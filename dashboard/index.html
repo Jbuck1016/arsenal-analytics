@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arsenal Analytics</title>
+<style>
+  :root {
+    --red: #EF0107;
+    --navy: #0A1128;
+    --navy-light: #111827;
+    --gold: #f5b800;
+    --white: #ffffff;
+    --text-primary: #f0f2f8;
+    --text-secondary: #8a94b0;
+    --text-muted: #4a5270;
+    --border: rgba(255,255,255,0.07);
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--navy); color: var(--text-primary); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .shell { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Header */
+  .header { background: var(--navy-light); border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .crest { width: 28px; height: 28px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--white); }
+  .header-sub { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .live-badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; background: rgba(239,1,7,0.15); color: #ff6b6e; border: 1px solid rgba(239,1,7,0.3); font-weight: 500; }
+  .match-count { font-size: 11px; color: var(--text-muted); }
+
+  /* Body */
+  .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 228px; flex-shrink: 0; background: var(--navy-light); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; padding: 12px; gap: 14px; }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .s-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 4px; }
+  select { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 7px 28px 7px 9px; border-radius: 7px; font-size: 12px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a94b0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+  select:hover { border-color: rgba(255,255,255,0.18); }
+  select:focus { border-color: var(--red); }
+  select option { background: #1c2951; }
+
+  /* Viz tabs */
+  .viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .viz-tab { padding: 7px 4px; font-size: 11px; text-align: center; cursor: pointer; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 7px; transition: all 0.13s; font-family: inherit; line-height: 1.3; }
+  .viz-tab:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .viz-tab.active { background: rgba(239,1,7,0.18); color: #ff6b6e; border-color: rgba(239,1,7,0.45); font-weight: 600; }
+
+  /* Player list */
+  .player-list { display: flex; flex-direction: column; gap: 3px; }
+  .player-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; gap: 6px; }
+  .player-item:hover { background: var(--surface-hover); border-color: var(--border); }
+  .player-item.selected { background: rgba(239,1,7,0.1); border-color: rgba(239,1,7,0.4); }
+  .player-name { font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbadges { display: flex; gap: 3px; flex-shrink: 0; }
+  .pb { font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: 700; min-width: 20px; text-align: center; }
+  .pb.p { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .pb.s { background: rgba(245,184,0,0.2); color: #fcd34d; }
+
+  /* Content */
+  .content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+  /* Stats bar */
+  .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .stat-cell { background: var(--navy-light); padding: 9px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .stat-val { font-size: 19px; font-weight: 700; color: var(--white); line-height: 1; }
+  .stat-val.red { color: var(--red); }
+  .stat-val.gold { color: var(--gold); }
+  .stat-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+
+  /* Pitch area */
+  .pitch-area { flex: 1; display: flex; min-height: 0; overflow: hidden; padding: 10px 14px; gap: 12px; }
+  .pitch-center { flex: 1; display: flex; flex-direction: column; align-items: center; min-height: 0; gap: 6px; }
+  .pitch-header { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .pitch-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .pitch-meta { font-size: 11px; color: var(--text-muted); }
+  .pitch-canvas-wrap { flex: 1; min-height: 0; display: flex; align-items: flex-start; justify-content: center; gap: 10px; overflow: hidden; }
+  .pitch-canvas { max-height:100%; max-width:100%; width:auto; height:auto; border-radius:8px; display:block; object-fit:contain; }
+  .panel-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; flex:1; min-height:0; height:100%; }
+  .panel-title { font-size:12px; font-weight:600; color:var(--text-primary); align-self:flex-start; }
+  .panel-legend { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .panel-header { display:flex; align-items:center; justify-content:space-between; width:100%; }
+  .team-switcher { display:flex; background:rgba(255,255,255,0.06); border-radius:8px; padding:3px; gap:2px; margin-right:8px; }
+  .team-btn { background:transparent; border:none; color:var(--text-secondary); font-size:12px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .team-btn.active { background:var(--red); color:white; }
+  .team-btn:hover:not(.active) { color:var(--text-primary); }
+  .tab-nav { display:flex; gap:2px; margin-left:24px; }
+  .tab-btn { background:transparent; border:none; color:var(--text-secondary); font-size:12px; font-weight:500; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .tab-btn:hover { color:var(--text-primary); background:var(--surface); }
+  .tab-btn.active { color:var(--white); background:var(--surface-hover); }
+  .tab-content { display:none; flex:1; min-height:0; overflow:hidden; }
+  .tab-content.active { display:flex; }
+
+  /* Season stats table */
+  .season-wrap { flex:1; overflow-y:auto; padding:16px 20px; }
+  .table-scroll { overflow-x:auto; }
+  .stats-table { width:max-content; min-width:100%; }
+  .season-wrap::-webkit-scrollbar { width:4px; }
+  .season-wrap::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .season-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .season-title { font-size:14px; font-weight:600; color:var(--white); }
+  .season-comp-filter { display:flex; gap:6px; }
+  .scomp-btn { background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); font-size:10px; padding:3px 10px; border-radius:99px; cursor:pointer; font-family:inherit; transition:all 0.13s; }
+  .scomp-btn.active { background:rgba(239,1,7,0.15); border-color:rgba(239,1,7,0.4); color:#ff6b6e; }
+  .stats-table { width:max-content; min-width:100%; border-collapse:collapse; font-size:12px; }
+  .stats-table th { padding:8px 10px; text-align:right; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer; user-select:none; }
+  .stats-table th:first-child, .stats-table th:nth-child(2), .stats-table th:nth-child(3) { text-align:left; }
+  .stats-table th:hover { color:var(--text-secondary); }
+  .stats-table th.sort-asc::after { content:' ↑'; color:var(--red); }
+  .stats-table th.sort-desc::after { content:' ↓'; color:var(--red); }
+  .stats-table td { padding:9px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-secondary); }
+  .stats-table td:first-child, .stats-table td:nth-child(2), .stats-table td:nth-child(3) { text-align:left; }
+  .stats-table tr:hover td { background:var(--surface); color:var(--text-primary); }
+  .stats-table td:first-child { color:var(--text-primary); font-weight:500; }
+  .ha-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; }
+  .ha-h { background:rgba(239,1,7,0.15); color:#ff6b6e; }
+  .ha-a { background:rgba(255,255,255,0.08); color:var(--text-secondary); }
+  .result-w { color:#4ade80; font-weight:600; }
+  .result-d { color:#f5b800; font-weight:600; }
+  .result-l { color:#f87171; font-weight:600; }
+  .col-highlight { color:var(--white) !important; }
+  .col-toggles { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+  .col-toggle { font-size:10px; padding:2px 9px; border-radius:99px; border:1px solid var(--border); background:var(--surface); color:var(--text-secondary); cursor:pointer; font-family:inherit; transition:all 0.13s; }
+  .col-toggle.active { background:rgba(239,1,7,0.12); border-color:rgba(239,1,7,0.35); color:#ff6b6e; }
+  .season-totals { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:16px; }
+  .tot-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+  .tot-val { font-size:20px; font-weight:700; color:var(--white); }
+  .tot-lbl { font-size:9px; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.07em; margin-top:2px; }
+  .tot-avg { font-size:10px; color:var(--text-primary); margin-top:1px; }
+  .dl-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:var(--text-secondary); font-size:10px; padding:3px 8px; border-radius:5px; cursor:pointer; font-family:inherit; transition:all 0.15s; display:flex; align-items:center; gap:4px; }
+  .dl-btn:hover { background:rgba(255,255,255,0.15); color:var(--text-primary); }
+  .dl-all-btn { background:rgba(239,1,7,0.12); border:1px solid rgba(239,1,7,0.3); color:#ff6b6e; font-size:11px; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all 0.15s; display:flex; align-items:center; gap:5px; }
+  .dl-all-btn:hover { background:rgba(239,1,7,0.22); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .leg-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Network panel */
+  .network-panel { width: 190px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+  .network-panel.hidden { display: none; }
+  .network-panel::-webkit-scrollbar { width: 3px; }
+  .network-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .net-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .net-pair { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); gap: 6px; }
+  .net-names { font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .net-count { font-size: 12px; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+  /* States */
+  .loading { display: flex; align-items: center; justify-content: center; flex: 1; font-size: 13px; color: var(--text-secondary); gap: 8px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { background: rgba(239,1,7,0.1); border: 1px solid rgba(239,1,7,0.3); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #ff6b6e; margin: 8px; }
+  .empty-state { text-align: center; padding: 30px 10px; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+  .cb-group { display: flex; flex-direction: column; gap: 5px; }
+  .cb-label { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-secondary); cursor: pointer; padding: 4px 2px; border-radius: 5px; transition: color 0.1s; }
+  .cb-label:hover { color: var(--text-primary); }
+  .cb-label input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
+  .cb-label input[type=radio] { width: 14px; height: 14px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
+  .cb-viz.active { color: #ff6b6e; font-weight: 600; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <div class="header">
+    <div class="crest">⚽</div>
+    <div>
+      <div class="team-switcher" id="teamSwitcher"><button class="team-btn active" data-team="Arsenal">Arsenal</button><button class="team-btn" data-team="LAFC">LAFC</button></div><div class="header-title" id="appTitle">Arsenal Analytics</div>
+      <div class="header-sub" id="matchSubtitle">Loading...</div>
+    </div>
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="analysis">Match Analysis</button>
+        <button class="tab-btn" data-tab="season">Season Stats</button>
+      </div>
+      <div class="header-right"><button class="dl-all-btn" id="dlAllBtn" style="display:none">⬇ Download All</button>
+      <span class="live-badge">● Live</span>
+      <span class="match-count" id="matchCount"></span>
+    </div>
+  </div>
+
+  <div class="body" id="tabAnalysis" style="display:flex;">
+    <div class="sidebar">
+      <div>
+        <div class="s-label">Competition</div>
+        <div class="cb-group" id="compFilters"></div>
+      </div>
+      <div><div class="s-label">Match</div><select id="matchSel"></select></div>
+      <div>
+        <div class="s-label">Period</div>
+        <div class="cb-group">
+          <label class="cb-label"><input type="checkbox" id="cbP1" value="1"> First half</label>
+          <label class="cb-label"><input type="checkbox" id="cbP2" value="2"> Second half</label>
+        </div>
+      </div>
+      <div>
+        <div class="s-label">Outcome</div>
+        <div class="cb-group">
+          <label class="cb-label"><input type="checkbox" id="cbSucc" value="Successful"> Successful</label>
+          <label class="cb-label"><input type="checkbox" id="cbFail" value="Unsuccessful"> Unsuccessful</label>
+        </div>
+      </div>
+      <div>
+        <div class="s-label">View</div>
+        <div class="cb-group" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;">
+          <label class="cb-label cb-viz active" data-viz="passes"><input type="checkbox" name="viz" value="passes" checked class="viz-cb"> Pass map</label>
+          <label class="cb-label cb-viz" data-viz="shots"><input type="checkbox" name="viz" value="shots" class="viz-cb"> Shot map</label>
+          <label class="cb-label cb-viz" data-viz="heatmap"><input type="checkbox" name="viz" value="heatmap" class="viz-cb"> Heatmap</label>
+          <label class="cb-label cb-viz" data-viz="final_third"><input type="checkbox" name="viz" value="final_third" class="viz-cb"> Final third passes</label>
+          <label class="cb-label cb-viz" data-viz="zone14"><input type="checkbox" name="viz" value="zone14" class="viz-cb"> Zone 14 passes</label>
+          <label class="cb-label cb-viz" data-viz="progressive"><input type="checkbox" name="viz" value="progressive" class="viz-cb"> Progressive passes</label>
+          <label class="cb-label cb-viz" data-viz="box_passes"><input type="checkbox" name="viz" value="box_passes" class="viz-cb"> Passes into box</label>
+          <label class="cb-label cb-viz" data-viz="defensive"><input type="checkbox" name="viz" value="defensive" class="viz-cb"> Defensive actions</label>
+          <label class="cb-label cb-viz" data-viz="network"><input type="checkbox" name="viz" value="network" class="viz-cb"> Passing network</label>
+        </div>
+      </div>
+      <div>
+        <div class="s-label">Player — click to filter</div>
+        <div class="player-list" id="playerList"><div class="empty-state">Select a match to load players</div></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats-bar">
+        <div class="stat-cell"><div class="stat-val" id="sPasses">—</div><div class="stat-lbl" id="lPasses">Passes</div></div>
+        <div class="stat-cell"><div class="stat-val" id="sAcc">—</div><div class="stat-lbl" id="lAcc">Accuracy</div></div>
+        <div class="stat-cell"><div class="stat-val gold" id="sShots">—</div><div class="stat-lbl" id="lShots">Shots</div></div>
+        <div class="stat-cell"><div class="stat-val red" id="sGoals">—</div><div class="stat-lbl" id="lGoals">Goals</div></div>
+        <div class="stat-cell"><div class="stat-val" id="sFinal">—</div><div class="stat-lbl" id="lFinal">Final 3rd passes</div></div>
+      </div>
+
+      <div class="pitch-area">
+        <div class="pitch-center">
+          <div class="pitch-header">
+            <span class="pitch-title" id="pitchTitle">Select a match</span>
+            <span class="pitch-meta" id="pitchMeta"></span>
+          </div>
+          <div class="pitch-canvas-wrap" id="pitchWrap">
+            <div class="loading"><div class="spinner"></div> Loading...</div>
+          </div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="network-panel hidden" id="networkPanel">
+          <div class="net-title">Top passing combos</div>
+          <div id="netPairs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabSeason" style="display:none;flex:1;min-height:0;overflow:hidden;">
+    <div class="season-wrap" id="seasonWrap">
+      <div class="season-header">
+        <div class="season-title" id="seasonTitle">2025/26 Season — Arsenal</div>
+        <div class="season-comp-filter" style="display:flex;gap:12px;align-items:center;" id="seasonCompFilters"></div>
+      </div>
+      <div class="season-totals" id="seasonTotals"></div>
+      <table class="stats-table" id="statsTable">
+        <thead>
+          <tr>
+            <th data-col="opponent">Opponent</th>
+            <th data-col="ha">H/A</th>
+            <th data-col="result">Result</th>
+            <th data-col="final_third_passes">Final 3rd</th>
+            <th data-col="zone14_passes">Zone 14</th>
+            <th data-col="progressive_passes">Prog. passes</th>
+            <th data-col="passes_into_box">Into box</th>
+            <th data-col="defensive_actions">Def. actions</th>
+            <th data-col="shots">Shots</th>
+            <th data-col="shots_on_target">On target</th>
+          </tr>
+        </thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const TEAMS = {
+  Arsenal: {
+    name: 'Arsenal',
+    displayName: 'Arsenal FC',
+    color: '#EF0107',
+    colorDark: '#b30005',
+    colorLight: '#ff6b6e',
+    navy: '#0A1128',
+    navyLight: '#111827',
+    pitchColor: '#f0ead6',
+    badge: '⚽',
+    competition: 'ENG-Premier League',
+    compOptions: [
+      {value:'ENG-Premier League', label:'Premier League'},
+      {value:'INT-Champions League', label:'Champions League'},
+      {value:'ENG-FA Cup', label:'FA Cup'},
+      {value:'ENG-League Cup', label:'League Cup'},
+    ],
+  },
+  LAFC: {
+    name: 'Los Angeles FC',
+    displayName: 'LAFC',
+    color: '#C39E6D',
+    colorDark: '#a07f4e',
+    colorLight: '#d4b483',
+    navy: '#0a0a0a',
+    navyLight: '#1a1a1a',
+    pitchColor: '#f0ead6',
+    badge: '⚽',
+    competition: 'USA-MLS',
+    compOptions: [
+      {value:'USA-MLS', label:'MLS'},
+    ],
+  },
+};
+
+function getTeam(){ return TEAMS[state.team]||TEAMS.Arsenal; }
+
+function applyTeamTheme(){
+  const t=getTeam();
+  const r=document.documentElement.style;
+  r.setProperty('--red', t.color);
+  r.setProperty('--navy', t.navy);
+  r.setProperty('--navy-light', t.navyLight);
+  // Update header subtitle
+  document.getElementById('appTitle').textContent=t.displayName+' Analytics';
+}
+
+const SUPABASE_URL = 'https://ptyffakhjbppzskvwggh.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0eWZmYWtoamJwcHpza3Z3Z2doIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODk4MzIsImV4cCI6MjA5MTI2NTgzMn0.BQkOg_2NnqqT1mlLwpU6BYVBVZAJuJE7vgikn7gRBK0';
+const H = { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` };
+
+async function sbAll(table, params={}) {
+  const PAGE=1000; let all=[], off=0;
+  while(true){
+    const url=new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+    const r=await fetch(url,{headers:{...H,'Prefer':'count=none','Range':`${off}-${off+PAGE-1}`,'Range-Unit':'items'}});
+    if(!r.ok) throw new Error(r.status);
+    const p=await r.json();
+    if(!Array.isArray(p)||!p.length) break;
+    all=all.concat(p);
+    if(p.length<PAGE) break;
+    off+=PAGE;
+  }
+  return all;
+}
+
+async function sbGet(table, params={}) {
+  // RPC calls use POST
+  if(table.startsWith('rpc/')){
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
+      method:'POST',
+      headers:{...H,'Content-Type':'application/json'},
+      body:JSON.stringify(params),
+    });
+    if(!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+  const url=new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const r=await fetch(url,{headers:H});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+let state={ team:'Arsenal', matches:[], events:[], starters:new Set(), starterNames:new Set(), playerPositions:{}, selectedMatch:null, selectedPlayer:null, viz:'passes', activeVizs:['passes'], periods:new Set(), outcomes:new Set() };
+let canvas, ctx;
+
+// Opta/WhoScored coords: x=0(own goal)->100(opp goal), y=0(right wing)->100(left wing)
+// Vertical pitch: attacking = top, right wing = right side of screen
+function toXY(x, y) {
+  return { cx:(1-y/100)*canvas.width, cy:(1-x/100)*canvas.height };
+}
+
+function initCanvas() {
+  // No-op — panels are created dynamically in renderAll()
+}
+
+function createPitchCanvas(wrap, id) {
+  const c=document.createElement('canvas');
+  c.className='pitch-canvas'; c.width=520; c.height=840;
+  c.style.cssText='max-height:100%;max-width:100%;width:auto;height:100%;border-radius:8px;display:block;';
+  wrap.appendChild(c);
+  return c;
+}
+
+function drawPitch() {
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // Flat cream pitch — no stripes
+  ctx.fillStyle='#f0ead6';
+  ctx.fillRect(0,0,W,H);
+  const lc='rgba(30,30,30,0.75)';
+  ctx.strokeStyle=lc; ctx.lineWidth=1.5;
+  ctx.strokeRect(3,3,W-6,H-6);
+  ctx.beginPath(); ctx.moveTo(3,H/2); ctx.lineTo(W-3,H/2); ctx.stroke();
+  const cr=W*0.148;
+  ctx.beginPath(); ctx.arc(W/2,H/2,cr,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=lc; ctx.beginPath(); ctx.arc(W/2,H/2,3.5,0,Math.PI*2); ctx.fill();
+  // Penalty areas
+  const paL=W*0.211,paR=W*0.789,paH=H*0.165;
+  ctx.strokeRect(paL,3,paR-paL,paH);
+  ctx.strokeRect(paL,H-paH,paR-paL,paH-3);
+  // 6-yard boxes
+  const sbL=W*0.368,sbR=W*0.632,sbH=H*0.057;
+  ctx.strokeRect(sbL,3,sbR-sbL,sbH);
+  ctx.strokeRect(sbL,H-sbH,sbR-sbL,sbH-3);
+  // Penalty spots
+  const ps1=0.115*H, ps2=0.885*H;
+  ctx.fillStyle=lc;
+  [[W/2,ps1],[W/2,ps2]].forEach(([px,py])=>{ ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); });
+  // Penalty arcs
+  ctx.beginPath(); ctx.arc(W/2,ps1,cr,Math.PI*0.18,Math.PI*0.82); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,ps2,cr,-Math.PI*0.82,-Math.PI*0.18); ctx.stroke();
+  // Corners
+  [[3,3,0,Math.PI/2],[W-3,3,Math.PI/2,Math.PI],[3,H-3,-Math.PI/2,0],[W-3,H-3,Math.PI,Math.PI*1.5]].forEach(([x,y,s,e])=>{
+    ctx.beginPath(); ctx.arc(x,y,11,s,e); ctx.stroke();
+  });
+  // Goals
+  const gL=W*0.449,gR=W*0.551,gd=H*0.022;
+  ctx.strokeRect(gL,3-gd,gR-gL,gd);
+  ctx.strokeRect(gL,H-3,gR-gL,gd);
+  // Wing labels only (no attacking/defending at goalmouths)
+  ctx.save();
+  ctx.font='9px Segoe UI,sans-serif'; ctx.fillStyle='rgba(30,30,30,0.18)';
+  ctx.save(); ctx.translate(W-5,H/2); ctx.rotate(Math.PI/2); ctx.fillText('Right wing',0,0); ctx.restore();
+  ctx.save(); ctx.translate(5,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Left wing',0,0); ctx.restore();
+  ctx.restore();
+}
+
+
+function drawPassLegend(succ, fail) {
+  const W=canvas.width, H=canvas.height;
+  const pad=14, gap=20, dotR=6;
+  const items=[
+    {color:'#1a7a3a', label:`Completed: ${succ}`},
+    {color:'#cc2200', label:`Incomplete: ${fail}`},
+  ];
+
+  ctx.save();
+  ctx.font='bold 12px Segoe UI,sans-serif';
+  ctx.textBaseline='middle';
+
+  const itemWidths=items.map(it=>dotR*2+8+ctx.measureText(it.label).width);
+  const totalW=itemWidths.reduce((a,b)=>a+b,0)+gap+pad*2;
+  const boxH=32, r=8;
+  const boxX=W/2-totalW/2;
+  // Place between halfway and defending box — clearly visible open space
+  const boxY=H*0.76;
+
+  // Manual rounded rect (no roundRect needed)
+  ctx.fillStyle='rgba(245,240,225,0.96)';
+  ctx.strokeStyle='rgba(0,0,0,0.15)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(boxX+r, boxY);
+  ctx.lineTo(boxX+totalW-r, boxY);
+  ctx.quadraticCurveTo(boxX+totalW, boxY, boxX+totalW, boxY+r);
+  ctx.lineTo(boxX+totalW, boxY+boxH-r);
+  ctx.quadraticCurveTo(boxX+totalW, boxY+boxH, boxX+totalW-r, boxY+boxH);
+  ctx.lineTo(boxX+r, boxY+boxH);
+  ctx.quadraticCurveTo(boxX, boxY+boxH, boxX, boxY+boxH-r);
+  ctx.lineTo(boxX, boxY+r);
+  ctx.quadraticCurveTo(boxX, boxY, boxX+r, boxY);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  let x=boxX+pad;
+  const midY=boxY+boxH/2;
+  items.forEach((item,i)=>{
+    ctx.fillStyle=item.color;
+    ctx.beginPath(); ctx.arc(x+dotR, midY, dotR, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a1a';
+    ctx.textAlign='left';
+    ctx.fillText(item.label, x+dotR*2+6, midY);
+    x+=itemWidths[i]+gap;
+  });
+  ctx.restore();
+}
+function drawArrow(x1,y1,x2,y2,color,alpha=0.65,w=1.8){
+  // Comet style: fades at origin, full width at destination (mplsoccer comet=True)
+  const {cx:sx,cy:sy}=toXY(x1,y1), {cx:ex,cy:ey}=toXY(x2,y2);
+  const dx=ex-sx,dy=ey-sy,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<4) return;
+  const steps=Math.max(12,Math.floor(len/3));
+  ctx.save(); ctx.lineCap='round';
+  for(let i=0;i<steps;i++){
+    const t0=i/steps, t1=(i+1)/steps;
+    const ax=sx+dx*t0, ay=sy+dy*t0;
+    const bx=sx+dx*t1, by=sy+dy*t1;
+    const segW=w*t1;           // width grows toward destination
+    const segA=alpha*t1*t1;    // alpha grows quadratically toward destination
+    ctx.globalAlpha=segA;
+    ctx.strokeStyle=color;
+    ctx.lineWidth=Math.max(0.3,segW);
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+  }
+  // Small dot at destination
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(ex,ey,Math.max(1.5,w*0.6),0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawDot(x,y,r,fill,stroke,alpha=0.85){
+  const {cx,cy}=toXY(x,y);
+  ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=fill; ctx.strokeStyle=stroke||'rgba(0,0,0,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore();
+}
+
+function renderNetwork(evts) {
+  drawPitch();
+  document.getElementById('pitchMeta').textContent='';
+  const legend=document.getElementById('legend');
+  const panel=document.getElementById('networkPanel');
+
+  // Filter to starters only
+  const arsenal=evts.filter(e=>e.team===getTeam().name&&e.player&&e.x!=null&&state.starterNames.has(e.player));
+  if(!arsenal.length){ legend.innerHTML=''; panel.classList.add('hidden'); return; }
+
+  // Average positions
+  const pos={};
+  arsenal.forEach(e=>{
+    if(!pos[e.player]) pos[e.player]={x:0,y:0,n:0};
+    pos[e.player].x+=e.x; pos[e.player].y+=e.y; pos[e.player].n++;
+  });
+  const avgPos={};
+  Object.entries(pos).forEach(([p,d])=>avgPos[p]={x:d.x/d.n,y:d.y/d.n});
+
+  // Pass pairs from sequential events
+  const sorted=[...arsenal].sort((a,b)=>(a.period-b.period)||(a.minute-b.minute)||((a.second||0)-(b.second||0)));
+  const pairs={};
+  for(let i=0;i<sorted.length-1;i++){
+    const c=sorted[i],n=sorted[i+1];
+    if(c.type==='Pass'&&c.outcome_type==='Successful'&&n.player&&c.player!==n.player){
+      const k=[c.player,n.player].sort().join('|||');
+      pairs[k]=(pairs[k]||0)+1;
+    }
+  }
+
+  const sortedPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]);
+  if(!sortedPairs.length){ legend.innerHTML=''; panel.classList.add('hidden'); return; }
+
+  const maxCount=sortedPairs[0][1];
+
+  // Draw lines
+  sortedPairs.slice(0,25).forEach(([key,count])=>{
+    const [p1,p2]=key.split('|||');
+    const a1=avgPos[p1],a2=avgPos[p2];
+    if(!a1||!a2) return;
+    const {cx:x1,cy:y1}=toXY(a1.x,a1.y), {cx:x2,cy:y2}=toXY(a2.x,a2.y);
+    const ratio=count/maxCount;
+    const w=1+ratio*9, alpha=0.12+ratio*0.72;
+    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle='#c0001a'; ctx.lineWidth=w; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+  });
+
+  // Draw nodes
+  const passCount={};
+  arsenal.filter(e=>e.type==='Pass').forEach(e=>{ passCount[e.player]=(passCount[e.player]||0)+1; });
+  const maxP=Math.max(...Object.values(passCount),1);
+
+  // Position colour map
+  const posColours={GK:'#f5b800',DC:'#3b82f6',DL:'#3b82f6',DR:'#3b82f6',MC:'#22c55e',ML:'#22c55e',MR:'#22c55e',DMC:'#16a34a',FW:'#EF0107',FWL:'#EF0107',FWR:'#EF0107'};
+  const posStroke={GK:'#b38600',DC:'#1d4ed8',DL:'#1d4ed8',DR:'#1d4ed8',MC:'#15803d',ML:'#15803d',MR:'#15803d',DMC:'#14532d',FW:'#b30005',FWL:'#b30005',FWR:'#b30005'};
+
+  // Build player->position map from lineups
+  const playerPos={};
+  evts.forEach(e=>{ if(e.team==='Arsenal'&&e.player&&e.position&&e.position!=='Sub') playerPos[e.player]=e.position; });
+
+  Object.entries(avgPos).forEach(([player,p])=>{
+    const {cx,cy}=toXY(p.x,p.y);
+    const r=12+(passCount[player]||0)/maxP*10;
+    ctx.save();
+    // White circle with dark border
+    ctx.fillStyle='white';
+    ctx.strokeStyle='#1a1a1a';
+    ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // Player name in dark
+    const last=player.split(' ').pop();
+    const label=last.length>9?last.slice(0,8)+'…':last;
+    ctx.fillStyle='#111';
+    ctx.font=`bold ${Math.max(9,Math.min(13,r*0.85))}px Segoe UI,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label,cx,cy); ctx.restore();
+  });
+
+  legend.innerHTML=`
+    <div class="leg"><div class="leg-dot" style="background:white;border:1.5px solid #333;"></div> Node size = pass volume</div>
+    <div class="leg"><div class="leg-line" style="background:#c0001a;height:3px;width:22px;"></div> Line weight = pass frequency</div>`;
+
+  // Right panel
+  panel.classList.remove('hidden');
+  document.getElementById('netPairs').innerHTML=sortedPairs.slice(0,15).map(([key,count])=>{
+    const [p1,p2]=key.split('|||');
+    const n1=p1.split(' ').pop(), n2=p2.split(' ').pop();
+    return `<div class="net-pair"><span class="net-names">${n1} ↔ ${n2}</span><span class="net-count">${count}</span></div>`;
+  }).join('');
+
+  document.getElementById('pitchMeta').textContent=`${Object.keys(avgPos).length} players`;
+}
+
+
+// ── PDF Export ──
+function getMatchDesc(){
+  return document.getElementById('matchSubtitle').textContent||'Arsenal Analytics';
+}
+
+// Parse "Arsenal vs Chelsea 2–1 · 2026-03-01" into parts
+function parseMatch(desc){
+  const dateMatch=desc.match(/·\s*(.+)$/);
+  const scoreMatch=desc.match(/(\d+)[–-](\d+)/);
+  const teamsMatch=desc.match(/^(.+?)\s+\d+[–-]\d+/)||desc.match(/^(.+?)\s+·/);
+  return {
+    teams: teamsMatch?teamsMatch[1].trim():desc,
+    score: scoreMatch?`${scoreMatch[1]}–${scoreMatch[2]}`:'',
+    date: dateMatch?dateMatch[1].trim():'',
+  };
+}
+
+function drawStyledPDF(doc, canvasEl, viewLabel, playerLabel, pageW, pageH, xOffset, allocW, singlePage){
+  const m=parseMatch(getMatchDesc());
+  const margin=singlePage?14:xOffset;
+  const contentW=singlePage?pageW-margin*2:allocW;
+
+  if(singlePage){
+    // ── Dark background ──
+    doc.setFillColor(10,17,40);
+    doc.rect(0,0,pageW,pageH,'F');
+
+    // ── Red accent bar left edge ──
+    doc.setFillColor(239,1,7);
+    doc.rect(0,0,5,pageH,'F');
+
+    let y=14;
+
+    // ── PLAYER NAME — big and bold at top ──
+    doc.setFontSize(22);
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.text((playerLabel||'All Players').toUpperCase(), margin+2, y);
+    y+=8;
+
+    // ── View type — smaller, red ──
+    doc.setFontSize(11);
+    doc.setTextColor(239,1,7);
+    doc.setFont('helvetica','bold');
+    doc.text(viewLabel.toUpperCase(), margin+2, y);
+    y+=7;
+
+    // ── Fixture ──
+    doc.setFontSize(9);
+    doc.setTextColor(200,200,200);
+    doc.setFont('helvetica','normal');
+    doc.text(m.teams.toUpperCase(), margin+2, y);
+    y+=5;
+
+    // ── Score + date on next line ──
+    doc.setFontSize(9);
+    doc.setTextColor(239,1,7);
+    doc.setFont('helvetica','bold');
+    const scorePart=m.score||'';
+    const datePart=m.date||'';
+    const combined=[scorePart,datePart].filter(Boolean).join('  ·  ');
+    doc.text(combined, margin+2, y);
+    y+=6;
+
+    // ── Thin red divider ──
+    doc.setDrawColor(239,1,7);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, pageW-margin, y);
+    y+=4;
+
+    // ── Pitch image — constrained to fit on page at a glance ──
+    const imgData=canvasEl.toDataURL('image/png');
+    const canvasAR=canvasEl.height/canvasEl.width;
+    const footerH=10;
+    const availH=pageH-y-footerH;
+    const availW=contentW;
+    let imgW=availW, imgH=availW*canvasAR;
+    if(imgH>availH){imgH=availH;imgW=availH/canvasAR;}
+    const imgX=margin+(contentW-imgW)/2;
+    doc.addImage(imgData,'PNG',imgX,y,imgW,imgH);
+
+    // ── Footer ──
+    doc.setFontSize(7);
+    doc.setTextColor(80,80,80);
+    doc.setFont('helvetica','normal');
+    doc.text('Arsenal Analytics',margin,pageH-4);
+    doc.text(new Date().toLocaleDateString('en-GB'),pageW-margin,pageH-4,{align:'right'});
+
+  } else {
+    // Multi-panel column: image + label
+    const imgData=canvasEl.toDataURL('image/png');
+    const canvasAR=canvasEl.height/canvasEl.width;
+    const topY=40;
+    const availH=pageH-topY-14;
+    let imgW=allocW-4, imgH=imgW*canvasAR;
+    if(imgH>availH){imgH=availH;imgW=availH/canvasAR;}
+    const imgX=xOffset+(allocW-imgW)/2;
+    doc.addImage(imgData,'PNG',imgX,topY,imgW,imgH);
+    doc.setFontSize(7.5);
+    doc.setTextColor(160,160,160);
+    doc.setFont('helvetica','normal');
+    doc.text(viewLabel.toUpperCase(),xOffset+allocW/2,topY+imgH+5,{align:'center'});
+  }
+}
+
+function downloadCanvasAsPDF(canvasEl, viewLabel, playerLabel){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pageW=doc.internal.pageSize.getWidth();
+  const pageH=doc.internal.pageSize.getHeight();
+  drawStyledPDF(doc,canvasEl,viewLabel,playerLabel||'',pageW,pageH,0,pageW-28,true);
+  const m=parseMatch(getMatchDesc());
+  const filename=`${m.teams.replace(/[^a-z0-9]/gi,'_')}_${viewLabel.replace(/[^a-z0-9]/gi,'_')}.pdf`;
+  doc.save(filename);
+}
+
+function downloadAllAsPDF(){
+  const {jsPDF}=window.jspdf;
+  const panels=[...document.querySelectorAll('.panel-wrap')];
+  if(!panels.length) return;
+  const n=panels.length;
+  const m=parseMatch(getMatchDesc());
+  const player=state.selectedPlayer||null;
+  const viewLabels=panels.map(p=>p.querySelector('.panel-title').textContent.split(' — ')[0]);
+
+  const orient=n===1?'portrait':'landscape';
+  const doc=new jsPDF({orientation:orient,unit:'mm',format:'a4'});
+  const pageW=doc.internal.pageSize.getWidth();
+  const pageH=doc.internal.pageSize.getHeight();
+  const margin=12;
+
+  if(n===1){
+    const canvasEl=panels[0].querySelector('canvas');
+    drawStyledPDF(doc,canvasEl,viewLabels[0],player||'',pageW,pageH,0,pageW-margin*2,true);
+  } else {
+    // ── Shared dark header for multi-panel ──
+    doc.setFillColor(10,17,40);
+    doc.rect(0,0,pageW,pageH,'F');
+    doc.setFillColor(239,1,7);
+    doc.rect(0,0,4,pageH,'F');
+
+    // Player name
+    doc.setFontSize(9); doc.setTextColor(180,180,180); doc.setFont('helvetica','normal');
+    doc.text((player||'All Players').toUpperCase(), margin+2, 12);
+    // View labels combined
+    doc.setFontSize(18); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+    doc.text(viewLabels.map(v=>v.toUpperCase()).join('  ·  '), margin+2, 22);
+    // Match info
+    doc.setFontSize(9); doc.setTextColor(200,200,200); doc.setFont('helvetica','normal');
+    doc.text(m.teams.toUpperCase(), margin+2, 30);
+    if(m.score){doc.setTextColor(239,1,7);doc.setFont('helvetica','bold');doc.text(m.score,pageW-margin,30,{align:'right'});}
+    if(m.date){doc.setTextColor(140,140,140);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(m.date,pageW-margin,36,{align:'right'});}
+    // Divider
+    doc.setDrawColor(239,1,7); doc.setLineWidth(0.4);
+    doc.line(margin,37,pageW-margin,37);
+    // Footer
+    doc.setFontSize(7); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal');
+    doc.text('Arsenal Analytics',margin,pageH-4);
+    doc.text(new Date().toLocaleDateString('en-GB'),pageW-margin,pageH-4,{align:'right'});
+
+    // ── Each pitch panel ──
+    const colGap=6;
+    const totalGap=colGap*(n-1);
+    const colW=(pageW-margin*2-totalGap)/n;
+    panels.forEach((panel,i)=>{
+      const canvasEl=panel.querySelector('canvas');
+      if(!canvasEl) return;
+      const xOff=margin+i*(colW+colGap);
+      drawStyledPDF(doc,canvasEl,viewLabels[i],player||'',pageW,pageH,xOff,colW,false);
+    });
+  }
+
+  const filename=`${m.teams.replace(/[^a-z0-9]/gi,'_')}_${viewLabels.join('_').replace(/[^a-z0-9_]/gi,'')}.pdf`;
+  doc.save(filename);
+}
+
+
+function renderAll(){
+  const wrap=document.getElementById('pitchWrap');
+  wrap.innerHTML='';
+  // Hide/show network panel
+  document.getElementById('networkPanel').classList.add('hidden');
+
+  const vizs=state.activeVizs||['passes'];
+  const cols=vizs.length<=1?1:vizs.length===2?2:vizs.length===3?3:vizs.length<=6?3:4;
+  wrap.style.display='grid';
+  wrap.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
+  wrap.style.gap='10px';
+  wrap.style.alignItems='stretch';
+
+  vizs.forEach(viz=>{
+    const panel=document.createElement('div');
+    panel.className='panel-wrap';
+    const titleEl=document.createElement('div');
+    titleEl.className='panel-title';
+    const canvasEl=document.createElement('canvas');
+    canvasEl.className='pitch-canvas';
+    // Size canvas to fill available container height
+    const wrapH=document.getElementById('pitchWrap').getBoundingClientRect().height||600;
+    const titleH=28; // panel header height
+    const legendH=24; // legend area
+    const availPx=Math.max(300, wrapH-titleH-legendH);
+    const scale=availPx/840; // 840 is our logical pitch height
+    canvasEl.height=840;
+    canvasEl.width=520;
+    canvasEl.style.cssText=`height:${Math.floor(availPx)}px;width:auto;max-width:100%;border-radius:8px;display:block;`;
+    const legendEl=document.createElement('div');
+    legendEl.className='panel-legend legend';
+    // Panel header with title + download button
+    const headerEl=document.createElement('div');
+    headerEl.className='panel-header';
+    headerEl.appendChild(titleEl);
+    const dlBtn=document.createElement('button');
+    dlBtn.className='dl-btn';
+    dlBtn.innerHTML='⬇ PDF';
+    dlBtn.addEventListener('click',()=>{
+      downloadCanvasAsPDF(canvasEl, titleEl.textContent.split(' — ')[0], state.selectedPlayer);
+    });
+    headerEl.appendChild(dlBtn);
+    panel.appendChild(headerEl);
+    panel.appendChild(canvasEl);
+    panel.appendChild(legendEl);
+    wrap.appendChild(panel);
+
+    // Set global canvas/ctx for render functions
+    canvas=canvasEl; ctx=canvasEl.getContext('2d');
+
+    if(viz==='network'){
+      document.getElementById('networkPanel').classList.remove('hidden');
+      renderNetwork(state.events.filter(e=>e.team===getTeam().name));
+      titleEl.textContent=document.getElementById('pitchTitle').textContent;
+      legendEl.innerHTML=document.getElementById('legend').innerHTML;
+    } else {
+      state.viz=viz;
+      render(titleEl, legendEl);
+    }
+  });
+
+  // Update main legend to be empty (each panel has its own)
+  document.getElementById('legend').innerHTML='';
+  // Show Download All only when multiple panels
+  document.getElementById('dlAllBtn').style.display=vizs.length>1?'flex':'none';
+}
+
+function render(titleEl, legendEl){
+  if(!canvas) return;
+  const filtered=getFiltered();
+  const player=state.selectedPlayer||'All players';
+  const title=titleEl||document.getElementById('pitchTitle');
+  const meta=document.getElementById('pitchMeta');
+  const legend=legendEl||document.getElementById('legend');
+  drawPitch();
+
+  if(state.viz==='passes'){
+    title.textContent=`Pass map — ${player}`;
+    const passes=filtered.filter(e=>e.type==='Pass'&&e.x!=null&&e.end_x!=null);
+    meta.textContent=`${passes.length} passes`;
+    passes.forEach(e=>{ const ok=e.outcome_type==='Successful'; drawArrow(e.x,e.y,e.end_x,e.end_y,ok?'#1a7a3a':'#cc2200',ok?0.85:0.6,ok?3.5:2.5); });
+    legend.innerHTML=`<div class="leg"><div class="leg-line" style="background:#4ade80;"></div> Successful (${passes.filter(e=>e.outcome_type==='Successful').length})</div><div class="leg"><div class="leg-line" style="background:#f87171;"></div> Unsuccessful (${passes.filter(e=>e.outcome_type!=='Successful').length})</div>`;
+
+  } else if(state.viz==='shots'){
+    title.textContent=`Shot map — ${player}`;
+    const shots=filtered.filter(e=>e.is_shot&&e.x!=null);
+    meta.textContent=`${shots.length} shots`;
+    shots.forEach(e=>{ const c=e.is_goal?'#c8a000':e.type==='SavedShot'?'#1a6aaa':'#555555'; drawDot(e.x,e.y,e.is_goal?10:6,c,'rgba(0,0,0,0.4)',e.is_goal?0.95:0.75); });
+    legend.innerHTML=`<div class="leg"><div class="leg-dot" style="background:#f5b800;"></div> Goal (${shots.filter(e=>e.is_goal).length})</div><div class="leg"><div class="leg-dot" style="background:#60a5fa;"></div> Saved (${shots.filter(e=>!e.is_goal&&e.type==='SavedShot').length})</div><div class="leg"><div class="leg-dot" style="background:#9ca3af;"></div> Off/blocked (${shots.filter(e=>!e.is_goal&&e.type!=='SavedShot').length})</div>`;
+
+  } else if(state.viz==='final_third'){
+    title.textContent=`Final third passes — ${player}`;
+    const ft=filtered.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66);
+    meta.textContent=`${ft.length} passes into final third`;
+    // Shade attacking third (x>=66 => cy<=(1-0.66)*H=0.34H)
+    ctx.save(); ctx.fillStyle='rgba(239,1,7,0.07)'; ctx.fillRect(0,0,canvas.width,canvas.height*0.34); ctx.restore();
+    ctx.save(); ctx.strokeStyle='rgba(239,1,7,0.35)'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(0,canvas.height*0.34); ctx.lineTo(canvas.width,canvas.height*0.34); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    ft.forEach(e=>{ const ok=e.outcome_type==='Successful'; drawArrow(e.x,e.y,e.end_x,e.end_y,ok?'#1a7a3a':'#cc2200',ok?0.85:0.58,3.5); });
+    drawPassLegend(ft.filter(e=>e.outcome_type==='Successful').length, ft.filter(e=>e.outcome_type!=='Successful').length);
+    legend.innerHTML='';
+
+  } else if(state.viz==='zone14'){
+    title.textContent=`Zone 14 passes — ${player}`;
+    // Zone 14: x=66-83 (attacking), y=21-79 (central) — the hole between midfield and box
+    // Show passes that END in Zone 14 (passes into the zone)
+    const z14=filtered.filter(e=>e.type==='Pass'&&e.end_x!=null&&
+      e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
+    meta.textContent=`${z14.length} passes into Zone 14`;
+
+    // Shade Zone 14 on pitch
+    // x=66-83 => cy=(1-0.83)*H to (1-0.66)*H = 0.17H to 0.34H
+    // y=21-79 => cx=(1-0.79)*W to (1-0.21)*W = 0.21W to 0.79W
+    ctx.save();
+    ctx.fillStyle='rgba(239,180,0,0.15)';
+    ctx.strokeStyle='rgba(239,180,0,0.6)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([5,3]);
+    const z14x=canvas.width*0.21, z14w=canvas.width*0.58;
+    const z14y=canvas.height*0.17, z14h=canvas.height*0.17;
+    ctx.fillRect(z14x,z14y,z14w,z14h);
+    ctx.strokeRect(z14x,z14y,z14w,z14h);
+    ctx.setLineDash([]); ctx.restore();
+
+    const z14Succ=z14.filter(e=>e.outcome_type==='Successful').length;
+    const z14Fail=z14.filter(e=>e.outcome_type!=='Successful').length;
+    z14.forEach(e=>{ const ok=e.outcome_type==='Successful'; drawArrow(e.x,e.y,e.end_x,e.end_y,ok?'#1a7a3a':'#cc2200',ok?0.85:0.58,ok?3.5:2.5); });
+    drawPassLegend(z14Succ, z14Fail);
+    legend.innerHTML=`<div class="leg"><div style="width:14px;height:14px;background:rgba(239,180,0,0.3);border:1.5px dashed rgba(239,180,0,0.8);border-radius:2px;"></div> Zone 14 highlighted</div>`;
+
+  } else if(state.viz==='progressive'){
+    title.textContent=`Progressive passes — ${player}`;
+    // Progressive pass: end point ≥25% closer to opponent goal (x=100) than start,
+    // AND distance ≥9 units (approx 9 metres on 0-100 scale)
+    const prog=filtered.filter(e=>{
+      if(e.type!=='Pass'||e.x==null||e.end_x==null) return false;
+      const distStart=100-e.x;   // distance from opp goal at start
+      const distEnd=100-e.end_x; // distance from opp goal at end
+      const closer=distStart-distEnd; // positive = moving toward goal
+      const dx=e.end_x-e.x, dy=(e.end_y||50)-(e.y||50);
+      const length=Math.sqrt(dx*dx+dy*dy);
+      return closer>=distStart*0.25 && length>=9;
+    });
+    meta.textContent=`${prog.length} progressive passes`;
+    prog.forEach(e=>{ const ok=e.outcome_type==='Successful'; drawArrow(e.x,e.y,e.end_x,e.end_y,ok?'#1a7a3a':'#cc2200',ok?0.85:0.58,ok?3.5:2.5); });
+    drawPassLegend(prog.filter(e=>e.outcome_type==='Successful').length, prog.filter(e=>e.outcome_type!=='Successful').length);
+    legend.innerHTML='<div class="leg" style="color:var(--text-muted);font-size:10px;">≥25% closer to goal · ≥9 units distance</div>';
+
+  } else if(state.viz==='box_passes'){
+    title.textContent=`Passes into box — ${player}`;
+    // Box: x=83-100, y=21-79 (Opta penalty area dimensions)
+    const box=filtered.filter(e=>e.type==='Pass'&&e.end_x!=null&&
+      e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
+    meta.textContent=`${box.length} passes into the box`;
+    box.forEach(e=>{ const ok=e.outcome_type==='Successful'; drawArrow(e.x,e.y,e.end_x,e.end_y,ok?'#1a7a3a':'#cc2200',ok?0.85:0.58,ok?3.5:2.5); });
+    drawPassLegend(box.filter(e=>e.outcome_type==='Successful').length, box.filter(e=>e.outcome_type!=='Successful').length);
+    legend.innerHTML='';
+
+  } else if(state.viz==='defensive'){
+    title.textContent=`Defensive actions — ${player}`;
+    // Defensive action types with distinct colours
+    const defTypes={
+      'Tackle':       {color:'#2563eb', label:'Tackle'},        // vivid blue
+      'Interception': {color:'#dc2626', label:'Interception'},  // vivid red
+      'Clearance':    {color:'#d97706', label:'Clearance'},     // vivid amber
+      'BallRecovery': {color:'#16a34a', label:'Ball recovery'}, // vivid green
+      'BlockedPass':  {color:'#7c3aed', label:'Blocked pass'},  // vivid purple
+      'Aerial':       {color:'#0891b2', label:'Aerial duel'},   // vivid cyan
+      'Challenge':    {color:'#db2777', label:'Challenge'},     // vivid pink
+      'Foul':         {color:'#854d0e', label:'Foul'},          // vivid brown
+    };
+    const defEvents=filtered.filter(e=>e.x!=null&&defTypes[e.type]);
+    meta.textContent=`${defEvents.length} defensive actions`;
+
+    defEvents.forEach(e=>{
+      const def=defTypes[e.type];
+      const won=e.outcome_type==='Successful';
+      const {cx,cy}=toXY(e.x,e.y);
+      ctx.save();
+      ctx.globalAlpha=won?0.85:0.5;
+      ctx.fillStyle=won?def.color:'transparent';
+      ctx.strokeStyle=def.color;
+      ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+
+    // Draw legend in top-left corner of canvas
+    const present=[...new Set(defEvents.map(e=>e.type))];
+    ctx.save();
+    const legPad=8, legLineH=16, legW=148, legH=legPad*2+present.length*legLineH+16;
+    const legX=10, legY=10;
+    ctx.fillStyle='rgba(240,234,214,0.92)';
+    ctx.strokeStyle='rgba(0,0,0,0.12)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.roundRect(legX,legY,legW,legH,5);
+    ctx.fill(); ctx.stroke();
+    ctx.font='bold 9px Segoe UI,sans-serif';
+    ctx.fillStyle='#333';
+    ctx.fillText('Filled=won · Hollow=lost',legX+legPad,legY+legPad+7);
+    present.forEach((t,i)=>{
+      const d=defTypes[t];
+      const n=defEvents.filter(e=>e.type===t).length;
+      const cy2=legY+legPad+20+i*legLineH;
+      ctx.fillStyle=d.color; ctx.strokeStyle=d.color; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(legX+legPad+5,cy2,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#222'; ctx.font='10px Segoe UI,sans-serif';
+      ctx.fillText(`${d.label} (${n})`,legX+legPad+14,cy2+4);
+    });
+    ctx.restore();
+    legend.innerHTML='';
+
+  } else if(state.viz==='heatmap'){
+    title.textContent=`Touch heatmap — ${player}`;
+    const touches=filtered.filter(e=>e.x!=null&&e.y!=null);
+    meta.textContent=`${touches.length} touches`;
+
+    // Gaussian-smoothed grid heatmap — finer grid, stronger blur
+    const COLS=60, ROWS=96;
+    const CW=canvas.width, CH=canvas.height;
+    const cellW=CW/COLS, cellH=CH/ROWS;
+
+    // Accumulate into grid
+    const grid=Array.from({length:ROWS},()=>new Float32Array(COLS));
+    touches.forEach(e=>{
+      const {cx,cy}=toXY(e.x,e.y);
+      const col=Math.min(COLS-1,Math.max(0,Math.floor(cx/cellW)));
+      const row=Math.min(ROWS-1,Math.max(0,Math.floor(cy/cellH)));
+      grid[row][col]+=1;
+    });
+
+    // Gaussian blur sigma=5 for very smooth gradients
+    const sigma=5,kSize=21,half=Math.floor(kSize/2);
+    const kernel=[];
+    let kSum=0;
+    for(let i=0;i<kSize;i++){const d=i-half;const v=Math.exp(-d*d/(2*sigma*sigma));kernel.push(v);kSum+=v;}
+    const kNorm=kernel.map(v=>v/kSum);
+
+    const blurX=Array.from({length:ROWS},()=>new Float32Array(COLS));
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){let v=0;for(let k=0;k<kSize;k++){const cc=c+k-half;if(cc>=0&&cc<COLS)v+=grid[r][cc]*kNorm[k];}blurX[r][c]=v;}
+    const blurred=Array.from({length:ROWS},()=>new Float32Array(COLS));
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){let v=0;for(let k=0;k<kSize;k++){const rr=r+k-half;if(rr>=0&&rr<ROWS)v+=blurX[rr][c]*kNorm[k];}blurred[r][c]=v;}
+
+    let maxVal=0;
+    blurred.forEach(row=>row.forEach(v=>{if(v>maxVal)maxVal=v;}));
+    if(maxVal===0){legend.innerHTML='<span style="color:var(--text-muted);font-size:11px;">No touch data</span>';return;}
+
+    // Heatmap overlays on top of the already-drawn pitch (cream background)
+    // No repaint needed — pitch is already drawn by drawPitch() above
+
+    // Draw cells — transparent at low density, vivid at high density
+    // Colormap: fully transparent -> blue -> cyan -> green -> yellow -> red
+    ctx.save();
+    blurred.forEach((row,r)=>{
+      row.forEach((val,c)=>{
+        const t=val/maxVal;
+        if(t<0.08) return; // below 8% — fully transparent, cream shows through cleanly
+        let red,green,blue,alpha;
+        if(t<0.25){
+          // blue (fading in from transparent)
+          const s=(t-0.08)/0.17;
+          red=0;green=Math.round(s*80);blue=Math.round(180+s*75);
+          alpha=s*0.55;
+        } else if(t<0.45){
+          // blue -> cyan -> green
+          const s=(t-0.25)/0.2;
+          red=0;green=Math.round(80+s*175);blue=Math.round(255-s*200);
+          alpha=0.55+s*0.15;
+        } else if(t<0.65){
+          // green -> yellow
+          const s=(t-0.45)/0.2;
+          red=Math.round(s*255);green=255;blue=Math.round(55-s*55);
+          alpha=0.68+s*0.1;
+        } else if(t<0.82){
+          // yellow -> orange -> red
+          const s=(t-0.65)/0.17;
+          red=255;green=Math.round(255-s*200);blue=0;
+          alpha=0.76+s*0.1;
+        } else {
+          // deep red core
+          const s=(t-0.82)/0.18;
+          red=255;green=Math.round(55-s*55);blue=0;
+          alpha=0.86+s*0.12;
+        }
+        ctx.fillStyle=`rgba(${red},${green},${blue},${Math.min(0.98,alpha).toFixed(2)})`;
+        ctx.fillRect(c*cellW,r*cellH,cellW+0.5,cellH+0.5);
+      });
+    });
+    ctx.restore();
+
+    // Redraw pitch lines ON TOP to stay visible through heatmap
+    const lc2='rgba(30,30,30,0.6)';
+    ctx.save();
+    ctx.strokeStyle=lc2; ctx.lineWidth=1.3;
+    const W2=CW,H2=CH;
+    ctx.strokeRect(3,3,W2-6,H2-6);
+    ctx.beginPath();ctx.moveTo(3,H2/2);ctx.lineTo(W2-3,H2/2);ctx.stroke();
+    const cr3=W2*0.148;ctx.beginPath();ctx.arc(W2/2,H2/2,cr3,0,Math.PI*2);ctx.stroke();
+    const paL2=W2*0.211,paR2=W2*0.789,paH2=H2*0.165;
+    ctx.strokeRect(paL2,3,paR2-paL2,paH2);ctx.strokeRect(paL2,H2-paH2,paR2-paL2,paH2-3);
+    const sbL2=W2*0.368,sbR2=W2*0.632,sbH2=H2*0.057;
+    ctx.strokeRect(sbL2,3,sbR2-sbL2,sbH2);ctx.strokeRect(sbL2,H2-sbH2,sbR2-sbL2,sbH2-3);
+    ctx.restore();
+
+    legend.innerHTML=`<div class="leg"><div style="width:90px;height:8px;border-radius:3px;background:linear-gradient(to right,rgba(0,100,255,0.4),#00aaff,#00dd88,#ffff00,#ff6600,#cc0000);border:1px solid rgba(255,255,255,0.2);"></div>&nbsp; Low → High</div>`;
+  }
+}
+
+function getFiltered(){
+  let e=state.events.filter(e=>e.team===getTeam().name);
+  if(state.selectedPlayer) e=e.filter(x=>x.player===state.selectedPlayer);
+  if(state.periods.size>0) e=e.filter(x=>state.periods.has(String(x.period)));
+  if(state.outcomes.size>0) e=e.filter(x=>state.outcomes.has(x.outcome_type));
+  return e;
+}
+
+
+// Position category from WhoScored position code
+function posCategory(player){
+  const pos=state.playerPositions[player]||'';
+  if(['GK','DC','DL','DR','DMC'].includes(pos)) return 'defender';
+  if(['MC','AMC','AML','AMR'].includes(pos)) return 'midfielder';
+  if(['FW','FWL','FWR'].includes(pos)) return 'forward';
+  return 'midfielder'; // default
+}
+
+// Compute all stats from events for a given player filter
+function computeStats(evts){
+  const a=evts; // already filtered to Arsenal + player
+  const passes=a.filter(e=>e.type==='Pass');
+  const succ=passes.filter(e=>e.outcome_type==='Successful');
+  const shots=a.filter(e=>e.is_shot);
+  const goals=a.filter(e=>e.is_goal);
+  const ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.outcome_type==='Successful');
+  const prog=passes.filter(e=>{
+    if(e.x==null||e.end_x==null) return false;
+    const distStart=100-e.x, distEnd=100-e.end_x;
+    const dx=e.end_x-e.x,dy=(e.end_y||50)-(e.y||50);
+    return (distStart-distEnd)>=distStart*0.25 && Math.sqrt(dx*dx+dy*dy)>=9;
+  });
+  const box=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y!=null&&e.end_y>=21&&e.end_y<=79);
+  const z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y!=null&&e.end_y>=21&&e.end_y<=79);
+
+  // Defensive actions
+  const defTypes=['Tackle','Interception','Clearance','BallRecovery','BlockedPass','Aerial','Challenge'];
+  const defAll=a.filter(e=>defTypes.includes(e.type));
+  const defWon=defAll.filter(e=>e.outcome_type==='Successful');
+
+  // Shot assists: pass where next Arsenal event is a shot
+  // Sort all Arsenal events by period+minute+second
+  const allArsenal=state.events.filter(e=>e.team===getTeam().name)
+    .sort((a,b)=>(a.period-b.period)||(a.minute-b.minute)||((a.second||0)-(b.second||0)));
+  let shotAssists=0;
+  const playerPasses=passes.map(p=>({...p}));
+  playerPasses.forEach(p=>{
+    const idx=allArsenal.findIndex(e=>e.minute===p.minute&&e.second===p.second&&e.player===p.player&&e.type==='Pass');
+    if(idx>=0&&idx<allArsenal.length-1){
+      const next=allArsenal[idx+1];
+      if(next.is_shot) shotAssists++;
+    }
+  });
+
+  // Pass direction (threshold = 5 units)
+  const THRESH=5;
+  const fwdPasses=passes.filter(e=>e.end_x!=null&&e.x!=null&&(e.end_x-e.x)>THRESH);
+  const bwdPasses=passes.filter(e=>e.end_x!=null&&e.x!=null&&(e.end_x-e.x)<-THRESH);
+  const latPasses=passes.filter(e=>e.end_x!=null&&e.x!=null&&Math.abs(e.end_x-e.x)<=THRESH);
+
+  return { passes:passes.length, acc:passes.length?Math.round(succ.length/passes.length*100):0,
+    shots:shots.length, goals:goals.length, ft:ft.length, prog:prog.length,
+    box:box.length, z14:z14.length, defAll:defAll.length, defWon:defWon.length,
+    defPct:defAll.length?Math.round(defWon.length/defAll.length*100):0, shotAssists };
+}
+
+function updateStats(){
+  let evts=state.events.filter(e=>e.team===getTeam().name);
+  if(state.selectedPlayer) evts=evts.filter(e=>e.player===state.selectedPlayer);
+  if(state.periods.size>0) evts=evts.filter(e=>state.periods.has(String(e.period)));
+
+  const s=computeStats(evts);
+  const cat=state.selectedPlayer?posCategory(state.selectedPlayer):null;
+
+  // Stat cells: [id, value, label]
+  let cells;
+  if(cat==='defender'){
+    cells=[
+      ['sPasses', s.passes, 'Passes'],
+      ['sAcc', s.acc+'%', 'Pass accuracy'],
+      ['sShots', s.prog, 'Progressive passes'],
+      ['sGoals', s.defAll, 'Defensive actions'],
+      ['sFinal', s.defPct+'%', '% actions won'],
+    ];
+  } else if(cat==='forward'){
+    cells=[
+      ['sPasses', s.shots, 'Shots'],
+      ['sAcc', s.shotAssists, 'Shot assists'],
+      ['sShots', s.goals, 'Goals'],
+      ['sGoals', s.ft, 'Final third passes'],
+      ['sFinal', s.box, 'Passes into box'],
+    ];
+  } else {
+    // midfielder or no player selected — default
+    cells=[
+      ['sPasses', s.passes, 'Passes'],
+      ['sAcc', s.acc+'%', 'Accuracy'],
+      ['sShots', s.prog, 'Progressive passes'],
+      ['sGoals', s.z14, 'Zone 14 passes'],
+      ['sFinal', s.ft, 'Final third passes'],
+    ];
+  }
+
+  const lblIds={sPasses:'lPasses',sAcc:'lAcc',sShots:'lShots',sGoals:'lGoals',sFinal:'lFinal'};
+  cells.forEach(([id, val, lbl])=>{
+    document.getElementById(id).textContent=val||val===0?val:'—';
+    document.getElementById(lblIds[id]).textContent=lbl;
+  });
+}
+
+function buildPlayerList(){
+  const list=document.getElementById('playerList');
+  const a=state.events.filter(e=>e.team==='Arsenal');
+  const players=[...new Set(a.filter(e=>e.player).map(e=>e.player))].sort();
+  if(!players.length){ list.innerHTML='<div class="empty-state">No players found</div>'; return; }
+  list.innerHTML=players.map(p=>{
+    const passes=a.filter(e=>e.player===p&&e.type==='Pass').length;
+    const shots=a.filter(e=>e.player===p&&e.is_shot).length;
+    return `<div class="player-item ${state.selectedPlayer===p?'selected':''}" data-player="${p}">
+      <span class="player-name">${p}</span>
+      <div class="pbadges">${passes?`<span class="pb p">${passes}</span>`:''} ${shots?`<span class="pb s">${shots}</span>`:''}</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.player-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const p=el.dataset.player;
+      state.selectedPlayer=state.selectedPlayer===p?null:p;
+      buildPlayerList(); updateStats(); renderAll();
+    });
+  });
+}
+
+async function loadMatch(gameId){
+  state.selectedPlayer=null; state.events=[]; state.starters=new Set();
+  document.getElementById('pitchWrap').innerHTML='<div class="loading"><div class="spinner"></div> Loading events...</div>';
+  try{
+    const [evts, starterRows]=await Promise.all([
+      sbAll('events',{game_id:`eq.${gameId}`,select:'type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'}),
+      sbGet('rpc/get_starter_names',{p_game_id:gameId}),
+    ]);
+    state.events=evts;
+    state.starterNames=new Set(Array.isArray(starterRows)?starterRows.map(r=>r.player_name).filter(Boolean):[]);
+    // Build player -> position map
+    state.playerPositions={};
+    (Array.isArray(starterRows)?starterRows:[]).forEach(r=>{
+      if(r.player_name&&r.player_pos) state.playerPositions[r.player_name]=r.player_pos;
+    });
+    console.log('Starters:',[...state.starterNames]);
+    state.selectedMatch=gameId;
+    const m=state.matches.find(x=>x.game_id===gameId);
+    if(m){
+      const score=m.home_score!=null?` ${m.home_score}–${m.away_score}`:'';
+      const desc=`${m.home_team} vs ${m.away_team}${score} · ${m.date||''}`;
+      document.getElementById('matchSubtitle').textContent=desc;
+      document.getElementById('pitchTitle').textContent=desc;
+    }
+    initCanvas(); updateStats(); buildPlayerList(); renderAll();
+  } catch(err){
+    document.getElementById('pitchWrap').innerHTML=`<div class="error-msg">Failed to load: ${err.message}</div>`;
+  }
+}
+
+async function init(){
+  try{
+    const t=getTeam();
+    const data=await sbGet('matches',{
+      select:'game_id,date,home_team,away_team,home_score,away_score,season,competition',
+      or:`(home_team.eq.${t.name},away_team.eq.${t.name})`,
+      order:'date.desc', limit:200,
+    });
+    state.matches=Array.isArray(data)?data:[];
+    document.getElementById('matchCount').textContent=`${state.matches.length} matches`;
+    const mSel=document.getElementById('matchSel');
+    if(!state.matches.length){
+      mSel.innerHTML='<option>No matches found</option>';
+      document.getElementById('pitchWrap').innerHTML='<div class="empty-state">No matches yet.<br>Run the scraper first.</div>';
+      return;
+    }
+    function getSelectedComps(){
+      return [...document.querySelectorAll('.comp-cb:checked')].map(c=>c.value);
+    }
+
+    function populateMatchSelect(){
+      const comps=getSelectedComps();
+      const filtered=state.matches.filter(m=>comps.length===0||comps.includes(m.competition));
+      mSel.innerHTML=filtered.map(m=>{
+        const score=m.home_score!=null?` ${m.home_score}–${m.away_score}`:'';
+        const comp=m.competition?` · ${m.competition.replace('ENG-','').replace('INT-','')}`:' · PL';
+        return `<option value="${m.game_id}">${m.home_team} vs ${m.away_team}${score} · ${m.date||''}${comp}</option>`;
+      }).join('');
+      if(filtered.length) loadMatch(filtered[0].game_id);
+    }
+
+    document.querySelectorAll('.comp-cb').forEach(cb=>{
+      cb.addEventListener('change', populateMatchSelect);
+    });
+
+    populateMatchSelect();
+    mSel.addEventListener('change',()=>loadMatch(mSel.value));
+    document.querySelectorAll('.viz-cb').forEach(cb=>{
+      cb.addEventListener('change',()=>{
+        const checked=[...document.querySelectorAll('.viz-cb:checked')].map(c=>c.value);
+        state.activeVizs=checked.length>0?checked:['passes'];
+        if(state.activeVizs.includes('network')){ state.selectedPlayer=null; buildPlayerList(); }
+        renderAll();
+      });
+    });
+
+// ── Season Stats Tab ──
+let seasonData=[], seasonSort={col:'date', dir:'desc'}, lastSeasonTeam=null;
+
+async function loadSeasonStats(){
+  const rows=await sbAll('v_season_stats',{select:'*'});
+  seasonData=Array.isArray(rows)?rows:[];
+  renderSeasonStats();
+}
+
+
+// Column visibility for season stats
+const COL_DEFS=[
+  {key:'final_third_passes', label:'Final 3rd', idx:3},
+  {key:'zone14_passes',      label:'Zone 14',   idx:4},
+  {key:'progressive_passes', label:'Prog. passes', idx:5},
+  {key:'passes_into_box',    label:'Into box',  idx:6},
+  {key:'defensive_actions',  label:'Def. actions', idx:7},
+  {key:'shots',              label:'Shots',     idx:8},
+  {key:'shots_on_target',    label:'On target', idx:9},
+  {key:'fwd_passes',         label:'Fwd passes',idx:10},
+  {key:'lat_passes',         label:'Lateral',   idx:11},
+  {key:'bwd_passes',         label:'Bwd passes',idx:12},
+];
+let hiddenCols=new Set();
+
+function buildColToggles(){
+  document.getElementById('colToggles').innerHTML=COL_DEFS.map(c=>`
+    <button class="col-toggle ${hiddenCols.has(c.key)?'':'active'}" data-col="${c.key}">${c.label}</button>
+  `).join('');
+  document.querySelectorAll('.col-toggle').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const col=btn.dataset.col;
+      if(hiddenCols.has(col)) hiddenCols.delete(col);
+      else hiddenCols.add(col);
+      btn.classList.toggle('active');
+      applyColVisibility();
+    });
+  });
+  applyColVisibility();
+}
+
+function applyColVisibility(){
+  const table=document.getElementById('statsTable');
+  if(!table) return;
+  COL_DEFS.forEach(c=>{
+    const hide=hiddenCols.has(c.key);
+    table.querySelectorAll(`th:nth-child(${c.idx}), td:nth-child(${c.idx})`).forEach(el=>{
+      el.style.display=hide?'none':'';
+    });
+  });
+}
+
+function renderSeasonStats(){
+  document.getElementById('seasonTitle').textContent=`2025/26 Season — ${getTeam().displayName}`;
+  const selectedComps=new Set([...document.querySelectorAll('.scomp-cb:checked')].map(c=>c.value));
+  const teamName=getTeam().name;
+  const data=seasonData.filter(r=>(selectedComps.size===0||selectedComps.has(r.competition))&&(r.home_team===teamName||r.away_team===teamName));
+
+  // Sort
+  data.sort((a,b)=>{
+    let av=a[seasonSort.col]??'', bv=b[seasonSort.col]??'';
+    if(typeof av==='string') av=av.toLowerCase(), bv=bv.toLowerCase();
+    return seasonSort.dir==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+  });
+
+  // Totals row
+  const n=data.length;
+  const sum=(col)=>data.reduce((acc,r)=>acc+(r[col]||0),0);
+  const avg=(col)=>n?Math.round(sum(col)/n):0;
+  const totals=[
+    {lbl:'Final 3rd passes', col:'final_third_passes'},
+    {lbl:'Zone 14 passes', col:'zone14_passes'},
+    {lbl:'Progressive', col:'progressive_passes'},
+    {lbl:'Into box', col:'passes_into_box'},
+    {lbl:'Def. actions', col:'defensive_actions'},
+    {lbl:'Shots', col:'shots'},
+    {lbl:'On target', col:'shots_on_target'},
+    {lbl:'Forward passes', col:'fwd_passes'},
+    {lbl:'Lateral passes', col:'lat_passes'},
+    {lbl:'Backward passes', col:'bwd_passes'},
+  ];
+  document.getElementById('seasonTotals').innerHTML=totals.map(t=>`
+    <div class="tot-card">
+      <div class="tot-val">${avg(t.col)}</div>
+      <div class="tot-lbl" style="color:var(--text-primary)">${t.lbl} per game</div>
+      <div class="tot-avg" style="color:var(--text-primary)">${sum(t.col)} total</div>
+    </div>`).join('');
+
+  // Table rows
+  document.getElementById('statsBody').innerHTML=data.map(r=>{
+    const gs=r.arsenal_score??'', gc=r.opp_score??'';
+    const resultStr=gs!==''?`${gs}–${gc}`:'';
+    const resultClass=gs>gc?'result-w':gs<gc?'result-l':'result-d';
+    const haClass=r.ha==='H'?'ha-h':'ha-a';
+    const defPct=r.defensive_actions?Math.round(r.defensive_actions_won/r.defensive_actions*100):0;
+    return `<tr>
+      <td>${r.opponent}</td>
+      <td><span class="ha-badge ${haClass}">${r.ha}</span></td>
+      <td class="${resultClass}">${resultStr}</td>
+      <td>${r.final_third_passes??'—'}</td>
+      <td>${r.zone14_passes??'—'}</td>
+      <td>${r.progressive_passes??'—'}</td>
+      <td>${r.passes_into_box??'—'}</td>
+      <td>${r.defensive_actions??'—'} <span style="color:var(--text-muted);font-size:10px;">(${defPct}%)</span></td>
+      <td>${r.shots??'—'}</td>
+      <td>${r.shots_on_target??'—'}</td>
+      <td>${r.fwd_passes??'—'}</td>
+      <td>${r.lat_passes??'—'}</td>
+      <td>${r.bwd_passes??'—'}</td>
+    </tr>`;
+  }).join('');
+
+  buildColToggles();
+  // Update sort indicators
+  document.querySelectorAll('.stats-table th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===seasonSort.col) th.classList.add(seasonSort.dir==='asc'?'sort-asc':'sort-desc');
+  });
+}
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab=btn.dataset.tab;
+    document.getElementById('tabAnalysis').style.display=tab==='analysis'?'flex':'none';
+    document.getElementById('tabSeason').style.display=tab==='season'?'flex':'none';
+    if(tab==='season'){ buildSeasonCompFilters(); if(!seasonData.length||lastSeasonTeam!==state.team){ lastSeasonTeam=state.team; loadSeasonStats(); } }
+  });
+});
+
+// Competition filter checkboxes — built dynamically per team
+function buildSeasonCompFilters(){
+  const t=getTeam();
+  const wrap=document.getElementById('seasonCompFilters');
+  if(!wrap) return;
+  wrap.innerHTML=t.compOptions.map((c,i)=>
+    `<label class="cb-label"><input type="checkbox" class="scomp-cb" value="${c.value}" ${i===0?'checked':''}> ${c.label}</label>`
+  ).join('');
+  document.querySelectorAll('.scomp-cb').forEach(cb=>{
+    cb.addEventListener('change', renderSeasonStats);
+  });
+}
+buildSeasonCompFilters();
+
+// Column sort
+document.querySelector('.stats-table thead').addEventListener('click',e=>{
+  const th=e.target.closest('th');
+  if(!th||!th.dataset.col) return;
+  const col=th.dataset.col;
+  if(seasonSort.col===col) seasonSort.dir=seasonSort.dir==='asc'?'desc':'asc';
+  else { seasonSort.col=col; seasonSort.dir='desc'; }
+  renderSeasonStats();
+});
+
+
+    // Team switcher
+    document.querySelectorAll('.team-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(btn.dataset.team===state.team) return;
+        document.querySelectorAll('.team-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        state.team=btn.dataset.team;
+        state.selectedPlayer=null;
+        state.selectedMatch=null;
+        state.periods=new Set();
+        state.outcomes=new Set();
+        applyTeamTheme();
+        buildCompFilters();
+        seasonData=[]; lastSeasonTeam=null;
+        init();
+      });
+    });
+
+    function buildCompFilters(){
+      const t=getTeam();
+      const wrap=document.getElementById('compFilters');
+      wrap.innerHTML=t.compOptions.map((c,i)=>
+        `<label class="cb-label"><input type="checkbox" class="comp-cb" value="${c.value}" ${i===0?'checked':''}> ${c.label}</label>`
+      ).join('');
+      // Re-attach listeners
+      document.querySelectorAll('.comp-cb').forEach(cb=>{
+        cb.addEventListener('change', populateMatchSelect);
+      });
+    }
+    buildCompFilters();
+
+    applyTeamTheme();
+    // Init default
+    state.activeVizs=['passes'];
+    document.getElementById('dlAllBtn').addEventListener('click', downloadAllAsPDF);
+    // Period checkboxes
+    ['cbP1','cbP2'].forEach(id=>{
+      document.getElementById(id).addEventListener('change',e=>{
+        if(e.target.checked) state.periods.add(e.target.value);
+        else state.periods.delete(e.target.value);
+        renderAll();
+      });
+    });
+    // Outcome checkboxes
+    ['cbSucc','cbFail'].forEach(id=>{
+      document.getElementById(id).addEventListener('change',e=>{
+        if(e.target.checked) state.outcomes.add(e.target.value);
+        else state.outcomes.delete(e.target.value);
+        renderAll();
+      });
+    });
+    loadMatch(state.matches[0].game_id);
+  } catch(err){
+    document.getElementById('pitchWrap').innerHTML=`<div class="error-msg">Could not connect: ${err.message}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
