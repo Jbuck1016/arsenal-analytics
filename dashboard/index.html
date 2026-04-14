@@ -204,7 +204,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .dl-btn,.jdp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text3);font:500 9px/1 'Inter',sans-serif;padding:3px 7px;border-radius:4px;cursor:pointer;transition:.15s;position:relative;z-index:100}
 .dl-btn:hover,.jdp-btn:hover{background:var(--surface2);color:var(--text)}
 .dl-wrap{position:relative;display:inline-block}
-.dl-menu{position:absolute;top:calc(100% + 4px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow2);z-index:100;min-width:170px;display:none;padding:4px;flex-direction:column;gap:2px}
+.dl-menu{position:fixed;top:0;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow2);z-index:999;min-width:170px;display:none;padding:4px;flex-direction:column;gap:2px}
 .dl-wrap.open .dl-menu{display:flex}
 .dl-menu-item{background:none;border:none;text-align:left;padding:6px 10px;font:500 10px/1.3 'Inter',sans-serif;color:var(--text);cursor:pointer;border-radius:4px;white-space:nowrap}
 .dl-menu-item:hover{background:var(--surface2)}
@@ -811,6 +811,8 @@ const CONCEPT_LEGENDS={
   passflow:'<b>Pass Flow</b> shows directional pass volume between pitch zones. Arrow thickness = number of passes between zones. Only the most frequent connections shown.'
 };
 
+function positionDlMenu(btn,menu){const r=btn.getBoundingClientRect();menu.style.display='flex';const mw=menu.offsetWidth||180;const mh=menu.offsetHeight||100;let left=r.right-mw;if(left<4)left=4;let top=r.bottom+4;if(top+mh>window.innerHeight-4)top=r.top-mh-4;menu.style.left=left+'px';menu.style.top=top+'px';}
+function toggleDlWrap(wrap,btn,menu){const wasOpen=wrap.classList.contains('open');document.querySelectorAll('.dl-wrap.open').forEach(w=>{w.classList.remove('open');const m=w.querySelector('.dl-menu');if(m)m.style.display='none';});if(!wasOpen){wrap.classList.add('open');positionDlMenu(btn,menu);}}
 function buildPanel(area,viz,sz,teamOverride){
   const panel=document.createElement('div');panel.className='panel';
   const head=document.createElement('div');head.className='panel-head';
@@ -843,7 +845,7 @@ function buildPanel(area,viz,sz,teamOverride){
   // Title with team prefix in compare mode
   if(teamOverride)title.textContent=teamOverride+' \u2014 '+(VIZ_LABELS[viz]||viz);
   // Export menu
-  const vLabel=VIZ_LABELS[viz]||viz;const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');fn();};return b;};
+  const vLabel=VIZ_LABELS[viz]||viz;const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
   dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
   dlMenu.append(mkItem('Download PNG (2x)',()=>downloadPNG(can,vLabel)));
   dlMenu.append(mkItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(can,vLabel)));
@@ -1154,7 +1156,7 @@ function renderPlayerProfile(){
   // Download All Views button
   const dlAllBtn=document.getElementById('psDlAllBtn');if(dlAllBtn)dlAllBtn.onclick=downloadAllPsViews;
   // Player stats export menu
-  const psWrap=document.getElementById('psExportWrap');const psMenu=document.getElementById('psExportMenu');const mkPsItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();psWrap.classList.remove('open');fn();};return b;};psMenu.append(mkPsItem('Scout Report PDF',()=>exportPlayerPDF()));const firstCan=document.querySelector('.ps-pitch-canvas');if(firstCan){psMenu.append(mkPsItem('Download PNG (2x)',()=>downloadPNG(firstCan,'Player')));psMenu.append(mkPsItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(firstCan,'Profile')));}document.getElementById('psExportBtn').onclick=e=>{e.stopPropagation();document.querySelectorAll('.dl-wrap.open').forEach(w=>{if(w!==psWrap)w.classList.remove('open');});psWrap.classList.toggle('open');};
+  const psWrap=document.getElementById('psExportWrap');const psMenu=document.getElementById('psExportMenu');const mkPsItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();psWrap.classList.remove('open');psMenu.style.display='none';fn();};return b;};psMenu.append(mkPsItem('Scout Report PDF',()=>exportPlayerPDF()));const firstCan=document.querySelector('.ps-pitch-canvas');if(firstCan){psMenu.append(mkPsItem('Download PNG (2x)',()=>downloadPNG(firstCan,'Player')));psMenu.append(mkPsItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(firstCan,'Profile')));}const psBtn=document.getElementById('psExportBtn');psBtn.onclick=e=>{e.stopPropagation();toggleDlWrap(psWrap,psBtn,psMenu);};
   // Per Game / Total / Per 90 toggle
   document.querySelectorAll('.ps-pill-btn[data-mode]').forEach(btn=>{btn.onclick=()=>{S.psMode=btn.dataset.mode;renderPlayerProfile();};});
   renderPsPitches();
@@ -1196,10 +1198,10 @@ function renderPsPitches(){
     if(noop._v)title.textContent=noop._v;
     // Export menu
     const vLabel=VIZ_LABELS[viz]||viz;const suffix=psFilenameSuffix();
-    const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');fn();};return b;};
+    const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
     dlMenu.append(mkItem('Download PDF',()=>{const origPlayer=S.selPlayer;S.selPlayer=name;downloadPlayerPitchPDF(can,vLabel,suffix);S.selPlayer=origPlayer;}));
     dlMenu.append(mkItem('Download PNG (2x)',()=>downloadPlayerPitchPNG(can,vLabel,suffix)));
-    dlBtn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dl-wrap.open').forEach(w=>{if(w!==dlWrap)w.classList.remove('open');});dlWrap.classList.toggle('open');};
+    dlBtn.onclick=e=>{e.stopPropagation();toggleDlWrap(dlWrap,dlBtn,dlMenu);};
     // Hover tooltips on ps canvases too
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
   });
@@ -1649,7 +1651,7 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=downloadAllPDF;const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap'))document.querySelectorAll('.dl-wrap.open').forEach(w=>w.classList.remove('open'));});await loadMatches();}
+async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=downloadAllPDF;const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))document.querySelectorAll('.dl-wrap.open').forEach(w=>{w.classList.remove('open');const m=w.querySelector('.dl-menu');if(m)m.style.display='none';});});await loadMatches();}
 init();
 </script>
 </body>
