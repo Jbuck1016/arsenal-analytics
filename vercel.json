@@ -1,8 +1,3 @@
 {
-  "outputDirectory": "dashboard",
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "outputDirectory": "dashboard"
 }
