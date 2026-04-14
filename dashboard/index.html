@@ -198,16 +198,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .pitch-area.single-viz .panel{flex:0 1 auto}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px;flex-shrink:0;gap:4px;position:relative;z-index:50}
 .dl-wrap{position:relative;z-index:100}
-.panel-export{position:absolute!important;top:6px;right:6px;z-index:200}
-.panel-export .dl-btn{background:var(--bg2);border:1px solid var(--border);box-shadow:var(--shadow);padding:4px 9px}
 .panel-title{font:600 12px/1 'Inter',sans-serif;color:var(--text)}
 .panel-legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0;padding:4px}
 .leg{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text2)}
 .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .panel-body{flex:1;min-height:0;display:flex;gap:8px;align-items:flex-start;overflow:hidden;position:relative}
 .pitch-canvas{max-height:100%;max-width:100%;border-radius:6px;display:block;box-shadow:var(--shadow)}
-.dl-btn,.jdp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text3);font:500 9px/1 'Inter',sans-serif;padding:3px 7px;border-radius:4px;cursor:pointer;transition:.15s;position:relative;z-index:100}
-.dl-btn:hover,.jdp-btn:hover{background:var(--surface2);color:var(--text)}
+.jdp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text3);font:500 9px/1 'Inter',sans-serif;padding:3px 7px;border-radius:4px;cursor:pointer;transition:.15s;position:relative;z-index:100}
+.jdp-btn:hover{background:var(--surface2);color:var(--text)}
+.dl-btn{background:transparent;border:1px solid transparent;color:var(--text3);font:500 9px/1 'Inter',sans-serif;padding:3px 8px;border-radius:99px;cursor:pointer;transition:.15s;position:relative;z-index:100;opacity:0.75}
+.dl-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border);opacity:1}
 .dl-wrap{position:relative;display:inline-block}
 .dl-menu{position:fixed;top:0;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow2);z-index:999;min-width:170px;display:none;padding:4px;flex-direction:column;gap:2px}
 .dl-wrap.open .dl-menu{display:flex}
@@ -824,12 +824,12 @@ function buildPanel(area,viz,sz,teamOverride){
   const title=document.createElement('div');title.className='panel-title';
   const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px';
   const jdpBtn=document.createElement('button');jdpBtn.className='jdp-btn'+(S.showJdP?' on':'');jdpBtn.textContent='JdP';jdpBtn.onclick=()=>{S.showJdP=!S.showJdP;renderAll();};
-  btns.append(jdpBtn);head.append(title,btns);
-  // Floating Export button — position:absolute top-right of panel
-  const dlWrap=document.createElement('div');dlWrap.className='dl-wrap panel-export';
-  const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export \u25BE';
+  // Export button lives in the title row, right-aligned
+  const dlWrap=document.createElement('div');dlWrap.className='dl-wrap';
+  const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export';
   const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
   dlWrap.append(dlBtn,dlMenu);
+  btns.append(jdpBtn,dlWrap);head.append(title,btns);
   const body=document.createElement('div');body.className='panel-body';
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
@@ -838,7 +838,7 @@ function buildPanel(area,viz,sz,teamOverride){
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
   const legend=document.createElement('div');legend.className='panel-legend';
-  panel.append(head,body,legend,dlWrap);
+  panel.append(head,body,legend);
   area.appendChild(panel);
   // Render with team override
   const ctx=can.getContext('2d');
