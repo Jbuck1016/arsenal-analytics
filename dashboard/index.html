@@ -1346,7 +1346,8 @@ async function openCellMatchModal(gid,oppName,colKey){
     const evts=await sbAll('events',{game_id:'eq.'+realGid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'});
     const vizType=COL_VIZ_MAP[colKey]||'passes';
     // Filter for team
-    let teamEvts=evts.filter(e=>e.team===t.name);
+    const teamAllEvts=evts.filter(e=>e.team===t.name);
+    let teamEvts=teamAllEvts;
     // Additional filters
     if(colKey==='shots_on_target')teamEvts=teamEvts.filter(e=>e.is_shot&&(e.outcome_type==='Saved'||e.outcome_type==='ShotSaved'||e.is_goal));
     if(colKey==='defensive_actions_won')teamEvts=teamEvts.filter(e=>DEF_TYPES.includes(e.type)&&e.outcome_type==='Successful');
@@ -1371,10 +1372,12 @@ async function openCellMatchModal(gid,oppName,colKey){
     // Hover tooltips
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
     can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
-    // Export buttons
+    // Export buttons — use isolated cell context (no S.selPlayer/S.selMatch leakage)
     const exportWrap=document.getElementById('cellExportWrap');if(exportWrap){exportWrap.innerHTML='';const vLabel=(colDef?colDef.label:colKey);
-      const pdfBtn=document.createElement('button');pdfBtn.className='report-btn sec';pdfBtn.textContent='\u2B07 PDF';pdfBtn.onclick=()=>downloadPDF(can,vLabel+' - '+oppName);
-      const pngBtn=document.createElement('button');pngBtn.className='report-btn sec';pngBtn.textContent='\u2B07 PNG';pngBtn.onclick=()=>downloadPNG(can,vLabel+' - '+oppName);
+      const isHomeRow=m?(m.home_team===t.name):null;
+      const rowData={opponent:oppName,ha:isHomeRow==null?'':(isHomeRow?'H':'A'),viewLabel:vLabel,teamEvts:teamAllEvts};
+      const pdfBtn=document.createElement('button');pdfBtn.className='report-btn sec';pdfBtn.textContent='\u2B07 PDF';pdfBtn.onclick=()=>downloadSeasonCellPDF(can,realGid,vizType,rowData);
+      const pngBtn=document.createElement('button');pngBtn.className='report-btn sec';pngBtn.textContent='\u2B07 PNG';pngBtn.onclick=()=>downloadSeasonCellPNG(can,realGid,vizType,rowData);
       exportWrap.append(pdfBtn,pngBtn);}
   }catch(err){body.innerHTML='<div class="report-error">Failed to load match events: '+esc(err.message)+'</div>';}
 }
@@ -1897,20 +1900,91 @@ function downloadStoryCard(pitchCanvas,viewLabel){
 }
 
 function downloadAllPDF(panels){
-  if(!panels){
+  // Guard: if invoked directly from a DOM event the first arg is the Event
+  if(!panels||!Array.isArray(panels)){
     const cans=document.querySelectorAll('#pitchArea .pitch-canvas');
-    panels=Array.from(cans).map(c=>({canvas:c,label:VIZ_LABELS[c.dataset?.viz]||c.dataset?.viz||''}));
+    panels=Array.from(cans).map(c=>({canvas:c,label:VIZ_LABELS[c.dataset&&c.dataset.viz]||(c.dataset&&c.dataset.viz)||''}));
   }
-  if(!panels.length)return;
+  if(!panels.length){console.warn('Export All: no pitch canvases found');return;}
+  if(!(window.jspdf&&window.jspdf.jsPDF)){console.error('jsPDF not available');return;}
   const joined=panels.map(p=>p.label).filter(Boolean).join(' \u00B7 ');
   const cfg=buildExportConfig(panels[0].canvas,joined);
   const off=renderAllPanelsCanvas(panels,cfg);
   const{jsPDF}=window.jspdf;
   const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   pdf.addImage(off.toDataURL('image/png'),'PNG',0,0,297,210);
-  const viewSlug=panels.slice(0,3).map(p=>safeName(p.label)).join('_');
+  const viewSlug=panels.map(p=>safeName(p.label)).filter(Boolean).join('_');
   const fn=[safeName(T().name),viewSlug].concat(S.timeFilter?[S.timeFilter.s+'-'+S.timeFilter.e+'min']:[]).concat([fileDate()]).join('_')+'.pdf';
   pdf.save(fn);
+}
+
+/* ---- Season stats cell export: uses explicit context, NOT global state ---- */
+function _cellStatsFromEvents(teamAllEvts,vizType){
+  const passes=teamAllEvts.filter(e=>e.type==='Pass');
+  const succ=passes.filter(e=>e.outcome_type==='Successful').length;
+  const fail=passes.length-succ;
+  const acc=passes.length?Math.round(succ/passes.length*100):0;
+  const progAll=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  const progSucc=progAll.filter(e=>e.outcome_type==='Successful').length;
+  const ftAll=passes.filter(e=>e.end_x!=null&&e.end_x>=66);
+  const ftSucc=ftAll.filter(e=>e.outcome_type==='Successful').length;
+  const z14All=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
+  const z14Succ=z14All.filter(e=>e.outcome_type==='Successful').length;
+  const boxAll=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
+  const boxSucc=boxAll.filter(e=>e.outcome_type==='Successful').length;
+  const shots=teamAllEvts.filter(e=>e.is_shot);
+  const shotsOnT=shots.filter(e=>e.outcome_type==='Saved'||e.outcome_type==='ShotSaved'||e.is_goal).length;
+  const goals=teamAllEvts.filter(e=>e.is_goal).length;
+  const defs=teamAllEvts.filter(e=>DEF_TYPES.includes(e.type));
+  const defsW=defs.filter(e=>e.outcome_type==='Successful').length;
+  const defPct=defs.length?Math.round(defsW/defs.length*100):0;
+  const shotAcc=shots.length?Math.round(shotsOnT/shots.length*100):0;
+  const as=arr=>arr.map(([label,value])=>({label:String(label),value:String(value)}));
+  if(vizType==='passes')return as([['Passes',passes.length],['Accuracy',acc+'%'],['Completed',succ],['Incomplete',fail]]);
+  if(vizType==='progressive')return as([['Total',progAll.length],['Completed',progSucc],['Incomplete',progAll.length-progSucc],['Accuracy',(progAll.length?Math.round(progSucc/progAll.length*100):0)+'%']]);
+  if(vizType==='final_third')return as([['Into Final Third',ftAll.length],['Completed',ftSucc],['Incomplete',ftAll.length-ftSucc],['Accuracy',(ftAll.length?Math.round(ftSucc/ftAll.length*100):0)+'%']]);
+  if(vizType==='zone14')return as([['Into Zone 14',z14All.length],['Completed',z14Succ],['Incomplete',z14All.length-z14Succ],['Accuracy',(z14All.length?Math.round(z14Succ/z14All.length*100):0)+'%']]);
+  if(vizType==='box_passes')return as([['Into Box',boxAll.length],['Completed',boxSucc],['Incomplete',boxAll.length-boxSucc],['Accuracy',(boxAll.length?Math.round(boxSucc/boxAll.length*100):0)+'%']]);
+  if(vizType==='shots')return as([['Shots',shots.length],['On Target',shotsOnT],['Goals',goals],['Accuracy',shotAcc+'%']]);
+  if(vizType==='defensive'||vizType==='pressure')return as([['Actions',defs.length],['Won',defsW],['Lost',defs.length-defsW],['Win %',defPct+'%']]);
+  return as([['Passes',passes.length],['Accuracy',acc+'%'],['Progressive',progAll.length],['Shots',shots.length]]);
+}
+
+function _buildSeasonCellConfig(gameId,vizType,rowData){
+  const t=T();
+  const m=S.matches.find(mm=>mm.game_id==gameId);
+  let matchDesc='',ha='',opponent='',competition='';
+  if(m){
+    const d=new Date(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    matchDesc=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+d;
+    const isHome=m.home_team===t.name;
+    opponent=isHome?m.away_team:m.home_team;ha=isHome?'H':'A';
+    const compMap={'ENG-Premier League':'Premier League','INT-Champions League':'Champions League','ENG-FA Cup':'FA Cup','ENG-League Cup':'League Cup','USA-MLS':'MLS'};
+    competition=compMap[m.competition]||m.competition||'';
+  }
+  if(rowData){
+    if(!opponent&&rowData.opponent)opponent=rowData.opponent;
+    if(!ha&&rowData.ha)ha=rowData.ha;
+  }
+  const viewLabel=(rowData&&rowData.viewLabel)?rowData.viewLabel:(VIZ_LABELS[vizType]||vizType);
+  const stats=(rowData&&rowData.teamEvts)?_cellStatsFromEvents(rowData.teamEvts,vizType):[];
+  return {playerName:null,viewLabel,matchDesc,competition,teamName:t.display||t.name,teamColor:t.color,ha,opponent,timeFilter:null,stats,isScoutReport:false};
+}
+
+function downloadSeasonCellPDF(canvasEl,gameId,vizType,rowData){
+  const cfg=_buildSeasonCellConfig(gameId,vizType,rowData);
+  const off=renderExportCanvas(canvasEl,cfg);
+  const{jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  pdf.addImage(off.toDataURL('image/png'),'PNG',0,0,210,297);
+  pdf.save([safeName(T().name),safeName(cfg.viewLabel),safeName(cfg.opponent||'opp'),fileDate()].join('_')+'.pdf');
+}
+function downloadSeasonCellPNG(canvasEl,gameId,vizType,rowData){
+  const cfg=_buildSeasonCellConfig(gameId,vizType,rowData);
+  const off=renderExportCanvas(canvasEl,cfg);
+  const a=document.createElement('a');
+  a.download=[safeName(T().name),safeName(cfg.viewLabel),safeName(cfg.opponent||'opp'),fileDate()].join('_')+'.png';
+  a.href=off.toDataURL('image/png');a.click();
 }
 
 function exportPlayerPDF(){
@@ -1942,7 +2016,7 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=downloadAllPDF;const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();}
+async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();}
 init();
 </script>
 </body>
