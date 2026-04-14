@@ -22,13 +22,23 @@ jobs:
         run: |
           pip install -r pipeline/requirements.txt
 
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v1
+      - name: Install Chrome and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          pip install webdriver-manager
+
+      - name: Start virtual display
+        run: |
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 2
 
       - name: Scrape Arsenal PL
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DISPLAY: :99
         run: |
           cd pipeline
           python scrape_and_load.py --league "ENG-Premier League" --season 2526 --team Arsenal
@@ -37,6 +47,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DISPLAY: :99
         run: |
           cd pipeline
           python scrape_and_load.py --league "INT-Champions League" --season 2526 --team Arsenal
@@ -45,6 +56,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DISPLAY: :99
         run: |
           cd pipeline
           python scrape_and_load.py --league "ENG-FA Cup" --season 2526 --team Arsenal
@@ -53,6 +65,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DISPLAY: :99
         run: |
           cd pipeline
           python scrape_and_load.py --league "ENG-League Cup" --season 2526 --team Arsenal
@@ -61,6 +74,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DISPLAY: :99
         run: |
           cd pipeline
           python scrape_and_load.py --league "USA-MLS" --season 2627 --team "Los Angeles FC"

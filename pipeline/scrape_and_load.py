@@ -278,6 +278,13 @@ def process_match(
 
 
 def main() -> int:
+    # Copy bundled league_dict.json to soccerdata config dir so custom leagues are recognised
+    import shutil, pathlib
+    src = pathlib.Path(__file__).parent / "league_dict.json"
+    dst = pathlib.Path.home() / "soccerdata" / "config" / "league_dict.json"
+    if src.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(src, dst)
     p = argparse.ArgumentParser()
     p.add_argument("--league", type=str, default=DEFAULT_LEAGUE, help="league id (default: ENG-Premier League)")
     p.add_argument("--season", type=str, default=DEFAULT_SEASON, help="season code (default: 2526)")

@@ -1,0 +1,45 @@
+{
+  "ENG-Premier League": {
+    "FBref": "Premier League",
+    "WhoScored": "England - Premier League"
+  },
+  "ESP-La Liga": {
+    "FBref": "La Liga"
+  },
+  "ITA-Serie A": {
+    "FBref": "Serie A"
+  },
+  "GER-Bundesliga": {
+    "FBref": "Bundesliga"
+  },
+  "FRA-Ligue 1": {
+    "FBref": "Ligue 1"
+  },
+  "ENG-Championship": {
+    "FBref": "Championship"
+  },
+  "NED-Eredivisie": {
+    "FBref": "Eredivisie"
+  },
+  "POR-LigaPortugal": {
+    "FBref": "Primeira Liga"
+  },
+  "BEL-Jupiler": {
+    "FBref": "Jupiler Pro League"
+  },
+  "TUR-SuperLig": {
+    "FBref": "Super Lig"
+  },
+  "INT-Champions League": {
+    "WhoScored": "Europe - Champions League"
+  },
+  "ENG-FA Cup": {
+    "WhoScored": "England - FA Cup"
+  },
+  "ENG-League Cup": {
+    "WhoScored": "England - League Cup"
+  },
+  "USA-MLS": {
+    "WhoScored": "USA - Major League Soccer"
+  }
+}
