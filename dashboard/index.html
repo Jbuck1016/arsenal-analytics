@@ -1681,6 +1681,47 @@ function renderStoryCanvas(pitchCanvas,config){
   return off;
 }
 
+/* Header for landscape multi-panel: two rows, left/right justified, compact */
+function _drawLandscapeHeader(ctx,W,topH,cfg,viewLabels){
+  const tc=cfg.teamColor;
+  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,topH);
+  ctx.fillStyle=tc;ctx.fillRect(0,0,6,topH);
+  const padL=48,padR=48,padTop=40;
+  ctx.textBaseline='alphabetic';
+  // Row 1: team name (LEFT, 52px bold white) | match info (RIGHT, 16px muted)
+  const row1Y=padTop+46;
+  ctx.textAlign='left';
+  ctx.fillStyle=EXP_TEXT;ctx.font='bold 52px Inter,system-ui,sans-serif';
+  ctx.fillText(cfg.teamName||'',padL,row1Y);
+  if(cfg.matchDesc){
+    ctx.textAlign='right';
+    ctx.fillStyle=EXP_MUTED;ctx.font='normal 16px Inter,system-ui,sans-serif';
+    ctx.fillText(cfg.matchDesc,W-padR,row1Y-6);
+  }
+  // Row 2: view labels joined (LEFT, 18px accent) | competition + H/A (RIGHT, 14px muted)
+  const row2Y=row1Y+30;
+  ctx.textAlign='left';
+  ctx.fillStyle=tc;ctx.font='500 18px Inter,system-ui,sans-serif';
+  ctx.fillText((viewLabels||cfg.viewLabel||'').toString(),padL,row2Y);
+  const compLine=[cfg.competition,cfg.ha?('\u00B7 '+cfg.ha):''].filter(Boolean).join(' ');
+  if(compLine){
+    ctx.textAlign='right';
+    ctx.fillStyle=EXP_MUTED;ctx.font='normal 14px Inter,system-ui,sans-serif';
+    ctx.fillText(compLine,W-padR,row2Y);
+  }
+  // Optional time-filter pill, bottom-left
+  if(cfg.timeFilter){
+    ctx.textAlign='left';
+    ctx.font='bold 14px Inter,system-ui,sans-serif';
+    const txt='\u23F1 '+cfg.timeFilter;
+    const tw=ctx.measureText(txt).width,pw=tw+20,ph=24,px=padL,py=topH-36;
+    ctx.fillStyle=tc;_expPill(ctx,px,py,pw,ph,12);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(txt,px+10,py+ph/2+1);
+    ctx.textBaseline='alphabetic';
+  }
+  ctx.textAlign='left';
+}
+
 /* Landscape multi-panel — A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
 function renderAllPanelsCanvas(panels,config){
   const LW=1754,LH=1240;const PW=3508,PH=2480;
@@ -1689,21 +1730,24 @@ function renderAllPanelsCanvas(panels,config){
   ctx.scale(PW/LW,PH/LH);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
-  const headerH=Math.round(LH*0.16),statsH=Math.round(LH*0.13),footerH=Math.round(LH*0.08);
+  const headerH=Math.round(LH*0.18),statsH=Math.round(LH*0.13),footerH=Math.round(LH*0.08);
   const gridTop=headerH,gridH=LH-headerH-statsH-footerH;
-  _drawHeaderBand(ctx,LW,headerH,config);
+  const viewLabels=panels.map(p=>p.label).filter(Boolean).join(' \u00B7 ');
+  _drawLandscapeHeader(ctx,LW,headerH,config,viewLabels);
   const n=panels.length;
   if(n){
     const cols=n<=2?Math.max(1,n):3,rows=Math.ceil(n/cols);
     const cellW=LW/cols,cellH=gridH/rows;
+    const titleH=36; // 28px baseline + descender, then 8px gap → pitch starts at y+44
     panels.forEach((p,i)=>{
       const col=i%cols,row=Math.floor(i/cols);
       const x=col*cellW,y=gridTop+row*cellH;
-      // Title (accent color caps) above pitch
+      // Title above pitch, with 8px gap
       ctx.fillStyle=config.teamColor;ctx.font='bold 18px Inter,system-ui,sans-serif';ctx.textAlign='center';
-      ctx.fillText((p.label||'').toUpperCase(),x+cellW/2,y+24);
+      ctx.fillText((p.label||'').toUpperCase(),x+cellW/2,y+26);
       ctx.textAlign='left';
-      _drawPitchBand(ctx,x,y+32,cellW,cellH-32,p.canvas);
+      const pitchTop=y+titleH+8;
+      _drawPitchBand(ctx,x,pitchTop,cellW,cellH-(titleH+8),p.canvas);
     });
   }
   _drawStatsBand(ctx,0,gridTop+gridH,LW,statsH,config);
