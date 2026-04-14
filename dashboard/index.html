@@ -823,17 +823,22 @@ const CONCEPT_LEGENDS={
   passflow:'<b>Pass Flow</b> shows directional pass volume between pitch zones. Arrow thickness = number of passes between zones. Only the most frequent connections shown.'
 };
 
-function positionDlMenu(btn,menu){
-  menu.style.position='fixed';menu.style.left='-9999px';menu.style.top='-9999px';menu.style.display='flex';
-  document.body.appendChild(menu);
-  const mw=menu.offsetWidth||140;const mh=menu.offsetHeight||120;
-  const rect=btn.getBoundingClientRect();
-  let top=rect.bottom+4;
-  let left=rect.right-mw;
-  if(left<4)left=4;
-  if(top+mh>window.innerHeight-4)top=Math.max(4,rect.top-mh-4);
-  menu.style.top=top+'px';
-  menu.style.left=left+'px';
+function positionDlMenu(btn, menu) {
+  menu.style.position = 'fixed';
+  menu.style.display = 'flex';
+  menu.style.left = '-9999px';
+  menu.style.top = '-9999px';
+  requestAnimationFrame(() => {
+    const mw = menu.offsetWidth || 140;
+    const mh = menu.offsetHeight || 120;
+    const rect = btn.getBoundingClientRect();
+    let top = rect.bottom + 4;
+    let left = rect.right - mw;
+    if (left < 4) left = 4;
+    if (top + mh > window.innerHeight - 4) top = Math.max(4, rect.top - mh - 4);
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+  });
 }
 function closeAllDlMenus(){document.querySelectorAll('.dl-wrap.open').forEach(w=>w.classList.remove('open'));document.querySelectorAll('.dl-menu').forEach(m=>{m.style.display='none';});}
 function toggleDlWrap(wrap,btn,menu){const wasOpen=wrap.classList.contains('open');closeAllDlMenus();if(!wasOpen){wrap.classList.add('open');positionDlMenu(btn,menu);}}
