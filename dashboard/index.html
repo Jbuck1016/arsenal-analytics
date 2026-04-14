@@ -102,6 +102,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .vt-cmp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text2);font:600 10px/1 'Inter',sans-serif;padding:6px 12px;border-radius:16px;cursor:pointer;transition:.15s;margin-left:4px}
 .vt-cmp-btn:hover{background:var(--surface2);color:var(--text)}
 .vt-cmp-btn.on{background:linear-gradient(90deg,var(--accent) 0%,var(--accent) 50%,#2563eb 50%,#2563eb 100%);color:#fff;border-color:transparent}
+.compare-indicator{font:700 10px/1 'Inter',sans-serif;letter-spacing:.1em;color:var(--accent);padding:5px 10px;border:1.5px solid var(--accent);border-radius:16px;background:var(--accent-dim);text-transform:uppercase}
+.concept-legend{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text3);border-radius:6px;padding:8px 12px;margin-top:8px;font:400 10px/1.5 'Inter',sans-serif;color:var(--text2);display:flex;gap:8px;align-items:flex-start}
+.concept-legend .concept-icon{font:600 14px/1 'Inter',sans-serif;color:var(--text3);flex-shrink:0}
+.concept-legend .concept-text b{font-weight:700;color:var(--text)}
 .pitch-area.swap-fade{opacity:0;transition:opacity .2s ease}
 .stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:linear-gradient(180deg,var(--border),var(--bg));border-bottom:1px solid var(--border);flex-shrink:0}
 .stat-c{background:var(--bg2);padding:8px 12px;display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--accent);transition:border-bottom-color .2s}
@@ -121,6 +125,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 /* Pitch area */
 .pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:auto;padding:8px 10px;gap:8px;align-content:flex-start;justify-content:center}
+.pitch-area[data-count="1"] .panel{max-height:70vh}
+.pitch-area[data-count="2"] .panel{max-height:70vh;flex:0 0 auto}
+.pitch-area[data-count="3"] .panel{max-height:70vh;flex:0 0 auto}
+.pitch-area[data-count="4"] .panel,.pitch-area[data-count="5"] .panel,.pitch-area[data-count="6"] .panel{max-height:45vh;flex:0 0 auto}
 .pitch-area.single-viz{justify-content:center;align-items:center;align-content:center}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .panel{display:flex;flex-direction:column;min-width:0;min-height:0;flex:0 1 auto;max-width:100%;animation:fadeIn .2s ease}
@@ -148,6 +156,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .net-pair{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-radius:5px;background:var(--bg);border:1px solid var(--border);gap:4px}
 .net-names{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .net-count{font:700 11px/1 'Inter',sans-serif;color:var(--gold);flex-shrink:0;font-variant-numeric:tabular-nums}
+.combo-rank{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;background:var(--bg);border:1px solid var(--border);margin-bottom:3px}
+.combo-rank-num{font:800 9px/1 'Inter',sans-serif;color:var(--text3);width:16px;text-align:center;flex-shrink:0}
+.combo-rank-body{flex:1;min-width:0}
+.combo-rank-names{font:600 10px/1.2 'Inter',sans-serif;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.combo-rank-bar{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.combo-rank-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+.combo-rank-count{font:700 11px/1 'Inter',sans-serif;color:var(--accent);flex-shrink:0;font-variant-numeric:tabular-nums;min-width:20px;text-align:right}
 
 /* Season Tab */
 .season-tab{display:none;flex:1;min-height:0;overflow:hidden}
@@ -605,10 +620,28 @@ function renderDominance(ctx,c,allEvts,titleEl,legendEl){drawPitch(ctx,c);if(S.s
   titleEl.textContent='Zone Dominance — '+vt+(oppName?' vs '+oppName:'');legendEl.innerHTML='';}
 
 /* Pass Combos */
-function renderCombos(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const sorted=[...evts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);const combos={};for(let i=0;i<sorted.length-1;i++){const p=sorted[i];if(p.type!=='Pass'||p.outcome_type!=='Successful')continue;// Find receiver = next team event by different player
-    for(let j=i+1;j<Math.min(i+3,sorted.length);j++){const n=sorted[j];if(n.team!==vt||n.player===p.player)continue;const key=p.player+'|||'+n.player;if(!combos[key])combos[key]={passer:p.player,receiver:n.player,count:0,ox:0,oy:0,dx:0,dy:0};combos[key].count++;combos[key].ox+=p.x;combos[key].oy+=p.y;combos[key].dx+=(p.end_x!=null?p.end_x:n.x);combos[key].dy+=(p.end_y!=null?p.end_y:n.y);break;}}const list=Object.values(combos).sort((a,b)=>b.count-a.count).slice(0,10);const maxC=list[0]?list[0].count:1;const accentRGB=[parseInt(t.color.slice(1,3),16),parseInt(t.color.slice(3,5),16),parseInt(t.color.slice(5,7),16)];list.forEach(cm=>{const ox=cm.ox/cm.count,oy=cm.oy/cm.count,dx=cm.dx/cm.count,dy=cm.dy/cm.count;const a=toXY(ox,oy,c),b=toXY(dx,dy,c);const w=1.5+4*(cm.count/maxC);const alpha=0.25+0.6*(cm.count/maxC);const mx=(a.cx+b.cx)/2,my=(a.cy+b.cy)/2,ddx=b.cx-a.cx,ddy=b.cy-a.cy;const ccx=mx-ddy*0.12,ccy=my+ddx*0.12;ctx.strokeStyle='rgba('+accentRGB[0]+','+accentRGB[1]+','+accentRGB[2]+','+alpha.toFixed(3)+')';ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.quadraticCurveTo(ccx,ccy,b.cx,b.cy);ctx.stroke();// arrowhead
-    const ang=Math.atan2(b.cy-ccy,b.cx-ccx),hl=7+w;ctx.fillStyle='rgba('+accentRGB[0]+','+accentRGB[1]+','+accentRGB[2]+','+alpha.toFixed(3)+')';ctx.beginPath();ctx.moveTo(b.cx,b.cy);ctx.lineTo(b.cx-hl*Math.cos(ang-0.3),b.cy-hl*Math.sin(ang-0.3));ctx.lineTo(b.cx-hl*Math.cos(ang+0.3),b.cy-hl*Math.sin(ang+0.3));ctx.closePath();ctx.fill();// count label
-    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.font='bold 8px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(cm.count,ccx,ccy+3);});titleEl.textContent='Pass Combos';legendEl.innerHTML='';if(pairEl){pairEl.innerHTML='<div class="net-hd">Top Combos</div>'+list.map(cm=>'<div class="net-pair"><span class="net-names">'+lastName(cm.passer)+' \u2192 '+lastName(cm.receiver)+'</span><span class="net-count">'+cm.count+'</span></div>').join('');}}
+function renderCombos(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const sorted=[...evts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);const combos={};for(let i=0;i<sorted.length-1;i++){const p=sorted[i];if(p.type!=='Pass'||p.outcome_type!=='Successful')continue;for(let j=i+1;j<Math.min(i+3,sorted.length);j++){const n=sorted[j];if(n.team!==vt||n.player===p.player)continue;const key=p.player+'|||'+n.player;if(!combos[key])combos[key]={passer:p.player,receiver:n.player,count:0,ox:0,oy:0,dx:0,dy:0};combos[key].count++;combos[key].ox+=p.x;combos[key].oy+=p.y;combos[key].dx+=(p.end_x!=null?p.end_x:n.x);combos[key].dy+=(p.end_y!=null?p.end_y:n.y);break;}}
+  let allList=Object.values(combos).sort((a,b)=>b.count-a.count);
+  // Threshold filter: 5+, fallback to 3+
+  let list=allList.filter(cm=>cm.count>=5);if(list.length<3)list=allList.filter(cm=>cm.count>=3);list=list.slice(0,10);
+  const maxC=list[0]?list[0].count:1,minC=list.length?list[list.length-1].count:1;
+  const arR=parseInt(t.color.slice(1,3),16),arG=parseInt(t.color.slice(3,5),16),arB=parseInt(t.color.slice(5,7),16);
+  list.forEach(cm=>{const ox=cm.ox/cm.count,oy=cm.oy/cm.count,dx=cm.dx/cm.count,dy=cm.dy/cm.count;const a=toXY(ox,oy,c),b=toXY(dx,dy,c);const norm=(cm.count-minC)/Math.max(1,maxC-minC);
+    // Thickness 2-6
+    const w=2+4*norm;
+    // Color scale: grey at low, accent at high
+    const r=Math.round(160+(arR-160)*norm),g=Math.round(160+(arG-160)*norm),bb=Math.round(160+(arB-160)*norm);
+    const col='rgb('+r+','+g+','+bb+')';
+    // Curved bezier (more dramatic curve)
+    const mx=(a.cx+b.cx)/2,my=(a.cy+b.cy)/2,ddx=b.cx-a.cx,ddy=b.cy-a.cy;const ccx=mx-ddy*0.18,ccy=my+ddx*0.18;
+    ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.quadraticCurveTo(ccx,ccy,b.cx,b.cy);ctx.stroke();
+    // Arrowhead at destination
+    const ang=Math.atan2(b.cy-ccy,b.cx-ccx),hl=8+w;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(b.cx,b.cy);ctx.lineTo(b.cx-hl*Math.cos(ang-0.35),b.cy-hl*Math.sin(ang-0.35));ctx.lineTo(b.cx-hl*Math.cos(ang+0.35),b.cy-hl*Math.sin(ang+0.35));ctx.closePath();ctx.fill();
+    // Midpoint pill label
+    const lbl=lastName(cm.passer)+'\u2192'+lastName(cm.receiver)+' ('+cm.count+')';ctx.font='bold 9px Inter,sans-serif';const tw=ctx.measureText(lbl).width;const px=ccx-tw/2-5,py=ccy-7,pW=tw+10,pH=14;ctx.fillStyle='rgba(26,26,26,0.85)';drawPill(ctx,px,py,pW,pH,pH/2);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(lbl,ccx,py+10);
+  });
+  titleEl.textContent='Pass Combos';legendEl.innerHTML='<span class="leg">'+list.length+' combos \u00B7 threshold '+(list.length?(list[list.length-1].count):0)+'+ passes</span>';
+  if(pairEl){pairEl.innerHTML='<div class="net-hd">Top Combos</div>'+list.map((cm,i)=>{const pctW=Math.round(cm.count/maxC*100);return '<div class="combo-rank"><span class="combo-rank-num">'+(i+1)+'</span><div class="combo-rank-body"><div class="combo-rank-names">'+lastName(cm.passer)+' \u2192 '+lastName(cm.receiver)+'</div><div class="combo-rank-bar"><div class="combo-rank-fill" style="width:'+pctW+'%"></div></div></div><span class="combo-rank-count">'+cm.count+'</span></div>';}).join('');}}
 
 function renderShape(ctx,c,allEvts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const atkTypes=new Set(['Pass','TakeOn','BallTouch','Shot','Dispossessed']);const defTypes=new Set(['Tackle','Interception','BallRecovery','Clearance','Challenge','Aerial','BlockedPass']);const atkPos={},atkCnt={},defPos={},defCnt={};allEvts.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(atkTypes.has(e.type)){if(!atkPos[e.player]){atkPos[e.player]={x:0,y:0};atkCnt[e.player]=0;}atkPos[e.player].x+=e.x;atkPos[e.player].y+=e.y;atkCnt[e.player]++;}if(defTypes.has(e.type)){if(!defPos[e.player]){defPos[e.player]={x:0,y:0};defCnt[e.player]=0;}defPos[e.player].x+=e.x;defPos[e.player].y+=e.y;defCnt[e.player]++;}});const avg=(pos,cnt)=>{const r={};Object.keys(pos).forEach(p=>{r[p]={x:pos[p].x/cnt[p],y:pos[p].y/cnt[p]}});return r};const atkAvg=avg(atkPos,atkCnt),defAvg=avg(defPos,defCnt);Object.entries(defAvg).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);ctx.fillStyle='rgba(37,99,235,0.7)';ctx.beginPath();ctx.arc(pt.cx,pt.cy,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(37,99,235,0.9)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='rgba(37,99,235,0.5)';ctx.font='bold 8px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(lastName(name),pt.cx,pt.cy+16);});Object.entries(atkAvg).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);ctx.fillStyle=hexAlpha(t.color,0.7);ctx.beginPath();ctx.arc(pt.cx,pt.cy,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle=hexAlpha(t.color,0.9);ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=hexAlpha(t.color,0.5);ctx.font='bold 8px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(lastName(name),pt.cx,pt.cy-12);});const shStored=[];Object.entries(atkAvg).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);shStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:'In possession',type:'Avg Position'});});Object.entries(defAvg).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);shStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:'Out of possession',type:'Avg Position'});});S.canvasEvents.set(c,shStored);titleEl.textContent='Team Shape';legendEl.innerHTML=leg(t.color,'In Possession')+leg('#2563eb','Out of Possession');}
 
@@ -641,65 +674,68 @@ function callRenderer(viz,ctx,can,evts,title,legend,pairEl){
 }
 
 /* RENDER ALL PANELS */
+const CONCEPT_LEGENDS={
+  xt:'<b>Expected Threat (xT)</b> measures how much each pass increased the probability of scoring. Only passes with positive xT gain above 0.02 are shown. Color intensity = magnitude of threat increase.',
+  pressure:'<b>Pressure Map</b> shows where the team applied defensive pressure. Calculated from all defensive actions (tackles, interceptions, clearances, ball recoveries). Darker zones = higher pressing intensity.',
+  dominance:'<b>Zone Dominance</b> divides the pitch into 30 zones and shows what % of touches in each zone belonged to the team. >60% = team dominant (accent color), <40% = opponent dominant (red), 40-60% = contested (neutral).',
+  formation:'<b>Formation</b> shows average positions of each player across all their touches in this match. The formation label (e.g. 4-3-3) is auto-detected by clustering players into lines by their average depth.',
+  shape:'<b>Team Shape</b> shows the team\'s positional structure. Each node = player average position, sized by touch volume, colored by position type.',
+  passflow:'<b>Pass Flow</b> shows directional pass volume between pitch zones. Arrow thickness = number of passes between zones. Only the most frequent connections shown.'
+};
+
+function buildPanel(area,viz,sz,teamOverride){
+  const panel=document.createElement('div');panel.className='panel';
+  const head=document.createElement('div');head.className='panel-head';
+  const title=document.createElement('div');title.className='panel-title';
+  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px';
+  const jdpBtn=document.createElement('button');jdpBtn.className='jdp-btn'+(S.showJdP?' on':'');jdpBtn.textContent='JdP';jdpBtn.onclick=()=>{S.showJdP=!S.showJdP;renderAll();};
+  const dlWrap=document.createElement('div');dlWrap.className='dl-wrap';
+  const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export \u25BE';
+  const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
+  dlWrap.append(dlBtn,dlMenu);btns.append(jdpBtn,dlWrap);head.append(title,btns);
+  const body=document.createElement('div');body.className='panel-body';
+  const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
+  if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
+  if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
+  const can=document.createElement('canvas');can.className='pitch-canvas';can.width=sz.w;can.height=sz.h;can.dataset.viz=viz;canWrap.appendChild(can);
+  body.appendChild(canWrap);
+  let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
+  const legend=document.createElement('div');legend.className='panel-legend';
+  panel.append(head,body,legend);
+  // Concept legend card
+  if(CONCEPT_LEGENDS[viz]){const cl=document.createElement('div');cl.className='concept-legend';cl.innerHTML='<span class="concept-icon">\u24D8</span><span class="concept-text">'+CONCEPT_LEGENDS[viz]+'</span>';panel.appendChild(cl);}
+  area.appendChild(panel);
+  // Render with team override
+  const ctx=can.getContext('2d');
+  const origVT=S.viewTeam;
+  if(teamOverride)S.viewTeam=teamOverride;
+  const evts=getFiltered(viz);
+  callRenderer(viz,ctx,can,evts,title,legend,pairEl);
+  S.viewTeam=origVT;
+  // Title with team prefix in compare mode
+  if(teamOverride)title.textContent=teamOverride+' \u2014 '+(VIZ_LABELS[viz]||viz);
+  // Export menu
+  const vLabel=VIZ_LABELS[viz]||viz;const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');fn();};return b;};
+  dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
+  dlMenu.append(mkItem('Download PNG (2x)',()=>downloadPNG(can,vLabel)));
+  dlMenu.append(mkItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(can,vLabel)));
+  dlBtn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dl-wrap.open').forEach(w=>{if(w!==dlWrap)w.classList.remove('open');});dlWrap.classList.toggle('open');};
+  can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
+  can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
+  return panel;
+}
+
 function renderAll(){
   if(!S.selMatch)return;const area=document.getElementById('pitchArea');area.innerHTML='';S.canvasEvents.clear();
-  const isSingle=S.activeVizs.length===1;area.classList.toggle('single-viz',isSingle);
-  const r=area.getBoundingClientRect();const sz=calcCanvasSize(r.height,r.width,S.activeVizs.length);
+  const effectiveCount=S.activeVizs.length*(S.compareMode?2:1);
+  const isSingle=effectiveCount===1;area.classList.toggle('single-viz',isSingle);
+  area.dataset.count=Math.min(6,effectiveCount);
+  const r=area.getBoundingClientRect();const sz=calcCanvasSize(r.height,r.width,effectiveCount);
   S.activeVizs.forEach(viz=>{
-    const panel=document.createElement('div');panel.className='panel';
-    const head=document.createElement('div');head.className='panel-head';
-    const title=document.createElement('div');title.className='panel-title';
-    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px';
-    const jdpBtn=document.createElement('button');jdpBtn.className='jdp-btn'+(S.showJdP?' on':'');jdpBtn.textContent='JdP';jdpBtn.onclick=()=>{S.showJdP=!S.showJdP;renderAll();};
-    const dlWrap=document.createElement('div');dlWrap.className='dl-wrap';
-    const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export \u25BE';
-    const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
-    dlWrap.append(dlBtn,dlMenu);
-    btns.append(jdpBtn,dlWrap);head.append(title,btns);
-    const body=document.createElement('div');body.className='panel-body';
-    const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
-    // Team-only banner if applicable
-    if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
-    // Opponent data warning
-    if(isOppView()){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===S.viewTeam).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
-    const can=document.createElement('canvas');can.className='pitch-canvas';can.width=sz.w;can.height=sz.h;can.dataset.viz=viz;canWrap.appendChild(can);
-    body.appendChild(canWrap);
-    let pairEl=null;
-    if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
-    const legend=document.createElement('div');legend.className='panel-legend';
-    panel.append(head,body,legend);area.appendChild(panel);
-    const ctx=can.getContext('2d');
-    if(S.compareMode&&S.oppTeam){
-      const tn=T().name;const oppName=S.oppTeam;
-      const origViewTeam=S.viewTeam;
-      // Render team A
-      S.viewTeam=tn;const evtsA=getFiltered(viz);
-      ctx.save();ctx.beginPath();ctx.rect(0,0,can.width/2,can.height);ctx.clip();
-      callRenderer(viz,ctx,can,evtsA,title,legend,pairEl);
-      ctx.restore();
-      // Render team B
-      S.viewTeam=oppName;const evtsB=getFiltered(viz);
-      ctx.save();ctx.beginPath();ctx.rect(can.width/2,0,can.width/2,can.height);ctx.clip();
-      callRenderer(viz,ctx,can,evtsB,{textContent:''},{innerHTML:''},null);
-      ctx.restore();
-      S.viewTeam=origViewTeam;
-      // Center divider + labels
-      ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(can.width/2,PM);ctx.lineTo(can.width/2,can.height-PM);ctx.stroke();ctx.setLineDash([]);
-      ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='left';ctx.fillStyle=T().color;ctx.fillText(tn,PM+4,PM+12);ctx.textAlign='right';ctx.fillStyle='#2563eb';ctx.fillText(oppName,can.width-PM-4,PM+12);
-      title.textContent=(VIZ_LABELS[viz]||viz)+' \u2014 Compare';
-    }else{const evts=getFiltered(viz);callRenderer(viz,ctx,can,evts,title,legend,pairEl);}
-    // Export menu
-    const vLabel=VIZ_LABELS[viz]||viz;
-    const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');fn();};return b;};
-    dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
-    dlMenu.append(mkItem('Download PNG (2x)',()=>downloadPNG(can,vLabel)));
-    dlMenu.append(mkItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(can,vLabel)));
-    dlBtn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dl-wrap.open').forEach(w=>{if(w!==dlWrap)w.classList.remove('open');});dlWrap.classList.toggle('open');};
-    // Tooltip
-    can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
-    can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
+    if(S.compareMode&&S.oppTeam){buildPanel(area,viz,sz,T().name);buildPanel(area,viz,sz,S.oppTeam);}
+    else{buildPanel(area,viz,sz,null);}
   });
-  document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';
+  document.getElementById('btnExpAll').style.display=S.activeVizs.length>1||S.compareMode?'block':'none';
 }
 
 /* TOOLTIP */
@@ -819,7 +855,7 @@ function showComparison(){if(!S.selPlayer||!S.cmpPlayer)return;document.getEleme
 
 /* MATCH INFO */
 function updateMatchInfo(){const m=S.matches.find(m=>m.game_id==S.selMatch);if(!m)return;const d=new Date(m.date);document.getElementById('matchInfo').textContent=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
-function renderTeamViewToggle(){const el=document.getElementById('viewTeamBar');if(!el)return;if(!S.selMatch||!S.oppTeam){el.innerHTML='';return;}const tn=T().name,opp=S.oppTeam,vt=VT();const aOn=vt===tn&&!S.compareMode,bOn=vt===opp&&!S.compareMode;el.innerHTML='<span class="vt-label">View:</span><div class="vt-pill"><button class="vt-pill-btn'+(aOn?' on':'')+'" data-team="'+esc(tn)+'">'+esc(tn)+'</button><button class="vt-pill-btn'+(bOn?' on opp':'')+'" data-team="'+esc(opp)+'">'+esc(opp)+'</button></div><button class="vt-cmp-btn'+(S.compareMode?' on':'')+'" id="vtCmpBtn">Compare</button>';el.querySelectorAll('.vt-pill-btn').forEach(btn=>{btn.onclick=()=>{const newT=btn.dataset.team;const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.viewTeam=newT;S.compareMode=false;S.selPlayer=null;S.cmpPlayer=null;renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};});document.getElementById('vtCmpBtn').onclick=()=>{const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.compareMode=!S.compareMode;if(S.compareMode){S.selPlayer=null;S.cmpPlayer=null;}renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};}
+function renderTeamViewToggle(){const el=document.getElementById('viewTeamBar');if(!el)return;if(!S.selMatch||!S.oppTeam){el.innerHTML='';return;}const tn=T().name,opp=S.oppTeam,vt=VT();let html='';if(S.compareMode){html='<span class="compare-indicator">\u25AC COMPARE MODE</span><button class="vt-cmp-btn on" id="vtCmpBtn">Exit Compare</button>';}else{const aOn=vt===tn,bOn=vt===opp;html='<span class="vt-label">View:</span><div class="vt-pill"><button class="vt-pill-btn'+(aOn?' on':'')+'" data-team="'+esc(tn)+'">'+esc(tn)+'</button><button class="vt-pill-btn'+(bOn?' on opp':'')+'" data-team="'+esc(opp)+'">'+esc(opp)+'</button></div><button class="vt-cmp-btn" id="vtCmpBtn">Compare</button>';}el.innerHTML=html;el.querySelectorAll('.vt-pill-btn').forEach(btn=>{btn.onclick=()=>{const newT=btn.dataset.team;const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.viewTeam=newT;S.compareMode=false;S.selPlayer=null;S.cmpPlayer=null;renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};});document.getElementById('vtCmpBtn').onclick=()=>{const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.compareMode=!S.compareMode;if(S.compareMode){S.selPlayer=null;S.cmpPlayer=null;}renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};}
 function fmtMatchOpt(m){const d=new Date(m.date);const day=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});return day+' \u00B7 '+m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team;}
 function renderMatchSelect(){const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select match \u2014</option>';S.matches.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=S.matches.length+' matches';}
 
