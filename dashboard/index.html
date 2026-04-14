@@ -828,14 +828,19 @@ function positionDlMenu(btn, menu) {
   menu.style.display = 'flex';
   menu.style.left = '-9999px';
   menu.style.top = '-9999px';
+  console.log('btn rect:', btn.getBoundingClientRect());
+  console.log('menu size:', menu.offsetWidth, menu.offsetHeight);
   requestAnimationFrame(() => {
     const mw = menu.offsetWidth || 140;
     const mh = menu.offsetHeight || 120;
     const rect = btn.getBoundingClientRect();
+    console.log('rAF btn rect:', rect);
+    console.log('rAF menu size:', mw, mh);
     let top = rect.bottom + 4;
     let left = rect.right - mw;
     if (left < 4) left = 4;
     if (top + mh > window.innerHeight - 4) top = Math.max(4, rect.top - mh - 4);
+    console.log('rAF computed top/left:', top, left);
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
   });
