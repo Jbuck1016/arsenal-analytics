@@ -1,1 +1,6 @@
-{"outputDirectory":"dashboard"}
+{
+  "outputDirectory": "dashboard",
+  "functions": {
+    "api/*.js": { "runtime": "@vercel/node@3" }
+  }
+}
