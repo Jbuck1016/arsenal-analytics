@@ -176,7 +176,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .stat-l{font:600 8px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--text2)}
 
 /* Timeline */
-.timeline{height:48px;min-height:48px;max-height:48px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;position:relative;z-index:1}
+.timeline{height:48px!important;min-height:48px!important;max-height:48px!important;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;position:relative;z-index:5;contain:size layout paint}
+.timeline::after,.timeline::before{display:none!important}
+.timeline svg{height:48px!important;max-height:48px}
 .timeline.hidden{display:none}
 .tl-bar{flex:1;min-width:0;background:var(--surface2);border-radius:2px 2px 0 0;cursor:pointer;transition:.15s;position:relative}
 .tl-bar:hover{background:var(--accent-glow)}
@@ -184,7 +186,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tl-label{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font:600 6px/1 'Inter',sans-serif;color:var(--text3);white-space:nowrap}
 
 /* Pitch area */
-.pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:auto;padding:8px 10px;gap:8px;align-content:center;justify-content:center;align-items:stretch;position:relative;z-index:2}
+.pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:auto;padding:8px 10px;gap:8px;align-content:center;justify-content:center;align-items:stretch;position:relative;z-index:2;margin-top:0!important}
 .pitch-area[data-count="1"]{align-content:center}
 .pitch-area[data-count="1"] .panel{height:80vh;max-height:80vh}
 .pitch-area[data-count="2"] .panel,.pitch-area[data-count="3"] .panel{height:75vh;max-height:75vh;flex:0 0 auto}
@@ -195,6 +197,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .pitch-area.single-viz .panel{flex:0 1 auto}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px;flex-shrink:0;gap:4px;position:relative;z-index:50}
 .dl-wrap{position:relative;z-index:100}
+.panel-export{position:absolute!important;top:4px;right:4px;z-index:200}
+.panel-export .dl-btn{background:var(--bg2);border:1px solid var(--border);box-shadow:var(--shadow);padding:4px 9px}
 .panel-title{font:600 12px/1 'Inter',sans-serif;color:var(--text)}
 .panel-legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0;padding:4px}
 .leg{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text2)}
@@ -819,10 +823,12 @@ function buildPanel(area,viz,sz,teamOverride){
   const title=document.createElement('div');title.className='panel-title';
   const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px';
   const jdpBtn=document.createElement('button');jdpBtn.className='jdp-btn'+(S.showJdP?' on':'');jdpBtn.textContent='JdP';jdpBtn.onclick=()=>{S.showJdP=!S.showJdP;renderAll();};
-  const dlWrap=document.createElement('div');dlWrap.className='dl-wrap';
+  btns.append(jdpBtn);head.append(title,btns);
+  // Floating Export button — position:absolute top-right of panel
+  const dlWrap=document.createElement('div');dlWrap.className='dl-wrap panel-export';
   const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export \u25BE';
   const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
-  dlWrap.append(dlBtn,dlMenu);btns.append(jdpBtn,dlWrap);head.append(title,btns);
+  dlWrap.append(dlBtn,dlMenu);
   const body=document.createElement('div');body.className='panel-body';
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
@@ -831,9 +837,7 @@ function buildPanel(area,viz,sz,teamOverride){
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
   const legend=document.createElement('div');legend.className='panel-legend';
-  panel.append(head,body,legend);
-  // Concept legend card
-  // Concept legend no longer appended to panel — shown in global bottom bar via updateConceptInfoBar()
+  panel.append(head,body,legend,dlWrap);
   area.appendChild(panel);
   // Render with team override
   const ctx=can.getContext('2d');
