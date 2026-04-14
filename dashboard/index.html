@@ -583,6 +583,10 @@ const XT=[[.000,.000,.000,.000,.000,.000,.000,.000],[.001,.001,.001,.002,.002,.0
 function getXT(x,y){return XT[Math.min(11,Math.floor(x/100*12))][Math.min(7,Math.floor(y/100*8))];}
 const PASS_OK='#1a6b3a',PASS_FAIL='#c0392b';
 const PM=20; // pitch margin - MUST match drawPitch
+/* Hi-DPI canvas setup: physical buffer scales by devicePixelRatio, c.width/height return logical values, ctx is pre-scaled so renderer code works unchanged */
+function setupHiDpiCanvas(can,logicalW,logicalH){const dpr=window.devicePixelRatio||1;can.width=Math.round(logicalW*dpr);can.height=Math.round(logicalH*dpr);Object.defineProperty(can,'width',{get:()=>logicalW,set:()=>{},configurable:true});Object.defineProperty(can,'height',{get:()=>logicalH,set:()=>{},configurable:true});const ctx=can.getContext('2d');ctx.scale(dpr,dpr);return ctx;}
+/* Dynamic panel title: "[Team] [View] — vs [Opponent] · [H/A]" */
+function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;if(!S.selMatch)return team+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return team+' '+vizLabel;const isArsenalHome=m.home_team===tn;const arsenalHA=isArsenalHome?'H':'A';const opp=isArsenalHome?m.away_team:m.home_team;const teamIsArsenal=team===tn;const oppName=teamIsArsenal?opp:tn;const ha=teamIsArsenal?arsenalHA:(isArsenalHome?'A':'H');return team+' '+vizLabel+' \u2014 vs '+oppName+' \u00B7 '+ha;}
 
 let S={team:'Arsenal',matches:[],events:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['passes'],periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
 function T(){return TEAMS[S.team]||TEAMS.Arsenal}
@@ -878,21 +882,21 @@ function buildPanel(area,viz,sz,teamOverride){
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
-  const can=document.createElement('canvas');can.className='pitch-canvas';can.width=sz.w;can.height=sz.h;can.dataset.viz=viz;canWrap.appendChild(can);
+  const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;canWrap.appendChild(can);
+  const ctx=setupHiDpiCanvas(can,sz.w,sz.h);
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
   const legend=document.createElement('div');legend.className='panel-legend';
   panel.append(head,body,legend);
   area.appendChild(panel);
-  // Render with team override
-  const ctx=can.getContext('2d');
+  // Render with team override (ctx already scaled for hi-DPI)
   const origVT=S.viewTeam;
   if(teamOverride)S.viewTeam=teamOverride;
   const evts=getFiltered(viz);
   callRenderer(viz,ctx,can,evts,title,legend,pairEl);
   S.viewTeam=origVT;
   // Title with team prefix in compare mode
-  if(teamOverride)title.textContent=teamOverride+' \u2014 '+(VIZ_LABELS[viz]||viz);
+  title.textContent=buildPanelTitle(viz,teamOverride);
   // Export menu
   const vLabel=VIZ_LABELS[viz]||viz;const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
   dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
@@ -1230,10 +1234,10 @@ function renderPsPitches(){
     const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
     dlWrap.append(dlBtn,dlMenu);
     titleRow.append(title,dlWrap);
-    const can=document.createElement('canvas');can.className='ps-pitch-canvas';can.width=200;can.height=Math.round(200/PITCH_RATIO);can.dataset.viz=viz;
+    const can=document.createElement('canvas');can.className='ps-pitch-canvas';can.dataset.viz=viz;
     const legend=document.createElement('div');legend.className='ps-pitch-legend';
     panel.append(titleRow,can,legend);grid.appendChild(panel);
-    const ctx=can.getContext('2d');let vizEvts=evts;
+    const ctx=setupHiDpiCanvas(can,200,Math.round(200/PITCH_RATIO));let vizEvts=evts;
     if(viz==='passes')vizEvts=evts.filter(e=>e.type==='Pass');
     else if(viz==='heatmap')vizEvts=evts.filter(e=>e.x!=null&&e.y!=null);
     else if(viz==='shots')vizEvts=evts.filter(e=>e.is_shot);
@@ -1244,6 +1248,9 @@ function renderPsPitches(){
     const noop={set textContent(v){this._v=v},get textContent(){return this._v||''},_v:''};
     callRenderer(viz,ctx,can,vizEvts,title.textContent?title:noop,legend,null);
     if(noop._v)title.textContent=noop._v;
+    // Dynamic title: prefix with team+viz and match info when a match filter is active
+    const tn=T().name;const vLabelFull=VIZ_LABELS[viz]||viz;
+    if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=new Date(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=tn+' '+vLabelFull+' \u2014 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=tn+' '+vLabelFull;}
     // Export menu
     const vLabel=VIZ_LABELS[viz]||viz;const suffix=psFilenameSuffix();
     const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
@@ -1351,10 +1358,10 @@ async function openCellMatchModal(gid,oppName,colKey){
     else if(vizType==='box_passes')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
     // Build canvas
     body.innerHTML='';
-    const can=document.createElement('canvas');can.width=560;can.height=Math.round(560/PITCH_RATIO);
+    const can=document.createElement('canvas');
     body.appendChild(can);
     const legend=document.createElement('div');legend.className='panel-legend';body.appendChild(legend);
-    const ctx=can.getContext('2d');const noopT={textContent:''};
+    const ctx=setupHiDpiCanvas(can,560,Math.round(560/PITCH_RATIO));const noopT={textContent:''};
     callRenderer(vizType,ctx,can,teamEvts,noopT,legend,null);
     // Hover tooltips
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
