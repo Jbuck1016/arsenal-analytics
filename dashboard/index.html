@@ -888,7 +888,7 @@ function buildPanel(area,viz,sz,teamOverride){
   dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
   dlMenu.append(mkItem('Download PNG (2x)',()=>downloadPNG(can,vLabel)));
   dlMenu.append(mkItem('Story Card (1080\u00D71080)',()=>downloadStoryCard(can,vLabel)));
-  dlBtn.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dl-wrap.open').forEach(w=>{if(w!==dlWrap)w.classList.remove('open');});dlWrap.classList.toggle('open');};
+  dlBtn.onclick=e=>{e.stopPropagation();toggleDlWrap(dlWrap,dlBtn,dlMenu);};
   can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
   can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
   return panel;
