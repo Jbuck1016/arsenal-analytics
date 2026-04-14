@@ -175,7 +175,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .stat-l{font:600 8px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--text2)}
 
 /* Timeline */
-.timeline{height:36px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden}
+.timeline{height:36px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;position:relative;z-index:1}
 .timeline.hidden{display:none}
 .tl-bar{flex:1;min-width:0;background:var(--surface2);border-radius:2px 2px 0 0;cursor:pointer;transition:.15s;position:relative}
 .tl-bar:hover{background:var(--accent-glow)}
@@ -183,14 +183,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tl-label{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);font:600 6px/1 'Inter',sans-serif;color:var(--text3);white-space:nowrap}
 
 /* Pitch area */
-.pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:auto;padding:8px 10px;gap:8px;align-content:center;justify-content:center;align-items:stretch}
+.pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:auto;padding:8px 10px;gap:8px;align-content:center;justify-content:center;align-items:stretch;position:relative;z-index:2}
 .pitch-area[data-count="1"]{align-content:center}
 .pitch-area[data-count="1"] .panel{height:80vh;max-height:80vh}
 .pitch-area[data-count="2"] .panel,.pitch-area[data-count="3"] .panel{height:75vh;max-height:75vh;flex:0 0 auto}
 .pitch-area[data-count="4"] .panel,.pitch-area[data-count="5"] .panel,.pitch-area[data-count="6"] .panel{height:42vh;max-height:42vh;flex:0 0 auto}
 .pitch-area.single-viz{justify-content:center;align-items:center;align-content:center}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.panel{display:flex;flex-direction:column;min-width:0;min-height:0;flex:0 1 auto;max-width:100%;animation:fadeIn .2s ease}
+.panel{display:flex;flex-direction:column;min-width:0;min-height:0;flex:0 1 auto;max-width:100%;max-height:80vh;animation:fadeIn .2s ease;box-sizing:border-box;position:relative}
 .pitch-area.single-viz .panel{flex:0 1 auto}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px;flex-shrink:0;gap:4px;position:relative;z-index:15}
 .dl-wrap{position:relative;z-index:15}
@@ -823,9 +823,7 @@ function buildPanel(area,viz,sz,teamOverride){
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
-  // Shrink canvas height when a concept-legend card will be shown
-  const hasConcept=!!CONCEPT_LEGENDS[viz];const canH=hasConcept?Math.max(240,sz.h-56):sz.h;const canW=hasConcept?Math.round(canH*PITCH_RATIO):sz.w;
-  const can=document.createElement('canvas');can.className='pitch-canvas';can.width=Math.min(sz.w,canW);can.height=canH;can.dataset.viz=viz;canWrap.appendChild(can);
+  const can=document.createElement('canvas');can.className='pitch-canvas';can.width=sz.w;can.height=sz.h;can.dataset.viz=viz;canWrap.appendChild(can);
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
   const legend=document.createElement('div');legend.className='panel-legend';
