@@ -824,23 +824,28 @@ const CONCEPT_LEGENDS={
 };
 
 function positionDlMenu(btn, menu) {
+  // Match Analysis panels live inside .pitch-area whose .panel descendants
+  // have an animation that creates a containing block trapping position:fixed.
+  // Move the menu to document.body so position:fixed resolves to the viewport.
+  // Player Stats export buttons are NOT inside .pitch-area — leave those untouched.
+  if (btn.closest('.pitch-area') && menu.parentNode !== document.body) {
+    if (!menu.dataset.origParent) {
+      menu.dataset.origParent = '1';
+    }
+    document.body.appendChild(menu);
+  }
   menu.style.position = 'fixed';
   menu.style.display = 'flex';
   menu.style.left = '-9999px';
   menu.style.top = '-9999px';
-  console.log('btn rect:', btn.getBoundingClientRect());
-  console.log('menu size:', menu.offsetWidth, menu.offsetHeight);
   requestAnimationFrame(() => {
     const mw = menu.offsetWidth || 140;
     const mh = menu.offsetHeight || 120;
     const rect = btn.getBoundingClientRect();
-    console.log('rAF btn rect:', rect);
-    console.log('rAF menu size:', mw, mh);
     let top = rect.bottom + 4;
     let left = rect.right - mw;
     if (left < 4) left = 4;
     if (top + mh > window.innerHeight - 4) top = Math.max(4, rect.top - mh - 4);
-    console.log('rAF computed top/left:', top, left);
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
   });
