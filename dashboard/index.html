@@ -581,6 +581,7 @@ const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const VIZ_LABELS={passes:'Pass Map',heatmap:'Heatmap',shots:'Shot Map',network:'Passing Network',progressive:'Progressive Passes',final_third:'Passes Into Final Third',zone14:'Passes Into Zone 14',box_passes:'Passes Into Box',defensive:'Defensive Actions',pressure:'Pressure Map',shape:'Team Shape',passflow:'Pass Flow',keypasses:'Key Passes',xt:'xT Map',formation:'Formation',dominance:'Zone Dominance',combos:'Pass Combos'};
 const TEAM_VIZ=new Set(['dominance','formation','passflow','shape']);
+function isProgPass(e){if(e.type!=='Pass'||e.x==null||e.end_x==null)return false;const g=e.end_x-e.x;if(e.x<50&&e.end_x<50)return g>=30;if(e.x<50&&e.end_x>=50)return g>=15;if(e.x>=50&&e.end_x>=50)return g>=10;return false;}
 const DEF_TYPES=['Tackle','Interception','Clearance','BallRecovery','BlockedPass','Aerial','Challenge'];
 const DEF_COLORS={Tackle:'#ef4444',Interception:'#2563eb',Clearance:'#7c3aed',BallRecovery:'#16a34a',BlockedPass:'#d4a017',Aerial:'#0891b2',Challenge:'#db2777'};
 const XT=[[.000,.000,.000,.000,.000,.000,.000,.000],[.001,.001,.001,.002,.002,.001,.001,.001],[.002,.003,.004,.005,.005,.004,.003,.002],[.004,.006,.008,.011,.011,.008,.006,.004],[.006,.009,.014,.019,.019,.014,.009,.006],[.010,.015,.022,.030,.030,.022,.015,.010],[.016,.024,.035,.048,.048,.035,.024,.016],[.025,.037,.054,.075,.075,.054,.037,.025],[.038,.056,.082,.115,.115,.082,.056,.038],[.055,.082,.122,.170,.170,.122,.082,.055],[.082,.120,.178,.250,.250,.178,.120,.082],[.120,.180,.270,.390,.390,.270,.180,.120]];
@@ -623,7 +624,7 @@ function getFiltered(vizType){
   else if(vizType==='formation')evts=evts.filter(e=>e.x!=null&&e.y!=null);
   else if(vizType==='dominance')return S.events;
   else if(vizType==='shape')return S.events;
-  if(vizType==='progressive')evts=evts.filter(e=>e.end_x!=null&&e.end_y!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  if(vizType==='progressive')evts=evts.filter(e=>isProgPass(e));
   else if(vizType==='final_third')evts=evts.filter(e=>e.end_x!=null&&e.end_x>=66);
   else if(vizType==='zone14')evts=evts.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
   else if(vizType==='box_passes')evts=evts.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
@@ -951,7 +952,7 @@ function buildTimeline(){
   tl.classList.remove('hidden');
   const tn=T().name;const N=18;// 18 buckets of 5 mins (0-90)
   const momentum=new Array(N).fill(0);const goals=[];
-  S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5));const isOurs=e.team===tn;if(isOurs){if(e.is_goal){momentum[b]+=5;goals.push({b,team:'us',min:e.minute});}else if(e.is_shot){momentum[b]+=2;}else if(e.type==='Pass'&&e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9)momentum[b]+=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))momentum[b]-=1;}else{if(e.is_goal){momentum[b]-=5;goals.push({b,team:'them',min:e.minute});}else if(e.is_shot){momentum[b]-=2;}}});
+  S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5));const isOurs=e.team===tn;if(isOurs){if(e.is_goal){momentum[b]+=5;goals.push({b,team:'us',min:e.minute});}else if(e.is_shot){momentum[b]+=2;}else if(e.type==='Pass'&&isProgPass(e))momentum[b]+=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))momentum[b]-=1;}else{if(e.is_goal){momentum[b]-=5;goals.push({b,team:'them',min:e.minute});}else if(e.is_shot){momentum[b]-=2;}}});
   const maxAbs=Math.max(...momentum.map(v=>Math.abs(v)),1);
   // Render SVG inside timeline
   const W=tl.clientWidth||600,H=32,padX=8;const innerW=W-padX*2;const step=innerW/N;const cy=H/2;
@@ -982,7 +983,7 @@ function renderMomentumTab(){
   const maxMin=Math.max(90,...S.events.map(e=>e.minute||0))+1;
   const usArr=new Array(maxMin+1).fill(0),themArr=new Array(maxMin+1).fill(0);
   const usGoals=[],themGoals=[],moments=[];
-  S.events.forEach(e=>{const mi=Math.min(maxMin,e.minute||0);const isOurs=e.team===tn;let d=0;if(isOurs){if(e.is_goal){d=5;usGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;else if(e.type==='Pass'&&e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9)d=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))d=-1;if(d!==0)usArr[mi]+=d;if(Math.abs(d)>=2)moments.push({m:mi,d,team:tn,player:e.player,type:e.is_goal?'Goal':e.is_shot?'Shot':'Event'});}else{if(e.is_goal){d=5;themGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;if(d!==0)themArr[mi]+=d;if(d>=2)moments.push({m:mi,d:-d,team:e.team,player:e.player,type:e.is_goal?'Goal':'Shot'});}});
+  S.events.forEach(e=>{const mi=Math.min(maxMin,e.minute||0);const isOurs=e.team===tn;let d=0;if(isOurs){if(e.is_goal){d=5;usGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;else if(e.type==='Pass'&&isProgPass(e))d=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))d=-1;if(d!==0)usArr[mi]+=d;if(Math.abs(d)>=2)moments.push({m:mi,d,team:tn,player:e.player,type:e.is_goal?'Goal':e.is_shot?'Shot':'Event'});}else{if(e.is_goal){d=5;themGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;if(d!==0)themArr[mi]+=d;if(d>=2)moments.push({m:mi,d:-d,team:e.team,player:e.player,type:e.is_goal?'Goal':'Shot'});}});
   // Cumulative
   const usCum=[],themCum=[];let us=0,them=0;for(let i=0;i<=maxMin;i++){us+=usArr[i];them+=themArr[i];usCum.push(us);themCum.push(them);}
   const W=Math.max(600,wrap.clientWidth-60),H=360,padL=50,padR=20,padT=20,padB=30;const innerW=W-padL-padR,innerH=H-padT-padB;
@@ -1040,7 +1041,7 @@ function highlightActiveStat(){}
 function renderPlayerList(){const el=document.getElementById('playerList');const vt=VT();const players={};S.events.filter(e=>e.team===vt).forEach(e=>{if(!players[e.player])players[e.player]={passes:0,shots:0};if(e.type==='Pass')players[e.player].passes++;if(e.is_shot)players[e.player].shots++;});const sorted=Object.entries(players).sort((a,b)=>{const sa=S.starters.has(a[0])?1:0,sb=S.starters.has(b[0])?1:0;if(sa!==sb)return sb-sa;return b[1].passes-a[1].passes;});el.innerHTML=sorted.map(([name,st])=>{const pos=S.playerPos[name];const posLabel=pos?(pos.startsWith('GK')?'GK':pos.startsWith('D')?'DC':pos.startsWith('M')||pos.startsWith('AM')||pos.startsWith('DM')?'MC':(pos.startsWith('FW')?'FW':'')):'';return'<div class="p-item'+(S.selPlayer===name?' sel':'')+'" data-player="'+esc(name)+'">'+(posLabel?'<span class="p-pos">'+posLabel+'</span>':'')+'<span class="p-name">'+esc(name)+'</span><div class="p-badges"><span class="p-b passes">'+st.passes+'</span>'+(st.shots?'<span class="p-b shots">'+st.shots+'</span>':'')+'<button class="p-cmp'+(S.cmpPlayer===name?' on':'')+'" data-cmp="'+esc(name)+'">\u21D4</button></div></div>';}).join('');el.querySelectorAll('.p-item').forEach(item=>{item.addEventListener('click',e=>{if(e.target.closest('.p-cmp'))return;const p=item.dataset.player;S.selPlayer=S.selPlayer===p?null:p;renderPlayerList();updateStats();renderAll();});});el.querySelectorAll('.p-cmp').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();const p=btn.dataset.cmp;if(!S.selPlayer||S.selPlayer===p){S.selPlayer=p;S.cmpPlayer=null;renderPlayerList();updateStats();renderAll();return;}S.cmpPlayer=p;showComparison();renderPlayerList();});});}
 
 /* COMPARISON */
-function computePlayerStats(name){const t=T(),evts=S.events.filter(e=>e.team===t.name&&e.player===name),passes=evts.filter(e=>e.type==='Pass'),succP=passes.filter(e=>e.outcome_type==='Successful'),prog=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9),ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66),z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79),box=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79),shots=evts.filter(e=>e.is_shot),goals=evts.filter(e=>e.is_goal),defs=evts.filter(e=>DEF_TYPES.includes(e.type)),defsW=defs.filter(e=>e.outcome_type==='Successful');return{Touches:evts.filter(e=>e.x!=null).length,Passes:passes.length,'Pass %':Math.round(succP.length/Math.max(1,passes.length)*100),Progressive:prog.length,'Final 3rd':ft.length,'Zone 14':z14.length,'Into Box':box.length,Shots:shots.length,Goals:goals.length,'Def Actions':defs.length,'Def Won %':Math.round(defsW.length/Math.max(1,defs.length)*100)};}
+function computePlayerStats(name){const t=T(),evts=S.events.filter(e=>e.team===t.name&&e.player===name),passes=evts.filter(e=>e.type==='Pass'),succP=passes.filter(e=>e.outcome_type==='Successful'),prog=passes.filter(e=>isProgPass(e)),ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66),z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79),box=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79),shots=evts.filter(e=>e.is_shot),goals=evts.filter(e=>e.is_goal),defs=evts.filter(e=>DEF_TYPES.includes(e.type)),defsW=defs.filter(e=>e.outcome_type==='Successful');return{Touches:evts.filter(e=>e.x!=null).length,Passes:passes.length,'Pass %':Math.round(succP.length/Math.max(1,passes.length)*100),Progressive:prog.length,'Final 3rd':ft.length,'Zone 14':z14.length,'Into Box':box.length,Shots:shots.length,Goals:goals.length,'Def Actions':defs.length,'Def Won %':Math.round(defsW.length/Math.max(1,defs.length)*100)};}
 function showComparison(){if(!S.selPlayer||!S.cmpPlayer)return;document.getElementById('cmpOverlay').classList.add('show');document.getElementById('cmpA').textContent=S.selPlayer;document.getElementById('cmpB').textContent=S.cmpPlayer;const a=computePlayerStats(S.selPlayer),b=computePlayerStats(S.cmpPlayer);const bars=document.getElementById('cmpBars');bars.innerHTML='';Object.keys(a).forEach(key=>{const va=a[key],vb=b[key],max=Math.max(va,vb,1);const row=document.createElement('div');row.className='cmp-row';row.innerHTML='<div class="cmp-val">'+va+'</div><div class="cmp-bars"><div class="cmp-bar-wrap"><div class="cmp-bar a" style="width:'+Math.round(va/max*100)+'%"></div></div></div><div class="cmp-label">'+key+'</div><div class="cmp-bars"><div class="cmp-bar-wrap"><div class="cmp-bar b" style="width:'+Math.round(vb/max*100)+'%"></div></div></div><div class="cmp-val">'+vb+'</div>';bars.appendChild(row);});}
 
 /* MATCH INFO */
@@ -1136,7 +1137,7 @@ function getPosCategory(pos){if(['GK','DC','DL','DR','DMC'].includes(pos))return
 function computePlayerMinutesMap(){if(S._pmCache)return S._pmCache;const t=T();const byGame={};S.psAllEvents.forEach(e=>{if(e.team!==t.name)return;if(!byGame[e.game_id])byGame[e.game_id]={events:[],players:new Set()};byGame[e.game_id].events.push(e);byGame[e.game_id].players.add(e.player);});const result={};Object.entries(byGame).forEach(([gid,{events,players}])=>{result[gid]={};const subOff={},subOn={};events.forEach(e=>{if(e.type==='SubstitutionOff')subOff[e.player]=e.minute;if(e.type==='SubstitutionOn')subOn[e.player]=e.minute;});const maxMin=Math.max(90,...events.map(e=>e.minute||0));players.forEach(p=>{let mins=90;if(subOff[p]!=null&&subOn[p]!=null)mins=Math.max(0,subOff[p]-subOn[p]);else if(subOff[p]!=null)mins=subOff[p];else if(subOn[p]!=null)mins=Math.max(0,maxMin-subOn[p]);result[gid][p]=Math.round(mins);});});S._pmCache=result;return result;}
 function getPlayerMatchMins(gid,player){const m=computePlayerMinutesMap();return (m[gid]&&m[gid][player])||0;}
 function getPlayerTotalMins(player){const m=computePlayerMinutesMap();let total=0;Object.keys(m).forEach(gid=>{if(m[gid][player])total+=m[gid][player];});return total;}
-function computeAllSquadStats(){if(S._sqStatsCache)return S._sqStatsCache;const t=T();const players={};const allTeam=S.psAllEvents.filter(e=>e.team===t.name);allTeam.forEach(e=>{if(!players[e.player])players[e.player]=[];players[e.player].push(e);});const sorted=[...allTeam].sort((a,b)=>(a.game_id-b.game_id)||a.period-b.period||a.minute-b.minute||a.second-b.second);const saCount={};for(let i=1;i<sorted.length;i++){if(sorted[i].is_shot&&sorted[i].game_id===sorted[i-1].game_id&&sorted[i-1].type==='Pass'){saCount[sorted[i-1].player]=(saCount[sorted[i-1].player]||0)+1;}}const result=[];Object.entries(players).forEach(([name,evts])=>{const p=evts.filter(e=>e.type==='Pass'),sp=p.filter(e=>e.outcome_type==='Successful'),pr=p.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9),fw=p.filter(e=>e.end_x!=null&&e.end_x>e.x+3),la=p.filter(e=>e.end_x!=null&&Math.abs(e.end_x-e.x)<=3),ft=p.filter(e=>e.end_x!=null&&e.end_x>=66),z1=p.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79),bx=p.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79),sh=evts.filter(e=>e.is_shot),gl=evts.filter(e=>e.is_goal),df=evts.filter(e=>DEF_TYPES.includes(e.type)),dw=df.filter(e=>e.outcome_type==='Successful'),pl=Math.max(1,p.length),dl=Math.max(1,df.length),mc=new Set(evts.map(e=>e.game_id)).size,mins=getPlayerTotalMins(name);result.push({name,_matches:mc,_mins:mins,passes:p.length,pass_acc:Math.round(sp.length/pl*100),progressive:pr.length,fwd_pct:Math.round(fw.length/pl*100),lat_pct:Math.round(la.length/pl*100),key_passes:saCount[name]||0,zone14:z1.length,final_third:ft.length,into_box:bx.length,shot_assists:saCount[name]||0,shots:sh.length,goals:gl.length,def_actions:df.length,def_won_pct:Math.round(dw.length/dl*100),tackles:evts.filter(e=>e.type==='Tackle').length,interceptions:evts.filter(e=>e.type==='Interception').length,clearances:evts.filter(e=>e.type==='Clearance').length,aerials:evts.filter(e=>e.type==='Aerial').length,ball_recoveries:evts.filter(e=>e.type==='BallRecovery').length});});S._sqStatsCache=result;return result;}
+function computeAllSquadStats(){if(S._sqStatsCache)return S._sqStatsCache;const t=T();const players={};const allTeam=S.psAllEvents.filter(e=>e.team===t.name);allTeam.forEach(e=>{if(!players[e.player])players[e.player]=[];players[e.player].push(e);});const sorted=[...allTeam].sort((a,b)=>(a.game_id-b.game_id)||a.period-b.period||a.minute-b.minute||a.second-b.second);const saCount={};for(let i=1;i<sorted.length;i++){if(sorted[i].is_shot&&sorted[i].game_id===sorted[i-1].game_id&&sorted[i-1].type==='Pass'){saCount[sorted[i-1].player]=(saCount[sorted[i-1].player]||0)+1;}}const result=[];Object.entries(players).forEach(([name,evts])=>{const p=evts.filter(e=>e.type==='Pass'),sp=p.filter(e=>e.outcome_type==='Successful'),pr=p.filter(e=>isProgPass(e)),fw=p.filter(e=>e.end_x!=null&&e.end_x>e.x+3),la=p.filter(e=>e.end_x!=null&&Math.abs(e.end_x-e.x)<=3),ft=p.filter(e=>e.end_x!=null&&e.end_x>=66),z1=p.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79),bx=p.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79),sh=evts.filter(e=>e.is_shot),gl=evts.filter(e=>e.is_goal),df=evts.filter(e=>DEF_TYPES.includes(e.type)),dw=df.filter(e=>e.outcome_type==='Successful'),pl=Math.max(1,p.length),dl=Math.max(1,df.length),mc=new Set(evts.map(e=>e.game_id)).size,mins=getPlayerTotalMins(name);result.push({name,_matches:mc,_mins:mins,passes:p.length,pass_acc:Math.round(sp.length/pl*100),progressive:pr.length,fwd_pct:Math.round(fw.length/pl*100),lat_pct:Math.round(la.length/pl*100),key_passes:saCount[name]||0,zone14:z1.length,final_third:ft.length,into_box:bx.length,shot_assists:saCount[name]||0,shots:sh.length,goals:gl.length,def_actions:df.length,def_won_pct:Math.round(dw.length/dl*100),tackles:evts.filter(e=>e.type==='Tackle').length,interceptions:evts.filter(e=>e.type==='Interception').length,clearances:evts.filter(e=>e.type==='Clearance').length,aerials:evts.filter(e=>e.type==='Aerial').length,ball_recoveries:evts.filter(e=>e.type==='BallRecovery').length});});S._sqStatsCache=result;return result;}
 
 /* PLAYER STATS TAB */
 async function loadAllPlayerEvents(){if(S.psPlayersLoaded)return;const t=T();document.getElementById('psList').innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const evts=await sbAll('events',{team:'eq.'+t.name,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal',order:'game_id.asc,minute.asc,second.asc'});S.psAllEvents=evts;S.psPlayersLoaded=true;renderPsPlayerList();}
@@ -1149,7 +1150,7 @@ function renderPlayerProfile(){
   const evts=S.psAllEvents.filter(e=>e.team===t.name&&e.player===name);
   const pos=inferPlayerPos(name);const posCat=getPosCategory(pos);
   const passes=evts.filter(e=>e.type==='Pass'),succP=passes.filter(e=>e.outcome_type==='Successful');
-  const prog=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  const prog=passes.filter(e=>isProgPass(e));
   const fwd=passes.filter(e=>e.end_x!=null&&e.end_x>e.x+3),lat=passes.filter(e=>e.end_x!=null&&Math.abs(e.end_x-e.x)<=3);
   const ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66);
   const z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
@@ -1195,7 +1196,7 @@ function renderPlayerProfile(){
   const sortC=S.psMatchSort.col,sortD=S.psMatchSort.dir;
   const headCells=mCols.map(c=>{let cls='';if(sortC===c.k)cls=sortD===1?' asc':' desc';return'<th data-col="'+c.k+'" class="'+cls+'">'+c.l+'</th>';}).join('');
   html+='<div class="tbl-wrap" style="max-height:340px"><table class="stbl" id="psMatchTbl"><thead><tr>'+headCells+'</tr></thead><tbody id="psMatchBody">';
-  const mRows=[];matchIds.forEach(gid=>{const match=S.matches.find(m=>m.game_id==gid);const mEvts=evts.filter(e=>e.game_id==gid);const mP=mEvts.filter(e=>e.type==='Pass'),mS=mP.filter(e=>e.outcome_type==='Successful'),mPr=mP.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9),mSh=mEvts.filter(e=>e.is_shot),mG=mEvts.filter(e=>e.is_goal),mD=mEvts.filter(e=>DEF_TYPES.includes(e.type));let dateStr='\u2014',opp='Match '+gid,ha='',resStr='\u2014',resCls='',dateTs=0;if(match){const isH=match.home_team===t.name;opp=isH?match.away_team:match.home_team;ha=isH?'H':'A';const s=match.home_score,o=match.away_score,r=isH?(s>o?'W':s<o?'L':'D'):(o>s?'W':o<s?'L':'D');resCls='res-'+r.toLowerCase();resStr=s+'\u2013'+o+' ('+r+')';dateStr=new Date(match.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});dateTs=new Date(match.date).getTime();}const accN=mP.length?Math.round(mS.length/mP.length*100):0;const mMins=getPlayerMatchMins(gid,name);mRows.push({gid,date:dateTs,dateStr,opp,ha,result:resStr,resCls,resStr,mins:mMins,p:mP.length,acc:pct(mS.length,mP.length),accN,sh:mSh.length,g:mG.length,pr:mPr.length,d:mD.length});});
+  const mRows=[];matchIds.forEach(gid=>{const match=S.matches.find(m=>m.game_id==gid);const mEvts=evts.filter(e=>e.game_id==gid);const mP=mEvts.filter(e=>e.type==='Pass'),mS=mP.filter(e=>e.outcome_type==='Successful'),mPr=mP.filter(e=>isProgPass(e)),mSh=mEvts.filter(e=>e.is_shot),mG=mEvts.filter(e=>e.is_goal),mD=mEvts.filter(e=>DEF_TYPES.includes(e.type));let dateStr='\u2014',opp='Match '+gid,ha='',resStr='\u2014',resCls='',dateTs=0;if(match){const isH=match.home_team===t.name;opp=isH?match.away_team:match.home_team;ha=isH?'H':'A';const s=match.home_score,o=match.away_score,r=isH?(s>o?'W':s<o?'L':'D'):(o>s?'W':o<s?'L':'D');resCls='res-'+r.toLowerCase();resStr=s+'\u2013'+o+' ('+r+')';dateStr=new Date(match.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});dateTs=new Date(match.date).getTime();}const accN=mP.length?Math.round(mS.length/mP.length*100):0;const mMins=getPlayerMatchMins(gid,name);mRows.push({gid,date:dateTs,dateStr,opp,ha,result:resStr,resCls,resStr,mins:mMins,p:mP.length,acc:pct(mS.length,mP.length),accN,sh:mSh.length,g:mG.length,pr:mPr.length,d:mD.length});});
   mRows.sort((a,b)=>{let va=a[sortC],vb=b[sortC];if(typeof va==='string')return va.localeCompare(vb)*sortD;return((va||0)-(vb||0))*sortD;});
   const mRanges={};['p','sh','g','pr','d'].forEach(k=>{const vals=mRows.map(r=>r[k]);mRanges[k]={min:Math.min(...vals),max:Math.max(...vals)};});
   mRows.forEach(r=>{const selCls=S.psMatchFilter===r.gid?' sel':'';html+='<tr data-gid="'+r.gid+'" class="ps-match-row'+selCls+'"><td>'+r.dateStr+'</td><td>'+esc(r.opp)+'</td><td><span class="ha-b '+(r.ha==='H'?'ha-h':'ha-a')+'">'+r.ha+'</span></td><td class="'+r.resCls+'" style="'+resultTint(r.resCls)+'">'+r.resStr+'</td><td>'+r.mins+"'</td><td style=\""+cellTint(r.p,mRanges.p.min,mRanges.p.max)+'">'+r.p+'</td><td>'+r.acc+'</td><td style="'+cellTint(r.sh,mRanges.sh.min,mRanges.sh.max)+'">'+r.sh+'</td><td style="'+cellTint(r.g,mRanges.g.min,mRanges.g.max)+'">'+r.g+'</td><td style="'+cellTint(r.pr,mRanges.pr.min,mRanges.pr.max)+'">'+r.pr+'</td><td style="'+cellTint(r.d,mRanges.d.min,mRanges.d.max)+'">'+r.d+'</td></tr>';});
@@ -1245,7 +1246,7 @@ function renderPsPitches(){
     if(viz==='passes')vizEvts=evts.filter(e=>e.type==='Pass');
     else if(viz==='heatmap')vizEvts=evts.filter(e=>e.x!=null&&e.y!=null);
     else if(viz==='shots')vizEvts=evts.filter(e=>e.is_shot);
-    else if(viz==='progressive')vizEvts=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_y!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+    else if(viz==='progressive')vizEvts=evts.filter(e=>e.type==='Pass'&&isProgPass(e));
     else if(viz==='zone14')vizEvts=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
     else if(viz==='box_passes')vizEvts=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
     else if(viz==='defensive')vizEvts=evts.filter(e=>DEF_TYPES.includes(e.type));
@@ -1358,7 +1359,7 @@ async function openCellMatchModal(gid,oppName,colKey){
     if(vizType==='passes')teamEvts=teamEvts.filter(e=>e.type==='Pass');
     else if(vizType==='shots'&&colKey!=='shots_on_target')teamEvts=teamEvts.filter(e=>e.is_shot);
     else if(vizType==='defensive'&&colKey!=='defensive_actions_won')teamEvts=teamEvts.filter(e=>DEF_TYPES.includes(e.type));
-    else if(vizType==='progressive')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_y!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+    else if(vizType==='progressive')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&isProgPass(e));
     else if(vizType==='final_third')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66);
     else if(vizType==='zone14')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
     else if(vizType==='box_passes')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
@@ -1384,10 +1385,10 @@ async function openCellMatchModal(gid,oppName,colKey){
 
 /* MATCH REPORT GENERATOR */
 function collectMatchReportStats(){const tn=T().name;const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppName=S.oppTeam||(m?(m.home_team===tn?m.away_team:m.home_team):'Opponent');const matchLabel=m?(m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team):'';
-  const teamStats=(team)=>{const evts=S.events.filter(e=>e.team===team);const passes=evts.filter(e=>e.type==='Pass');const succ=passes.filter(e=>e.outcome_type==='Successful').length;const prog=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9).length;const ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66).length;const z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79).length;const box=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79).length;const shots=evts.filter(e=>e.is_shot).length;const onT=evts.filter(e=>e.is_shot&&(e.outcome_type==='Saved'||e.is_goal)).length;const goals=evts.filter(e=>e.is_goal).length;const defs=evts.filter(e=>DEF_TYPES.includes(e.type)).length;const defsW=evts.filter(e=>DEF_TYPES.includes(e.type)&&e.outcome_type==='Successful').length;return{passes:passes.length,pass_acc:passes.length?Math.round(succ/passes.length*100):0,progressive:prog,final_third:ft,zone14:z14,into_box:box,shots,shots_on_target:onT,goals,def_actions:defs,def_won_pct:defs?Math.round(defsW/defs*100):0};};
+  const teamStats=(team)=>{const evts=S.events.filter(e=>e.team===team);const passes=evts.filter(e=>e.type==='Pass');const succ=passes.filter(e=>e.outcome_type==='Successful').length;const prog=passes.filter(e=>isProgPass(e)).length;const ft=passes.filter(e=>e.end_x!=null&&e.end_x>=66).length;const z14=passes.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79).length;const box=passes.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79).length;const shots=evts.filter(e=>e.is_shot).length;const onT=evts.filter(e=>e.is_shot&&(e.outcome_type==='Saved'||e.is_goal)).length;const goals=evts.filter(e=>e.is_goal).length;const defs=evts.filter(e=>DEF_TYPES.includes(e.type)).length;const defsW=evts.filter(e=>DEF_TYPES.includes(e.type)&&e.outcome_type==='Successful').length;return{passes:passes.length,pass_acc:passes.length?Math.round(succ/passes.length*100):0,progressive:prog,final_third:ft,zone14:z14,into_box:box,shots,shots_on_target:onT,goals,def_actions:defs,def_won_pct:defs?Math.round(defsW/defs*100):0};};
   const usStats=teamStats(tn),themStats=teamStats(oppName);
   // Top players for Arsenal
-  const players={};S.events.filter(e=>e.team===tn).forEach(e=>{if(!players[e.player])players[e.player]={passes:0,prog:0,defs:0,shots:0,goals:0};if(e.type==='Pass')players[e.player].passes++;if(e.type==='Pass'&&e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9)players[e.player].prog++;if(DEF_TYPES.includes(e.type))players[e.player].defs++;if(e.is_shot)players[e.player].shots++;if(e.is_goal)players[e.player].goals++;});
+  const players={};S.events.filter(e=>e.team===tn).forEach(e=>{if(!players[e.player])players[e.player]={passes:0,prog:0,defs:0,shots:0,goals:0};if(e.type==='Pass')players[e.player].passes++;if(e.type==='Pass'&&isProgPass(e))players[e.player].prog++;if(DEF_TYPES.includes(e.type))players[e.player].defs++;if(e.is_shot)players[e.player].shots++;if(e.is_goal)players[e.player].goals++;});
   const topPassers=Object.entries(players).sort((a,b)=>b[1].passes-a[1].passes).slice(0,3).map(([n,s])=>({name:n,...s}));
   const topProg=Object.entries(players).sort((a,b)=>b[1].prog-a[1].prog).slice(0,3).map(([n,s])=>({name:n,prog:s.prog}));
   const topDef=Object.entries(players).sort((a,b)=>b[1].defs-a[1].defs)[0];
@@ -1395,7 +1396,7 @@ function collectMatchReportStats(){const tn=T().name;const m=S.matches.find(mm=>
   const combos={};const sorted=[...S.events.filter(e=>e.team===tn)].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){const p=sorted[i];if(p.type!=='Pass'||p.outcome_type!=='Successful')continue;for(let j=i+1;j<Math.min(i+3,sorted.length);j++){const n=sorted[j];if(n.team!==tn||n.player===p.player)continue;const key=p.player+'|||'+n.player;combos[key]=(combos[key]||0)+1;break;}}
   const keyCombos=Object.entries(combos).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k,v])=>{const[p,r]=k.split('|||');return{passer:p,receiver:r,count:v};});
   // Momentum peak
-  const N=18;const mArr=new Array(N).fill(0);S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5));const ours=e.team===tn;if(ours){if(e.is_goal)mArr[b]+=5;else if(e.is_shot)mArr[b]+=2;else if(e.type==='Pass'&&e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9)mArr[b]+=1;}else{if(e.is_goal)mArr[b]-=5;else if(e.is_shot)mArr[b]-=2;}});
+  const N=18;const mArr=new Array(N).fill(0);S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5));const ours=e.team===tn;if(ours){if(e.is_goal)mArr[b]+=5;else if(e.is_shot)mArr[b]+=2;else if(e.type==='Pass'&&isProgPass(e))mArr[b]+=1;}else{if(e.is_goal)mArr[b]-=5;else if(e.is_shot)mArr[b]-=2;}});
   let peakIdx=0,peakVal=-Infinity;mArr.forEach((v,i)=>{if(v>peakVal){peakVal=v;peakIdx=i;}});const peakWindow=(peakIdx*5)+"'-"+((peakIdx+1)*5)+"'";
   return{teamName:tn,oppName,matchLabel,usStats,themStats,topPassers,topProg,topDef:topDef?{name:topDef[0],defs:topDef[1].defs}:null,keyCombos,peakWindow};
 }
@@ -1446,7 +1447,7 @@ function computeVizStats(viz){
   const succ=passes.filter(e=>e.outcome_type==='Successful').length;
   const fail=passes.length-succ;
   const acc=passes.length?Math.round(succ/passes.length*100):0;
-  const progAll=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  const progAll=passes.filter(e=>isProgPass(e));
   const progSucc=progAll.filter(e=>e.outcome_type==='Successful').length;
   const ftAll=passes.filter(e=>e.end_x!=null&&e.end_x>=66);
   const ftSucc=ftAll.filter(e=>e.outcome_type==='Successful').length;
@@ -1471,10 +1472,44 @@ function computeVizStats(viz){
   if(viz==='final_third')return[['Into Final Third',ftAll.length],['Completed',ftSucc],['Incomplete',ftAll.length-ftSucc],['Accuracy',(ftAll.length?Math.round(ftSucc/ftAll.length*100):0)+'%']];
   if(viz==='zone14')return[['Into Zone 14',z14All.length],['Completed',z14Succ],['Incomplete',z14All.length-z14Succ],['Accuracy',(z14All.length?Math.round(z14Succ/z14All.length*100):0)+'%']];
   if(viz==='box_passes')return[['Into Box',boxAll.length],['Completed',boxSucc],['Incomplete',boxAll.length-boxSucc],['Accuracy',(boxAll.length?Math.round(boxSucc/boxAll.length*100):0)+'%']];
-  if(viz==='keypasses'){const kp=getKeyPasses().length;return[['Key Passes',kp],['Accuracy',acc+'%'],['Completed',succ],['Incomplete',fail]];}
+  if(viz==='keypasses'){
+    const kpList=getKeyPasses();
+    const kpSucc=kpList.filter(o=>o.pass.outcome_type==='Successful').length;
+    const kpFail=kpList.length-kpSucc;
+    const assists=kpList.filter(o=>o.shot.is_goal).length;
+    return[['Key Passes',kpList.length],['Completed',kpSucc],['Incomplete',kpFail],['Shot Assists',assists]];
+  }
   if(viz==='shots')return[['Shots',shots.length],['On Target',shotsOnT],['Goals',goals],['Accuracy',shotAcc+'%']];
-  if(viz==='defensive'||viz==='pressure')return[['Actions',defs.length],['Won',defsWon],['Lost',defsLost],['Win %',defPct+'%']];
-  if(viz==='heatmap')return[['Touches',touches],['In Final Third',touchesFT],['In Own Half',touchesOwn],['—','']];
+  if(viz==='defensive')return[['Actions',defs.length],['Won',defsWon],['Lost',defsLost],['Win %',defPct+'%']];
+  if(viz==='pressure'){
+    const pressEvts=evts.filter(e=>DEF_TYPES.includes(e.type)&&e.x!=null);
+    const oppHalf=pressEvts.filter(e=>e.x>=50).length;
+    const ownHalf=pressEvts.filter(e=>e.x<50).length;
+    const pct=pressEvts.length?Math.round(oppHalf/pressEvts.length*100):0;
+    return[['Actions',pressEvts.length],['In Opp Half',oppHalf],['In Own Half',ownHalf],['High Press %',pct+'%']];
+  }
+  if(viz==='heatmap'){
+    const zoneCounts={};const zoneLabels=['Def L','Def C','Def R','Mid L','Mid C','Mid R','Att L','Att C','Att R'];
+    evts.forEach(e=>{if(e.x==null||e.y==null)return;const xi=e.x<33?0:e.x<66?1:2;const yi=e.y<33?2:e.y<66?1:0;const idx=xi*3+yi;zoneCounts[idx]=(zoneCounts[idx]||0)+1;});
+    let peakIdx=0,peakVal=-1;Object.entries(zoneCounts).forEach(([k,v])=>{if(v>peakVal){peakVal=v;peakIdx=+k;}});
+    const peakLabel=touches?zoneLabels[peakIdx]:'\u2014';
+    return[['Touches',touches],['In Final Third',touchesFT],['In Own Half',touchesOwn],['Peak Zone',peakLabel]];
+  }
+  if(viz==='network'){
+    const netSucc=passes.filter(e=>e.outcome_type==='Successful');
+    const sortedN=[...netSucc].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);
+    const pairs={};for(let i=0;i<sortedN.length-1;i++){const p=sortedN[i];for(let j=i+1;j<Math.min(i+3,sortedN.length);j++){const n=sortedN[j];if(n.player===p.player)continue;const key=[p.player,n.player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}
+    const entries=Object.entries(pairs).sort((a,b)=>b[1]-a[1]);
+    const topEntry=entries[0];
+    const topName=topEntry?(lastName(topEntry[0].split('|||')[0])+'\u2194'+lastName(topEntry[0].split('|||')[1])):'\u2014';
+    return[['Connections',entries.length],['Top Combo',topName],['Total Passes',passes.length],['Accuracy',acc+'%']];
+  }
+  if(viz==='xt'){
+    let totalXT=0,highXT=0,shown=0;
+    passes.forEach(e=>{if(e.end_x==null||e.end_y==null)return;const gain=getXT(e.end_x,e.end_y)-getXT(e.x,e.y);if(gain<=0.02)return;shown++;totalXT+=gain;if(gain>0.05)highXT++;});
+    const avgXT=shown?(totalXT/shown):0;
+    return[['Passes Shown',shown],['Total xT Gain','+'+totalXT.toFixed(3)],['Avg xT','+'+avgXT.toFixed(3)],['High xT',highXT]];
+  }
   return[['Passes',passes.length],['Accuracy',acc+'%'],['Progressive',progAll.length],['Shots',shots.length]];
 }
 function getTeamInitials(){const d=T().display||'';const caps=d.match(/[A-Z]/g);if(caps&&caps.length>=2)return caps.join('').slice(0,4);return (T().name||'FC').substring(0,3).toUpperCase();}
@@ -1606,8 +1641,7 @@ function _drawFooterBand(ctx,x,y,w,h,cfg){
   ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
   ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y+0.5);ctx.lineTo(x+w,y+0.5);ctx.stroke();
   const cy=y+h/2;ctx.textBaseline='middle';
-  ctx.font='normal 24px Inter,system-ui,sans-serif';ctx.fillStyle=EXP_MUTED;
-  ctx.textAlign='left';ctx.fillText((cfg.teamName||'')+' Analytics',x+48,cy);
+  ctx.font='normal 24px Inter,system-ui,sans-serif';
   ctx.textAlign='center';ctx.fillStyle=EXP_TEXT;
   if(cfg.matchDesc)ctx.fillText(cfg.matchDesc,x+w/2,cy);
   ctx.textAlign='right';ctx.fillStyle=EXP_MUTED;
@@ -1764,7 +1798,7 @@ function renderScoutCanvas(){
   const evts=S.psAllEvents.filter(e=>e.team===t.name&&e.player===S.psPlayer);
   const passes=evts.filter(e=>e.type==='Pass');
   const succP=passes.filter(e=>e.outcome_type==='Successful').length;
-  const prog=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  const prog=passes.filter(e=>isProgPass(e));
   const shots=evts.filter(e=>e.is_shot);const goals=evts.filter(e=>e.is_goal);
   const defs=evts.filter(e=>DEF_TYPES.includes(e.type));
   const matchIds=[...new Set(evts.map(e=>e.game_id))];const mins=getPlayerTotalMins(S.psPlayer);
@@ -1836,7 +1870,7 @@ function renderScoutCanvas(){
     const cx=col*gcellW,cy=gridY+row*gcellH;
     let ve=evts;
     if(v.id==='passes')ve=evts.filter(e=>e.type==='Pass');
-    else if(v.id==='progressive')ve=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+    else if(v.id==='progressive')ve=evts.filter(e=>e.type==='Pass'&&isProgPass(e));
     else if(v.id==='final_third')ve=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66);
     else if(v.id==='zone14')ve=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79);
     else if(v.id==='box_passes')ve=evts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
@@ -1968,7 +2002,7 @@ function _cellStatsFromEvents(teamAllEvts,vizType){
   const succ=passes.filter(e=>e.outcome_type==='Successful').length;
   const fail=passes.length-succ;
   const acc=passes.length?Math.round(succ/passes.length*100):0;
-  const progAll=passes.filter(e=>e.end_x!=null&&e.end_x>=e.x*1.25&&Math.sqrt((e.end_x-e.x)**2+(e.end_y-e.y)**2)>=9);
+  const progAll=passes.filter(e=>isProgPass(e));
   const progSucc=progAll.filter(e=>e.outcome_type==='Successful').length;
   const ftAll=passes.filter(e=>e.end_x!=null&&e.end_x>=66);
   const ftSucc=ftAll.filter(e=>e.outcome_type==='Successful').length;
