@@ -1258,7 +1258,7 @@ function collectMatchReportStats(){const tn=T().name;const m=S.matches.find(mm=>
 async function callReportAPI(statsPayload){
   const prompt='Match data:\n'+JSON.stringify(statsPayload,null,2)+'\n\nWrite the match report now.';
   const system="You are a professional football analyst writing a concise tactical match report. Write in a professional, analytical tone. Be specific \u2014 use the exact numbers provided. Do not invent statistics. Write 3-4 paragraphs covering: 1) overall match pattern and territorial dominance, 2) Arsenal's attacking patterns and key creative players, 3) defensive performance and pressing, 4) one tactical observation or area for improvement. Keep each paragraph to 3-4 sentences.";
-  const r=await fetch('/api/match-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],system})});
+  const r=await fetch(SB+'/functions/v1/match-report',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AK},body:JSON.stringify({messages:[{role:'user',content:prompt}],system})});
   if(!r.ok){let msg='API error '+r.status;try{const e=await r.json();if(e.error)msg+=': '+(typeof e.error==='string'?e.error:JSON.stringify(e.error));}catch(_){}throw new Error(msg);}
   const d=await r.json();
   if(d.content&&d.content[0]&&d.content[0].text)return d.content[0].text;
