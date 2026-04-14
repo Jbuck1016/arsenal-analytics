@@ -704,7 +704,31 @@ function renderZone14(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP
 
 function renderBoxPasses(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const tl=toXY(83,79,c),br=toXY(100,21,c);ctx.fillStyle='rgba(26,122,58,0.06)';ctx.fillRect(tl.cx,tl.cy,br.cx-tl.cx,br.cy-tl.cy);let succ=0,fail=0;const stored=[];evts.forEach(e=>{if(e.end_x==null)return;const ok=e.outcome_type==='Successful';drawComet(ctx,c,e.x,e.y,e.end_x,e.end_y,ok?PASS_OK:PASS_FAIL,ok?0.7:0.45);ok?succ++:fail++;const p2=toXY(e.end_x,e.end_y,c);stored.push({cx:p2.cx,cy:p2.cy,player:e.player,minute:e.minute,outcome:e.outcome_type,type:'Pass',dir:passDir(e.x,e.end_x),dist:passDist(e.x,e.y,e.end_x,e.end_y)});});S.canvasEvents.set(c,stored);titleEl.textContent='Passes Into Box';legendEl.innerHTML=passLegend(succ,fail);}
 
-function renderDefensive(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const counts={};const stored=[];evts.forEach(e=>{if(e.x==null)return;const p=toXY(e.x,e.y,c);const col=DEF_COLORS[e.type]||'#9ca3af';const won=e.outcome_type==='Successful';counts[e.type]=(counts[e.type]||0)+1;ctx.beginPath();ctx.arc(p.cx,p.cy,5,0,Math.PI*2);if(won){ctx.fillStyle=hexAlpha(col,0.7);ctx.fill();}else{ctx.strokeStyle=hexAlpha(col,0.7);ctx.lineWidth=1.5;ctx.stroke();}stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,outcome:e.outcome_type,type:e.type});});S.canvasEvents.set(c,stored);const won=evts.filter(e=>e.outcome_type==='Successful').length;titleEl.textContent='Defensive Actions';legendEl.innerHTML=Object.entries(DEF_COLORS).filter(([t])=>counts[t]).map(([t,c])=>leg(c,t+' ('+counts[t]+')')).join('')+' <span class="leg">Won: '+pct(won,evts.length)+'</span>';}
+function renderDefensive(ctx,c,evts,titleEl,legendEl){
+  drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
+  const counts={};const stored=[];
+  evts.forEach(e=>{if(e.x==null)return;const p=toXY(e.x,e.y,c);const col=DEF_COLORS[e.type]||'#9ca3af';const won=e.outcome_type==='Successful';counts[e.type]=(counts[e.type]||0)+1;ctx.beginPath();ctx.arc(p.cx,p.cy,5,0,Math.PI*2);if(won){ctx.fillStyle=hexAlpha(col,0.7);ctx.fill();}else{ctx.strokeStyle=hexAlpha(col,0.7);ctx.lineWidth=1.5;ctx.stroke();}stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,outcome:e.outcome_type,type:e.type});});
+  S.canvasEvents.set(c,stored);
+  const wonCount=evts.filter(e=>e.outcome_type==='Successful').length;
+  titleEl.textContent='Defensive Actions';
+  // Draw compact legend ON canvas top-left corner (removes HTML legend entirely)
+  const items=Object.entries(DEF_COLORS).filter(([tp])=>counts[tp]);
+  if(items.length){
+    ctx.save();
+    const fs=9,lineH=13,padX=8,padY=5;
+    ctx.font='bold '+fs+'px Inter,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+    const rows=[...items.map(([tp])=>tp+' ('+counts[tp]+')'),'Won: '+pct(wonCount,evts.length)];
+    const maxW=Math.max(...rows.map(r=>ctx.measureText(r).width));
+    const boxW=maxW+padX*2+12,boxH=rows.length*lineH+padY*2;
+    const bx=PM+6,by=PM+6;
+    ctx.fillStyle='rgba(240,234,214,0.92)';drawPill(ctx,bx,by,boxW,boxH,5);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=0.8;drawPill(ctx,bx,by,boxW,boxH,5);ctx.stroke();
+    items.forEach(([tp,col],i)=>{const y=by+padY+i*lineH+lineH/2;ctx.fillStyle=col;ctx.beginPath();ctx.arc(bx+padX+3,y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#333';ctx.fillText(tp+' ('+counts[tp]+')',bx+padX+10,y);});
+    const yw=by+padY+items.length*lineH+lineH/2;ctx.fillStyle='#444';ctx.fillText('Won: '+pct(wonCount,evts.length),bx+padX+3,yw);
+    ctx.restore();
+  }
+  legendEl.innerHTML='';
+}
 
 function renderPressure(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const gw=60,gh=96,sigma=5;const grid=Array.from({length:gh},()=>new Float32Array(gw));evts.forEach(e=>{if(e.x==null)return;const gi=Math.min(gw-1,Math.max(0,Math.floor((1-e.y/100)*gw)));const gj=Math.min(gh-1,Math.max(0,Math.floor((1-e.x/100)*gh)));grid[gj][gi]++;});const blur=Array.from({length:gh},()=>new Float32Array(gw));for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){let s=0,w=0;for(let dj=-sigma*2;dj<=sigma*2;dj++)for(let di=-sigma*2;di<=sigma*2;di++){const nj=j+dj,ni=i+di;if(nj<0||nj>=gh||ni<0||ni>=gw)continue;const g=Math.exp(-(dj*dj+di*di)/(2*sigma*sigma));s+=grid[nj][ni]*g;w+=g;}blur[j][i]=s/w;}let max=0,peakJ=0,peakI=0;blur.forEach((r,j)=>r.forEach((v,i)=>{if(v>max){max=v;peakJ=j;peakI=i;}}));if(!max)max=1;const pw=c.width-2*PM,ph=c.height-2*PM;const cw=pw/gw,ch=ph/gh;for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const v=blur[j][i]/max;if(v<0.06)continue;ctx.fillStyle=pressureColor(v,0.6*v);ctx.fillRect(PM+i*cw,PM+j*ch,cw+1,ch+1);}// redraw pitch lines on top
   ctx.strokeStyle='rgba(136,136,136,0.8)';ctx.lineWidth=1.5;const m=PM;ctx.strokeRect(m,m,pw,ph);ctx.beginPath();ctx.moveTo(m,m+ph/2);ctx.lineTo(m+pw,m+ph/2);ctx.stroke();const paW=pw*0.44,paH=ph*0.17,paX=(c.width-paW)/2;ctx.strokeRect(paX,m,paW,paH);ctx.strokeRect(paX,m+ph-paH,paW,paH);
@@ -800,9 +824,8 @@ const CONCEPT_LEGENDS={
 };
 
 function positionDlMenu(btn,menu){
-  // Render first so offsetWidth/Height are measurable
-  menu.style.left='-9999px';menu.style.top='-9999px';menu.style.display='flex';
-  // Force layout
+  menu.style.position='fixed';menu.style.left='-9999px';menu.style.top='-9999px';menu.style.display='flex';
+  document.body.appendChild(menu);
   const mw=menu.offsetWidth||140;const mh=menu.offsetHeight||120;
   const rect=btn.getBoundingClientRect();
   let top=rect.bottom+4;
@@ -812,7 +835,8 @@ function positionDlMenu(btn,menu){
   menu.style.top=top+'px';
   menu.style.left=left+'px';
 }
-function toggleDlWrap(wrap,btn,menu){const wasOpen=wrap.classList.contains('open');document.querySelectorAll('.dl-wrap.open').forEach(w=>{w.classList.remove('open');const m=w.querySelector('.dl-menu');if(m)m.style.display='none';});if(!wasOpen){wrap.classList.add('open');positionDlMenu(btn,menu);}}
+function closeAllDlMenus(){document.querySelectorAll('.dl-wrap.open').forEach(w=>w.classList.remove('open'));document.querySelectorAll('.dl-menu').forEach(m=>{m.style.display='none';});}
+function toggleDlWrap(wrap,btn,menu){const wasOpen=wrap.classList.contains('open');closeAllDlMenus();if(!wasOpen){wrap.classList.add('open');positionDlMenu(btn,menu);}}
 function buildPanel(area,viz,sz,teamOverride){
   const panel=document.createElement('div');panel.className='panel';
   const head=document.createElement('div');head.className='panel-head';
@@ -1650,7 +1674,7 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=downloadAllPDF;const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))document.querySelectorAll('.dl-wrap.open').forEach(w=>{w.classList.remove('open');const m=w.querySelector('.dl-menu');if(m)m.style.display='none';});});await loadMatches();}
+async function init(){initThemeToggle();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=downloadAllPDF;const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();}
 init();
 </script>
 </body>
