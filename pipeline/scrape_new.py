@@ -5,11 +5,17 @@ Usage:
 """
 from __future__ import annotations
 
-import pathlib
-import shutil
-import sys
-import time
-from collections import defaultdict
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+import pathlib  # noqa: E402
+import shutil  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+from collections import defaultdict  # noqa: E402
 
 # Copy bundled league_dict.json to soccerdata config dir so custom leagues are recognised
 _src = pathlib.Path(__file__).parent / "league_dict.json"
@@ -19,10 +25,6 @@ if _src.exists():
     shutil.copy(_src, _dst)
 
 import pandas as pd  # noqa: E402
-from dotenv import load_dotenv  # noqa: E402
-
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
 
 # Reuse helpers from the main pipeline script
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
