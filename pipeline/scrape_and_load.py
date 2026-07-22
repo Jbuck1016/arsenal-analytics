@@ -37,8 +37,10 @@ def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
-def get_scraper(league: str, season: str) -> sd.WhoScored:
-    return sd.WhoScored(leagues=league, seasons=[season], headless=True)
+def get_scraper(league: str, season: str, headless: bool = False) -> sd.WhoScored:
+    # headless defaults to False: WhoScored's Incapsula anti-bot tends to crash
+    # the undetected-chromedriver session in headless mode.
+    return sd.WhoScored(leagues=league, seasons=[season], headless=headless)
 
 
 def _int_or_none(v: Any) -> int | None:
@@ -291,6 +293,7 @@ def main() -> int:
     p.add_argument("--team", type=str, default="Arsenal", help="team name to filter (default: Arsenal)")
     p.add_argument("--match-id", type=str, help="scrape a single WhoScored match id")
     p.add_argument("--list", action="store_true", help="list team schedule and exit")
+    p.add_argument("--headless", action="store_true", help="run browser headless (default: headful, which is needed to get past WhoScored's anti-bot)")
     args = p.parse_args()
 
     league = args.league
@@ -298,7 +301,7 @@ def main() -> int:
     team = args.team
 
     sb = get_supabase()
-    ws = get_scraper(league, season)
+    ws = get_scraper(league, season, headless=args.headless)
 
     print(f"Reading schedule for {league} {season}...")
     team_sched = get_team_schedule(ws, team)
