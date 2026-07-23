@@ -156,6 +156,7 @@ tr:hover td{background:var(--surface)}
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
     <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
+    <a class="lnk" href="teams.html">Teams &rarr;</a>
     <a class="lnk" href="index.html">&larr; Match Dashboard</a>
     <button class="lnk" onclick="toggleDark()">Theme</button>
   </div>
@@ -185,9 +186,10 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const MIN90=6;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
-const TABS=['Player','Scatter','Scout','Compare','Glossary'];
+const TABS=['Player','Rank','Scatter','Scout','Compare','Glossary'];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
+let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
 let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90',hi:[]};
 let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[]};
 let CMP={a:null,b:null,pool:'W'};
@@ -251,6 +253,7 @@ function setTab(t){
   TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t!=='Player');
   if(t==='Player'){ if(SEL){pick(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
+  else if(t==='Rank')renderRank();
   else if(t==='Scatter')renderScatter();
   else if(t==='Scout')renderScout();
   else if(t==='Compare')renderCompare();
@@ -681,6 +684,69 @@ function renderGlossary(){
     h+='</tbody></table></div>';
   });
   document.getElementById('main').innerHTML=h;
+}
+
+/* ---------- RANK / LEADERBOARD ---------- */
+function rankCtrls(){
+  return '<div class="ctrls"><div class="crow">'+
+    '<div class="cfield" style="min-width:250px"><span class="clbl">Rank players by</span>'+
+      '<select class="sel" onchange="RK.metric=this.value;renderRank()">'+metricOptions(RK.metric)+'</select></div>'+
+    '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="RK.pool=this.value;renderRank()">'+
+      '<option value="">All roles</option>'+
+      POOLS.map(function(p){return '<option value="'+p+'"'+(RK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+
+      '</select></div>'+
+    '<div class="cfield" style="min-width:130px"><span class="clbl">Show</span><select class="sel" onchange="RK.n=+this.value;renderRank()">'+
+      [10,25,50,100].map(function(n){return '<option value="'+n+'"'+(RK.n===n?' selected':'')+'>Top '+n+'</option>'}).join('')+
+      '</select></div>'+
+    '<div class="cfield" style="min-width:130px"><span class="clbl">Order</span><select class="sel" onchange="RK.dir=+this.value;renderRank()">'+
+      '<option value="-1"'+(RK.dir===-1?' selected':'')+'>Highest first</option>'+
+      '<option value="1"'+(RK.dir===1?' selected':'')+'>Lowest first</option></select></div>'+
+    '</div><div class="foot" style="margin-top:8px">Ranks by <b>percentile within role</b>, so players from different roles are comparable. '+
+    'Filter to one role to rank on the raw value within that pool instead. Click a player to open their profile.</div></div>';
+}
+async function renderRank(){
+  const main=document.getElementById('main');
+  main.innerHTML=rankCtrls()+'<div class="spin"></div>';
+  try{
+    const q={metric:'eq.'+RK.metric,select:'player_id,pool,value,pct'};
+    if(RK.pool)q.pool='eq.'+RK.pool;
+    const rows=await sbAll('mv_player_percentiles',q);
+    const d=defOf(RK.metric)||{};
+    const list=rows.map(function(r){
+      const p=playerOf(r.player_id)||{};
+      return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
+    }).filter(function(r){return r.name})
+      .sort(function(a,b){
+        if(a.pct!==b.pct)return (a.pct-b.pct)*RK.dir;
+        return (a.value-b.value)*RK.dir;
+      }).slice(0,RK.n);
+    if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players</div>';return}
+    const mxv=Math.max.apply(null,list.map(function(r){return Math.abs(r.value)}))||1;
+    let h='<div class="sect"><div class="sect-h"><span>'+esc(d.label||RK.metric)+
+      (RK.pool?' \u00B7 '+POOL_NAME[RK.pool]:' \u00B7 all roles')+'</span>'+
+      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+list.length+' shown</span></div>'+
+      '<div style="max-height:calc(100vh - 330px);overflow:auto"><table><thead><tr>'+
+      '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
+      '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
+      '<th class="num" style="cursor:default">'+esc(d.label||'Value')+'</th>'+
+      '<th style="cursor:default;width:200px">Relative</th>'+
+      '<th class="num" style="cursor:default">Pct</th></tr></thead><tbody>';
+    list.forEach(function(r,i){
+      const t=tier(r.pct),w=Math.max(2,Math.abs(r.value)/mxv*100);
+      h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
+        '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
+        '<td style="color:var(--text2)">'+esc(r.team)+'</td>'+
+        '<td><span class="badge">'+esc(r.pool)+'</span></td>'+
+        '<td class="num">'+r.n90.toFixed(1)+'</td>'+
+        '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
+        '<td><div class="bar"><div class="bar-f" style="width:'+w+'%;background:'+t.c+'"></div></div></td>'+
+        '<td class="num" style="color:'+t.c+';font-weight:700">'+r.pct+'</td></tr>';
+    });
+    h+='</tbody></table></div><div class="foot">'+esc(d.definition||'')+
+       (d.higher_is_better===false?' <b>Lower is better</b>, so the percentile is inverted.':'')+'</div>'+
+       legendHtml()+'</div>';
+    main.innerHTML=rankCtrls()+h;
+  }catch(e){main.innerHTML=rankCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
 /* ---------- PITCH VISUALISATIONS ---------- */

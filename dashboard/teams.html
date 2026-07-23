@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Profiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--accent:#C39E6D;--accent-dim:rgba(195,158,109,.10);--accent-glow:rgba(195,158,109,.22);
+ --bg:#f5f4f1;--bg2:#fff;--bg3:#fafaf8;--surface:rgba(0,0,0,.025);--surface2:rgba(0,0,0,.05);
+ --border:#e8e5e0;--border2:#d5d2cc;--text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
+ --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.07)}
+html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
+ --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
+ --border:#272b35;--border2:#3a3f4b;--text:#f2f4f9;--text2:#9aa4bd;--text3:#69738c;
+ --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+.hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;box-shadow:var(--shadow);z-index:10}
+.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#12141a}
+.hdr-title{font:800 14px/1 'Inter'}
+.hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
+.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.lnk:hover{background:var(--surface2);color:var(--text)}
+.lnk.acc{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
+.wrap{flex:1;display:flex;overflow:hidden}
+.side{width:250px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.side.hide{display:none}
+.plist{flex:1;overflow-y:auto;padding:6px}
+.pitem{padding:9px 11px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.pitem:hover{background:var(--surface)}
+.pitem.on{background:var(--accent-dim);box-shadow:inset 2px 0 0 var(--accent)}
+.pitem-nm{font:600 12px/1.2 'Inter'}
+.pitem-meta{font:500 10px/1 'Inter';color:var(--text3)}
+.main{flex:1;overflow-y:auto;padding:16px 20px}
+.empty{height:100%;display:grid;place-items:center;color:var(--text3);font:500 13px/1 'Inter'}
+.tcard{background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:10px;padding:15px 18px;margin-bottom:14px;display:flex;gap:22px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.tname{font:800 22px/1.15 'Inter'}
+.tmeta{font:500 11px/1.5 'Inter';color:var(--text2);margin-top:5px}
+.kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;min-width:120px;flex:1;box-shadow:var(--shadow)}
+.kpi-l{font:700 9px/1 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+.kpi-v{font:800 19px/1 'Inter';margin:7px 0 5px}
+.kpi-s{font:500 9px/1.3 'Inter';color:var(--text3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:12px}
+.sect{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+.sect-h{font:700 11px/1 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:170px 66px 1fr 30px;align-items:center;gap:9px;padding:4px 0}
+.row-lbl{font:500 11px/1.3 'Inter';color:var(--text2);cursor:help;border-bottom:1px dotted var(--border2);justify-self:start}
+.row-val{font:600 11px/1 'Inter';text-align:right}
+.bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.bar-f{height:100%;border-radius:5px}
+.row-pct{font:700 11px/1 'Inter';text-align:right}
+table{width:100%;border-collapse:collapse;font:500 11px/1.4 'Inter'}
+th{text-align:left;font:700 9px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:8px 9px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);cursor:pointer;white-space:nowrap}
+th:hover{color:var(--text)}
+td{padding:7px 9px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--surface)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
+.lg{display:flex;align-items:center;gap:5px;font:500 10px/1 'Inter';color:var(--text3)}
+.dot{width:8px;height:8px;border-radius:50%}
+.foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:50;display:none;color:var(--text)}
+.wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-logo">T</div>
+  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hdr-right">
+    <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
+    <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
+    <a class="lnk" href="players.html">Players &rarr;</a>
+    <a class="lnk" href="index.html">&larr; Match Dashboard</a>
+    <button class="lnk" onclick="document.documentElement.classList.toggle('dark')">Theme</button>
+  </div>
+</div>
+<div class="wrap">
+  <div class="side" id="side"><div class="plist" id="tlist"></div></div>
+  <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+const HD={'apikey':AK,'Authorization':'Bearer '+AK};
+const TABS=['Profile','League Map','Matches','Squad'];
+let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
+let LM={x:'ppda',y:'field_tilt'};
+
+async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
+  while(true){const u=new URL(SB+'/rest/v1/'+t);
+    Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
+    const r=await fetch(u,{headers:Object.assign({},HD,{'Range':off+'-'+(off+PG-1),'Range-Unit':'items'})});
+    if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
+    if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
+  return all;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+function tier(p){if(p==null)return{c:'var(--text3)'};if(p>=80)return{c:'var(--elite)'};
+  if(p>=60)return{c:'var(--above)'};if(p>=40)return{c:'var(--avg)'};if(p>=20)return{c:'var(--below)'};return{c:'var(--poor)'}}
+function fmt(v,u){if(v==null)return'\u2014';return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+(u==='%'?'%':(u==='m'?' m':''))}
+function tdefOf(k){for(var i=0;i<TDEFS.length;i++)if(TDEFS[i].key===k)return TDEFS[i];return null}
+function teamOf(n){for(var i=0;i<TEAMS.length;i++)if(TEAMS[i].team===n)return TEAMS[i];return null}
+
+async function init(){
+  try{
+    const r=await Promise.all([
+      sbAll('mv_team_season',{select:'*',order:'team.asc'}),
+      sbAll('team_metric_defs',{select:'*',order:'grp_order.asc,sort_order.asc'}),
+      sbAll('mv_team_percentiles',{select:'team,metric,value,pct'})
+    ]);
+    TEAMS=r[0];TDEFS=r[1];
+    PCT={};r[2].forEach(function(x){if(!PCT[x.team])PCT[x.team]={};PCT[x.team][x.metric]=x});
+    document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 '+TEAMS.length+' teams \u00B7 ranked across the league';
+    renderTabs();renderList();
+    SEL=teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team;
+    pick(SEL);
+  }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
+}
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(function(t){
+  return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('')}
+function setTab(t){TAB=t;renderTabs();
+  document.getElementById('side').classList.toggle('hide',t==='League Map');
+  draw();}
+function renderList(){
+  document.getElementById('tlist').innerHTML=TEAMS.slice().sort(function(a,b){
+    return b.field_tilt-a.field_tilt}).map(function(t){
+    return '<div class="pitem'+(SEL===t.team?' on':'')+'" onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
+      '<span class="pitem-nm">'+esc(t.team)+'</span>'+
+      '<span class="pitem-meta">'+t.matches+'</span></div>'}).join('');
+}
+function pick(t){SEL=t;renderList();draw()}
+
+async function draw(){
+  const main=document.getElementById('main');
+  if(TAB==='League Map')return renderLeagueMap();
+  if(!SEL)return;
+  const t=teamOf(SEL);if(!t)return;
+  if(TAB==='Profile')return renderProfile(t);
+  main.innerHTML='<div class="spin"></div>';
+  if(TAB==='Matches')return renderMatches(t);
+  if(TAB==='Squad')return renderSquad(t);
+}
+function teamHead(t){
+  const p=PCT[t.team]||{};
+  const gd=(t.goals_pg-t.goals_against_pg);
+  return '<div class="tcard"><div style="flex:1;min-width:230px">'+
+    '<div class="tname">'+esc(t.team)+'</div>'+
+    '<div class="tmeta">MLS 2026 \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
+    (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
+    '<div class="kpis">'+
+    kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct)+
+    kpi('Field tilt',(+t.field_tilt).toFixed(1)+'%',p.field_tilt)+
+    kpi('PPDA',(+t.ppda).toFixed(2),p.ppda,'lower = presses harder')+
+    kpi('Line height',(+t.def_height).toFixed(1),p.def_height)+
+    kpi('Directness',(+t.directness).toFixed(2)+' m',p.directness)+
+    kpi('Shots',(+t.shots_pg).toFixed(1),p.shots_pg)+
+    '</div>';
+}
+function kpi(l,v,p,sub){
+  const c=p?tier(+p.pct).c:'var(--text)';
+  return '<div class="kpi"><div class="kpi-l">'+l+'</div><div class="kpi-v" style="color:'+c+'">'+v+'</div>'+
+    '<div class="kpi-s">'+(p?('league pct '+p.pct):(sub||''))+'</div></div>';
+}
+function renderProfile(t){
+  const p=PCT[t.team]||{};
+  const groups=[];TDEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
+  let h=teamHead(t)+'<div class="grid">';
+  groups.forEach(function(g){
+    const ms=TDEFS.filter(function(d){return d.grp===g});
+    h+='<div class="sect"><div class="sect-h"><span>'+esc(g)+'</span></div>';
+    ms.forEach(function(d){
+      const r=p[d.key],pc=r?+r.pct:null,tc=tier(pc);
+      h+='<div class="row"><div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
+         '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
+         '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
+         '<div class="row-pct" style="color:'+tc.c+'">'+(pc==null?'':pc)+'</div></div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>'+legendHtml()+'<div class="foot">Percentiles are across all 30 MLS teams this season. '+
+     'PPDA and the conceded metrics are inverted so a high percentile always means better.</div>';
+  document.getElementById('main').innerHTML=h;
+}
+function metricOpts(sel){let o='',g='';
+  TDEFS.forEach(function(d){if(d.grp!==g){if(g)o+='</optgroup>';o+='<optgroup label="'+esc(d.grp)+'">';g=d.grp}
+    o+='<option value="'+d.key+'"'+(sel===d.key?' selected':'')+'>'+esc(d.label)+'</option>'});
+  return o+'</optgroup>'}
+function renderLeagueMap(){
+  const dx=tdefOf(LM.x)||{},dy=tdefOf(LM.y)||{};
+  const pts=TEAMS.map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
+  const W=1080,H=520,MT=20,MR=30,MB=48,ML=64;
+  const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
+  const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+  const px=(x1-x0)*.1||1,py=(y1-y0)*.1||1;
+  const xmin=x0-px,xmax=x1+px,ymin=y0-py,ymax=y1+py;
+  function SX(v){return ML+((v-xmin)/(xmax-xmin))*(W-ML-MR)}
+  function SY(v){return H-MB-((v-ymin)/(ymax-ymin))*(H-MT-MB)}
+  function med(a){const s=a.slice().sort(function(m,n){return m-n});return s[Math.floor(s.length/2)]}
+  const mx=med(xs),my=med(ys);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 230px);display:block">';
+  s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
+  s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
+  pts.forEach(function(p){
+    const on=p.team===SEL,cx=SX(p.x),cy=SY(p.y),right=cx<W-170;
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(on?8:5.5)+'" fill="'+(on?'var(--accent)':'var(--above)')+
+       '" fill-opacity="'+(on?1:.55)+'"/>';
+    s+='<text x="'+(right?cx+11:cx-11)+'" y="'+(cy+4)+'" fill="'+(on?'var(--accent)':'var(--text3)')+
+       '" font-size="'+(on?12:10)+'" font-weight="'+(on?800:500)+'" text-anchor="'+(right?'start':'end')+
+       '" font-family="Inter">'+esc(p.team)+'</text>';
+  });
+  s+='<text x="'+(W/2)+'" y="'+(H-8)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
+  s+='<text transform="translate(14,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
+  s+='</svg>';
+  document.getElementById('main').innerHTML=
+    '<div class="sect" style="margin-bottom:12px"><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
+    '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">X axis</span>'+
+      '<select class="lnk" style="padding:8px 10px;width:100%" onchange="LM.x=this.value;renderLeagueMap()">'+metricOpts(LM.x)+'</select></div>'+
+    '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">Y axis</span>'+
+      '<select class="lnk" style="padding:8px 10px;width:100%" onchange="LM.y=this.value;renderLeagueMap()">'+metricOpts(LM.y)+'</select></div>'+
+    '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">Highlight</span>'+
+      '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderLeagueMap()">'+
+      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(t.team)+'</option>'}).join('')+
+      '</select></div></div></div>'+
+    '<div class="sect">'+s+'<div class="foot">All 30 MLS teams. Dashed lines are league medians, so each quadrant is a style archetype. '+
+    'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
+}
+async function renderMatches(t){
+  try{
+    const rows=await sbAll('mv_team_match',{team:'eq.'+encodeURIComponent(t.team).replace(/%20/g,' '),select:'*'});
+    const gids=rows.map(function(r){return r.game_id});
+    const ms=await sbAll('matches',{game_id:'in.('+gids.join(',')+')',select:'game_id,date,home_team,away_team,home_score,away_score'});
+    const mm={};ms.forEach(function(m){mm[m.game_id]=m});
+    const list=rows.map(function(r){
+      const m=mm[r.game_id]||{};const home=m.home_team===t.team;
+      const gf=home?m.home_score:m.away_score,ga=home?m.away_score:m.home_score;
+      return Object.assign({},r,{date:m.date,opp:home?m.away_team:m.home_team,ha:home?'H':'A',gf:gf,ga:ga,
+        res:gf>ga?'W':(gf<ga?'L':'D')});
+    }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
+    const rc={W:'var(--elite)',D:'var(--avg)',L:'var(--poor)'};
+    let h=teamHead(t)+'<div class="sect"><div style="max-height:calc(100vh - 330px);overflow:auto"><table><thead><tr>'+
+      '<th style="cursor:default">Date</th><th style="cursor:default">Opponent</th><th style="cursor:default"></th>'+
+      '<th class="num" style="cursor:default">Score</th><th class="num" style="cursor:default">Poss</th>'+
+      '<th class="num" style="cursor:default">Tilt</th><th class="num" style="cursor:default">PPDA</th>'+
+      '<th class="num" style="cursor:default">Shots</th><th class="num" style="cursor:default">Conceded</th></tr></thead><tbody>';
+    list.forEach(function(r){
+      h+='<tr><td style="color:var(--text2)">'+esc((r.date||'').slice(0,10))+'</td>'+
+        '<td style="font-weight:700">'+esc(r.opp||'')+'</td>'+
+        '<td><span class="wl" style="background:'+rc[r.res]+'">'+r.res+'</span> <span style="color:var(--text3)">'+r.ha+'</span></td>'+
+        '<td class="num">'+r.gf+'\u2013'+r.ga+'</td>'+
+        '<td class="num">'+(+r.possession_pct).toFixed(1)+'%</td>'+
+        '<td class="num">'+(+r.field_tilt).toFixed(1)+'%</td>'+
+        '<td class="num">'+(r.ppda==null?'\u2014':(+r.ppda).toFixed(2))+'</td>'+
+        '<td class="num">'+r.shots+'</td><td class="num">'+r.opp_shots+'</td></tr>';
+    });
+    h+='</tbody></table></div><div class="foot">Match-by-match style. Open any of these in the '+
+       '<a href="index.html" style="color:var(--accent)">match dashboard</a> for the full event maps.</div></div>';
+    document.getElementById('main').innerHTML=h;
+  }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+async function renderSquad(t){
+  try{
+    const r=await Promise.all([
+      sbAll('mv_player_season',{team:'eq.'+t.team,select:'player_id,player_name,nineties,minutes,starts'}),
+      sbAll('mv_player_role',{select:'player_id,pool,modal_position'}),
+      sbAll('mv_player_dna',{select:'player_id,completeness,impact,top_pillar'})
+    ]);
+    const rm={};r[1].forEach(function(x){rm[x.player_id]=x});
+    const dm={};r[2].forEach(function(x){dm[x.player_id]=x});
+    const rows=r[0].map(function(p){return Object.assign({},p,rm[p.player_id]||{},dm[p.player_id]||{})})
+      .sort(function(a,b){return b.nineties-a.nineties});
+    let h=teamHead(t)+'<div class="sect"><div style="max-height:calc(100vh - 330px);overflow:auto"><table><thead><tr>'+
+      '<th style="cursor:default">Player</th><th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
+      '<th class="num" style="cursor:default">Starts</th><th class="num" style="cursor:default">Completeness</th>'+
+      '<th class="num" style="cursor:default">Impact</th><th style="cursor:default">Strongest</th></tr></thead><tbody>';
+    rows.forEach(function(p){
+      h+='<tr><td><a href="players.html" style="font-weight:700;color:var(--text);text-decoration:none">'+esc(p.player_name)+'</a></td>'+
+        '<td style="color:var(--text2)">'+esc(p.pool||'\u2014')+'</td>'+
+        '<td class="num">'+(+p.nineties).toFixed(1)+'</td><td class="num">'+p.starts+'</td>'+
+        '<td class="num" style="color:'+tier(+p.completeness).c+';font-weight:700">'+(p.completeness==null?'\u2014':p.completeness)+'</td>'+
+        '<td class="num" style="color:'+tier(+p.impact).c+';font-weight:700">'+(p.impact==null?'\u2014':p.impact)+'</td>'+
+        '<td style="color:var(--text2)">'+esc(p.top_pillar||'\u2014')+'</td></tr>';
+    });
+    h+='</tbody></table></div>'+legendHtml()+
+       '<div class="foot">Completeness and Impact are ranked within each player\u2019s role across the league, not within this squad.</div></div>';
+    document.getElementById('main').innerHTML=h;
+  }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
+  ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
+  .map(function(a){return '<div class="lg"><div class="dot" style="background:'+a[0]+'"></div>'+a[1]+'</div>'}).join('')+'</div>'}
+async function snap(){const el=document.getElementById('main');
+  return await html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,
+    windowWidth:el.scrollWidth,height:el.scrollHeight,windowHeight:el.scrollHeight})}
+async function exportPNG(){try{const c=await snap();const a=document.createElement('a');
+  a.download=(SEL||'team').replace(/[^\w]+/g,'_')+'.png';a.href=c.toDataURL('image/png');a.click()}catch(e){alert(e.message)}}
+async function exportPDF(){try{const c=await snap();const jsPDF=window.jspdf.jsPDF;
+  const pdf=new jsPDF({orientation:c.width>=c.height?'l':'p',unit:'pt',format:'a4'});
+  const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+  const r=Math.min(pw/c.width,ph/c.height);
+  pdf.addImage(c.toDataURL('image/png'),'PNG',(pw-c.width*r)/2,20,c.width*r,c.height*r);
+  pdf.save((SEL||'team').replace(/[^\w]+/g,'_')+'.pdf')}catch(e){alert(e.message)}}
+init();
+</script>
+</body>
+</html>
