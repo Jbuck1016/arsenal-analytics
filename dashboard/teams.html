@@ -73,6 +73,16 @@ tr:hover td{background:var(--surface)}
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
 .tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:50;display:none;color:var(--text)}
+.viz-sub{font:500 10px/1.5 'Inter';color:var(--text3);margin:-2px 0 8px}
+.viz-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font:500 10px/1 'Inter';color:var(--text3)}
+.viz-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.viz-leg b{font-weight:700;color:var(--text2)}
+.vz-tog{display:flex;gap:4px;margin:0 0 10px;background:var(--surface);border-radius:7px;padding:3px;flex-wrap:wrap}
+.vzb{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter';padding:6px 10px;border-radius:5px;cursor:pointer}
+.vzb:hover{color:var(--text)}
+.vzb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.split2{display:grid;grid-template-columns:1.05fr .95fr;gap:12px;align-items:start}
+@media(max-width:1150px){.split2{grid-template-columns:1fr}}
 .wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
 </style>
 </head>
@@ -98,9 +108,12 @@ tr:hover td{background:var(--surface)}
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const TABS=['Profile','League Map','Matches','Squad'];
+const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
+let MP={kind:'touches'};
+let RKT={metric:'ppda'};
+let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null;
 
 async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
   while(true){const u=new URL(SB+'/rest/v1/'+t);
@@ -135,7 +148,7 @@ async function init(){
 function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(function(t){
   return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('')}
 function setTab(t){TAB=t;renderTabs();
-  document.getElementById('side').classList.toggle('hide',t==='League Map');
+  document.getElementById('side').classList.toggle('hide',t==='League Map'||t==='Rankings');
   draw();}
 function renderList(){
   document.getElementById('tlist').innerHTML=TEAMS.slice().sort(function(a,b){
@@ -151,8 +164,10 @@ async function draw(){
   if(TAB==='League Map')return renderLeagueMap();
   if(!SEL)return;
   const t=teamOf(SEL);if(!t)return;
+  if(TAB==='Rankings')return renderRankings();
   if(TAB==='Profile')return renderProfile(t);
   main.innerHTML='<div class="spin"></div>';
+  if(TAB==='Maps')return renderMaps(t);
   if(TAB==='Matches')return renderMatches(t);
   if(TAB==='Squad')return renderSquad(t);
 }
@@ -301,6 +316,151 @@ async function renderSquad(t){
     document.getElementById('main').innerHTML=h;
   }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
+
+/* ---------- PITCH + TEAM MAPS ---------- */
+function PX(x){return x*1.05}
+function PY(y){return y*0.68}
+function pitchMarks(){
+  const st='fill="none" stroke="var(--border2)" stroke-width="0.32"';
+  return '<rect x="0" y="0" width="105" height="68" '+st+'/>'+
+    '<line x1="52.5" y1="0" x2="52.5" y2="68" stroke="var(--border2)" stroke-width="0.32"/>'+
+    '<circle cx="52.5" cy="34" r="9.15" '+st+'/>'+
+    '<circle cx="52.5" cy="34" r="0.45" fill="var(--border2)"/>'+
+    '<rect x="0" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+    '<rect x="88.5" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+    '<rect x="0" y="24.84" width="5.5" height="18.32" '+st+'/>'+
+    '<rect x="99.5" y="24.84" width="5.5" height="18.32" '+st+'/>'+
+    '<rect x="-1.3" y="30.34" width="1.3" height="7.32" '+st+'/>'+
+    '<rect x="105" y="30.34" width="1.3" height="7.32" '+st+'/>';
+}
+function pitchWrap(title,sub,inner,legend,ctrl){
+  return '<div class="sect"><div class="sect-h"><span>'+esc(title)+'</span></div>'+(ctrl||'')+
+    (sub?'<div class="viz-sub">'+sub+'</div>':'')+
+    '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
+    'style="width:100%;height:auto;max-height:calc(100vh - 340px);display:block">'+pitchMarks()+inner+'</svg>'+
+    (legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
+}
+const MAPS=[
+  {k:'touches',l:'Touches',f:'touches',src:'z',d:'Where the team has the ball. The clearest picture of how high and how wide they play.'},
+  {k:'passes',l:'Completed passes',f:'passes',src:'z',d:'Origin of every completed pass.'},
+  {k:'prog',l:'Progressive passes',f:'prog_passes',src:'z',d:'Origin of passes that meaningfully advance the ball.'},
+  {k:'def',l:'Defensive actions',f:'def_actions',src:'z',d:'Where they win the ball back. Mass high up means an aggressive press.'},
+  {k:'carries',l:'Carries',f:'carries',src:'c',d:'Where carries begin.'},
+  {k:'progcarries',l:'Progressive carries',f:'prog_carries',src:'c',d:'Where ball-carrying runs begin.'},
+  {k:'shots',l:'Shot map (for)',f:null,src:'s',d:'Every shot taken. Circle size is chance quality.'},
+  {k:'shotsag',l:'Shots conceded',f:null,src:'sa',d:'Every shot faced. Circle size is chance quality.'}
+];
+function mapCtrl(){
+  return '<div class="vz-tog">'+MAPS.map(function(m){
+    return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
+  }).join('')+'</div>';
+}
+async function loadZones(team){
+  if(ZTEAM===team&&ZONES)return;
+  const r=await Promise.all([
+    sbAll('mv_team_zones',{team:'eq.'+team,select:'zx,zy,touches,passes,prog_passes,shots,def_actions'}),
+    sbAll('mv_team_carry_zones',{team:'eq.'+team,select:'zx,zy,carries,prog_carries,carries_into_box'}),
+    sbAll('v_team_shots',{select:'team,x,y,xg,is_goal,is_open_play,game_id'})
+  ]);
+  ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
+}
+function heat(rows,field){
+  const mx=Math.max.apply(null,rows.map(function(r){return +r[field]||0}))||1;
+  const cw=105/12,ch=68/8;
+  let s='';
+  rows.forEach(function(r){
+    const v=+r[field]||0;if(!v)return;
+    const t=v/mx;
+    s+='<rect x="'+(r.zx*cw)+'" y="'+(r.zy*ch)+'" width="'+cw+'" height="'+ch+
+       '" fill="var(--accent)" fill-opacity="'+(0.06+t*0.78).toFixed(3)+'"/>';
+    if(t>0.35)s+='<text x="'+(r.zx*cw+cw/2)+'" y="'+(r.zy*ch+ch/2+1.4)+'" fill="var(--bg)" font-size="2.7" '+
+       'font-weight="800" text-anchor="middle" font-family="Inter">'+v+'</text>';
+  });
+  return s;
+}
+async function renderMaps(t){
+  const main=document.getElementById('main');
+  main.innerHTML=teamHead(t)+'<div class="spin"></div>';
+  try{
+    await loadZones(t.team);
+    const m=MAPS.filter(function(x){return x.k===MP.kind})[0]||MAPS[0];
+    let inner='',leg='';
+    if(m.src==='z'||m.src==='c'){
+      const rows=(m.src==='z')?ZONES:CZONES;
+      inner=heat(rows,m.f);
+      const tot=rows.reduce(function(a,r){return a+(+r[m.f]||0)},0);
+      leg='<span><b>'+tot.toLocaleString()+'</b> total \u00B7 shading is relative to this team\u2019s busiest zone</span>';
+    } else {
+      const forTeam=(m.src==='s');
+      const gids={};
+      TSHOTS.forEach(function(x){if(x.team===t.team)gids[x.game_id]=1});
+      const sh=TSHOTS.filter(function(x){
+        return forTeam ? x.team===t.team : (gids[x.game_id]&&x.team!==t.team)});
+      let g=0,sx=0;
+      sh.forEach(function(a){
+        const xg=+(a.xg||0.04);sx+=xg;
+        const r=0.62+Math.sqrt(xg)*2.5;
+        const c=a.is_goal?'var(--accent)':(forTeam?'var(--elite)':'var(--poor)');
+        if(a.is_goal)g++;
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+
+               '" fill-opacity="'+(a.is_goal?0.95:0.42)+'" stroke="'+c+'" stroke-width="0.2" stroke-opacity="0.85"/>';
+      });
+      leg='<span><i style="background:var(--accent)"></i>Goals <b>'+g+'</b></span>'+
+          '<span><i style="background:'+(forTeam?'var(--elite)':'var(--poor)')+'"></i>Shots <b>'+sh.length+'</b></span>'+
+          '<span>xG <b>'+sx.toFixed(1)+'</b></span>';
+    }
+    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right.',inner,leg,mapCtrl());
+  }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+
+/* ---------- RANKINGS ---------- */
+function renderRankings(){
+  const d=tdefOf(RKT.metric)||{};
+  const rows=TEAMS.map(function(t){
+    const p=(PCT[t.team]||{})[RKT.metric];
+    return{team:t.team,value:+t[RKT.metric],pct:p?+p.pct:null};
+  }).filter(function(r){return !isNaN(r.value)});
+  rows.sort(function(a,b){return (b.pct==null?-1:b.pct)-(a.pct==null?-1:a.pct)});
+  const mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+  const W=1080,BH=26,MT=26,ML=190,H=MT+rows.length*BH+16;
+  let sv='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
+  rows.forEach(function(r,i){
+    const y=MT+i*BH,w=Math.max(2,Math.abs(r.value)/mx*(W-ML-90));
+    const c=tier(r.pct).c,on=r.team===SEL;
+    sv+='<text x="'+(ML-9)+'" y="'+(y+14)+'" fill="'+(on?'var(--accent)':'var(--text2)')+'" font-size="11" font-weight="'+(on?800:600)+
+        '" text-anchor="end" font-family="Inter">'+esc(r.team)+'</text>';
+    sv+='<rect x="'+ML+'" y="'+(y+4)+'" width="'+w+'" height="14" rx="3" fill="'+c+'" fill-opacity="'+(on?0.98:0.7)+'"/>';
+    sv+='<text x="'+(ML+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" font-family="Inter">'+
+        fmt(r.value,d.unit)+'</text>';
+    sv+='<text x="'+(ML-9-0)+'" y="'+(y+14)+'" opacity="0"></text>';
+  });
+  sv+='</svg>';
+  let tb='<div style="max-height:560px;overflow:auto"><table><thead><tr>'+
+    '<th style="cursor:default">#</th><th style="cursor:default">Team</th>'+
+    '<th class="num" style="cursor:default">'+esc(d.label||'Value')+'</th>'+
+    '<th class="num" style="cursor:default">League pct</th></tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    tb+='<tr'+(r.team===SEL?' style="background:var(--accent-dim)"':'')+'>'+
+      '<td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
+      '<td style="font-weight:700;cursor:pointer" onclick="SEL=\''+esc(r.team).replace(/'/g,"\\'")+
+      '\';TAB=\'Profile\';renderTabs();renderList();draw()">'+esc(r.team)+'</td>'+
+      '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
+      '<td class="num" style="color:'+tier(r.pct).c+';font-weight:700">'+(r.pct==null?'\u2014':r.pct)+'</td></tr>';
+  });
+  tb+='</tbody></table></div>';
+  document.getElementById('main').innerHTML=
+    '<div class="sect" style="margin-bottom:12px"><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
+    '<div style="display:flex;flex-direction:column;gap:5px;min-width:250px"><span class="kpi-l">Rank teams by</span>'+
+      '<select class="lnk" style="padding:8px 10px;width:100%" onchange="RKT.metric=this.value;renderRankings()">'+metricOpts(RKT.metric)+'</select></div>'+
+    '<div style="display:flex;flex-direction:column;gap:5px;min-width:220px"><span class="kpi-l">Highlight</span>'+
+      '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderRankings()">'+
+      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(t.team)+'</option>'}).join('')+
+      '</select></div></div>'+
+    '<div class="foot" style="margin-top:8px">Sorted best to worst, so inverted metrics like PPDA and goals conceded put the strongest team on top. '+
+    (d.definition?esc(d.definition):'')+'</div></div>'+
+    '<div class="split2"><div class="sect">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
+}
+
 function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
   ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
   .map(function(a){return '<div class="lg"><div class="dot" style="background:'+a[0]+'"></div>'+a[1]+'</div>'}).join('')+'</div>'}
