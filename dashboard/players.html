@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Player Fingerprints</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --accent:#C39E6D;--accent-dim:rgba(195,158,109,0.10);--accent-glow:rgba(195,158,109,0.22);
@@ -17,31 +19,33 @@
   --shadow:0 1px 3px rgba(0,0,0,0.07);
 }
 html.dark{
-  --bg:#0f1117;--bg2:#1a1d24;--bg3:#22252e;
-  --surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);
-  --border:#2a2d35;--border2:#3a3d45;
-  --text:#f0f2f8;--text2:#8a94b0;--text3:#5a6480;
-  --elite:#22c55e;--above:#4ade80;--avg:#eab308;--below:#f97316;--poor:#ef4444;
-  --shadow:0 1px 3px rgba(0,0,0,0.25);
+  --accent:#D8B384;--accent-dim:rgba(216,179,132,0.12);--accent-glow:rgba(216,179,132,0.28);
+  --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;
+  --surface:rgba(255,255,255,0.035);--surface2:rgba(255,255,255,0.07);
+  --border:#272b35;--border2:#3a3f4b;
+  --text:#f2f4f9;--text2:#9aa4bd;--text3:#69738c;
+  --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;
+  --shadow:0 1px 3px rgba(0,0,0,0.35);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
 
 .hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;box-shadow:var(--shadow);z-index:10}
-.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#fff}
+.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#12141a}
 .hdr-title{font:800 14px/1 'Inter'}
 .hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
 .tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;transition:.15s}
 .tab:hover{color:var(--text)}
-.tab.on{color:var(--text);background:var(--bg2);box-shadow:var(--shadow)}
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;transition:.15s}
+.lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;transition:.15s;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
+.lnk.acc{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
 
 .wrap{flex:1;display:flex;overflow:hidden}
-.side{width:290px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.side{width:284px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .side.hide{display:none}
 .side-top{padding:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
 .inp,.sel{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font:500 12px/1 'Inter';padding:8px 10px;border-radius:6px;outline:none}
@@ -54,31 +58,40 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .pitem-meta{font:500 10px/1.2 'Inter';color:var(--text3);margin-top:2px}
 .badge{font:700 9px/1 'Inter';padding:3px 6px;border-radius:4px;background:var(--surface2);color:var(--text2);flex-shrink:0}
 
-.main{flex:1;overflow-y:auto;padding:18px 22px}
+.main{flex:1;overflow-y:auto;padding:16px 20px}
 .empty{height:100%;display:grid;place-items:center;color:var(--text3);font:500 13px/1 'Inter'}
 
-.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:flex-start;border-left:4px solid var(--accent);margin-bottom:16px;flex-wrap:wrap}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:15px 18px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:flex-start;border-left:4px solid var(--accent);margin-bottom:14px;flex-wrap:wrap}
 .pcard-l{flex:1;min-width:240px}
 .pname{font:800 22px/1.15 'Inter'}
 .pmeta{font:500 11px/1.5 'Inter';color:var(--text2);margin-top:5px}
 .chips{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
 .chip{font:600 10px/1 'Inter';padding:5px 9px;border-radius:5px;background:var(--surface2);color:var(--text2)}
 .chip.acc{background:var(--accent-dim);color:var(--accent)}
-.chip.warn{background:rgba(249,115,22,.12);color:var(--below)}
+.chip.warn{background:rgba(251,146,60,.15);color:var(--below)}
 .pcard-r{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;min-width:190px}
 .pool-lbl{font:700 9px/1 'Inter';color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
 .pool-val{font:800 17px/1 'Inter';color:var(--accent);margin-top:6px}
 .pool-sub{font:500 10px/1.5 'Inter';color:var(--text3);margin-top:5px}
 
-.gtabs{display:flex;gap:3px;background:var(--surface);border-radius:8px;padding:3px;margin-bottom:14px;flex-wrap:wrap}
-.gtab{background:none;border:none;color:var(--text3);font:600 11px/1 'Inter';padding:7px 13px;border-radius:6px;cursor:pointer}
-.gtab:hover{color:var(--text)}
-.gtab.on{color:var(--text);background:var(--bg2);box-shadow:var(--shadow)}
+.dna{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.dcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;min-width:112px;flex:1;box-shadow:var(--shadow)}
+.dcard-l{font:700 9px/1 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--text3);display:flex;justify-content:space-between;gap:6px}
+.dcard-v{font:800 19px/1 'Inter';margin:7px 0 6px}
+.dcard-b{height:4px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.dcard-b span{display:block;height:100%;border-radius:3px}
+.dtag{font:700 8px/1 'Inter';color:var(--text3)}
+.ocard{background:var(--bg3);border:1px solid var(--accent-glow);border-radius:9px;padding:10px 13px;min-width:130px}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
-.sect{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
-.sect-h{font:700 11px/1 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;justify-content:space-between}
-.row{display:grid;grid-template-columns:158px 62px 1fr 32px;align-items:center;gap:9px;padding:4px 0}
+.gtabs{display:flex;gap:3px;background:var(--surface);border-radius:8px;padding:3px;margin-bottom:12px;flex-wrap:wrap}
+.gtab{background:none;border:none;color:var(--text3);font:600 11px/1 'Inter';padding:7px 12px;border-radius:6px;cursor:pointer}
+.gtab:hover{color:var(--text)}
+.gtab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px}
+.sect{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+.sect-h{font:700 11px/1 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:150px 62px 1fr 30px;align-items:center;gap:9px;padding:3.5px 0}
 .row-lbl{font:500 11px/1.3 'Inter';color:var(--text2);cursor:help;border-bottom:1px dotted var(--border2);justify-self:start}
 .row-val{font:600 11px/1 'Inter';text-align:right}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
@@ -86,46 +99,43 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .row-pct{font:700 11px/1 'Inter';text-align:right}
 .na{color:var(--text3);font:500 10px/1 'Inter'}
 
-.ctrls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
-.crow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
-.cfield{display:flex;flex-direction:column;gap:5px;min-width:180px}
+.ctrls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:12px;box-shadow:var(--shadow)}
+.crow{display:flex;gap:13px;flex-wrap:wrap;align-items:flex-end}
+.cfield{display:flex;flex-direction:column;gap:5px;min-width:170px}
 .clbl{font:700 9px/1 'Inter';color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
-.btn{background:var(--accent);border:none;color:#fff;font:600 12px/1 'Inter';padding:9px 16px;border-radius:6px;cursor:pointer}
-.btn:hover{filter:brightness(1.06)}
+.btn{background:var(--accent);border:none;color:#12141a;font:600 12px/1 'Inter';padding:9px 15px;border-radius:6px;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
 .btn.sec{background:var(--surface2);color:var(--text2)}
 
 .mchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .mchip{display:flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:6px;padding:6px 9px}
 .mchip-nm{font:600 10px/1 'Inter';color:var(--accent)}
-.mchip input[type=range]{width:80px}
+.mchip input[type=range]{width:76px;accent-color:var(--accent)}
 .mchip-w{font:700 10px/1 'Inter';color:var(--text2);min-width:12px;text-align:center}
 .mchip button{background:none;border:none;color:var(--text3);cursor:pointer;font:700 12px/1 'Inter'}
+.hchip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 9px}
+.hchip-nm{font:600 10px/1 'Inter';color:var(--text)}
 
 table{width:100%;border-collapse:collapse;font:500 11px/1.4 'Inter'}
-th{text-align:left;font:700 9px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:8px 9px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2)}
+th{text-align:left;font:700 9px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:8px 9px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--text)}
+th.sorted{color:var(--accent)}
 td{padding:8px 9px;border-bottom:1px solid var(--border)}
 tr:hover td{background:var(--surface)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .fit{font:800 12px/1 'Inter'}
+.pname-link{font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px dotted var(--border2)}
+.pname-link:hover{color:var(--accent)}
 
-.legend{display:flex;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.legend{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
 .lg{display:flex;align-items:center;gap:5px;font:500 10px/1 'Inter';color:var(--text3)}
 .dot{width:8px;height:8px;border-radius:50%}
-.foot{margin-top:16px;font:500 10px/1.6 'Inter';color:var(--text3)}
+.foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
-.tip{position:fixed;pointer-events:none;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:50;display:none}
+.tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:50;display:none;color:var(--text)}
 .cmp-row{display:grid;grid-template-columns:1fr 130px 1fr;align-items:center;gap:10px;padding:5px 0}
 .cmp-lbl{font:600 10px/1.2 'Inter';color:var(--text2);text-align:center;cursor:help}
-.dna{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
-.dcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;min-width:118px;flex:1;box-shadow:var(--shadow)}
-.dcard.style-axis{border-style:dashed}
-.dcard-l{font:700 9px/1 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--text3);display:flex;justify-content:space-between;gap:6px}
-.dcard-v{font:800 19px/1 'Inter';margin:7px 0 6px}
-.dcard-b{height:4px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.dcard-b span{display:block;height:100%;border-radius:3px}
-.dtag{font:700 8px/1 'Inter';color:var(--text3);letter-spacing:.04em}
-.ocard{background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;min-width:132px}
 </style>
 </head>
 <body>
@@ -138,6 +148,8 @@ tr:hover td{background:var(--surface)}
   </div>
   <div class="tabs" id="tabs"></div>
   <div class="hdr-right">
+    <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
+    <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
     <a class="lnk" href="index.html">&larr; Match Dashboard</a>
     <button class="lnk" onclick="toggleDark()">Theme</button>
   </div>
@@ -169,14 +181,13 @@ const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
 const TABS=['Player','Scatter','Scout','Compare','Glossary'];
 
-let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',PILLAR_KIND=null;
-let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90'};
-let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}]};
+let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
+let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90',hi:[]};
+let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[]};
 let CMP={a:null,b:null,pool:'W'};
 
 async function sbAll(tbl,p){
-  p=p||{};
-  const PG=1000;let all=[],off=0;
+  p=p||{};const PG=1000;let all=[],off=0;
   while(true){
     const u=new URL(SB+'/rest/v1/'+tbl);
     Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
@@ -208,19 +219,19 @@ async function init(){
     const res=await Promise.all([
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties,apps,starts,minutes'}),
       sbAll('mv_player_role',{select:'player_id,modal_position,listed_pool,pool,reassigned,confidence'}),
-      sbAll('metric_defs',{select:'key,label,grp,unit,higher_is_better,definition,sort_order,grp_order',order:'grp_order.asc,sort_order.asc'})
+      sbAll('metric_defs',{select:'key,label,grp,unit,higher_is_better,definition,sort_order,grp_order',order:'grp_order.asc,sort_order.asc'}),
+      sbAll('role_pillar_weights',{select:'pool,pillar,weight'})
     ]);
     const season=res[0],role=res[1];DEFS=res[2];
+    WEIGHTS={};res[3].forEach(function(r){if(!WEIGHTS[r.pool])WEIGHTS[r.pool]={};WEIGHTS[r.pool][r.pillar]=+r.weight});
     const rmap={};role.forEach(function(r){rmap[r.player_id]=r});
     PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})}).filter(function(p){return p.pool});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
-
-    const ts=document.getElementById('teamSel');
-    const teams=[];PLAYERS.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team)});
+    const ts=document.getElementById('teamSel'),teams=[];
+    PLAYERS.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team)});
     teams.sort().forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=t;ts.appendChild(o)});
     ts.value='Los Angeles FC';
-
     document.getElementById('hdrSub').textContent=
       'MLS 2026 \u00B7 '+PLAYERS.length+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
     renderTabs();renderList();setTab('Player');
@@ -238,6 +249,36 @@ function setTab(t){
   else if(t==='Scout')renderScout();
   else if(t==='Compare')renderCompare();
   else renderGlossary();
+}
+
+/* ---------- EXPORT ---------- */
+function exportName(){
+  if(TAB==='Player'&&SEL){const p=playerOf(SEL);return (p?p.player_name:'player').replace(/[^\w]+/g,'_')}
+  return 'fingerprints_'+TAB.toLowerCase();
+}
+async function snap(){
+  const el=document.getElementById('main');
+  const bg=getComputedStyle(document.body).backgroundColor;
+  return await html2canvas(el,{backgroundColor:bg,scale:2,useCORS:true,windowWidth:el.scrollWidth,height:el.scrollHeight,windowHeight:el.scrollHeight});
+}
+async function exportPNG(){
+  try{
+    const c=await snap();
+    const a=document.createElement('a');a.download=exportName()+'.png';a.href=c.toDataURL('image/png');a.click();
+  }catch(e){alert('Export failed: '+e.message)}
+}
+async function exportPDF(){
+  try{
+    const c=await snap();
+    const img=c.toDataURL('image/png');
+    const jsPDF=window.jspdf.jsPDF;
+    const landscape=c.width>=c.height;
+    const pdf=new jsPDF({orientation:landscape?'l':'p',unit:'pt',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const r=Math.min(pw/c.width,ph/c.height);
+    pdf.addImage(img,'PNG',(pw-c.width*r)/2,20,c.width*r,c.height*r);
+    pdf.save(exportName()+'.pdf');
+  }catch(e){alert('Export failed: '+e.message)}
 }
 
 /* ---------- PLAYER ---------- */
@@ -265,17 +306,16 @@ async function pick(pid){
   try{
     const res=await Promise.all([
       sbAll('mv_player_percentiles',{player_id:'eq.'+pid,select:'metric,value,pct'}),
-      sbAll('mv_player_pillars',{player_id:'eq.'+pid,select:'pillar,score,ord,markers_used',order:'ord.asc'}),
-      sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'}),
-      PILLAR_KIND?Promise.resolve(null):sbAll('pillar_defs',{select:'pillar,kind'})
+      sbAll('mv_player_pillars',{player_id:'eq.'+pid,select:'pillar,score,ord',order:'ord.asc'}),
+      sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'})
     ]);
-    if(res[3]){PILLAR_KIND={};res[3].forEach(function(r){PILLAR_KIND[r.pillar]=r.kind})}
     renderPlayer(p,res[0],res[1],res[2][0]||null);
   }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});
   const n=POOLC[p.pool]||0,low=p.nineties<MIN90;
+  const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
     '<div class="pmeta">'+esc(p.team)+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
@@ -286,16 +326,14 @@ function renderPlayer(p,pcts,pillars,dna){
     '<div class="pcard-r"><div class="pool-lbl">Ranked against</div>'+
     '<div class="pool-val">'+esc(POOL_NAME[p.pool]||p.pool)+'</div>'+
     '<div class="pool-sub">MLS 2026 \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div></div>';
-  if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:14px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">Below the '+MIN90+'-nineties threshold, so no percentiles are computed.</div></div>';
+  if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">Below the '+MIN90+'-nineties threshold, so no percentiles are computed.</div></div>';
 
   if(pillars&&pillars.length){
     h+='<div class="dna">';
     pillars.forEach(function(pl){
-      const t=tier(+pl.score);
-      const isStyle=PILLAR_KIND&&PILLAR_KIND[pl.pillar]==='style';
-      h+='<div class="dcard'+(isStyle?' style-axis':'')+'">'+
-         '<div class="dcard-l"><span>'+esc(pl.pillar)+'</span>'+
-         (isStyle?'<span class="dtag">STYLE</span>':'')+'</div>'+
+      const t=tier(+pl.score),w=wmap[pl.pillar];
+      h+='<div class="dcard"><div class="dcard-l"><span>'+esc(pl.pillar)+'</span>'+
+         (w!=null?'<span class="dtag" title="Weight in this role\u2019s completeness score">w'+w+'</span>':'')+'</div>'+
          '<div class="dcard-v" style="color:'+t.c+'">'+(+pl.score).toFixed(1)+'</div>'+
          '<div class="dcard-b"><span style="width:'+pl.score+'%;background:'+t.c+'"></span></div></div>';
     });
@@ -307,10 +345,9 @@ function renderPlayer(p,pcts,pillars,dna){
          '<div class="dcard-v" style="color:'+tier(+dna.impact).c+'">'+dna.impact+'</div>'+
          '<div style="font:500 9px/1.4 Inter;color:var(--text3)">best: '+esc(dna.top_pillar||'\u2014')+'</div></div>';
     }
-    h+='</div>';
-    h+='<div class="foot" style="margin:-6px 0 14px">Pillars are the average percentile of a few deliberately uncorrelated marker metrics. '+
-       'Dashed cards are <b>style</b> axes, where a high score means different rather than better, so they are excluded from the overall scores. '+
-       'Completeness rewards having no weak pillar; Impact rewards the two strongest. Both are ranked within role.</div>';
+    h+='</div><div class="foot" style="margin:-4px 0 12px">Pillars are the average percentile of a few deliberately uncorrelated marker metrics. '+
+       'The <b>w</b> tag is how much that pillar counts toward completeness <i>for this role</i> \u2014 defending barely matters for a forward, heavily for a centre-back. '+
+       'Completeness rewards no weak spot in the role\u2019s relevant pillars; Impact rewards the two strongest. Both ranked within role.</div>';
   }
 
   const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
@@ -334,7 +371,7 @@ function renderPlayer(p,pcts,pillars,dna){
     h+='</div>';
   });
   h+='</div>'+legendHtml()+
-     '<div class="foot">Percentiles are within role pool, MLS 2026, open play only. Role is assigned from where a player actually operates on the pitch, not from the team sheet.</div>';
+     '<div class="foot">Percentiles are within role pool, MLS 2026, open play only. Role is assigned from where a player actually operates, not from the team sheet.</div>';
   document.getElementById('main').innerHTML=h;
 }
 function setGrp(g){GRP=g;if(SEL)pick(SEL)}
@@ -354,13 +391,27 @@ function metricOptions(sel){
   return out+'</optgroup>';
 }
 function scatterCtrls(){
-  return '<div class="ctrls"><div class="crow">'+
-    '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;renderScatter()">'+
+  const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90})
+                    .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
+  let h='<div class="ctrls"><div class="crow">'+
+    '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];renderScatter()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SC.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     '<div class="cfield"><span class="clbl">X axis</span><select class="sel" onchange="SC.x=this.value;renderScatter()">'+metricOptions(SC.x)+'</select></div>'+
     '<div class="cfield"><span class="clbl">Y axis</span><select class="sel" onchange="SC.y=this.value;renderScatter()">'+metricOptions(SC.y)+'</select></div>'+
-    '</div></div>';
+    '<div class="cfield" style="min-width:220px"><span class="clbl">Highlight player</span>'+
+      '<select class="sel" onchange="addHi(this.value);this.value=\'\'"><option value="">Choose a player&hellip;</option>'+
+      pool.filter(function(p){return SC.hi.indexOf(p.player_id)<0})
+          .map(function(p){return '<option value="'+p.player_id+'">'+esc(p.player_name)+'</option>'}).join('')+
+      '</select></div></div>';
+  if(SC.hi.length){
+    h+='<div class="mchips">'+SC.hi.map(function(id,i){const p=playerOf(id)||{};
+      return '<div class="hchip"><span class="hchip-nm">'+esc(p.player_name)+'</span>'+
+             '<button onclick="delHi('+i+')" style="background:none;border:none;color:var(--text3);cursor:pointer;font:700 12px/1 Inter">&times;</button></div>'}).join('')+'</div>';
+  }
+  return h+'</div>';
 }
+function addHi(id){if(id&&SC.hi.indexOf(id)<0){SC.hi.push(id);renderScatter()}}
+function delHi(i){SC.hi.splice(i,1);renderScatter()}
 async function renderScatter(){
   const main=document.getElementById('main');
   main.innerHTML=scatterCtrls()+'<div class="spin"></div>';
@@ -372,8 +423,8 @@ async function renderScatter(){
     Object.keys(by).forEach(function(pid){
       const v=by[pid];if(!v[SC.x]||!v[SC.y])return;
       const p=playerOf(pid)||{};
-      pts.push({name:p.player_name||'?',team:p.team||'',x:+v[SC.x].value,y:+v[SC.y].value,
-                px:+v[SC.x].pct,py:+v[SC.y].pct});
+      pts.push({id:pid,name:p.player_name||'?',team:p.team||'',x:+v[SC.x].value,y:+v[SC.y].value,
+                px:+v[SC.x].pct,py:+v[SC.y].pct,hi:SC.hi.indexOf(pid)>=0});
     });
     main.innerHTML=scatterCtrls()+scatterSvg(pts);
     wireTips();
@@ -381,83 +432,89 @@ async function renderScatter(){
 }
 function scatterSvg(pts){
   if(!pts.length)return'<div class="empty">No data for that combination</div>';
-  const W=900,H=520,MT=20,MR=20,MB=52,ML=64;
+  const W=1100,H=470,MT=18,MR=26,MB=46,ML=62;
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
   const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
   const y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
-  const padX=(x1-x0)*0.08||1,padY=(y1-y0)*0.08||1;
+  const padX=(x1-x0)*0.09||1,padY=(y1-y0)*0.09||1;
   const xmin=x0-padX,xmax=x1+padX,ymin=y0-padY,ymax=y1+padY;
   function SX(v){return ML+((v-xmin)/(xmax-xmin))*(W-ML-MR)}
   function SY(v){return H-MB-((v-ymin)/(ymax-ymin))*(H-MT-MB)}
   function med(a){const s=a.slice().sort(function(p,q){return p-q});return s[Math.floor(s.length/2)]}
   const mx=med(xs),my=med(ys);
   const dx=defOf(SC.x)||{},dy=defOf(SC.y)||{};
-  let s='<div class="sect"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">';
+  let s='<div class="sect"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" '+
+        'style="width:100%;height:auto;max-height:calc(100vh - 250px);display:block">';
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   s+='<line x1="'+ML+'" y1="'+(H-MB)+'" x2="'+(W-MR)+'" y2="'+(H-MB)+'" stroke="var(--border)"/>';
   s+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(H-MB)+'" stroke="var(--border)"/>';
   [0,0.25,0.5,0.75,1].forEach(function(f){
     const vx=xmin+f*(xmax-xmin),vy=ymin+f*(ymax-ymin);
-    s+='<text x="'+SX(vx)+'" y="'+(H-MB+18)+'" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="Inter">'+(+vx).toFixed(1)+'</text>';
-    s+='<text x="'+(ML-9)+'" y="'+(SY(vy)+3)+'" fill="var(--text3)" font-size="10" text-anchor="end" font-family="Inter">'+(+vy).toFixed(1)+'</text>';
+    s+='<text x="'+SX(vx)+'" y="'+(H-MB+17)+'" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="Inter">'+(+vx).toFixed(1)+'</text>';
+    s+='<text x="'+(ML-8)+'" y="'+(SY(vy)+3)+'" fill="var(--text3)" font-size="10" text-anchor="end" font-family="Inter">'+(+vy).toFixed(1)+'</text>';
   });
-  pts.forEach(function(p){
-    const avg=(p.px+p.py)/2;
-    s+='<circle class="pt" cx="'+SX(p.x)+'" cy="'+SY(p.y)+'" r="5" fill="'+tier(avg).c+'" fill-opacity="0.78" '+
+  pts.filter(function(p){return !p.hi}).forEach(function(p){
+    s+='<circle class="pt" cx="'+SX(p.x)+'" cy="'+SY(p.y)+'" r="5" fill="'+tier((p.px+p.py)/2).c+'" fill-opacity="0.65" '+
        'data-n="'+esc(p.name)+' \u00B7 '+esc(p.team)+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
   });
-  s+='<text x="'+(W/2)+'" y="'+(H-8)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
-  s+='<text transform="translate(14,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
-  s+='</svg><div class="foot" style="margin-top:6px">'+pts.length+' players \u00B7 '+POOL_NAME[SC.pool]+
-     ' \u00B7 dashed lines are pool medians \u00B7 colour is the average of both percentiles</div></div>';
+  pts.filter(function(p){return p.hi}).forEach(function(p){
+    const cx=SX(p.x),cy=SY(p.y);
+    const right=cx < W-190;
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="10" fill="var(--accent)" fill-opacity="0.22"></circle>';
+    s+='<circle class="pt" cx="'+cx+'" cy="'+cy+'" r="6.5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.6" '+
+       'data-n="'+esc(p.name)+' \u00B7 '+esc(p.team)+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
+    s+='<text x="'+(right?cx+13:cx-13)+'" y="'+(cy+4)+'" fill="var(--accent)" font-size="12" font-weight="700" '+
+       'text-anchor="'+(right?'start':'end')+'" font-family="Inter">'+esc(p.name)+'</text>';
+  });
+  s+='<text x="'+(W/2)+'" y="'+(H-6)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
+  s+='<text transform="translate(13,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
+  s+='</svg><div class="foot" style="margin-top:4px">'+pts.length+' players \u00B7 '+POOL_NAME[SC.pool]+
+     ' \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are pool medians \u00B7 dot colour is the average of both percentiles</div></div>';
   return s;
 }
 function wireTips(){
-  const tip=document.getElementById('tip');
-  const els=document.querySelectorAll('.pt');
-  for(var i=0;i<els.length;i++){
-    (function(el){
-      el.addEventListener('mouseenter',function(){
-        tip.innerHTML='<div>'+el.getAttribute('data-n')+'</div>'+
-          '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+el.getAttribute('data-v')+'</div>';
-        tip.style.display='block';
-      });
-      el.addEventListener('mousemove',function(e){tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'});
-      el.addEventListener('mouseleave',function(){tip.style.display='none'});
-    })(els[i]);
-  }
+  const tip=document.getElementById('tip'),els=document.querySelectorAll('.pt');
+  for(var i=0;i<els.length;i++){(function(el){
+    el.addEventListener('mouseenter',function(){
+      tip.innerHTML='<div>'+el.getAttribute('data-n')+'</div>'+
+        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+el.getAttribute('data-v')+'</div>';
+      tip.style.display='block';});
+    el.addEventListener('mousemove',function(e){tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'});
+    el.addEventListener('mouseleave',function(){tip.style.display='none'});
+  })(els[i]);}
 }
 
 /* ---------- SCOUT ---------- */
 function scoutCtrls(){
   const chosen={};SK.metrics.forEach(function(m){chosen[m.k]=1});
-  const avail=DEFS.filter(function(d){return !chosen[d.key]});
   let opts='',g='';
-  avail.forEach(function(d){
+  DEFS.filter(function(d){return !chosen[d.key]}).forEach(function(d){
     if(d.grp!==g){if(g)opts+='</optgroup>';opts+='<optgroup label="'+esc(d.grp)+'">';g=d.grp}
-    opts+='<option value="'+d.key+'">'+esc(d.label)+'</option>';
-  });
+    opts+='<option value="'+d.key+'">'+esc(d.label)+'</option>';});
   if(g)opts+='</optgroup>';
   let h='<div class="ctrls"><div class="crow">'+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SK.pool=this.value;renderScout()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
-    '<div class="cfield" style="min-width:260px"><span class="clbl">Add metric (up to 10)</span>'+
+    '<div class="cfield" style="min-width:250px"><span class="clbl">Add metric (up to 10)</span>'+
       '<select class="sel" onchange="addMetric(this.value);this.value=\'\'"><option value="">Choose a metric&hellip;</option>'+opts+'</select></div>'+
     '<button class="btn sec" onclick="SK.metrics=[];renderScout()">Clear</button></div>';
-  h+='<div class="mchips">'+SK.metrics.map(function(m,i){
-    const d=defOf(m.k)||{};
+  h+='<div class="mchips">'+SK.metrics.map(function(m,i){const d=defOf(m.k)||{};
     return '<div class="mchip"><span class="mchip-nm">'+esc(d.label||m.k)+'</span>'+
       '<input type="range" min="0" max="5" step="1" value="'+m.w+'" oninput="setW('+i+',this.value)">'+
-      '<span class="mchip-w">'+m.w+'</span>'+
-      '<button onclick="delMetric('+i+')" title="Remove">&times;</button></div>';
-  }).join('')+'</div>';
-  h+='<div class="foot" style="margin-top:8px">Fit is the importance-weighted average of each metric\u2019s percentile inside the selected pool. A weight of 0 ignores a metric; 5 counts it five times as much as 1.</div></div>';
+      '<span class="mchip-w">'+m.w+'</span><button onclick="delMetric('+i+')">&times;</button></div>'}).join('')+'</div>';
+  h+='<div class="foot" style="margin-top:8px"><b>Every number in the table below is a percentile from 0 to 100</b>, measured inside the selected role pool, '+
+     'not a raw stat. 90 means better than 90% of players in that role. <b>Fit</b> is the weighted average of those percentiles using the sliders '+
+     '(0 ignores a metric, 5 counts it five times as much as 1). Click any column header to sort; click a player to open their profile.</div></div>';
   return h;
 }
 function addMetric(k){if(!k||SK.metrics.length>=10)return;for(var i=0;i<SK.metrics.length;i++)if(SK.metrics[i].k===k)return;SK.metrics.push({k:k,w:3});renderScout()}
 function delMetric(i){SK.metrics.splice(i,1);renderScout()}
 function setW(i,v){SK.metrics[i].w=+v;renderScout()}
+function sortScout(col){
+  if(SK.sort.col===col)SK.sort.dir=-SK.sort.dir; else {SK.sort.col=col;SK.sort.dir=-1}
+  drawScout();
+}
 async function renderScout(){
   const main=document.getElementById('main');
   main.innerHTML=scoutCtrls()+'<div class="spin"></div>';
@@ -467,33 +524,70 @@ async function renderScout(){
     const rows=await sbAll('mv_player_percentiles',
       {pool:'eq.'+SK.pool,metric:'in.('+keys+')',select:'player_id,metric,value,pct'});
     const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
-    const ranked=[];
+    SK.rows=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid];let acc=0,used=0;
       SK.metrics.forEach(function(m){if(v[m.k]&&v[m.k].pct!=null){acc+=(+v[m.k].pct)*m.w;used+=m.w}});
       if(!used)return;
       const p=playerOf(pid)||{};
-      ranked.push({name:p.player_name,team:p.team,n90:p.nineties,fit:acc/used,v:v});
+      SK.rows.push({id:pid,name:p.player_name,team:p.team,n90:+p.nineties,fit:acc/used,v:v});
     });
-    ranked.sort(function(a,b){return b.fit-a.fit});
-    main.innerHTML=scoutCtrls()+scoutTable(ranked.slice(0,50));
+    drawScout();
   }catch(e){main.innerHTML=scoutCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
-function scoutTable(rows){
-  if(!rows.length)return'<div class="empty">No qualifying players</div>';
-  let h='<div class="sect"><div style="max-height:calc(100vh - 340px);overflow:auto"><table><thead><tr>'+
-    '<th>#</th><th>Player</th><th>Team</th><th class="num">90s</th><th class="num">Fit</th>'+
-    SK.metrics.map(function(m){return '<th class="num">'+esc((defOf(m.k)||{}).label||m.k)+'</th>'}).join('')+'</tr></thead><tbody>';
+function drawScout(){
+  const rows=SK.rows.slice().sort(function(a,b){
+    let av,bv;
+    if(SK.sort.col==='fit'){av=a.fit;bv=b.fit}
+    else if(SK.sort.col==='name'){av=(a.name||'').toLowerCase();bv=(b.name||'').toLowerCase()}
+    else if(SK.sort.col==='team'){av=(a.team||'').toLowerCase();bv=(b.team||'').toLowerCase()}
+    else if(SK.sort.col==='n90'){av=a.n90;bv=b.n90}
+    else{av=a.v[SK.sort.col]?+a.v[SK.sort.col].pct:-1;bv=b.v[SK.sort.col]?+b.v[SK.sort.col].pct:-1}
+    if(av<bv)return SK.sort.dir; if(av>bv)return -SK.sort.dir; return 0;
+  }).slice(0,50);
+  const ar=function(c){return SK.sort.col===c?(SK.sort.dir===-1?' \u2193':' \u2191'):''};
+  const cls=function(c){return SK.sort.col===c?' class="sorted"':''};
+  let h='<div class="sect"><div style="max-height:calc(100vh - 360px);overflow:auto"><table><thead><tr>'+
+    '<th>#</th><th'+cls('name')+' onclick="sortScout(\'name\')">Player'+ar('name')+'</th>'+
+    '<th'+cls('team')+' onclick="sortScout(\'team\')">Team'+ar('team')+'</th>'+
+    '<th class="num"'+(SK.sort.col==='n90'?' style="color:var(--accent)"':'')+' onclick="sortScout(\'n90\')">90s'+ar('n90')+'</th>'+
+    '<th class="num"'+(SK.sort.col==='fit'?' style="color:var(--accent)"':'')+' onclick="sortScout(\'fit\')">Fit'+ar('fit')+'</th>'+
+    SK.metrics.map(function(m){const d=defOf(m.k)||{};
+      return '<th class="num"'+(SK.sort.col===m.k?' style="color:var(--accent)"':'')+
+             ' onclick="sortScout(\''+m.k+'\')" title="'+esc(d.definition||'')+'">'+esc(d.label||m.k)+ar(m.k)+'</th>'}).join('')+
+    '</tr></thead><tbody>';
   rows.forEach(function(r,i){
     h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
-       '<td style="font-weight:700">'+esc(r.name)+'</td><td style="color:var(--text2)">'+esc(r.team)+'</td>'+
-       '<td class="num">'+(+r.n90).toFixed(1)+'</td>'+
+       '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
+       '<td style="color:var(--text2)">'+esc(r.team)+'</td>'+
+       '<td class="num">'+r.n90.toFixed(1)+'</td>'+
        '<td class="num fit" style="color:'+tier(r.fit).c+'">'+Math.round(r.fit)+'</td>'+
        SK.metrics.map(function(m){const c=r.v[m.k];
          return '<td class="num" style="color:'+(c?tier(+c.pct).c:'var(--text3)')+'">'+(c?c.pct:'\u2014')+'</td>'}).join('')+'</tr>';
   });
-  h+='</tbody></table></div><div class="foot">Fit and every column are percentiles inside the pool above. Top 50 shown.</div>'+legendHtml()+'</div>';
-  return h;
+  h+='</tbody></table></div>'+legendHtml()+'</div>';
+  h+=scoutChart(rows.slice(0,15));
+  const main=document.getElementById('main');
+  main.innerHTML=scoutCtrls()+h;
+}
+function scoutChart(rows){
+  if(!rows.length)return'';
+  const W=1100,BH=22,MT=30,ML=170,H=MT+rows.length*BH+22;
+  let s='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Fit \u2014 top '+rows.length+'</span></div>'+
+        '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
+  [0,25,50,75,100].forEach(function(v){
+    const x=ML+(v/100)*(W-ML-30);
+    s+='<line x1="'+x+'" y1="'+(MT-8)+'" x2="'+x+'" y2="'+(MT+rows.length*BH)+'" stroke="var(--border)" stroke-dasharray="3 3"/>';
+    s+='<text x="'+x+'" y="'+(MT-14)+'" fill="var(--text3)" font-size="9" text-anchor="middle" font-family="Inter">'+v+'</text>';
+  });
+  rows.forEach(function(r,i){
+    const y=MT+i*BH,w=(r.fit/100)*(W-ML-30);
+    s+='<text x="'+(ML-8)+'" y="'+(y+13)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="end" font-family="Inter">'+esc(r.name)+'</text>';
+    s+='<rect x="'+ML+'" y="'+(y+4)+'" width="'+w+'" height="12" rx="3" fill="'+tier(r.fit).c+'" fill-opacity="0.85"></rect>';
+    s+='<text x="'+(ML+w+7)+'" y="'+(y+14)+'" fill="'+tier(r.fit).c+'" font-size="10" font-weight="700" font-family="Inter">'+Math.round(r.fit)+'</text>';
+  });
+  s+='</svg><div class="foot">Fit is the weighted average of the selected metrics\u2019 percentiles inside '+POOL_NAME[SK.pool]+'.</div></div>';
+  return s;
 }
 
 /* ---------- COMPARE ---------- */
@@ -506,9 +600,9 @@ async function renderCompare(){
   const ctrl='<div class="ctrls"><div class="crow">'+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="CMP.pool=this.value;CMP.a=null;CMP.b=null;renderCompare()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(CMP.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
-    '<div class="cfield" style="min-width:220px"><span class="clbl">Player A</span><select class="sel" onchange="CMP.a=this.value;renderCompare()">'+
+    '<div class="cfield" style="min-width:210px"><span class="clbl">Player A</span><select class="sel" onchange="CMP.a=this.value;renderCompare()">'+
       pool.map(function(p){return '<option value="'+p.player_id+'"'+(CMP.a===p.player_id?' selected':'')+'>'+esc(p.player_name)+'</option>'}).join('')+'</select></div>'+
-    '<div class="cfield" style="min-width:220px"><span class="clbl">Player B</span><select class="sel" onchange="CMP.b=this.value;renderCompare()">'+
+    '<div class="cfield" style="min-width:210px"><span class="clbl">Player B</span><select class="sel" onchange="CMP.b=this.value;renderCompare()">'+
       pool.map(function(p){return '<option value="'+p.player_id+'"'+(CMP.b===p.player_id?' selected':'')+'>'+esc(p.player_name)+'</option>'}).join('')+'</select></div>'+
     '</div></div>';
   main.innerHTML=ctrl+'<div class="spin"></div>';
@@ -521,7 +615,7 @@ async function renderCompare(){
     const A={},B={};res[0].forEach(function(r){A[r.metric]=r});res[1].forEach(function(r){B[r.metric]=r});
     const pa=playerOf(CMP.a),pb=playerOf(CMP.b);
     const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
-    let h=ctrl+'<div class="sect" style="margin-bottom:14px"><div class="cmp-row">'+
+    let h=ctrl+'<div class="sect" style="margin-bottom:12px"><div class="cmp-row">'+
       '<div style="text-align:right"><div style="font:800 15px/1 Inter">'+esc(pa.player_name)+'</div>'+
       '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(pa.team)+' \u00B7 '+(+pa.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '<div class="cmp-lbl" style="color:var(--accent);font-weight:800">'+POOL_NAME[CMP.pool]+'</div>'+
@@ -554,12 +648,12 @@ async function renderCompare(){
 /* ---------- GLOSSARY ---------- */
 function renderGlossary(){
   const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
-  let h='<div class="sect" style="margin-bottom:14px"><div style="font:800 17px/1.2 Inter">Glossary</div>'+
-    '<div class="foot" style="margin-top:6px">Every metric, defined. These definitions drive the tooltips throughout the app. '+
-    'Percentiles are computed within a player\u2019s role pool across MLS 2026, using open play only unless stated otherwise.</div></div>';
+  let h='<div class="sect" style="margin-bottom:12px"><div style="font:800 17px/1.2 Inter">Glossary</div>'+
+    '<div class="foot" style="margin-top:6px">Every metric, defined. These drive the tooltips throughout the app. '+
+    'Percentiles are computed within a player\u2019s role pool across MLS 2026, open play only unless stated.</div></div>';
   groups.forEach(function(g){
-    h+='<div class="sect" style="margin-bottom:14px"><div class="sect-h"><span>'+esc(g)+'</span></div><table><thead><tr>'+
-       '<th style="width:200px">Metric</th><th style="width:56px">Unit</th><th>Definition</th></tr></thead><tbody>';
+    h+='<div class="sect" style="margin-bottom:12px"><div class="sect-h"><span>'+esc(g)+'</span></div><table><thead><tr>'+
+       '<th style="width:200px;cursor:default">Metric</th><th style="width:56px;cursor:default">Unit</th><th style="cursor:default">Definition</th></tr></thead><tbody>';
     DEFS.filter(function(d){return d.grp===g}).forEach(function(d){
       h+='<tr><td style="font-weight:700">'+esc(d.label)+'</td>'+
          '<td style="color:var(--text3)">'+esc(d.unit||'\u2014')+'</td>'+
