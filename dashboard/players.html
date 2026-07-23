@@ -132,6 +132,7 @@ tr:hover td{background:var(--surface)}
 
 .split{display:grid;grid-template-columns:minmax(360px,0.85fr) minmax(420px,1.15fr);gap:12px;align-items:start}
 @media(max-width:1180px){.split{grid-template-columns:1fr}}
+.pitch-box{height:calc(100vh - 452px);min-height:230px;max-height:640px}
 .viz-eyebrow{font:700 8px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
 .viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:3px}
 .viz-sub{font:500 10px/1.45 var(--f-body);color:var(--text3);margin:0 0 7px;max-width:82ch}
@@ -199,7 +200,7 @@ const TABS=['Player','Rank','Scatter','Scout','Compare','Glossary'];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
-let VZ={passMode:'prog'};
+let VZ={passMode:'prog',outcome:''};
 /* Which metric groups make sense for which role. A winger has no goalkeeping
    panel; a keeper has no half-space panel. */
 const GRP_HIDE={GK:['Creation','Shooting','Carrying','Half-Spaces','Hold-Up','Tempo'],
@@ -801,8 +802,8 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     '<div class="viz-title">'+esc(title)+'</div>'+
     (ctrl||'')+
     (sub?'<div class="viz-sub">'+sub+'</div>':'')+
-    '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 408px);min-height:260px;display:block">'+
-    pitchMarks()+inner+'</svg>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
+    '<div class="pitch-box"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
+    pitchMarks()+inner+'</svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 function lg(c,t,n){return '<span><i style="background:'+c+'"></i>'+t+(n!=null?' <b>'+n+'</b>':'')+'</span>'}
 function line(a,c,w,op,dash){
@@ -816,6 +817,16 @@ function dot(a,c,r,op){
 }
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
 
+function okF(a){
+  if(VZ.outcome==='ok')return a.ok===true;
+  if(VZ.outcome==='fail')return a.ok===false;
+  return true;
+}
+function outcomeTog(){
+  return '<div class="vz-tog">'+[['','Both'],['ok','Successful'],['fail','Unsuccessful']].map(function(o){
+    return '<button class="vzb'+(VZ.outcome===o[0]?' on':'')+'" onclick="VZ.outcome=\''+o[0]+'\';pick(SEL)">'+o[1]+'</button>'
+  }).join('')+'</div>';
+}
 function vizPanel(grp,p){
   if(!PACT)return noData('Loading actions\u2026');
   const A=PACT,C=PCAR||[];
@@ -825,7 +836,7 @@ function vizPanel(grp,p){
     const all=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.end_x!=null});
     if(!all.length)return noData();
     const showAll=VZ.passMode==='all';
-    const ps=showAll?all:all.filter(function(a){return a.prog||a.into_box});
+    const ps=(showAll?all:all.filter(function(a){return a.prog||a.into_box})).filter(okF);
     let s2='';let np=0,nb=0,nf=0,no=0;
     ps.forEach(function(a){
       if(!a.ok){s2+=line(a,R,0.22,showAll?0.16:0.3);nf++;return}
@@ -833,7 +844,7 @@ function vizPanel(grp,p){
       else if(a.prog){s2+=line(a,G,0.3,0.62);np++}
       else if(showAll){s2+=line(a,N,0.17,0.22);no++}
     });
-    const tog='<div class="vz-tog">'+
+    const tog=outcomeTog()+'<div class="vz-tog">'+
       '<button class="vzb'+(!showAll?' on':'')+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
       '<button class="vzb'+(showAll?' on':'')+'" onclick="VZ.passMode=\'all\';pick(SEL)">All passes</button></div>';
     return pitchWrap(showAll?'All passing':'Progressive passing',
@@ -842,7 +853,7 @@ function vizPanel(grp,p){
       s2, lg(G,'Progressive',np)+lg(AC,'Into box',nb)+(showAll?lg(N,'Other completed',no):'')+lg(R,'Incomplete',nf), tog);
   }
   if(grp==='Creation'){
-    const ps=A.filter(function(a){return a.type==='Pass'&&(a.keypass||a.assist||a.through)});
+    const ps=A.filter(function(a){return a.type==='Pass'&&(a.keypass||a.assist||a.through)}).filter(okF);
     if(!ps.length)return noData();
     let s='',k=0,as=0,th=0;
     ps.forEach(function(a){
@@ -937,7 +948,7 @@ function vizPanel(grp,p){
   }
   if(grp==='Half-Spaces'){
     const inHS=function(a){return a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))};
-    const hs=A.filter(inHS);
+    const hs=A.filter(inHS).filter(function(a){return a.type==='Pass'?okF(a):true});
     if(!hs.length)return noData();
     let s2='<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+
            '" fill="var(--accent)" fill-opacity="0.07"/>'+
