@@ -358,8 +358,8 @@ function mapCtrl(){
 async function loadZones(team){
   if(ZTEAM===team&&ZONES)return;
   const r=await Promise.all([
-    sbAll('v_team_actions',{team:'eq."'+team+'"',select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
-    sbAll('v_team_carries',{team:'eq."'+team+'"',select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
+    sbAll('v_team_actions',{team:'eq.'+team,select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
+    sbAll('v_team_carries',{team:'eq.'+team,select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
     sbAll('v_team_shots',{select:'team,x,y,xg,is_goal,game_id'})
   ]);
   ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
