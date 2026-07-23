@@ -604,6 +604,9 @@ async function loadTeams(){
   }catch(e){ names=['Los Angeles FC']; }
   if(!names.length)names=['Los Angeles FC'];
   TEAMS={};
+  TEAMS['__ALL__']={name:'__ALL__',display:'\u2014 All teams \u2014',color:'#8b95b5',
+    colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
+    bg:'#f5f4f1',bg2:'#ffffff',comps:[{v:'USA-MLS',l:'MLS'}]};
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
@@ -630,7 +633,7 @@ function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;c
 
 let S={team:'LAFC',matches:[],events:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['passes'],periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
 function T(){return TEAMS[S.team]||TEAMS.LAFC}
-function VT(){return S.viewTeam||T().name}
+function VT(){return S.viewTeam||(S.matchTeams&&S.matchTeams[0])||T().name}
 function isOppView(){return S.viewTeam&&S.viewTeam!==T().name}
 function posToGroup(pos){if(!pos)return null;if(pos.startsWith('GK'))return'GK';if(pos.startsWith('D')&&!pos.startsWith('DMC'))return'DEF';if(pos==='DMC')return'DEF';if(pos.startsWith('FW'))return'FWD';return'MID';}
 function passesPosFilter(playerName){if(!S.posGroups.size)return true;const pos=S.playerPos[playerName];if(!pos)return false;return S.posGroups.has(posToGroup(pos));}
@@ -640,8 +643,26 @@ async function sbAll(tbl,p={}){const PG=1000;let all=[],off=0;while(true){const 
 async function sbRpc(fn,p={}){const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:{...HD,'Content-Type':'application/json'},body:JSON.stringify(p)});if(!r.ok)throw new Error(r.status);return r.json();}
 
 /* DATA */
-async function loadMatches(){const t=T();let all=[];for(const c of t.comps){const m=await sbAll('matches',{or:'(home_team.eq.'+t.name+',away_team.eq.'+t.name+')',competition:'eq.'+c.v,select:'game_id,date,home_team,away_team,home_score,away_score,competition,season',order:'date.desc'});all=all.concat(m);}all.sort((a,b)=>b.date.localeCompare(a.date));S.matches=all;renderMatchSelect();}
-async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters]=await Promise.all([sbAll('events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'}),sbRpc('get_starter_names',{p_game_id:gid})]);S.events=evts;S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;S.oppTeam=m?(m.home_team===tn?m.away_team:m.home_team):null;S.viewTeam=tn;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';document.getElementById('btnGenReport').style.display='block';}
+async function loadMatches(){
+  const t=T();let all=[];
+  for(const c of t.comps){
+    const q={competition:'eq.'+c.v,select:'game_id,date,home_team,away_team,home_score,away_score,competition,season',order:'date.desc'};
+    if(t.name!=='__ALL__'){
+      // values are double-quoted: names like "L.A. Galaxy" contain dots, which
+      // PostgREST would otherwise read as filter syntax
+      q.or='(home_team.eq."'+t.name+'",away_team.eq."'+t.name+'")';
+    }else{
+      q.home_score='not.is.null';
+    }
+    const m=await sbAll('matches',q);all=all.concat(m);
+  }
+  all.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  S.matches=all;renderMatchSelect();
+}
+async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters]=await Promise.all([sbAll('events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'}),sbRpc('get_starter_names',{p_game_id:gid})]);S.events=evts;S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
+  S.matchTeams=m?[m.home_team,m.away_team]:[];
+  const mine=(m&&(m.home_team===tn||m.away_team===tn))?tn:(m?m.home_team:null);
+  S.viewTeam=mine;S.oppTeam=m?(m.home_team===mine?m.away_team:m.home_team):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';document.getElementById('btnGenReport').style.display='block';}
 
 function getFiltered(vizType){
   const vt=VT();let evts=S.events.filter(e=>e.team===vt);
@@ -1081,14 +1102,16 @@ function showComparison(){if(!S.selPlayer||!S.cmpPlayer)return;document.getEleme
 
 /* MATCH INFO */
 function updateMatchInfo(){const m=S.matches.find(m=>m.game_id==S.selMatch);if(!m)return;const d=new Date(m.date);document.getElementById('matchInfo').textContent=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
-function renderTeamViewToggle(){const el=document.getElementById('viewTeamBar');if(!el)return;if(!S.selMatch||!S.oppTeam){el.innerHTML='';return;}const tn=T().name,opp=S.oppTeam,vt=VT();let html='';if(S.compareMode){html='<span class="compare-indicator">\u25AC COMPARE MODE</span><button class="vt-cmp-btn on" id="vtCmpBtn">Exit Compare</button>';}else{const aOn=vt===tn,bOn=vt===opp;html='<span class="vt-label">View:</span><div class="vt-pill"><button class="vt-pill-btn'+(aOn?' on':'')+'" data-team="'+esc(tn)+'">'+esc(tn)+'</button><button class="vt-pill-btn'+(bOn?' on opp':'')+'" data-team="'+esc(opp)+'">'+esc(opp)+'</button></div><button class="vt-cmp-btn" id="vtCmpBtn">Compare</button>';}el.innerHTML=html;el.querySelectorAll('.vt-pill-btn').forEach(btn=>{btn.onclick=()=>{const newT=btn.dataset.team;const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.viewTeam=newT;S.compareMode=false;S.selPlayer=null;S.cmpPlayer=null;renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};});document.getElementById('vtCmpBtn').onclick=()=>{const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.compareMode=!S.compareMode;if(S.compareMode){S.selPlayer=null;S.cmpPlayer=null;}renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};}
+function renderTeamViewToggle(){const el=document.getElementById('viewTeamBar');if(!el)return;if(!S.selMatch||!S.oppTeam){el.innerHTML='';return;}const pair=(S.matchTeams&&S.matchTeams.length===2)?S.matchTeams:[T().name,S.oppTeam];const tn=pair[0],opp=pair[1],vt=VT();let html='';if(S.compareMode){html='<span class="compare-indicator">\u25AC COMPARE MODE</span><button class="vt-cmp-btn on" id="vtCmpBtn">Exit Compare</button>';}else{const aOn=vt===tn,bOn=vt===opp;html='<span class="vt-label">View:</span><div class="vt-pill"><button class="vt-pill-btn'+(aOn?' on':'')+'" data-team="'+esc(tn)+'">'+esc(tn)+'</button><button class="vt-pill-btn'+(bOn?' on opp':'')+'" data-team="'+esc(opp)+'">'+esc(opp)+'</button></div><button class="vt-cmp-btn" id="vtCmpBtn">Compare</button>';}el.innerHTML=html;el.querySelectorAll('.vt-pill-btn').forEach(btn=>{btn.onclick=()=>{const newT=btn.dataset.team;const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.viewTeam=newT;S.compareMode=false;S.selPlayer=null;S.cmpPlayer=null;renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};});document.getElementById('vtCmpBtn').onclick=()=>{const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.compareMode=!S.compareMode;if(S.compareMode){S.selPlayer=null;S.cmpPlayer=null;}renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};}
 function fmtMatchOpt(m){const d=new Date(m.date);const day=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});return day+' \u00B7 '+m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team;}
 function renderMatchSelect(){const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select match \u2014</option>';S.matches.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=S.matches.length+' matches';}
 
 /* SEASON STATS */
 const SEASON_COLS=[{key:'opponent',label:'Opponent',type:'text'},{key:'ha',label:'H/A',type:'badge'},{key:'result',label:'Result',type:'result'},{key:'final_third_passes',label:'Final 3rd',type:'num'},{key:'zone14_passes',label:'Zone 14',type:'num'},{key:'progressive_passes',label:'Prog. Passes',type:'num'},{key:'passes_into_box',label:'Into Box',type:'num'},{key:'defensive_actions',label:'Def. Actions',type:'num'},{key:'defensive_actions_won',label:'Def. Won',type:'num'},{key:'shots',label:'Shots',type:'num'},{key:'shots_on_target',label:'On Target',type:'num'},{key:'fwd_passes',label:'Fwd Passes',type:'num'},{key:'lat_passes',label:'Lat Passes',type:'num'},{key:'bwd_passes',label:'Bwd Passes',type:'num'}];
 
-async function loadSeasonStats(){const data=await sbAll('v_season_stats',{team:'eq.'+T().name,select:'*',order:'opponent.asc'});S.seasonData=data;S.seasonComps=new Set(T().comps.map(c=>c.v));renderSeasonComps();renderSeasonTable();}
+async function loadSeasonStats(){
+  if(T().name==='__ALL__'){S.seasonData=[];S.seasonComps=new Set();renderSeasonComps();renderSeasonTable();return;}
+  const data=await sbAll('v_season_stats',{team:'eq.'+T().name,select:'*',order:'opponent.asc'});S.seasonData=data;S.seasonComps=new Set(T().comps.map(c=>c.v));renderSeasonComps();renderSeasonTable();}
 
 function renderSeasonComps(){const el=document.getElementById('seasonComps');el.innerHTML=T().comps.map(c=>'<label class="chk"><input type="checkbox" class="scomp-cb" value="'+c.v+'"'+(S.seasonComps.has(c.v)?' checked':'')+'>'+c.l+'</label>').join('');el.querySelectorAll('.scomp-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.seasonComps.add(cb.value);else S.seasonComps.delete(cb.value);renderSeasonTable();};});}
 
@@ -2122,7 +2145,7 @@ function initTeamSwitcher(){
     applyTheme();initCompFilters();
     S.selMatch=null;S.selPlayer=null;S.cmpPlayer=null;S.events=[];S.timeFilter=null;
     S.psPlayer=null;S.psPlayersLoaded=false;S.psAllEvents=[];S.seasonData=[];
-    S._sqStatsCache=null;S._pmCache=null;S.psMatchFilter=null;S.viewTeam=null;S.oppTeam=null;
+    S._sqStatsCache=null;S._pmCache=null;S.psMatchFilter=null;S.viewTeam=null;S.oppTeam=null;S.matchTeams=[];
     document.getElementById('viewTeamBar').innerHTML='';
     document.getElementById('pitchArea').innerHTML='<div class="loading">Select a match</div>';
     document.getElementById('playerList').innerHTML='<div class="empty">Select a match</div>';
