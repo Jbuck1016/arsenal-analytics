@@ -261,7 +261,13 @@ async function init(){
     ts.value='Los Angeles FC';
     document.getElementById('hdrSub').textContent=
       'MLS 2026 \u00B7 '+PLAYERS.length+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
-    renderTabs();renderList();setTab('Player');
+    renderTabs();renderList();
+    const qp=new URLSearchParams(location.search).get('player');
+    if(qp&&playerOf(qp)){
+      const tp=playerOf(qp);
+      document.getElementById('teamSel').value=tp.team;
+      renderList();pick(qp);
+    } else setTab('Player');
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 function renderTabs(){

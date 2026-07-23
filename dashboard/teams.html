@@ -32,6 +32,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
 .lnk.acc{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
+select.lnk{background:var(--bg3);color:var(--text);appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text3) 50%),linear-gradient(135deg,var(--text3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px!important}
+select.lnk:focus{border-color:var(--accent);outline:none}
+select option,.sel option{background:var(--bg2);color:var(--text)}
 .wrap{flex:1;display:flex;overflow:hidden}
 .side{width:250px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
 .side.hide{display:none}
@@ -221,7 +226,7 @@ function metricOpts(sel){let o='',g='';
 function renderLeagueMap(){
   const dx=tdefOf(LM.x)||{},dy=tdefOf(LM.y)||{};
   const pts=TEAMS.map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
-  const W=1080,H=520,MT=20,MR=30,MB=48,ML=64;
+  const W=1080,H=520,MT=22,MR=34,MB=54,ML=82;
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
   const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
   const px=(x1-x0)*.1||1,py=(y1-y0)*.1||1;
@@ -231,8 +236,19 @@ function renderLeagueMap(){
   function med(a){const s=a.slice().sort(function(m,n){return m-n});return s[Math.floor(s.length/2)]}
   const mx=med(xs),my=med(ys);
   let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 230px);display:block">';
-  s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
-  s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
+  // gridlines + tick values
+  [0,0.25,0.5,0.75,1].forEach(function(f){
+    const vx=xmin+f*(xmax-xmin), vy=ymin+f*(ymax-ymin);
+    s+='<line x1="'+SX(vx)+'" y1="'+MT+'" x2="'+SX(vx)+'" y2="'+(H-MB)+'" stroke="var(--border)" stroke-opacity="0.55"/>';
+    s+='<line x1="'+ML+'" y1="'+SY(vy)+'" x2="'+(W-MR)+'" y2="'+SY(vy)+'" stroke="var(--border)" stroke-opacity="0.55"/>';
+    s+='<text x="'+SX(vx)+'" y="'+(H-MB+20)+'" fill="var(--text3)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">'+(+vx).toFixed(1)+'</text>';
+    s+='<text x="'+(ML-10)+'" y="'+(SY(vy)+4)+'" fill="var(--text3)" font-size="11" text-anchor="end" font-family="JetBrains Mono,monospace">'+(+vy).toFixed(1)+'</text>';
+  });
+  s+='<line x1="'+ML+'" y1="'+(H-MB)+'" x2="'+(W-MR)+'" y2="'+(H-MB)+'" stroke="var(--border2)"/>';
+  s+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(H-MB)+'" stroke="var(--border2)"/>';
+  s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
+  s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
+  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">league median</text>';
   pts.forEach(function(p){
     const on=p.team===SEL,cx=SX(p.x),cy=SY(p.y),right=cx<W-170;
     s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(on?8:5.5)+'" fill="'+(on?'var(--accent)':'var(--above)')+
@@ -290,6 +306,12 @@ async function renderMatches(t){
     document.getElementById('main').innerHTML=h;
   }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
+function naCell(v,p){
+  if(v!=null)return '<td class="num" style="color:'+tier(+v).c+';font-weight:700">'+v+'</td>';
+  const why=(p.pool==='GK')?'Keepers are scored on goalkeeping, not the outfield pillars'
+    :'Needs 6+ nineties to be ranked \u2014 this player has '+(+p.nineties).toFixed(1);
+  return '<td class="num" style="color:var(--text3)" title="'+esc(why)+'">n/a</td>';
+}
 async function renderSquad(t){
   try{
     const r=await Promise.all([
@@ -309,12 +331,12 @@ async function renderSquad(t){
       h+='<tr><td><a href="players.html" style="font-weight:700;color:var(--text);text-decoration:none">'+esc(p.player_name)+'</a></td>'+
         '<td style="color:var(--text2)">'+esc(p.pool||'\u2014')+'</td>'+
         '<td class="num">'+(+p.nineties).toFixed(1)+'</td><td class="num">'+p.starts+'</td>'+
-        '<td class="num" style="color:'+tier(+p.completeness).c+';font-weight:700">'+(p.completeness==null?'\u2014':p.completeness)+'</td>'+
-        '<td class="num" style="color:'+tier(+p.impact).c+';font-weight:700">'+(p.impact==null?'\u2014':p.impact)+'</td>'+
+        naCell(p.completeness,p)+naCell(p.impact,p)+
         '<td style="color:var(--text2)">'+esc(p.top_pillar||'\u2014')+'</td></tr>';
     });
     h+='</tbody></table></div>'+legendHtml()+
-       '<div class="foot">Completeness and Impact are ranked within each player\u2019s role across the league, not within this squad.</div></div>';
+       '<div class="foot">Completeness and Impact are ranked within each player\u2019s role across the league, not within this squad. '+
+       '<b>n/a</b> means the player is under the 6-nineties threshold or is a goalkeeper, who are scored on goalkeeping rather than the outfield pillars \u2014 hover for the reason.</div></div>';
     document.getElementById('main').innerHTML=h;
   }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
