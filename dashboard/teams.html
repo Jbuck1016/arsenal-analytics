@@ -111,7 +111,7 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
-let MP={kind:'touches'};
+let MP={kind:'passes'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null;
 
@@ -341,14 +341,14 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     (legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 const MAPS=[
-  {k:'touches',l:'Touches',f:'touches',src:'z',d:'Where the team has the ball. The clearest picture of how high and how wide they play.'},
-  {k:'passes',l:'Completed passes',f:'passes',src:'z',d:'Origin of every completed pass.'},
-  {k:'prog',l:'Progressive passes',f:'prog_passes',src:'z',d:'Origin of passes that meaningfully advance the ball.'},
-  {k:'def',l:'Defensive actions',f:'def_actions',src:'z',d:'Where they win the ball back. Mass high up means an aggressive press.'},
-  {k:'carries',l:'Carries',f:'carries',src:'c',d:'Where carries begin.'},
-  {k:'progcarries',l:'Progressive carries',f:'prog_carries',src:'c',d:'Where ball-carrying runs begin.'},
-  {k:'shots',l:'Shot map (for)',f:null,src:'s',d:'Every shot taken. Circle size is chance quality.'},
-  {k:'shotsag',l:'Shots conceded',f:null,src:'sa',d:'Every shot faced. Circle size is chance quality.'}
+  {k:'passes',l:'Completed passes',d:'Every completed open-play pass. Density does the work \u2014 the brighter the weave, the more they play through that area.'},
+  {k:'prog',l:'Progressive passes',d:'Passes that meaningfully advance the ball toward goal.'},
+  {k:'box',l:'Passes into the box',d:'Completed passes ending inside the penalty area. Shows how they actually get in.'},
+  {k:'carries',l:'Carries',d:'Every carry of 3m or more, drawn start to finish. Progressive carries highlighted.'},
+  {k:'touches',l:'Touch density',d:'Every on-ball action. The clearest read on how high and how wide they live.'},
+  {k:'def',l:'Defensive actions',d:'Where they win the ball back. Mass high up the pitch means an aggressive press.'},
+  {k:'shots',l:'Shot map (for)',d:'Every shot taken. Circle size is chance quality.'},
+  {k:'shotsag',l:'Shots conceded',d:'Every shot faced. Circle size is chance quality.'}
 ];
 function mapCtrl(){
   return '<div class="vz-tog">'+MAPS.map(function(m){
@@ -358,58 +358,84 @@ function mapCtrl(){
 async function loadZones(team){
   if(ZTEAM===team&&ZONES)return;
   const r=await Promise.all([
-    sbAll('mv_team_zones',{team:'eq.'+team,select:'zx,zy,touches,passes,prog_passes,shots,def_actions'}),
-    sbAll('mv_team_carry_zones',{team:'eq.'+team,select:'zx,zy,carries,prog_carries,carries_into_box'}),
-    sbAll('v_team_shots',{select:'team,x,y,xg,is_goal,is_open_play,game_id'})
+    sbAll('v_team_actions',{team:'eq."'+team+'"',select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
+    sbAll('v_team_carries',{team:'eq."'+team+'"',select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
+    sbAll('v_team_shots',{select:'team,x,y,xg,is_goal,game_id'})
   ]);
   ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
 }
-function heat(rows,field){
-  const mx=Math.max.apply(null,rows.map(function(r){return +r[field]||0}))||1;
-  const cw=105/12,ch=68/8;
-  let s='';
-  rows.forEach(function(r){
-    const v=+r[field]||0;if(!v)return;
-    const t=v/mx;
-    s+='<rect x="'+(r.zx*cw)+'" y="'+(r.zy*ch)+'" width="'+cw+'" height="'+ch+
-       '" fill="var(--accent)" fill-opacity="'+(0.06+t*0.78).toFixed(3)+'"/>';
-    if(t>0.35)s+='<text x="'+(r.zx*cw+cw/2)+'" y="'+(r.zy*ch+ch/2+1.4)+'" fill="var(--bg)" font-size="2.7" '+
-       'font-weight="800" text-anchor="middle" font-family="Inter">'+v+'</text>';
-  });
-  return s;
+function tline(a,c,w,op){
+  return '<line x1="'+PX(a.x)+'" y1="'+PY(a.y)+'" x2="'+PX(a.end_x)+'" y2="'+PY(a.end_y)+
+    '" stroke="'+c+'" stroke-width="'+w+'" stroke-opacity="'+op+'" stroke-linecap="round"/>';
 }
 async function renderMaps(t){
   const main=document.getElementById('main');
-  main.innerHTML=teamHead(t)+'<div class="spin"></div>';
+  main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
+    '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Loading season actions\u2026</div></div>';
   try{
     await loadZones(t.team);
     const m=MAPS.filter(function(x){return x.k===MP.kind})[0]||MAPS[0];
+    const G='var(--elite)',R='var(--poor)',AC='var(--accent)',B='#60a5fa',N='var(--text3)',Y='var(--avg)';
     let inner='',leg='';
-    if(m.src==='z'||m.src==='c'){
-      const rows=(m.src==='z')?ZONES:CZONES;
-      inner=heat(rows,m.f);
-      const tot=rows.reduce(function(a,r){return a+(+r[m.f]||0)},0);
-      leg='<span><b>'+tot.toLocaleString()+'</b> total \u00B7 shading is relative to this team\u2019s busiest zone</span>';
-    } else {
-      const forTeam=(m.src==='s');
-      const gids={};
-      TSHOTS.forEach(function(x){if(x.team===t.team)gids[x.game_id]=1});
-      const sh=TSHOTS.filter(function(x){
-        return forTeam ? x.team===t.team : (gids[x.game_id]&&x.team!==t.team)});
+
+    if(m.k==='passes'){
+      const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null});
+      ps.forEach(function(a){inner+=tline(a,G,0.13,0.10)});
+      leg='<span><i style="background:'+G+'"></i>Completed passes <b>'+ps.length.toLocaleString()+'</b></span>'+
+          '<span>Lines are drawn faintly and stack, so brightness is volume</span>';
+    }
+    else if(m.k==='prog'){
+      const ps=ZONES.filter(function(a){return a.prog&&a.ok&&a.end_x!=null});
+      ps.forEach(function(a){inner+=tline(a,G,0.2,0.3)});
+      leg='<span><i style="background:'+G+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>';
+    }
+    else if(m.k==='box'){
+      const ps=ZONES.filter(function(a){return a.into_box&&a.ok&&a.end_x!=null});
+      ps.forEach(function(a){inner+=tline(a,AC,0.28,0.55)+
+        '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.5" fill="'+AC+'" fill-opacity="0.8"/>'});
+      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>';
+    }
+    else if(m.k==='carries'){
+      let pr=0,ot=0;
+      CZONES.forEach(function(c){
+        const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
+        if(c.is_progressive){inner+=tline(a,G,0.2,0.34);pr++} else {inner+=tline(a,N,0.13,0.12);ot++}
+      });
+      leg='<span><i style="background:'+G+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
+          '<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>';
+    }
+    else if(m.k==='touches'){
+      ZONES.forEach(function(a){
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.42" fill="'+AC+'" fill-opacity="0.16"/>';
+      });
+      leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.length.toLocaleString()+'</b></span>';
+    }
+    else if(m.k==='def'){
+      const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
+      const ds=ZONES.filter(function(a){return col[a.type]});
+      const cnt={};
+      ds.forEach(function(a){cnt[a.type]=(cnt[a.type]||0)+1;
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.55" fill="'+col[a.type]+'" fill-opacity="0.5"/>'});
+      leg=Object.keys(cnt).map(function(k){
+        return '<span><i style="background:'+col[k]+'"></i>'+k+' <b>'+cnt[k]+'</b></span>'}).join('');
+    }
+    else {
+      const forTeam=(m.k==='shots');
+      const gids={};TSHOTS.forEach(function(x){if(x.team===t.team)gids[x.game_id]=1});
+      const sh=TSHOTS.filter(function(x){return forTeam?x.team===t.team:(gids[x.game_id]&&x.team!==t.team)});
       let g=0,sx=0;
       sh.forEach(function(a){
         const xg=+(a.xg||0.04);sx+=xg;
-        const r=0.62+Math.sqrt(xg)*2.5;
-        const c=a.is_goal?'var(--accent)':(forTeam?'var(--elite)':'var(--poor)');
-        if(a.is_goal)g++;
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+
-               '" fill-opacity="'+(a.is_goal?0.95:0.42)+'" stroke="'+c+'" stroke-width="0.2" stroke-opacity="0.85"/>';
+        const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(0.62+Math.sqrt(xg)*2.5)+'" fill="'+c+
+               '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>';
       });
-      leg='<span><i style="background:var(--accent)"></i>Goals <b>'+g+'</b></span>'+
-          '<span><i style="background:'+(forTeam?'var(--elite)':'var(--poor)')+'"></i>Shots <b>'+sh.length+'</b></span>'+
+      leg='<span><i style="background:'+AC+'"></i>Goals <b>'+g+'</b></span>'+
+          '<span><i style="background:'+(forTeam?G:R)+'"></i>Shots <b>'+sh.length+'</b></span>'+
           '<span>xG <b>'+sx.toFixed(1)+'</b></span>';
     }
-    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right.',inner,leg,mapCtrl());
+    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.',
+      inner,leg,mapCtrl());
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
