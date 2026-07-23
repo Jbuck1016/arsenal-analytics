@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line style mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --f-display:'Archivo','Inter',system-ui,sans-serif;
+  --f-body:'Inter',system-ui,sans-serif;
+  --f-data:'JetBrains Mono',monospace;
+  --accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
+  --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;
+  --surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
+  --border:#272b35;--border2:#3a3f4b;
+  --text:#f4f6fb;--text2:#b9c3db;--text3:#8b97b4;
+  --elite:#34d399;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);padding:18px 22px}
+h1{font:800 24px/1.1 var(--f-display);letter-spacing:-.025em}
+.sub{font:500 11.5px/1.6 var(--f-body);color:var(--text3);margin:7px 0 16px;max-width:80ch}
+.ctrls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.tog{display:flex;gap:4px;background:var(--surface);border-radius:7px;padding:3px}
+.tb{background:none;border:none;color:var(--text3);font:600 11px/1 var(--f-body);padding:7px 12px;border-radius:5px;cursor:pointer}
+.tb:hover{color:var(--text)}
+.tb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.lbl{font:700 8.5px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
+.card.pick{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-glow)}
+.cn{font:700 8.5px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.ct{font:700 15px/1.15 var(--f-display);letter-spacing:-.02em;margin-bottom:4px}
+.cd{font:500 10px/1.5 var(--f-body);color:var(--text3);margin-bottom:9px;min-height:30px}
+svg{width:100%;height:auto;display:block;border-radius:6px}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:60px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.note{margin-top:18px;font:500 10.5px/1.7 var(--f-body);color:var(--text3);max-width:86ch}
+code{font:500 10px/1 var(--f-data);background:var(--surface2);padding:2px 5px;border-radius:3px;color:var(--text2)}
+</style>
+</head>
+<body>
+<h1>Pass &amp; carry line styles</h1>
+<div class="sub">Same real data rendered eight ways. Switch between a sparse set (one player's progressive passes)
+and a dense one (a whole team's) &mdash; a style that reads well at 60 lines can turn to mud at 900, so both matter.
+Tell me the number you want and I'll apply it everywhere.</div>
+
+<div class="ctrls">
+  <div><div class="lbl" style="margin-bottom:5px">Dataset</div>
+    <div class="tog" id="dsTog"></div></div>
+  <div><div class="lbl" style="margin-bottom:5px">Colour</div>
+    <div class="tog" id="clTog"></div></div>
+</div>
+
+<div id="out"><div class="spin"></div></div>
+
+<div class="note">
+Notes on the trade-offs: <b>gradient fade</b> needs its own <code>&lt;linearGradient&gt;</code> per line, so it's honest at
+60 lines but means ~900 extra defs on a team map. <b>Comet</b> and <b>arrow</b> are single filled paths, so they stay cheap
+at any volume. <b>Curved</b> styles separate overlapping lines that share endpoints, which helps a passing network far more
+than a pass map. <b>Glow</b> doubles the element count.
+</div>
+
+<script>
+const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+const HD={'apikey':AK,'Authorization':'Bearer '+AK};
+let DS='player', CL='single', SPARSE=[], DENSE=[];
+
+async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
+  while(true){const u=new URL(SB+'/rest/v1/'+t);
+    Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
+    const r=await fetch(u,{headers:Object.assign({},HD,{'Range':off+'-'+(off+PG-1),'Range-Unit':'items'})});
+    if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
+    if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
+  return all;}
+
+function PX(x){return x*1.05}
+function PY(y){return y*0.68}
+function pitch(){
+  const st='fill="none" stroke="var(--border2)" stroke-width="0.32"';
+  return '<rect x="-3" y="-3" width="111.5" height="74" fill="#11141b"/>'+
+   '<rect x="0" y="0" width="105" height="68" '+st+'/>'+
+   '<line x1="52.5" y1="0" x2="52.5" y2="68" stroke="var(--border2)" stroke-width="0.32"/>'+
+   '<circle cx="52.5" cy="34" r="9.15" '+st+'/>'+
+   '<rect x="0" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+   '<rect x="88.5" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+   '<rect x="0" y="24.84" width="5.5" height="18.32" '+st+'/>'+
+   '<rect x="99.5" y="24.84" width="5.5" height="18.32" '+st+'/>';
+}
+function col(a){
+  if(CL==='outcome')return a.ok?'var(--elite)':'var(--poor)';
+  if(CL==='progress'){
+    const g=(a.end_x-a.x);
+    return g>18?'#34d399':(g>6?'#a3e635':(g>-2?'var(--accent)':'#f87171'));
+  }
+  return 'var(--elite)';
+}
+function geom(a){
+  const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  return{x1:x1,y1:y1,x2:x2,y2:y2,dx:dx,dy:dy,len:len,nx:-dy/len,ny:dx/len};
+}
+const SPARSE_W=1, DENSE_W=0.34;   // opacity/width scaling per dataset
+
+/* ---- the eight styles ---- */
+const STYLES=[
+ {n:'01',t:'Flat line',d:'Constant width with an end dot. The original \u2014 here as the baseline to judge against.',
+  f:function(a,c,s){const g=geom(a);
+   return '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" stroke="'+c+
+     '" stroke-width="'+(0.3*s.w)+'" stroke-opacity="'+s.o+'" stroke-linecap="round"/>'+
+     '<circle cx="'+g.x2+'" cy="'+g.y2+'" r="'+(0.55*s.w)+'" fill="'+c+'" fill-opacity="'+s.o+'"/>';}},
+
+ {n:'02',t:'Comet taper',d:'Filled path, narrow at the origin, full width on arrival. What is live now.',
+  f:function(a,c,s){const g=geom(a),W=0.5*s.w,t=W*0.14,h=W*0.62;
+   return '<path d="M'+(g.x1+g.nx*t)+' '+(g.y1+g.ny*t)+'L'+(g.x2+g.nx*h)+' '+(g.y2+g.ny*h)+
+     'L'+(g.x2-g.nx*h)+' '+(g.y2-g.ny*h)+'L'+(g.x1-g.nx*t)+' '+(g.y1-g.ny*t)+'Z" fill="'+c+
+     '" fill-opacity="'+s.o+'"/><circle cx="'+g.x2+'" cy="'+g.y2+'" r="'+(h*0.95)+'" fill="'+c+
+     '" fill-opacity="'+Math.min(1,s.o*1.3)+'"/>';}},
+
+ {n:'03',t:'Gradient fade',d:'True alpha ramp from invisible at the origin to solid on arrival. The cleanest read of direction, but one gradient def per line.',
+  f:function(a,c,s,i){const g=geom(a);const id='gr'+i;
+   return '<defs><linearGradient id="'+id+'" gradientUnits="userSpaceOnUse" x1="'+g.x1+'" y1="'+g.y1+
+     '" x2="'+g.x2+'" y2="'+g.y2+'"><stop offset="0%" stop-color="'+c+'" stop-opacity="0"/>'+
+     '<stop offset="55%" stop-color="'+c+'" stop-opacity="'+(s.o*0.45)+'"/>'+
+     '<stop offset="100%" stop-color="'+c+'" stop-opacity="'+s.o+'"/></linearGradient></defs>'+
+     '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" stroke="url(#'+id+')" stroke-width="'+
+     (0.42*s.w)+'" stroke-linecap="round"/>';}},
+
+ {n:'04',t:'Arrowhead',d:'Hairline shaft with a solid head. Unambiguous direction, and the head marks the destination precisely.',
+  f:function(a,c,s){const g=geom(a);const hl=Math.min(2.4*s.w,g.len*0.32),hw=hl*0.5;
+   const bx=g.x2-(g.dx/g.len)*hl, by=g.y2-(g.dy/g.len)*hl;
+   return '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+bx+'" y2="'+by+'" stroke="'+c+
+     '" stroke-width="'+(0.22*s.w)+'" stroke-opacity="'+(s.o*0.8)+'" stroke-linecap="round"/>'+
+     '<path d="M'+g.x2+' '+g.y2+'L'+(bx+g.nx*hw)+' '+(by+g.ny*hw)+'L'+(bx-g.nx*hw)+' '+(by-g.ny*hw)+
+     'Z" fill="'+c+'" fill-opacity="'+s.o+'"/>';}},
+
+ {n:'05',t:'Curved arc',d:'Gentle bow off the straight line. Separates passes that share endpoints instead of stacking them.',
+  f:function(a,c,s){const g=geom(a);const bow=g.len*0.13;
+   const mx=(g.x1+g.x2)/2+g.nx*bow, my=(g.y1+g.y2)/2+g.ny*bow;
+   return '<path d="M'+g.x1+' '+g.y1+'Q'+mx+' '+my+' '+g.x2+' '+g.y2+'" fill="none" stroke="'+c+
+     '" stroke-width="'+(0.3*s.w)+'" stroke-opacity="'+s.o+'" stroke-linecap="round"/>'+
+     '<circle cx="'+g.x2+'" cy="'+g.y2+'" r="'+(0.5*s.w)+'" fill="'+c+'" fill-opacity="'+s.o+'"/>';}},
+
+ {n:'06',t:'Curved comet',d:'The bow of 05 with the taper of 02. Most expressive, and the busiest.',
+  f:function(a,c,s){const g=geom(a);const bow=g.len*0.11,W=0.5*s.w,t=W*0.12,h=W*0.6;
+   const mx=(g.x1+g.x2)/2+g.nx*bow, my=(g.y1+g.y2)/2+g.ny*bow;
+   return '<path d="M'+(g.x1+g.nx*t)+' '+(g.y1+g.ny*t)+'Q'+(mx+g.nx*h*0.6)+' '+(my+g.ny*h*0.6)+' '+
+     (g.x2+g.nx*h)+' '+(g.y2+g.ny*h)+'L'+(g.x2-g.nx*h)+' '+(g.y2-g.ny*h)+'Q'+(mx-g.nx*h*0.6)+' '+
+     (my-g.ny*h*0.6)+' '+(g.x1-g.nx*t)+' '+(g.y1-g.ny*t)+'Z" fill="'+c+'" fill-opacity="'+s.o+'"/>';}},
+
+ {n:'07',t:'Origin ring',d:'Hollow ring where it starts, solid dot where it lands, hairline between. Reads as a journey rather than a vector.',
+  f:function(a,c,s){const g=geom(a);
+   return '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" stroke="'+c+
+     '" stroke-width="'+(0.2*s.w)+'" stroke-opacity="'+(s.o*0.55)+'"/>'+
+     '<circle cx="'+g.x1+'" cy="'+g.y1+'" r="'+(0.5*s.w)+'" fill="none" stroke="'+c+
+     '" stroke-width="'+(0.18*s.w)+'" stroke-opacity="'+(s.o*0.75)+'"/>'+
+     '<circle cx="'+g.x2+'" cy="'+g.y2+'" r="'+(0.52*s.w)+'" fill="'+c+'" fill-opacity="'+s.o+'"/>';}},
+
+ {n:'08',t:'Glow',d:'A soft blurred pass under a bright core. Density lights up; sparse maps look cinematic.',
+  f:function(a,c,s){const g=geom(a);
+   return '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" stroke="'+c+
+     '" stroke-width="'+(1.15*s.w)+'" stroke-opacity="'+(s.o*0.22)+'" stroke-linecap="round" filter="url(#glow)"/>'+
+     '<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" stroke="'+c+
+     '" stroke-width="'+(0.24*s.w)+'" stroke-opacity="'+Math.min(1,s.o*1.4)+'" stroke-linecap="round"/>';}}
+];
+
+function draw(){
+  const rows=(DS==='player')?SPARSE:DENSE;
+  const s=(DS==='player')?{w:1,o:0.82}:{w:0.46,o:0.30};
+  document.getElementById('out').innerHTML='<div class="grid">'+STYLES.map(function(st,si){
+    let inner='';
+    rows.forEach(function(a,i){inner+=st.f(a,col(a),s,si*4000+i)});
+    return '<div class="card"><div class="cn">Option '+st.n+'</div>'+
+      '<div class="ct">'+st.t+'</div><div class="cd">'+st.d+'</div>'+
+      '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet">'+
+      '<defs><filter id="glow" x="-20%" y="-20%" width="140%" height="140%">'+
+      '<feGaussianBlur stdDeviation="0.9"/></filter></defs>'+
+      pitch()+inner+'</svg></div>';
+  }).join('')+'</div>';
+}
+function togs(){
+  document.getElementById('dsTog').innerHTML=
+    [['player','One player \u00B7 '+SPARSE.length+' passes'],['team','Whole team \u00B7 '+DENSE.length+' passes']]
+    .map(function(d){return '<button class="tb'+(DS===d[0]?' on':'')+'" onclick="DS=\''+d[0]+'\';togs();draw()">'+d[1]+'</button>'}).join('');
+  document.getElementById('clTog').innerHTML=
+    [['single','Single colour'],['outcome','By outcome'],['progress','By progress']]
+    .map(function(c){return '<button class="tb'+(CL===c[0]?' on':'')+'" onclick="CL=\''+c[0]+'\';togs();draw()">'+c[1]+'</button>'}).join('');
+}
+async function init(){
+  try{
+    const pid=await sbAll('mv_player_season',{player_name:'eq.Denis Bouanga',select:'player_id'});
+    const r=await Promise.all([
+      sbAll('v_player_actions',{player_id:'eq.'+pid[0].player_id,select:'type,x,y,end_x,end_y,ok,prog,into_box'}),
+      sbAll('v_team_actions',{team:'eq.Los Angeles FC',select:'type,x,y,end_x,end_y,ok,prog'})
+    ]);
+    SPARSE=r[0].filter(function(a){return a.type==='Pass'&&a.end_x!=null&&(a.prog||a.into_box)});
+    DENSE=r[1].filter(function(a){return a.type==='Pass'&&a.end_x!=null&&a.prog});
+    togs();draw();
+  }catch(e){document.getElementById('out').innerHTML='<div style="color:var(--poor)">Failed to load: '+e.message+'</div>'}
+}
+init();
+</script>
+</body>
+</html>
