@@ -46,6 +46,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .btn-exp:hover{background:var(--accent-glow)}
 .btn-report{background:var(--bg);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter',sans-serif;padding:5px 12px;border-radius:6px;cursor:pointer;transition:.15s;display:none}
 .btn-report:hover{background:var(--surface2);color:var(--text);border-color:var(--accent-glow)}
+.btn-fp{display:inline-block;text-decoration:none;background:var(--accent-dim);border:1px solid var(--accent-glow);color:var(--accent);font:600 11px/1 'Inter',sans-serif;padding:6px 12px;border-radius:6px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-fp:hover{background:var(--accent-glow)}
 .cell-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:100;display:none;backdrop-filter:blur(3px)}
 .cell-overlay.show{display:block}
 .cell-panel{position:absolute;right:0;top:0;bottom:0;width:720px;max-width:96vw;background:var(--bg2);border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(0,0,0,0.12);display:flex;flex-direction:column;animation:slideInR .25s ease}
@@ -445,6 +447,7 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
       <button class="htab" data-tab="momentum">Momentum</button>
     </div>
     <div class="hdr-right">
+      <a class="btn-fp" href="players.html">&#128100; Player Fingerprints</a>
       <button class="btn-exp" id="btnExpAll">&#11015; Export All</button>
       <button class="btn-report" id="btnGenReport">&#9997; Generate Report</button>
       <span class="badge" id="matchCount"></span>
