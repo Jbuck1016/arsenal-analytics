@@ -124,7 +124,7 @@ let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:''};
 let RKT={metric:'ppda'};
-let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null;
+let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
 
 async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
   while(true){const u=new URL(SB+'/rest/v1/'+t);
@@ -146,10 +146,14 @@ async function init(){
     const r=await Promise.all([
       sbAll('mv_team_season',{select:'*',order:'team.asc'}),
       sbAll('team_metric_defs',{select:'*',order:'grp_order.asc,sort_order.asc'}),
-      sbAll('mv_team_percentiles',{select:'team,metric,value,pct'})
+      sbAll('mv_team_percentiles',{select:'team,metric,value,pct'}),
+      sbAll('mv_team_buildup',{select:'*'}),
+      sbAll('mv_team_lanes',{select:'*'})
     ]);
     TEAMS=r[0];TDEFS=r[1];
     PCT={};r[2].forEach(function(x){if(!PCT[x.team])PCT[x.team]={};PCT[x.team][x.metric]=x});
+    BUILD={};(r[3]||[]).forEach(function(b){BUILD[b.team]=b});
+    LANES={};(r[4]||[]).forEach(function(l){if(!LANES[l.team])LANES[l.team]={};LANES[l.team][l.lane]=l});
     document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 '+TEAMS.length+' teams \u00B7 ranked across the league';
     renderTabs();renderList();
     SEL=teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team;
@@ -219,8 +223,10 @@ function renderProfile(t){
     });
     h+='</div>';
   });
-  h+='</div>'+legendHtml()+'<div class="foot">Percentiles are across all 30 MLS teams this season. '+
-     'PPDA and the conceded metrics are inverted so a high percentile always means better.</div>';
+  h+='</div>';
+  h+='<div class="split2" style="margin-top:12px">'+attackProfile(t)+laneViz(t)+'</div>';
+  h+=legendHtml()+'<div class="foot">Percentiles are across all 30 MLS teams this season. '+
+     'PPDA and the conceded metrics are inverted so a high percentile always means better. '+'A possession ends when the opposition touch the ball or play stops for more than eight seconds.</div>';
   document.getElementById('main').innerHTML=h;
 }
 function metricOpts(sel){let o='',g='';
@@ -374,7 +380,8 @@ const MAPS=[
   {k:'prog',l:'Progressive passes',d:'Passes that meaningfully advance the ball toward goal.'},
   {k:'box',l:'Passes into the box',d:'Completed passes ending inside the penalty area. Shows how they actually get in.'},
   {k:'carries',l:'Carries',d:'Every carry of 3m or more, drawn start to finish. Progressive carries highlighted.'},
-  {k:'touches',l:'Touch density',d:'Every on-ball action. The clearest read on how high and how wide they live.'},
+  {k:'heat',l:'Touch heatmap',d:'Smoothed density of every on-ball action. Bright areas are where the team lives.'},
+  {k:'touches',l:'Touch density',d:'Every on-ball action as a single mark. The raw version of the heatmap.'},
   {k:'def',l:'Defensive actions',d:'Where they win the ball back. Mass high up the pitch means an aggressive press.'},
   {k:'shots',l:'Shot map (for)',d:'Every shot taken. Circle size is chance quality.'},
   {k:'shotsag',l:'Shots conceded',d:'Every shot faced. Circle size is chance quality.'}
@@ -468,6 +475,11 @@ async function renderMaps(t){
       leg='<span><i style="background:'+G+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
           '<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>';
     }
+    else if(m.k==='heat'){
+      const rows=ZONES.filter(function(a){return inZone(a.x,a.y)});
+      inner+=heatLayer(rows);
+      leg='<span>Smoothed density of <b>'+rows.length.toLocaleString()+'</b> actions \u00B7 brighter is busier</span>';
+    }
     else if(m.k==='touches'){
       ZONES.filter(function(a){return inZone(a.x,a.y)}).forEach(function(a){
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.42" fill="'+AC+'" fill-opacity="0.16"/>';
@@ -503,6 +515,82 @@ async function renderMaps(t){
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
+function heatLayer(rows){
+  const GW=42,GH=28,cw=105/GW,ch=68/GH;
+  const g=[];for(let j=0;j<GH;j++)g.push(new Float32Array(GW));
+  rows.forEach(function(a){
+    const i=Math.min(GW-1,Math.max(0,Math.floor(a.x/100*GW)));
+    const j=Math.min(GH-1,Math.max(0,Math.floor(a.y/100*GH)));
+    g[j][i]++;
+  });
+  let mx=0;for(let j=0;j<GH;j++)for(let i=0;i<GW;i++)if(g[j][i]>mx)mx=g[j][i];
+  if(!mx)mx=1;
+  let s2='<defs><filter id="hblur" x="-12%" y="-12%" width="124%" height="124%">'+
+         '<feGaussianBlur stdDeviation="2.1"/></filter></defs><g filter="url(#hblur)">';
+  for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){
+    const v=g[j][i]/mx; if(v<0.04)continue;
+    // cool -> warm ramp reads as intensity without a legend
+    const t=Math.pow(v,0.62);
+    const r=Math.round(40+215*Math.min(1,t*1.35));
+    const gg=Math.round(90+150*Math.min(1,Math.max(0,t*1.5-0.25)));
+    const b=Math.round(190-150*t);
+    s2+='<rect x="'+(i*cw)+'" y="'+(j*ch)+'" width="'+(cw+0.35)+'" height="'+(ch+0.35)+
+        '" fill="rgb('+r+','+gg+','+b+')" fill-opacity="'+(0.10+0.72*t).toFixed(3)+'"/>';
+  }
+  return s2+'</g>';
+}
+/* ---------- ATTACK PROFILE ---------- */
+const BUILD_DEFS=[
+  {k:'passes_per_seq',l:'Passes per possession',hi:true,d:'How many passes they string together before losing it. High means patient.'},
+  {k:'secs_per_seq',l:'Seconds per possession',hi:true,d:'How long they keep the ball each time they win it.'},
+  {k:'long_sequence_pct',l:'Long possessions',unit:'%',hi:true,d:'Share of possessions reaching six or more passes.'},
+  {k:'direct_attack_pct',l:'Direct attacks',unit:'%',hi:true,d:'Possessions starting in their own half that reach a shot inside 15 seconds.'},
+  {k:'pct_ending_in_shot',l:'Possessions ending in a shot',unit:'%',hi:true,d:'How often keeping the ball actually produces an attempt.'},
+  {k:'ground_gained',l:'Ground gained per possession',hi:true,d:'How far up the pitch a typical possession travels.'},
+  {k:'passes_before_shot',l:'Passes before a shot',hi:true,d:'Length of the possessions that end in an attempt.'},
+  {k:'sequences_pg',l:'Possessions per game',hi:true,d:'How often they have the ball. High means a broken, transitional game.'}
+];
+function buildRank(metric,team){
+  const vals=Object.keys(BUILD).map(function(t){return +BUILD[t][metric]}).filter(function(v){return !isNaN(v)});
+  if(!vals.length)return null;
+  const v=+BUILD[team][metric];if(isNaN(v))return null;
+  const below=vals.filter(function(x){return x<v}).length;
+  return Math.round(100*below/Math.max(1,vals.length-1));
+}
+function attackProfile(t){
+  const b=BUILD&&BUILD[t.team];if(!b)return'';
+  let h='<div class="sect"><div class="sect-h"><span>How they attack</span></div>';
+  BUILD_DEFS.forEach(function(d){
+    const v=b[d.k];const pc=buildRank(d.k,t.team);const c=tier(pc);
+    h+='<div class="row"><div class="row-lbl" title="'+esc(d.d)+'">'+esc(d.l)+'</div>'+
+       '<div class="row-val">'+(v==null?'\u2014':(+v).toFixed(d.unit==='%'?1:2)+(d.unit==='%'?'%':''))+'</div>'+
+       '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+c.c+'"></div></div>'+
+       '<div class="row-pct" style="color:'+c.c+'">'+(pc==null?'':pc)+'</div></div>';
+  });
+  return h+'</div>';
+}
+function laneViz(t){
+  const L=LANES&&LANES[t.team];if(!L)return'';
+  const get=function(k){return L[k]?+L[k].pct_of_final_third:0};
+  const l=get('L'),c=get('C'),r=get('R');
+  const bands=[{k:'L',lbl:'Left',v:l,y0:0,y1:33.3},{k:'C',lbl:'Centre',v:c,y0:33.3,y1:66.7},{k:'R',lbl:'Right',v:r,y0:66.7,y1:100}];
+  const mx=Math.max(l,c,r)||1;
+  let inner='';
+  bands.forEach(function(b){
+    const t2=b.v/mx;
+    inner+='<rect x="'+PX(50)+'" y="'+PY(b.y0)+'" width="'+PX(50)+'" height="'+PY(b.y1-b.y0)+
+           '" fill="var(--accent)" fill-opacity="'+(0.06+0.42*t2).toFixed(3)+'"/>';
+    inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+1.2)+'" fill="var(--text)" font-size="4.6" font-weight="800" '+
+           'text-anchor="middle" font-family="JetBrains Mono,monospace">'+b.v.toFixed(1)+'%</text>';
+    inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+6.2)+'" fill="var(--text3)" font-size="2.6" font-weight="700" '+
+           'text-anchor="middle" letter-spacing="0.4" font-family="Inter">'+b.lbl.toUpperCase()+'</text>';
+  });
+  const domi=l>c&&l>r?'down the left':(r>c&&r>l?'down the right':'through the middle');
+  return pitchWrap('Which side they attack',
+    'Share of final-third involvement by channel. This team works '+domi+'. Attack is left to right, so the top band is their left.',
+    inner,
+    '<span><i style="background:var(--accent)"></i>Darker band = more of their final-third play</span>');
+}
 /* ---------- RANKINGS ---------- */
 function renderRankings(){
   const d=tdefOf(RKT.metric)||{};
