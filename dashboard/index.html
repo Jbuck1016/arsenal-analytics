@@ -25,7 +25,7 @@ html.dark{
   --bg:#0f1117;--bg2:#1a1d24;--bg3:#22252e;
   --surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);
   --border:#2a2d35;--border2:#3a3d45;
-  --text:#f0f2f8;--text2:#8a94b0;--text3:#5a6480;
+  --text:#f4f6fb;--text2:#b9c3db;--text3:#8b97b4;
   --pitch:#11141b;
   --shadow:0 1px 3px rgba(0,0,0,0.25);--shadow2:0 2px 8px rgba(0,0,0,0.2);
 }
@@ -253,6 +253,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .tot-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:transform .15s,box-shadow .15s}
 .tot-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.tot-rank{display:flex;align-items:baseline;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)}
+.tot-rank-n{font:700 12px/1 var(--f-data);letter-spacing:-.02em}
+.tot-rank-of{font:500 9px/1 var(--f-body);color:var(--text3)}
 .tot-val{font:700 26px/1 var(--f-data);color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.035em}
 .tot-lbl{font:700 8px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-top:5px}
 .tot-sub{font:500 10px/1 'Inter',sans-serif;color:var(--text3);margin-top:3px;font-variant-numeric:tabular-nums}
@@ -367,10 +370,10 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 /* Momentum tab */
 .mom-tab{display:none;flex:1;min-height:0;overflow:hidden}
 .mom-tab.show{display:flex}
-.mom-wrap{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.mom-wrap{flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:11px}
 .mom-wrap::-webkit-scrollbar{width:4px}.mom-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .mom-hdr{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.mom-title{font:800 20px/1.1 'Inter',sans-serif;color:var(--text)}
+.mom-title{font:800 21px/1.05 var(--f-display);letter-spacing:-.025em;color:var(--text)}
 .mom-explain{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text3);border-radius:6px;padding:10px 12px;font:400 11px/1.5 'Inter',sans-serif;color:var(--text2)}
 .mom-explain-hdr{display:flex;align-items:center;gap:8px;cursor:pointer}
 .mom-explain-title{font:700 11px/1 'Inter',sans-serif;color:var(--text);flex:1}
@@ -379,8 +382,8 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 .mom-explain.open .mom-explain-body{display:block}
 .mom-explain b{color:var(--text);font-weight:700}
 .mom-sub{font:500 12px/1 'Inter',sans-serif;color:var(--text2)}
-.mom-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative}
-.mom-chart{width:100%;display:block}
+.mom-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;position:relative}
+.mom-chart{width:100%;display:block;max-height:38vh}
 .mom-legend{display:flex;gap:16px;margin-top:8px;font:500 11px/1 'Inter',sans-serif;color:var(--text2)}
 .mom-legend-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
 .mom-tooltip{position:absolute;pointer-events:none;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font:500 11px/1.4 'Inter',sans-serif;color:var(--text);box-shadow:var(--shadow2);z-index:10;display:none}
@@ -388,7 +391,7 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 @media(max-width:1000px){.mom-bottom{grid-template-columns:1fr 1fr;}.mom-bottom > :last-child{grid-column:span 2}}
 .mom-heat-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mom-heat-title{font:700 11px/1 'Inter',sans-serif;color:var(--text)}
-.mom-heat-canvas{width:100%;height:auto;border-radius:6px}
+.mom-heat-canvas{width:100%;height:auto;max-height:34vh;object-fit:contain;border-radius:6px}
 .mom-moments{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .mom-moments-title{font:700 11px/1 'Inter',sans-serif;color:var(--text);margin-bottom:4px}
 .mom-moment-row{display:flex;gap:8px;align-items:center;font:500 10px/1.3 'Inter',sans-serif;color:var(--text2);padding:4px 6px;border-radius:4px}
@@ -1128,7 +1131,9 @@ const SEASON_COLS=[{key:'opponent',label:'Opponent',type:'text'},{key:'ha',label
 
 async function loadSeasonStats(){
   if(T().name==='__ALL__'){S.seasonData=[];S.seasonComps=new Set();renderSeasonComps();renderSeasonTable();return;}
-  const data=await sbAll('v_season_stats',{team:'eq.'+T().name,select:'*',order:'opponent.asc'});S.seasonData=data;S.seasonComps=new Set(T().comps.map(c=>c.v));renderSeasonComps();renderSeasonTable();}
+  const data=await sbAll('v_season_stats',{team:'eq.'+T().name,select:'*',order:'opponent.asc'});S.seasonData=data;
+  try{const rk=await sbAll('mv_team_stat_ranks',{team:'eq.'+T().name,select:'metric,per_game,league_rank,of_teams'});
+    S.statRanks={};rk.forEach(r=>{S.statRanks[r.metric]=r});}catch(e){S.statRanks={};}S.seasonComps=new Set(T().comps.map(c=>c.v));renderSeasonComps();renderSeasonTable();}
 
 function renderSeasonComps(){const el=document.getElementById('seasonComps');el.innerHTML=T().comps.map(c=>'<label class="chk"><input type="checkbox" class="scomp-cb" value="'+c.v+'"'+(S.seasonComps.has(c.v)?' checked':'')+'>'+c.l+'</label>').join('');el.querySelectorAll('.scomp-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.seasonComps.add(cb.value);else S.seasonComps.delete(cb.value);renderSeasonTable();};});}
 
@@ -1199,7 +1204,14 @@ function renderSeasonTable(){
   document.querySelectorAll('#stblBody td.num-clickable').forEach(td=>{td.onclick=()=>{const tr=td.closest('tr');const gid=tr.dataset.gid;const opp=tr.dataset.opp;const col=td.dataset.col;openCellMatchModal(gid,opp,col);};});
   // Summary cards - BIG = per-game avg, small = total
   const totEl=document.getElementById('totGrid');const nCols=visCols.filter(c=>c.type==='num');const n=sorted.length||1;
-  totEl.innerHTML=nCols.map(c=>{const sum=sorted.reduce((s,r)=>s+(r[c.key]||0),0);const avg=(sum/n).toFixed(1);return'<div class="tot-card"><div class="tot-val">'+avg+'</div><div class="tot-lbl">'+c.label+' / game</div><div class="tot-sub">'+sum+' total</div></div>';}).join('');
+  totEl.innerHTML=nCols.map(c=>{
+    const sum=sorted.reduce((s,r)=>s+(r[c.key]||0),0);const avg=(sum/n).toFixed(1);
+    const rk=(S.statRanks||{})[c.key];
+    const rankHtml=rk?'<div class="tot-rank" title="Rank across all '+rk.of_teams+' MLS teams, per game">'+
+      '<span class="tot-rank-n" style="color:'+rankColor(rk.league_rank,rk.of_teams)+'">#'+rk.league_rank+'</span>'+
+      '<span class="tot-rank-of">of '+rk.of_teams+'</span></div>':'';
+    return'<div class="tot-card"><div class="tot-val">'+avg+'</div><div class="tot-lbl">'+c.label+' / game</div>'+
+      '<div class="tot-sub">'+sum+' total</div>'+rankHtml+'</div>';}).join('');
   document.getElementById('seasonTitle').textContent=T().display+' \u2014 Season Stats';
   // Populate trend dropdown
   const trendSel=document.getElementById('trendSel');if(trendSel){const cur=trendSel.value;trendSel.innerHTML='<option value="">Select stat to chart \u2192</option>'+SEASON_COLS.filter(c=>c.type==='num').map(c=>'<option value="'+c.key+'"'+(cur===c.key?' selected':'')+'>'+c.label+'</option>').join('');trendSel.onchange=()=>{if(trendSel.value){S.seasonTrend=trendSel.value;renderSeasonTrend(trendSel.value);}else{S.seasonTrend=null;document.getElementById('seasonTrendWrap').innerHTML='';}};if(cur&&S.seasonTrend)renderSeasonTrend(S.seasonTrend);}
@@ -2181,6 +2193,9 @@ function resetStats(){/* noop */}
 
 /* HELPERS */
 function leg(color,text){return'<span class="leg"><span class="leg-dot" style="background:'+color+'"></span>'+text+'</span>';}
+function rankColor(r,n){const p=1-((r-1)/Math.max(1,n-1));
+  if(p>=0.8)return'var(--green)';if(p>=0.6)return'#4ade80';if(p>=0.4)return'var(--gold)';
+  if(p>=0.2)return'#f97316';return'var(--red-bright)';}
 function cellTint(val,min,max){
   if(max===min)return'';
   const p=Math.max(0,Math.min(1,(val-min)/(max-min)));

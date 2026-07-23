@@ -15,7 +15,7 @@
  --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.07)}
 html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
  --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
- --border:#272b35;--border2:#3a3f4b;--text:#f2f4f9;--text2:#9aa4bd;--text3:#69738c;
+ --border:#272b35;--border2:#3a3f4b;--text:#f4f6fb;--text2:#b9c3db;--text3:#8b97b4;
  --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
@@ -60,7 +60,7 @@ select option,.sel option{background:var(--bg2);color:var(--text)}
 .sect{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
 .sect-h{font:700 10px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;display:flex;justify-content:space-between}
 .row{display:grid;grid-template-columns:170px 66px 1fr 30px;align-items:center;gap:9px;padding:4px 0}
-.row-lbl{font:500 11px/1.3 'Inter';color:var(--text2);cursor:help;border-bottom:1px dotted var(--border2);justify-self:start}
+.row-lbl{font:500 11.5px/1.3 var(--f-body);color:var(--text2);cursor:help;border-bottom:1px dotted var(--border2);justify-self:start}
 .row-val{font:500 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
 .bar-f{height:100%;border-radius:5px}
@@ -85,6 +85,10 @@ tr:hover td{background:var(--surface)}
 .viz-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .viz-leg b{font-weight:700;color:var(--text2)}
 .vz-tog{display:flex;gap:4px;margin:0 0 10px;background:var(--surface);border-radius:7px;padding:3px;flex-wrap:wrap}
+.vz-tog.sm{margin:0}
+.vz-tog.sm .vzb{font-size:9.5px;padding:5px 9px}
+.vz-filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 10px}
+.vz-flabel{font:700 8.5px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
 .vzb{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter';padding:6px 10px;border-radius:5px;cursor:pointer}
 .vzb:hover{color:var(--text)}
 .vzb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
@@ -118,7 +122,7 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
-let MP={kind:'passes'};
+let MP={kind:'passes',third:'',lane:''};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null;
 
@@ -376,9 +380,44 @@ const MAPS=[
   {k:'shotsag',l:'Shots conceded',d:'Every shot faced. Circle size is chance quality.'}
 ];
 function mapCtrl(){
+  const thirds=[['','All thirds'],['def','Defensive third'],['mid','Middle third'],['att','Final third']];
+  const lanes=[['','Full width'],['L','Left'],['C','Centre'],['R','Right']];
   return '<div class="vz-tog">'+MAPS.map(function(m){
-    return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
-  }).join('')+'</div>';
+      return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
+    }).join('')+'</div>'+
+    '<div class="vz-filters"><span class="vz-flabel">Filter by zone</span>'+
+    '<div class="vz-tog sm">'+thirds.map(function(t){
+      return '<button class="vzb'+(MP.third===t[0]?' on':'')+'" onclick="MP.third=\''+t[0]+'\';renderMaps(teamOf(SEL))">'+t[1]+'</button>'
+    }).join('')+'</div>'+
+    '<div class="vz-tog sm">'+lanes.map(function(l){
+      return '<button class="vzb'+(MP.lane===l[0]?' on':'')+'" onclick="MP.lane=\''+l[0]+'\';renderMaps(teamOf(SEL))">'+l[1]+'</button>'
+    }).join('')+'</div></div>';
+}
+/* Zone test runs on where the action STARTS. Attack is left to right, so with the
+   pitch drawn from above the top strip is the attacking team's left. */
+function inZone(x,y){
+  if(MP.third==='def'&&!(x<33.3))return false;
+  if(MP.third==='mid'&&!(x>=33.3&&x<66.7))return false;
+  if(MP.third==='att'&&!(x>=66.7))return false;
+  if(MP.lane==='L'&&!(y<33.3))return false;
+  if(MP.lane==='C'&&!(y>=33.3&&y<66.7))return false;
+  if(MP.lane==='R'&&!(y>=66.7))return false;
+  return true;
+}
+function zoneShade(){
+  if(!MP.third&&!MP.lane)return'';
+  const x0=MP.third==='def'?0:(MP.third==='mid'?33.3:(MP.third==='att'?66.7:0));
+  const x1=MP.third==='def'?33.3:(MP.third==='mid'?66.7:(MP.third==='att'?100:100));
+  const y0=MP.lane==='L'?0:(MP.lane==='C'?33.3:(MP.lane==='R'?66.7:0));
+  const y1=MP.lane==='L'?33.3:(MP.lane==='C'?66.7:(MP.lane==='R'?100:100));
+  return '<rect x="'+PX(x0)+'" y="'+PY(y0)+'" width="'+PX(x1-x0)+'" height="'+PY(y1-y0)+
+         '" fill="var(--accent)" fill-opacity="0.055"/>';
+}
+function zoneNote(){
+  if(!MP.third&&!MP.lane)return'';
+  const t={def:'defensive third',mid:'middle third',att:'final third'}[MP.third]||'';
+  const l={L:'left',C:'central',R:'right'}[MP.lane]||'';
+  return ' Filtered to '+[l,t].filter(Boolean).join(' ')+(l&&!t?' channel':'')+'.';
 }
 async function loadZones(team){
   if(ZTEAM===team&&ZONES)return;
@@ -401,28 +440,28 @@ async function renderMaps(t){
     await loadZones(t.team);
     const m=MAPS.filter(function(x){return x.k===MP.kind})[0]||MAPS[0];
     const G='var(--elite)',R='var(--poor)',AC='var(--accent)',B='#60a5fa',N='var(--text3)',Y='var(--avg)';
-    let inner='',leg='';
+    let inner=zoneShade(),leg='';
 
     if(m.k==='passes'){
-      const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null});
+      const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
       ps.forEach(function(a){inner+=tline(a,G,0.13,0.10)});
       leg='<span><i style="background:'+G+'"></i>Completed passes <b>'+ps.length.toLocaleString()+'</b></span>'+
           '<span>Lines are drawn faintly and stack, so brightness is volume</span>';
     }
     else if(m.k==='prog'){
-      const ps=ZONES.filter(function(a){return a.prog&&a.ok&&a.end_x!=null});
+      const ps=ZONES.filter(function(a){return a.prog&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
       ps.forEach(function(a){inner+=tline(a,G,0.2,0.3)});
       leg='<span><i style="background:'+G+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>';
     }
     else if(m.k==='box'){
-      const ps=ZONES.filter(function(a){return a.into_box&&a.ok&&a.end_x!=null});
+      const ps=ZONES.filter(function(a){return a.into_box&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
       ps.forEach(function(a){inner+=tline(a,AC,0.28,0.55)+
         '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.5" fill="'+AC+'" fill-opacity="0.8"/>'});
       leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>';
     }
     else if(m.k==='carries'){
       let pr=0,ot=0;
-      CZONES.forEach(function(c){
+      CZONES.filter(function(c){return inZone(c.start_x,c.start_y)}).forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
         if(c.is_progressive){inner+=tline(a,G,0.2,0.34);pr++} else {inner+=tline(a,N,0.13,0.12);ot++}
       });
@@ -430,14 +469,14 @@ async function renderMaps(t){
           '<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>';
     }
     else if(m.k==='touches'){
-      ZONES.forEach(function(a){
+      ZONES.filter(function(a){return inZone(a.x,a.y)}).forEach(function(a){
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.42" fill="'+AC+'" fill-opacity="0.16"/>';
       });
-      leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.length.toLocaleString()+'</b></span>';
+      leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.filter(function(a){return inZone(a.x,a.y)}).length.toLocaleString()+'</b></span>';
     }
     else if(m.k==='def'){
       const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
-      const ds=ZONES.filter(function(a){return col[a.type]});
+      const ds=ZONES.filter(function(a){return col[a.type]&&inZone(a.x,a.y)});
       const cnt={};
       ds.forEach(function(a){cnt[a.type]=(cnt[a.type]||0)+1;
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.55" fill="'+col[a.type]+'" fill-opacity="0.5"/>'});
@@ -447,19 +486,19 @@ async function renderMaps(t){
     else {
       const forTeam=(m.k==='shots');
       const gids={};TSHOTS.forEach(function(x){if(x.team===t.team)gids[x.game_id]=1});
-      const sh=TSHOTS.filter(function(x){return forTeam?x.team===t.team:(gids[x.game_id]&&x.team!==t.team)});
+      const sh=TSHOTS.filter(function(x){return (forTeam?x.team===t.team:(gids[x.game_id]&&x.team!==t.team))&&inZone(x.x,x.y)});
       let g=0,sx=0;
       sh.forEach(function(a){
         const xg=+(a.xg||0.04);sx+=xg;
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(0.62+Math.sqrt(xg)*2.5)+'" fill="'+c+
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(0.45+Math.sqrt(xg)*1.7)+'" fill="'+c+
                '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>';
       });
       leg='<span><i style="background:'+AC+'"></i>Goals <b>'+g+'</b></span>'+
           '<span><i style="background:'+(forTeam?G:R)+'"></i>Shots <b>'+sh.length+'</b></span>'+
           '<span>xG <b>'+sx.toFixed(1)+'</b></span>';
     }
-    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.',
+    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote(),
       inner,leg,mapCtrl());
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
