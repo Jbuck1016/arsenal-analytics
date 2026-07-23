@@ -42,6 +42,9 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;transition:.15s}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.tab-x{text-decoration:none;color:var(--text3)}
+.tab-x:hover{color:var(--accent)}
+.tab-div{width:1px;align-self:stretch;background:var(--border2);margin:3px 5px;flex-shrink:0}
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;transition:.15s;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
@@ -166,8 +169,6 @@ tr:hover td{background:var(--surface)}
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
     <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
-    <a class="lnk" href="teams.html">Teams &rarr;</a>
-    <a class="lnk" href="index.html">&larr; Match Dashboard</a>
     <button class="lnk" onclick="toggleDark()">Theme</button>
   </div>
 </div>
@@ -197,6 +198,7 @@ const MIN90=6;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
 const TABS=['Player','Rank','Scatter','Scout','Compare','Glossary'];
+const NAV=[['Match Dashboard','index.html'],['Teams','teams.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
@@ -272,8 +274,11 @@ async function init(){
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 function renderTabs(){
-  document.getElementById('tabs').innerHTML=TABS.map(function(t){
-    return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('');
+  document.getElementById('tabs').innerHTML=
+    TABS.map(function(t){
+      return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('')+
+    '<span class="tab-div"></span>'+
+    NAV.map(function(n){return '<a class="tab tab-x" href="'+n[1]+'">'+n[0]+'</a>'}).join('');
 }
 function setTab(t){
   TAB=t;renderTabs();
@@ -405,6 +410,7 @@ function renderPlayer(p,pcts,pillars,dna){
   h+=legendHtml()+
      '<div class="foot">Percentiles are within role pool, MLS 2026, open play only. Role is assigned from where a player actually operates, not from the team sheet.</div>';
   document.getElementById('main').innerHTML=h;
+  wireTips();
 }
 
 function metricCard(g,pm){
@@ -806,11 +812,29 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     pitchMarks()+inner+'</svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 function lg(c,t,n){return '<span><i style="background:'+c+'"></i>'+t+(n!=null?' <b>'+n+'</b>':'')+'</span>'}
+/* Comet: a tapered quad, narrow where the ball starts and full width where it
+   arrives, so direction reads without arrowheads. Cheaper than a gradient per
+   line, which matters when a team map draws several thousand. */
 function line(a,c,w,op,dash){
-  return '<line x1="'+PX(a.x)+'" y1="'+PY(a.y)+'" x2="'+PX(a.end_x)+'" y2="'+PY(a.end_y)+
-    '" stroke="'+c+'" stroke-width="'+(w||0.34)+'" stroke-opacity="'+(op||0.75)+
-    '" stroke-linecap="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'+
-    '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.62" fill="'+c+'" fill-opacity="'+(op||0.85)+'"/>';
+  const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  if(dash){
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
+      '" stroke-width="'+(w||0.34)+'" stroke-opacity="'+(op||0.75)+
+      '" stroke-linecap="round" stroke-dasharray="'+dash+'"/>'+
+      '<circle cx="'+x2+'" cy="'+y2+'" r="0.6" fill="'+c+'" fill-opacity="'+(op||0.85)+'"/>';
+  }
+  const W=(w||0.34)*1.5, nx=-dy/len, ny=dx/len;
+  const t=W*0.14, h=W*0.62;           // tail width, head width
+  const p1x=x1+nx*t,  p1y=y1+ny*t;
+  const p2x=x2+nx*h,  p2y=y2+ny*h;
+  const p3x=x2-nx*h,  p3y=y2-ny*h;
+  const p4x=x1-nx*t,  p4y=y1-ny*t;
+  return '<path d="M'+p1x.toFixed(2)+' '+p1y.toFixed(2)+'L'+p2x.toFixed(2)+' '+p2y.toFixed(2)+
+    'L'+p3x.toFixed(2)+' '+p3y.toFixed(2)+'L'+p4x.toFixed(2)+' '+p4y.toFixed(2)+
+    'Z" fill="'+c+'" fill-opacity="'+(op||0.75)+'"/>'+
+    '<circle cx="'+x2+'" cy="'+y2+'" r="'+(h*0.95).toFixed(2)+'" fill="'+c+
+    '" fill-opacity="'+Math.min(1,(op||0.75)*1.25).toFixed(2)+'"/>';
 }
 function dot(a,c,r,op){
   return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(r||0.85)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
@@ -876,8 +900,13 @@ function vizPanel(grp,p){
       if(a.is_goal){c=AC;op=0.95;g++}
       else if(a.type==='SavedShot'){c=G;op=0.6;ot++}
       else{c=R;op=0.42;off++}
-      s+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
-         '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"/>';
+      const dist=Math.sqrt(Math.pow((100-a.x)*1.05,2)+Math.pow((50-a.y)*0.68,2));
+      const lbl=(a.is_goal?'Goal':(a.type==='SavedShot'?'Saved':'Off target'));
+      s+='<circle class="pt" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
+         '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"'+
+         ' data-n="'+esc(p.player_name)+' \u00B7 '+lbl+'"'+
+         ' data-v="xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.is_header?' \u00B7 header':'')+
+         (a.bigchance?' \u00B7 big chance':'')+'"/>';
     });
     return pitchWrap('Shot map','Open-play shots. Circle size is chance quality (xG); total '+sx.toFixed(1)+' xG from '+sh.length+' shots.',s,
       lg(AC,'Goals',g)+lg(G,'On target',ot)+lg(R,'Off target',off));

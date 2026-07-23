@@ -28,6 +28,9 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.tab-x{text-decoration:none;color:var(--text3)}
+.tab-x:hover{color:var(--accent)}
+.tab-div{width:1px;align-self:stretch;background:var(--border2);margin:3px 5px;flex-shrink:0}
 .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
@@ -106,8 +109,6 @@ tr:hover td{background:var(--surface)}
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
     <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
-    <a class="lnk" href="players.html">Players &rarr;</a>
-    <a class="lnk" href="index.html">&larr; Match Dashboard</a>
     <button class="lnk" onclick="document.documentElement.classList.toggle('dark')">Theme</button>
   </div>
 </div>
@@ -121,6 +122,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
+const NAV=[['Match Dashboard','index.html'],['Players','players.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
@@ -161,8 +163,11 @@ async function init(){
     pick(SEL);
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
-function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(function(t){
-  return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('')}
+function renderTabs(){document.getElementById('tabs').innerHTML=
+  TABS.map(function(t){
+    return '<button class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('')+
+  '<span class="tab-div"></span>'+
+  NAV.map(function(n){return '<a class="tab tab-x" href="'+n[1]+'">'+n[0]+'</a>'}).join('')}
 function setTab(t){TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t==='League Map'||t==='Rankings');
   draw();}
@@ -446,13 +451,20 @@ async function loadZones(team){
   const r=await Promise.all([
     sbAll('v_team_actions',{team:'eq.'+team,select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
     sbAll('v_team_carries',{team:'eq.'+team,select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
-    sbAll('v_team_shots',{select:'team,x,y,xg,is_goal,game_id'})
+    sbAll('v_team_shots',{select:'team,player,x,y,xg,is_goal,game_id,dist_m'})
   ]);
   ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
 }
+/* Tapered comet, narrow at the origin and full width where the ball arrives. */
 function tline(a,c,w,op){
-  return '<line x1="'+PX(a.x)+'" y1="'+PY(a.y)+'" x2="'+PX(a.end_x)+'" y2="'+PY(a.end_y)+
-    '" stroke="'+c+'" stroke-width="'+w+'" stroke-opacity="'+op+'" stroke-linecap="round"/>';
+  const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const nx=-dy/len, ny=dx/len, t=w*0.16, h=w*0.78;
+  return '<path d="M'+(x1+nx*t).toFixed(2)+' '+(y1+ny*t).toFixed(2)+
+    'L'+(x2+nx*h).toFixed(2)+' '+(y2+ny*h).toFixed(2)+
+    'L'+(x2-nx*h).toFixed(2)+' '+(y2-ny*h).toFixed(2)+
+    'L'+(x1-nx*t).toFixed(2)+' '+(y1-ny*t).toFixed(2)+
+    'Z" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
 async function renderMaps(t){
   const main=document.getElementById('main');
@@ -654,6 +666,18 @@ function renderRankings(){
     '<div class="split2"><div class="sect">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
 }
 
+function wireTips(){
+  const tip=document.getElementById('tip'),els=document.querySelectorAll('.pt');
+  for(var i=0;i<els.length;i++){(function(el){
+    el.style.cursor='crosshair';
+    el.addEventListener('mouseenter',function(){
+      tip.innerHTML='<div>'+el.getAttribute('data-n')+'</div>'+
+        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+el.getAttribute('data-v')+'</div>';
+      tip.style.display='block';});
+    el.addEventListener('mousemove',function(e){tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'});
+    el.addEventListener('mouseleave',function(){tip.style.display='none'});
+  })(els[i]);}
+}
 function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
   ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
   .map(function(a){return '<div class="lg"><div class="dot" style="background:'+a[0]+'"></div>'+a[1]+'</div>'}).join('')+'</div>'}
