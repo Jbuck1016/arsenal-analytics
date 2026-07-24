@@ -122,7 +122,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
-const NAV=[['Match Dashboard','index.html'],['Players','players.html']];
+const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
@@ -326,7 +326,7 @@ async function renderMatches(t){
         '<td class="num">'+r.shots+'</td><td class="num">'+r.opp_shots+'</td></tr>';
     });
     h+='</tbody></table></div><div class="foot">Match-by-match style. Open any of these in the '+
-       '<a href="index.html" style="color:var(--accent)">match dashboard</a> for the full event maps.</div></div>';
+       '<a href="match.html" style="color:var(--accent)">match dashboard</a> for the full event maps.</div></div>';
     document.getElementById('main').innerHTML=h;
   }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
