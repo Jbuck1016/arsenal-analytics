@@ -130,6 +130,8 @@ td{padding:8px 9px;border-bottom:1px solid var(--border)}
 tr:hover td{background:var(--surface)}
 .num{text-align:right;font-family:var(--f-data);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .fit{font:700 12.5px/1 var(--f-data);font-variant-numeric:tabular-nums}
+.c-val{font:600 11.5px/1.15 var(--f-data);color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.c-pct{font:600 9px/1.15 var(--f-data);font-variant-numeric:tabular-nums;margin-top:2px;opacity:.92}
 .pname-link{font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px dotted var(--border2)}
 .pname-link:hover{color:var(--accent)}
 
@@ -139,6 +141,19 @@ tr:hover td{background:var(--surface)}
 .viz-eyebrow{font:700 8px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
 .viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:3px}
 .viz-sub{font:500 10px/1.45 var(--f-body);color:var(--text3);margin:0 0 7px;max-width:82ch}
+.viz-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.viz-exp{display:flex;gap:5px;flex-shrink:0}
+.viz-exp button{background:var(--surface);border:1px solid var(--border);color:var(--text3);
+  font:600 9.5px/1 var(--f-body);letter-spacing:.06em;padding:6px 9px;border-radius:5px;cursor:pointer}
+.viz-exp button:hover{color:var(--accent);border-color:var(--accent-glow)}
+.lchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text2);font:600 10px/1 var(--f-body);padding:6px 9px;border-radius:5px;cursor:pointer;transition:.12s}
+.lchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.lchip b{font-weight:700;color:var(--text3)}
+.lchip:hover{border-color:var(--border2);color:var(--text)}
+.lchip.off{opacity:.34}
+.lchip.off i{background:var(--text3)!important}
+.lchip.solo{color:var(--text3);font-weight:500}
 .vz-tog{display:flex;gap:4px;margin:0 0 9px;background:var(--surface);border-radius:7px;padding:3px;width:fit-content}
 .vzb{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter';padding:6px 11px;border-radius:5px;cursor:pointer}
 .vzb:hover{color:var(--text)}
@@ -208,12 +223,12 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const MIN90=6;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
-const TABS=['Player','Rank','Scatter','Scout','Compare','Glossary'];
-const NAV=[['Home','index.html'],['Match','match.html'],['Teams','teams.html']];
+const TABS=['Player','Rank','Scatter','Scout','Compare'];
+const NAV=[['Home','index.html'],['Match','match.html'],['Teams','teams.html'],['Reference','glossary.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
-let VZ={passMode:'prog',outcome:''};
+let VZ={passMode:'prog',outcome:'',off:{}};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
@@ -233,7 +248,7 @@ function groupsFor(pool){
   return out;
 }
 let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90',hi:[]};
-let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[]};
+let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[],show:'both'};
 let CMP={a:null,b:null,pool:'W'};
 
 async function sbAll(tbl,p){
@@ -308,7 +323,7 @@ function setTab(t){
   else if(t==='Scatter')renderScatter();
   else if(t==='Scout')renderScout();
   else if(t==='Compare')renderCompare();
-  else renderGlossary();
+  else if(t==='Glossary')renderGlossary();
 }
 
 /* ---------- EXPORT ---------- */
@@ -596,6 +611,11 @@ function scoutCtrls(){
       POOLS.map(function(p){return '<option value="'+p+'"'+(SK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     '<div class="cfield" style="min-width:250px"><span class="clbl">Add metric (up to 10)</span>'+
       '<select class="sel" onchange="addMetric(this.value);this.value=\'\'"><option value="">Choose a metric&hellip;</option>'+opts+'</select></div>'+
+    '<div class="cfield" style="min-width:190px"><span class="clbl">Cell display</span>'+
+      '<div class="vz-tog" style="margin:0">'+
+      [['both','Value + pct'],['val','Value'],['pct','Percentile']].map(function(o){
+        return '<button class="vzb'+(SK.show===o[0]?' on':'')+'" onclick="SK.show=\''+o[0]+'\';drawScout()">'+o[1]+'</button>'
+      }).join('')+'</div></div>'+
     '<button class="btn sec" onclick="SK.metrics=[];renderScout()">Clear</button></div>';
   h+='<div class="mchips">'+SK.metrics.map(function(m,i){const d=defOf(m.k)||{};
     return '<div class="mchip"><span class="mchip-nm">'+esc(d.label||m.k)+'</span>'+
@@ -651,8 +671,10 @@ function drawScout(){
     '<th class="num"'+(SK.sort.col==='n90'?' style="color:var(--accent)"':'')+' onclick="sortScout(\'n90\')">90s'+ar('n90')+'</th>'+
     '<th class="num"'+(SK.sort.col==='fit'?' style="color:var(--accent)"':'')+' onclick="sortScout(\'fit\')">Fit'+ar('fit')+'</th>'+
     SK.metrics.map(function(m){const d=defOf(m.k)||{};
+      const u=d.unit==='%'?' (%)':(d.unit==='m'?' (m)':(d.unit==='s'?' (s)':''));
       return '<th class="num"'+(SK.sort.col===m.k?' style="color:var(--accent)"':'')+
-             ' onclick="sortScout(\''+m.k+'\')" title="'+esc(d.definition||'')+'">'+esc(d.label||m.k)+ar(m.k)+'</th>'}).join('')+
+             ' onclick="sortScout(\''+m.k+'\')" title="'+esc(d.definition||'')+'">'+
+             esc(d.label||m.k)+u+ar(m.k)+'</th>'}).join('')+
     '</tr></thead><tbody>';
   rows.forEach(function(r,i){
     h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
@@ -660,8 +682,7 @@ function drawScout(){
        '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
        '<td class="num">'+r.n90.toFixed(1)+'</td>'+
        '<td class="num fit" style="color:'+tier(r.fit).c+'">'+Math.round(r.fit)+'</td>'+
-       SK.metrics.map(function(m){const c=r.v[m.k];
-         return '<td class="num" style="color:'+(c?tier(+c.pct).c:'var(--text3)')+'">'+(c?c.pct:'\u2014')+'</td>'}).join('')+'</tr>';
+       SK.metrics.map(function(m){return cell(r.v[m.k],m.k)}).join('')+'</tr>';
   });
   h+='</tbody></table></div>'+legendHtml()+'</div>';
   h+=scoutChart(rows.slice(0,15));
@@ -848,8 +869,11 @@ function pitchMarks(){
     '<rect x="105" y="30.34" width="1.3" height="7.32" '+st+'/>';
 }
 function pitchWrap(title,sub,inner,legend,ctrl){
-  return '<div class="sect"><div class="viz-eyebrow">Pitch view</div>'+
-    '<div class="viz-title">'+esc(title)+'</div>'+
+  return '<div class="sect"><div class="viz-head">'+
+    '<div><div class="viz-eyebrow">Pitch view</div>'+
+    '<div class="viz-title">'+esc(title)+'</div></div>'+
+    '<div class="viz-exp"><button onclick="exportViz(\'png\')">PNG</button>'+
+    '<button onclick="exportViz(\'pdf\')">PDF</button></div></div>'+
     (ctrl||'')+
     (sub?'<div class="viz-sub">'+sub+'</div>':'')+
     '<div class="pitch-box"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
@@ -903,230 +927,316 @@ function outcomeTog(){
     return '<button class="vzb'+(VZ.outcome===o[0]?' on':'')+'" onclick="VZ.outcome=\''+o[0]+'\';pick(SEL)">'+o[1]+'</button>'
   }).join('')+'</div>';
 }
-function vizPanel(grp,p){
-  if(!PACT)return noData('Loading actions\u2026');
-  const A=PACT,C=PCAR||[];
-  // Solo view: green succeeded, red failed. Multi view: passes green,
-  // progressive blue, carries yellow.
-  const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,N='var(--text3)',Y=PAL.carry;
+/* One definition per layer supplies its colour, its legend entry and its filter
+   chip, so the three can no longer drift apart. */
+function vizLayers(grp,p){
+  const A=PACT||[], C=PCAR||[], R2=PREC||[];
+  const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,Y=PAL.carry,N='var(--text3)';
+  const L=function(k,label,color,items,draw){return{k:k,label:label,color:color,items:items,draw:draw}};
+  const pl=function(c,w,op){return function(a){return line(a,c,w,op)}};
+  const cl=function(c,w,op){return function(c2){
+    return line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},c,w,op)}};
+  const dt=function(c,r,op){return function(a){return dot({x:a.x,y:a.y},c,r,op)}};
 
   if(grp==='Passing'){
     const all=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.end_x!=null});
-    if(!all.length)return noData();
     const showAll=VZ.passMode==='all';
-    const ps=(showAll?all:all.filter(function(a){return a.prog||a.into_box})).filter(okF);
-    let s2='';let np=0,nb=0,nf=0,no=0;
-    ps.forEach(function(a){
-      if(showAll){
-        // several action types on one map, so colour encodes type not outcome
-        if(!a.ok){s2+=line(a,R,0.18,0.2);nf++;return}
-        if(a.into_box){s2+=line(a,AC,0.36,0.9);nb++}
-        else if(a.prog){s2+=line(a,B,0.3,0.7);np++}
-        else {s2+=line(a,G,0.16,0.28);no++}
-      } else {
-        // one family of action, so colour encodes success
-        if(!a.ok){s2+=line(a,R,0.26,0.45);nf++;return}
-        if(a.into_box){s2+=line(a,AC,0.4,0.92);nb++}
-        else {s2+=line(a,G,0.32,0.72);np++}
-      }
-    });
-    const tog=outcomeTog()+'<div class="vz-tog">'+
-      '<button class="vzb'+(!showAll?' on':'')+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
-      '<button class="vzb'+(showAll?' on':'')+'" onclick="VZ.passMode=\'all\';pick(SEL)">All passes</button></div>';
-    return pitchWrap(showAll?'All passing':'Progressive passing',
-      showAll?'Every open-play pass. Progressive and box entries stay highlighted.'
-             :'Completed progressive passes and passes into the box, open play only.',
-      s2, (showAll?lg(G,'Passes',no)+lg(B,'Progressive',np):lg(G,'Progressive',np))+
-          lg(AC,'Into box',nb)+lg(R,'Incomplete',nf), tog);
+    const base=showAll?all:all.filter(function(a){return a.prog||a.into_box});
+    return {title:showAll?'All passing':'Progressive passing',
+      sub:showAll?'Every open-play pass. Progressive and box entries stay highlighted.'
+                 :'Completed progressive passes and passes into the box, open play only.',
+      tog:'<div class="vz-tog">'+
+        '<button class="vzb'+(!showAll?' on':'')+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
+        '<button class="vzb'+(showAll?' on':'')+'" onclick="VZ.passMode=\'all\';pick(SEL)">All passes</button></div>',
+      layers:[
+        L('box','Into box',AC,base.filter(function(a){return a.into_box&&a.ok}),pl(AC,0.4,0.92)),
+        L('prog','Progressive',B,base.filter(function(a){return a.prog&&a.ok&&!a.into_box}),pl(B,0.3,0.72)),
+        L('other','Other completed',G,showAll?base.filter(function(a){return a.ok&&!a.prog&&!a.into_box}):[],pl(G,0.16,0.28)),
+        L('fail','Incomplete',R,base.filter(function(a){return !a.ok}),pl(R,0.24,0.4))
+      ]};
   }
   if(grp==='Creation'){
-    const ps=A.filter(function(a){return a.type==='Pass'&&(a.keypass||a.assist||a.through)}).filter(okF);
-    if(!ps.length)return noData();
-    let s='',k=0,as=0,th=0;
-    ps.forEach(function(a){
-      if(a.end_x==null)return;
-      if(a.assist){s+=line(a,AC,0.55,0.95);as++}
-      else if(a.through){s+=line(a,B,0.4,0.85,'1.2 0.8');th++}
-      else {s+=line(a,G,0.34,0.62);k++}
-    });
-    return pitchWrap('Chance creation','Passes that created a shot, plus through balls and assists.',s,
-      lg(G,'Key passes',k)+lg(B,'Through balls',th)+lg(AC,'Assists',as));
+    const ps=A.filter(function(a){return a.type==='Pass'&&a.end_x!=null});
+    return {title:'Chance creation',sub:'Passes that created a shot, plus through balls and assists.',
+      layers:[
+        L('assist','Assists',AC,ps.filter(function(a){return a.assist}),pl(AC,0.5,0.98)),
+        L('through','Through balls',B,ps.filter(function(a){return a.through&&!a.assist}),
+          function(a){return line(a,B,0.38,0.88,'1.2 0.8')}),
+        L('key','Key passes',G,ps.filter(function(a){return a.keypass&&!a.assist&&!a.through}),pl(G,0.32,0.7))
+      ]};
   }
   if(grp==='Shooting'){
     const sh=A.filter(function(a){return a.is_shot&&a.is_open_play});
-    if(!sh.length)return noData();
-    let s='',g=0,ot=0,off=0,sx=0;
-    let bl=0,po=0;
-    sh.forEach(function(a){
-      const xg=+(a.xg||0.04);sx+=xg;
-      const r=0.26+Math.sqrt(xg)*0.92;
-      const oc=a.shot_outcome||(a.is_goal?'goal':(a.type==='SavedShot'?'saved':'off'));
-      let c=N,op=0.5;
-      if(oc==='goal'){c=PAL.box;op=1;g++}
-      else if(oc==='saved'){c=G;op=0.75;ot++}
-      else if(oc==='blocked'){c='#a78bfa';op=0.6;bl++}
-      else if(oc==='post'){c=Y;op=0.8;po++}
-      else{c=R;op=0.42;off++}
+    const by=function(oc){return sh.filter(function(a){return (a.shot_outcome||'off')===oc})};
+    const mk=function(c,oc){return function(a){
+      const xg=+(a.xg||0.04), r=0.26+Math.sqrt(xg)*0.92;
+      const tipN=esc(p.player_name)+' \u00B7 '+({goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'}[oc]);
       const dist=Math.sqrt(Math.pow((100-a.x)*1.05,2)+Math.pow((50-a.y)*0.68,2));
-      const lbl=(a.is_goal?'Goal':(a.type==='SavedShot'?'Saved':'Off target'));
-      const tipN=esc(p.player_name)+' \u00B7 '+lbl;
-      const tipV='xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.is_header?' \u00B7 header':'')+
-        (a.bigchance?' \u00B7 big chance':'');
-      s+=shotMark(a.x,a.y,r,c,op,oc)+
-         '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r*2.4,1.6)+
-         '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';
-    });
-    return pitchWrap('Shot map',
-      'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+' shots. '+
-      'Blocked attempts are shown separately \u2014 the provider files them as saves but they never reached the keeper.',s,
-      lg(PAL.box,'Goal',g)+lg(G,'Saved',ot)+lg('#a78bfa','Blocked',bl)+lg(Y,'Post',po)+lg(R,'Off target',off));
+      const tipV='xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.head?' \u00B7 header':'')+(a.bigchance?' \u00B7 big chance':'');
+      return shotMark(a.x,a.y,r,c,oc==='goal'?1:(oc==='saved'?0.75:(oc==='blocked'?0.6:0.5)),oc)+
+        '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r*2.4,1.6)+
+        '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';}};
+    const sx=sh.reduce(function(t,a){return t+(+(a.xg||0.04))},0);
+    return {title:'Shot map',
+      sub:'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+
+          ' shots. Blocked attempts are separated \u2014 the provider files them as saves but they never reached the keeper.',
+      layers:[
+        L('goal','Goal',AC,by('goal'),mk(AC,'goal')),
+        L('saved','Saved',G,by('saved'),mk(G,'saved')),
+        L('blocked','Blocked','#a78bfa',by('blocked'),mk('#a78bfa','blocked')),
+        L('post','Post',Y,by('post'),mk(Y,'post')),
+        L('off','Off target',R,by('off'),mk(R,'off'))
+      ]};
   }
   if(grp==='Carrying'){
-    if(!C.length)return noData();
-    let s='',pr=0,bx=0,o=0;
-    C.forEach(function(c2){
-      const a={x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y};
-      if(c2.into_box){s+=line(a,AC,0.42,0.92);bx++}
-      else if(c2.is_progressive){s+=line(a,Y,0.3,0.7);pr++}
-      else {s+=line(a,N,0.18,0.22);o++}
-    });
-    return pitchWrap('Carry map','Every carry of 3m or more, from where the ball arrived to where he released it.',s,
-      lg(AC,'Into box',bx)+lg(G,'Progressive',pr)+lg(N,'Other carries',o));
+    return {title:'Carry map',sub:'Every carry of 3m or more, from where the ball arrived to where he released it.',
+      layers:[
+        L('box','Into box',AC,C.filter(function(c2){return c2.into_box}),cl(AC,0.42,0.92)),
+        L('prog','Progressive',Y,C.filter(function(c2){return c2.is_progressive&&!c2.into_box}),cl(Y,0.3,0.75)),
+        L('other','Other carries',N,C.filter(function(c2){return !c2.is_progressive&&!c2.into_box}),cl(N,0.18,0.24))
+      ]};
   }
   if(grp==='Combined'){
     const ps=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.ok&&a.end_x!=null});
-    let s2='',np=0,pp=0,cc=0;
-    ps.forEach(function(a){
-      if(a.prog){s2+=line(a,B,0.3,0.78);pp++} else {s2+=line(a,G,0.15,0.24);np++}
-    });
-    C.forEach(function(c2){
-      if(!c2.is_progressive)return;
-      s2+=line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},Y,0.3,0.8);cc++;
-    });
-    if(!ps.length&&!cc)return noData();
-    return pitchWrap('Everything he does on the ball',
-      'Passes, progressive passes and progressive carries on one pitch, coloured by action type rather than outcome.',
-      s2, lg(G,'Passes',np)+lg(B,'Progressive passes',pp)+lg(Y,'Progressive carries',cc));
+    return {title:'Everything he does on the ball',
+      sub:'Passes, progressive passes and progressive carries on one pitch, coloured by action type.',
+      layers:[
+        L('pass','Passes',G,ps.filter(function(a){return !a.prog}),pl(G,0.15,0.24)),
+        L('prog','Progressive passes',B,ps.filter(function(a){return a.prog}),pl(B,0.3,0.78)),
+        L('carry','Progressive carries',Y,C.filter(function(c2){return c2.is_progressive}),cl(Y,0.3,0.8))
+      ]};
   }
   if(grp==='Tempo'){
-    const rc=(PREC||[]).filter(function(r){return r.ttr!=null&&r.ttr<=20});
-    if(!rc.length)return noData();
-    let s2='';
-    rc.forEach(function(r){
-      const t=+r.ttr;
-      const c=t<1?'#34d399':(t<2?G:(t<5?Y:R));
-      s2+='<circle cx="'+PX(r.start_x)+'" cy="'+PY(r.start_y)+'" r="'+(0.55+Math.min(t,10)*0.11)+
-          '" fill="'+c+'" fill-opacity="'+(t<2?0.85:0.55)+'"/>';
-    });
-    const q=rc.filter(function(r){return r.ttr<2}).length;
-    return pitchWrap('Where he releases quickly',
-      'Every receipt, placed where the ball arrived. Colour and size are how long he held it \u2014 '+
-      'green is released inside two seconds, red is a long hold. '+q+' of '+rc.length+' were quick.',
-      s2, lg('#34d399','Under 1s')+lg(G,'1-2s')+lg(Y,'2-5s')+lg(R,'5s+'));
+    const rc=R2.filter(function(r){return r.ttr!=null&&r.ttr<=20});
+    const band=function(lo,hi){return rc.filter(function(r){return r.ttr>=lo&&r.ttr<hi})};
+    const mk=function(c){return function(r){
+      return '<circle cx="'+PX(r.start_x)+'" cy="'+PY(r.start_y)+'" r="'+(0.42+Math.min(r.ttr,10)*0.08)+
+        '" fill="'+c+'" fill-opacity="'+(r.ttr<2?0.85:0.55)+'"/>'}};
+    return {title:'Where he releases quickly',
+      sub:'Every receipt, placed where the ball arrived, coloured by how long he held it.',
+      layers:[
+        L('u1','Under 1s','#34d399',band(0,1),mk('#34d399')),
+        L('u2','1-2s',G,band(1,2),mk(G)),
+        L('u5','2-5s',Y,band(2,5),mk(Y)),
+        L('o5','5s+',R,band(5,999),mk(R))
+      ]};
   }
   if(grp==='Defending'||grp==='Discipline'){
-    const isD=grp==='Defending';
-    const types=isD?['Tackle','Interception','BallRecovery','Clearance','BlockedPass','Challenge','Save']:['Foul'];
-    const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6',Save:'#f0abfc'};
-    const lbl={Save:'Shot blocks',BlockedPass:'Blocked passes',BallRecovery:'Recoveries'};
-    const ds=A.filter(function(a){return types.indexOf(a.type)>=0});
-    if(!ds.length)return noData();
-    let s='',cnt={};
-    ds.forEach(function(a){
-      const c=isD?(col[a.type]||N):(a.ok?G:R);
-      cnt[isD?a.type:(a.ok?'Won':'Conceded')]=(cnt[isD?a.type:(a.ok?'Won':'Conceded')]||0)+1;
-      s+=dot(a,c,0.85,0.72);
-    });
-    const leg=Object.keys(cnt).map(function(k){
-      return lg(isD?(col[k]||N):(k==='Won'?G:R),(lbl&&lbl[k])||k,cnt[k])}).join('');
-    return pitchWrap(isD?'Defensive actions':'Fouls',
-      isD?'Where he wins the ball back. Attack direction left to right, so his own goal is on the left.'
-         :'Fouls won and conceded.',s,leg);
+    if(grp==='Discipline'){
+      const f=A.filter(function(a){return a.type==='Foul'});
+      return {title:'Fouls',sub:'Fouls won and conceded.',
+        layers:[L('won','Fouls won',G,f.filter(function(a){return a.ok}),dt(G,0.85,0.8)),
+                L('com','Fouls conceded',R,f.filter(function(a){return !a.ok}),dt(R,0.85,0.6))]};
+    }
+    const C2={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',
+              BlockedPass:Y,Challenge:'#f472b6',Save:'#22d3ee'};
+    const LB={Tackle:'Tackles',Interception:'Interceptions',BallRecovery:'Recoveries',
+              Clearance:'Clearances',BlockedPass:'Blocked passes',Challenge:'Challenges lost',Save:'Shot blocks'};
+    return {title:'Defensive actions',
+      sub:'Where he wins the ball back. Attack direction left to right, so his own goal is on the left.',
+      layers:Object.keys(C2).map(function(t){
+        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),dt(C2[t],0.85,0.74))})};
   }
   if(grp==='Aerial'){
     const ae=A.filter(function(a){return a.type==='Aerial'});
-    if(!ae.length)return noData();
-    let s='',w=0,l=0;
-    ae.forEach(function(a){if(a.ok){s+=dot(a,G,1,0.8);w++}else{s+=dot(a,R,1,0.5);l++}});
-    return pitchWrap('Aerial duels','Where he contests in the air. Win rate '+(w+l?Math.round(100*w/(w+l)):0)+'%.',s,
-      lg(G,'Won',w)+lg(R,'Lost',l));
+    const w=ae.filter(function(a){return a.ok}).length;
+    return {title:'Aerial duels',sub:'Where he contests in the air. Win rate '+(ae.length?Math.round(100*w/ae.length):0)+'%.',
+      layers:[L('won','Won',G,ae.filter(function(a){return a.ok}),dt(G,1,0.8)),
+              L('lost','Lost',R,ae.filter(function(a){return !a.ok}),dt(R,1,0.5))]};
   }
   if(grp==='Goalkeeping'){
-    const gk=A.filter(function(a){return ['Save','Claim','KeeperSweeper','Punch','KeeperPickup'].indexOf(a.type)>=0});
-    if(!gk.length)return noData();
-    const col={Save:G,Claim:B,KeeperSweeper:AC,Punch:Y,KeeperPickup:N};
-    let s='',cnt={};
-    gk.forEach(function(a){cnt[a.type]=(cnt[a.type]||0)+1;s+=dot(a,col[a.type]||N,a.type==='KeeperSweeper'?1.2:0.9,0.78)});
-    return pitchWrap('Goalkeeper actions','Saves, claims and sweeping actions. Sweeps further right mean a higher line.',s,
-      Object.keys(cnt).map(function(k){return lg(col[k]||N,k,cnt[k])}).join(''));
+    const C2={Save:G,Claim:B,KeeperSweeper:AC,Punch:Y,KeeperPickup:N};
+    const LB={Save:'Saves',Claim:'Claims',KeeperSweeper:'Sweeps',Punch:'Punches',KeeperPickup:'Pickups'};
+    return {title:'Goalkeeper actions',sub:'Saves, claims and sweeping actions. Sweeps further right mean a higher line.',
+      layers:Object.keys(C2).map(function(t){
+        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),dt(C2[t],t==='KeeperSweeper'?1.2:0.9,0.78))})};
   }
   if(grp==='Half-Spaces'){
     const inHS=function(a){return a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))};
-    const hs=A.filter(inHS).filter(function(a){return a.type==='Pass'?okF(a):true});
-    if(!hs.length)return noData();
-    let s2='<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+
-           '" fill="var(--accent)" fill-opacity="0.07"/>'+
-           '<rect x="'+PX(50)+'" y="'+PY(63.2)+'" width="'+PX(50)+'" height="'+(PY(78.9)-PY(63.2))+
-           '" fill="var(--accent)" fill-opacity="0.07"/>';
-    let pa=0,sh2=0,to=0;
-    // passes first, muted, so the actions on top stay readable
-    hs.forEach(function(a){
-      if(a.type==='Pass'&&a.end_x!=null&&a.ok){s2+=line(a,G,0.24,0.42);pa++}
-    });
-    hs.forEach(function(a){
-      if(a.type==='TakeOn'){s2+=dot({x:a.x,y:a.y},B,0.95,0.9);to++}
-      else if(a.is_shot){s2+=dot({x:a.x,y:a.y},AC,1.15,0.95);sh2++}
-    });
-    const top=hs.filter(function(a){return a.y<50}).length;
-    return pitchWrap('Half-space activity',
-      'The two shaded strips between the box edge and the six-yard line, extended into the attacking half. '+
-      top+' of '+hs.length+' actions came in the left strip.',
-      s2, lg(G,'Completed passes',pa)+lg(B,'Take-ons',to)+lg(AC,'Shots',sh2));
+    const hs=A.filter(inHS);
+    return {title:'Half-space activity',
+      sub:'The two shaded strips between the box edge and the six-yard line, extended into the attacking half.',
+      base:'<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+'" fill="var(--accent)" fill-opacity="0.07"/>'+
+           '<rect x="'+PX(50)+'" y="'+PY(63.2)+'" width="'+PX(50)+'" height="'+(PY(78.9)-PY(63.2))+'" fill="var(--accent)" fill-opacity="0.07"/>',
+      layers:[
+        L('pass','Completed passes',G,hs.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null}),pl(G,0.26,0.5)),
+        L('fail','Incomplete passes',R,hs.filter(function(a){return a.type==='Pass'&&!a.ok&&a.end_x!=null}),pl(R,0.2,0.3)),
+        L('takeon','Take-ons',B,hs.filter(function(a){return a.type==='TakeOn'}),dt(B,0.95,0.9)),
+        L('shot','Shots',AC,hs.filter(function(a){return a.is_shot}),dt(AC,1.15,0.95))
+      ]};
   }
   if(grp==='Hold-Up'){
     const hl=C.filter(function(c2){return c2.ttr>=5&&c2.end_x>=66.7});
-    if(!hl.length)return noData();
-    let s2='<rect x="'+PX(66.7)+'" y="0" width="'+PX(33.3)+'" height="68" fill="var(--accent)" fill-opacity="0.05"/>';
-    let car=0,pas=0,sht=0,lost=0;
-    hl.forEach(function(c2){
-      const a={x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y};
-      const rt=c2.release_type;
-      if(rt==='SavedShot'||rt==='MissedShots'||rt==='Goal'||rt==='ShotOnPost'){s2+=line(a,AC,0.5,0.95);sht++}
-      else if(c2.is_progressive){s2+=line(a,G,0.34,0.75);car++}
-      else if(rt==='Pass'){s2+=line(a,B,0.3,0.65);pas++}
-      else {s2+=line(a,R,0.26,0.45);lost++}
-    });
-    return pitchWrap('Hold-up play',
-      'Times he kept the ball five seconds or more in the final third (shaded), coloured by what he did with it.',
-      s2, lg(AC,'Shot',sht)+lg(G,'Carried forward',car)+lg(B,'Released a pass',pas)+lg(R,'Lost it',lost));
+    const isShot=function(c2){return ['SavedShot','MissedShots','Goal','ShotOnPost'].indexOf(c2.release_type)>=0};
+    return {title:'Hold-up play',
+      sub:'Times he kept the ball five seconds or more in the final third, coloured by what he did with it.',
+      base:'<rect x="'+PX(66.7)+'" y="0" width="'+PX(33.3)+'" height="68" fill="var(--accent)" fill-opacity="0.05"/>',
+      layers:[
+        L('shot','Shot',AC,hl.filter(isShot),cl(AC,0.5,0.95)),
+        L('carry','Carried forward',G,hl.filter(function(c2){return !isShot(c2)&&c2.is_progressive}),cl(G,0.34,0.78)),
+        L('pass','Released a pass',B,hl.filter(function(c2){return !isShot(c2)&&!c2.is_progressive&&c2.release_type==='Pass'}),cl(B,0.3,0.68)),
+        L('lost','Lost it',R,hl.filter(function(c2){return !isShot(c2)&&!c2.is_progressive&&c2.release_type!=='Pass'}),cl(R,0.26,0.5))
+      ]};
   }
   if(grp==='Set Pieces'){
-    const sp=A.filter(function(a){return a.sp_phase&&(a.is_shot||a.type==='Aerial'||(a.type==='Pass'&&a.keypass))});
-    if(!sp.length)return noData();
-    let s='',sh3=0,ar=0,dl=0;
-    sp.forEach(function(a){
-      if(a.is_shot){s+=dot(a,a.is_goal?AC:G,1.2,0.85);sh3++}
-      else if(a.type==='Aerial'){s+=dot(a,a.ok?B:R,0.9,0.6);ar++}
-      else if(a.end_x!=null){s+=line(a,Y,0.4,0.85);dl++}
-    });
-    return pitchWrap('Set-piece involvement','Shots, aerial duels and shot-creating deliveries within ten seconds of a dead ball.',s,
-      lg(G,'Shots',sh3)+lg(B,'Aerials',ar)+lg(Y,'Deliveries',dl));
+    const sp=A.filter(function(a){return a.sp_phase});
+    return {title:'Set-piece involvement',
+      sub:'Shots, aerial duels and shot-creating deliveries within ten seconds of a dead ball.',
+      layers:[
+        L('shot','Shots',G,sp.filter(function(a){return a.is_shot}),dt(G,1.2,0.85)),
+        L('aerial','Aerials won',B,sp.filter(function(a){return a.type==='Aerial'&&a.ok}),dt(B,0.9,0.7)),
+        L('lost','Aerials lost',R,sp.filter(function(a){return a.type==='Aerial'&&!a.ok}),dt(R,0.9,0.45)),
+        L('deliv','Deliveries',Y,sp.filter(function(a){return a.type==='Pass'&&a.keypass&&a.end_x!=null}),pl(Y,0.4,0.85))
+      ]};
   }
-  return noData('No pitch view for this group yet');
+  return null;
+}
+
+function vizPanel(grp,p){
+  if(!PACT)return noData('Loading actions\u2026');
+  const cfg=vizLayers(grp,p);
+  if(!cfg)return noData('No pitch view for this group yet');
+  if(!VZ.off[grp])VZ.off[grp]={};
+  const off=VZ.off[grp];
+  const live=cfg.layers.filter(function(l){return l.items.length});
+  if(!live.length)return noData();
+
+  let inner=cfg.base||'';
+  live.forEach(function(l){
+    if(off[l.k])return;
+    l.items.forEach(function(it){inner+=l.draw(it)});
+  });
+
+  const chips='<div class="vz-filters"><span class="vz-flabel">Show</span>'+
+    live.map(function(l){
+      return '<button class="lchip'+(off[l.k]?' off':'')+'" onclick="tglLayer(\''+grp+'\',\''+l.k+'\')">'+
+        '<i style="background:'+l.color+'"></i>'+esc(l.label)+' <b>'+l.items.length+'</b></button>';
+    }).join('')+
+    (live.length>1?'<button class="lchip solo" onclick="allLayers(\''+grp+'\')">reset</button>':'')+
+    '</div>';
+
+  const legend=live.filter(function(l){return !off[l.k]})
+    .map(function(l){return lg(l.color,l.label,l.items.length)}).join('');
+
+  return pitchWrap(cfg.title,cfg.sub,inner,legend,(cfg.tog||'')+chips);
+}
+function tglLayer(grp,k){
+  if(!VZ.off[grp])VZ.off[grp]={};
+  VZ.off[grp][k]=!VZ.off[grp][k];
+  refreshViz();
+}
+function allLayers(grp){VZ.off[grp]={};refreshViz()}
+function refreshViz(){
+  const p=playerOf(SEL);if(!p)return;
+  const el=document.querySelector('.split-r');
+  if(el){el.innerHTML=vizPanel(GRP,p);wireTips();}
+  else pick(SEL);
+}
+
+/* ---------- EXPORT A SINGLE MAP ---------- */
+async function exportViz(fmt){
+  const p=playerOf(SEL);if(!p)return;
+  const src=document.querySelector('.split-r .sect')||document.querySelector('#main .sect');
+  if(!src)return;
+  const stage=document.createElement('div');
+  stage.style.cssText='position:fixed;left:-10000px;top:0;width:1020px;padding:26px 28px;'+
+    'background:'+getComputedStyle(document.body).backgroundColor+';font-family:var(--f-body)';
+  const title=(src.querySelector('.viz-title')||{}).textContent||'Pitch view';
+  const clone=src.cloneNode(true);
+  const ctl=clone.querySelector('.vz-filters');if(ctl)ctl.remove();
+  const tg=clone.querySelector('.vz-tog');if(tg)tg.remove();
+  const eb=clone.querySelector('.viz-eyebrow');if(eb)eb.remove();
+  const tt=clone.querySelector('.viz-title');if(tt)tt.remove();
+  const box=clone.querySelector('.pitch-box');if(box){box.style.height='560px'}
+  clone.style.border='none';clone.style.background='transparent';clone.style.padding='0';
+
+  stage.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;'+
+      'border-bottom:1px solid var(--border);padding-bottom:13px;margin-bottom:14px">'+
+      '<div><div style="font:800 27px/1.08 var(--f-display);letter-spacing:-.025em;color:var(--text)">'+
+        esc(p.player_name)+'</div>'+
+        '<div style="font:500 11.5px/1.6 var(--f-body);color:var(--text2);margin-top:5px">'+
+        esc(tname(p.team))+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+
+        ' \u00D7 90) \u00B7 listed '+esc(p.modal_position||'\u2014')+', plays '+esc(POOL_NAME[p.pool]||p.pool)+'</div></div>'+
+      '<div style="text-align:right"><div style="font:700 9px/1 var(--f-body);letter-spacing:.18em;'+
+        'text-transform:uppercase;color:var(--text3)">'+esc(GRP)+'</div>'+
+        '<div style="font:700 17px/1.2 var(--f-display);letter-spacing:-.02em;margin-top:6px">'+esc(title)+'</div></div>'+
+    '</div>';
+  stage.appendChild(clone);
+  const cap=document.createElement('div');
+  cap.style.cssText='margin-top:12px;padding-top:10px;border-top:1px solid var(--border);'+
+    'font:500 9.5px/1.6 var(--f-body);color:var(--text3);display:flex;justify-content:space-between;gap:14px';
+  cap.innerHTML='<span>Full season, open play unless stated \u00B7 attack left to right</span>'+
+    '<span>data whoscored \u00B7 percentiles within role</span>';
+  stage.appendChild(cap);
+  document.body.appendChild(stage);
+  try{
+    const c=await html2canvas(stage,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2});
+    const base=(p.player_name+'_'+title).replace(/[^\w]+/g,'_');
+    if(fmt==='png'){const a=document.createElement('a');a.download=base+'.png';a.href=c.toDataURL('image/png');a.click()}
+    else{
+      const jsPDF=window.jspdf.jsPDF;
+      const pdf=new jsPDF({orientation:'l',unit:'pt',format:'a4'});
+      const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+      const r=Math.min(pw/c.width,ph/c.height)*0.96;
+      pdf.addImage(c.toDataURL('image/png'),'PNG',(pw-c.width*r)/2,(ph-c.height*r)/2,c.width*r,c.height*r);
+      pdf.save(base+'.pdf');
+    }
+  }catch(e){alert('Export failed: '+e.message)}
+  finally{stage.remove()}
+}
+
+/* Value is the measurement, percentile is the ranking. Showing only the second
+   tells you where a player sits but not what he actually does. */
+function cell(c,key){
+  if(!c)return '<td class="num" style="color:var(--text3)">\u2014</td>';
+  const d=defOf(key)||{}, t=tier(+c.pct);
+  if(SK.show==='pct')return '<td class="num" style="color:'+t.c+';font-weight:700">'+c.pct+'</td>';
+  if(SK.show==='val')return '<td class="num" style="color:'+t.c+';font-weight:600">'+fmt(c.value,d.unit)+'</td>';
+  return '<td class="num"><div class="c-val">'+fmt(c.value,d.unit)+'</div>'+
+         '<div class="c-pct" style="color:'+t.c+'">'+c.pct+'</div></td>';
+}
+function scoutTable(rows){
+  if(!rows.length)return'<div class="empty">No qualifying players</div>';
+  const ar=function(c){return SK.sort.col===c?(SK.sort.dir===-1?' \u2193':' \u2191'):''};
+  const cls=function(c){return SK.sort.col===c?' class="sorted"':''};
+  let h='<div class="sect"><div style="max-height:calc(100vh - 400px);overflow:auto"><table><thead><tr>'+
+    '<th>#</th><th'+cls('name')+' onclick="sortScout(\'name\')">Player'+ar('name')+'</th>'+
+    '<th'+cls('team')+' onclick="sortScout(\'team\')">Team'+ar('team')+'</th>'+
+    '<th class="num" onclick="sortScout(\'n90\')" title="Nineties played">90s'+ar('n90')+'</th>'+
+    '<th class="num" onclick="sortScout(\'fit\')" title="Weighted average of the selected percentiles">Fit'+ar('fit')+'</th>'+
+    SK.metrics.map(function(m){const d=defOf(m.k)||{};
+      const u=d.unit==='%'?' (%)':(d.unit==='m'?' (m)':(d.unit==='s'?' (s)':''));
+      return '<th class="num"'+(SK.sort.col===m.k?' style="color:var(--accent)"':'')+
+             ' onclick="sortScout(\''+m.k+'\')" title="'+esc(d.definition||'')+'">'+
+             esc(d.label||m.k)+u+ar(m.k)+'</th>'}).join('')+
+    '</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
+       '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
+       '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
+       '<td class="num">'+(+r.n90).toFixed(1)+'</td>'+
+       '<td class="num fit" style="color:'+tier(r.fit).c+'">'+Math.round(r.fit)+'</td>'+
+       SK.metrics.map(function(m){return cell(r.v[m.k],m.k)}).join('')+'</tr>';
+  });
+  h+='</tbody></table></div><div class="foot">Fit is the weighted average of the selected percentiles. Top 50 shown.</div>'+
+     legendHtml()+'</div>';
+  return h;
 }
 
 /* ---------- DRILL-DOWN ---------- */
-function xtOf(x,y){
-  const gx=Math.min(11,Math.max(0,Math.floor(x/100*12))), gy=Math.min(7,Math.max(0,Math.floor(y/100*8)));
-  return (XTG[gx]&&XTG[gx][gy])||0;
-}
 const XTG=[[0,0,0,0,0,0,0,0],[.001,.001,.001,.002,.002,.001,.001,.001],
 [.002,.003,.004,.005,.005,.004,.003,.002],[.004,.006,.008,.011,.011,.008,.006,.004],
 [.006,.009,.014,.019,.019,.014,.009,.006],[.010,.015,.022,.030,.030,.022,.015,.010],
 [.016,.024,.035,.048,.048,.035,.024,.016],[.025,.037,.054,.075,.075,.054,.037,.025],
 [.038,.056,.082,.115,.115,.082,.056,.038],[.055,.082,.122,.170,.170,.122,.082,.055],
 [.082,.120,.178,.250,.250,.178,.120,.082],[.120,.180,.270,.390,.390,.270,.180,.120]];
-
+function xtOf(x,y){
+  const gx=Math.min(11,Math.max(0,Math.floor(x/100*12))), gy=Math.min(7,Math.max(0,Math.floor(y/100*8)));
+  return (XTG[gx]&&XTG[gx][gy])||0;
+}
+function pm_of(k){return PMCACHE[k]||null}
+function closeDrill(){document.getElementById('drillWrap').style.display='none'}
 function drill(key){
   const p=playerOf(SEL); if(!p||!PACT)return;
   const d=defOf(key)||{}; const kind=DRILL[key];
@@ -1211,9 +1321,7 @@ function drill(key){
     '<div class="viz-leg">'+leg+'</div>';
   document.getElementById('drillWrap').style.display='flex';
 }
-let PMCACHE={};
-function pm_of(k){return PMCACHE[k]||null}
-function closeDrill(){document.getElementById('drillWrap').style.display='none'}
+
 function toggleDark(){document.documentElement.classList.toggle('dark')}
 init();
 </script>
