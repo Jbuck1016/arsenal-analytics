@@ -203,6 +203,7 @@ const NAV=[['Match Dashboard','index.html'],['Teams','teams.html']];
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
 let VZ={passMode:'prog',outcome:''};
+const PAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
 /* Which metric groups make sense for which role. A winger has no goalkeeping
    panel; a keeper has no half-space panel. */
 const GRP_HIDE={GK:['Creation','Shooting','Carrying','Half-Spaces','Hold-Up','Tempo'],
@@ -210,6 +211,7 @@ const GRP_HIDE={GK:['Creation','Shooting','Carrying','Half-Spaces','Hold-Up','Te
 function groupsFor(pool){
   const hide=(pool==='GK')?GRP_HIDE.GK:GRP_HIDE._outfield;
   const out=[];DEFS.forEach(function(d){if(out.indexOf(d.grp)<0&&hide.indexOf(d.grp)<0)out.push(d.grp)});
+  if(pool!=='GK')out.splice(1,0,'Combined');
   return out;
 }
 let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90',hi:[]};
@@ -401,10 +403,11 @@ function renderPlayer(p,pcts,pillars,dna){
 
   if(GRP==='All'){
     h+='<div class="grid">';
-    groups.forEach(function(g){ h+=metricCard(g,pm) });
+    groups.forEach(function(g){ if(g!=='Combined')h+=metricCard(g,pm) });
     h+='</div>';
   } else {
-    h+='<div class="split"><div class="split-l">'+metricCard(GRP,pm)+'</div>'+
+    if(GRP==='Combined'){ h+=vizPanel(GRP,p); }
+    else h+='<div class="split"><div class="split-l">'+metricCard(GRP,pm)+'</div>'+
        '<div class="split-r">'+vizPanel(GRP,p)+'</div></div>';
   }
   h+=legendHtml()+
@@ -527,16 +530,24 @@ function scatterSvg(pts){
      ' \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are pool medians \u00B7 dot colour is the average of both percentiles</div></div>';
   return s;
 }
+/* Delegated so it survives re-renders, and small marks get an invisible
+   hit circle so they are actually hoverable. */
 function wireTips(){
-  const tip=document.getElementById('tip'),els=document.querySelectorAll('.pt');
-  for(var i=0;i<els.length;i++){(function(el){
-    el.addEventListener('mouseenter',function(){
+  const main=document.getElementById('main');
+  if(main.dataset.tipsBound)return;
+  main.dataset.tipsBound='1';
+  const tip=document.getElementById('tip');
+  main.addEventListener('mousemove',function(e){
+    const el=e.target.closest?e.target.closest('.pt,.hit'):null;
+    if(el&&el.getAttribute('data-n')){
       tip.innerHTML='<div>'+el.getAttribute('data-n')+'</div>'+
-        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+el.getAttribute('data-v')+'</div>';
-      tip.style.display='block';});
-    el.addEventListener('mousemove',function(e){tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'});
-    el.addEventListener('mouseleave',function(){tip.style.display='none'});
-  })(els[i]);}
+        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+
+        (el.getAttribute('data-v')||'')+'</div>';
+      tip.style.display='block';
+      tip.style.left=(e.clientX+13)+'px';tip.style.top=(e.clientY+13)+'px';
+    } else tip.style.display='none';
+  });
+  main.addEventListener('mouseleave',function(){tip.style.display='none'});
 }
 
 /* ---------- SCOUT ---------- */
@@ -812,29 +823,20 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     pitchMarks()+inner+'</svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 function lg(c,t,n){return '<span><i style="background:'+c+'"></i>'+t+(n!=null?' <b>'+n+'</b>':'')+'</span>'}
-/* Comet: a tapered quad, narrow where the ball starts and full width where it
-   arrives, so direction reads without arrowheads. Cheaper than a gradient per
-   line, which matters when a team map draws several thousand. */
+/* Origin ring: hollow circle where the ball starts, hairline through the middle,
+   solid dot where it arrives. Reads as a journey rather than a vector, and keeps
+   both ends legible when lines overlap. */
 function line(a,c,w,op,dash){
   const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
-  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
-  if(dash){
-    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
-      '" stroke-width="'+(w||0.34)+'" stroke-opacity="'+(op||0.75)+
-      '" stroke-linecap="round" stroke-dasharray="'+dash+'"/>'+
-      '<circle cx="'+x2+'" cy="'+y2+'" r="0.6" fill="'+c+'" fill-opacity="'+(op||0.85)+'"/>';
-  }
-  const W=(w||0.34)*1.5, nx=-dy/len, ny=dx/len;
-  const t=W*0.14, h=W*0.62;           // tail width, head width
-  const p1x=x1+nx*t,  p1y=y1+ny*t;
-  const p2x=x2+nx*h,  p2y=y2+ny*h;
-  const p3x=x2-nx*h,  p3y=y2-ny*h;
-  const p4x=x1-nx*t,  p4y=y1-ny*t;
-  return '<path d="M'+p1x.toFixed(2)+' '+p1y.toFixed(2)+'L'+p2x.toFixed(2)+' '+p2y.toFixed(2)+
-    'L'+p3x.toFixed(2)+' '+p3y.toFixed(2)+'L'+p4x.toFixed(2)+' '+p4y.toFixed(2)+
-    'Z" fill="'+c+'" fill-opacity="'+(op||0.75)+'"/>'+
-    '<circle cx="'+x2+'" cy="'+y2+'" r="'+(h*0.95).toFixed(2)+'" fill="'+c+
-    '" fill-opacity="'+Math.min(1,(op||0.75)*1.25).toFixed(2)+'"/>';
+  const W=w||0.34, o=(op==null?0.75:op);
+  const shaft='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
+    '" stroke-width="'+(W*0.62).toFixed(3)+'" stroke-opacity="'+(o*0.55).toFixed(3)+
+    '" stroke-linecap="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+  const ring='<circle cx="'+x1+'" cy="'+y1+'" r="'+(W*1.45).toFixed(3)+'" fill="none" stroke="'+c+
+    '" stroke-width="'+(W*0.52).toFixed(3)+'" stroke-opacity="'+(o*0.8).toFixed(3)+'"/>';
+  const head='<circle cx="'+x2+'" cy="'+y2+'" r="'+(W*1.5).toFixed(3)+'" fill="'+c+
+    '" fill-opacity="'+Math.min(1,o*1.15).toFixed(3)+'"/>';
+  return shaft+ring+head;
 }
 function dot(a,c,r,op){
   return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(r||0.85)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
@@ -854,7 +856,9 @@ function outcomeTog(){
 function vizPanel(grp,p){
   if(!PACT)return noData('Loading actions\u2026');
   const A=PACT,C=PCAR||[];
-  const G='var(--elite)',R='var(--poor)',AC='var(--accent)',B='#60a5fa',N='var(--text3)',Y='var(--avg)';
+  // Solo view: green succeeded, red failed. Multi view: passes green,
+  // progressive blue, carries yellow.
+  const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,N='var(--text3)',Y=PAL.carry;
 
   if(grp==='Passing'){
     const all=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.end_x!=null});
@@ -863,10 +867,18 @@ function vizPanel(grp,p){
     const ps=(showAll?all:all.filter(function(a){return a.prog||a.into_box})).filter(okF);
     let s2='';let np=0,nb=0,nf=0,no=0;
     ps.forEach(function(a){
-      if(!a.ok){s2+=line(a,R,0.22,showAll?0.16:0.3);nf++;return}
-      if(a.into_box){s2+=line(a,AC,0.4,0.9);nb++}
-      else if(a.prog){s2+=line(a,G,0.3,0.62);np++}
-      else if(showAll){s2+=line(a,N,0.17,0.22);no++}
+      if(showAll){
+        // several action types on one map, so colour encodes type not outcome
+        if(!a.ok){s2+=line(a,R,0.18,0.2);nf++;return}
+        if(a.into_box){s2+=line(a,AC,0.36,0.9);nb++}
+        else if(a.prog){s2+=line(a,B,0.3,0.7);np++}
+        else {s2+=line(a,G,0.16,0.28);no++}
+      } else {
+        // one family of action, so colour encodes success
+        if(!a.ok){s2+=line(a,R,0.26,0.45);nf++;return}
+        if(a.into_box){s2+=line(a,AC,0.4,0.92);nb++}
+        else {s2+=line(a,G,0.32,0.72);np++}
+      }
     });
     const tog=outcomeTog()+'<div class="vz-tog">'+
       '<button class="vzb'+(!showAll?' on':'')+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
@@ -874,7 +886,8 @@ function vizPanel(grp,p){
     return pitchWrap(showAll?'All passing':'Progressive passing',
       showAll?'Every open-play pass. Progressive and box entries stay highlighted.'
              :'Completed progressive passes and passes into the box, open play only.',
-      s2, lg(G,'Progressive',np)+lg(AC,'Into box',nb)+(showAll?lg(N,'Other completed',no):'')+lg(R,'Incomplete',nf), tog);
+      s2, (showAll?lg(G,'Passes',no)+lg(B,'Progressive',np):lg(G,'Progressive',np))+
+          lg(AC,'Into box',nb)+lg(R,'Incomplete',nf), tog);
   }
   if(grp==='Creation'){
     const ps=A.filter(function(a){return a.type==='Pass'&&(a.keypass||a.assist||a.through)}).filter(okF);
@@ -902,11 +915,13 @@ function vizPanel(grp,p){
       else{c=R;op=0.42;off++}
       const dist=Math.sqrt(Math.pow((100-a.x)*1.05,2)+Math.pow((50-a.y)*0.68,2));
       const lbl=(a.is_goal?'Goal':(a.type==='SavedShot'?'Saved':'Off target'));
-      s+='<circle class="pt" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
-         '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"'+
-         ' data-n="'+esc(p.player_name)+' \u00B7 '+lbl+'"'+
-         ' data-v="xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.is_header?' \u00B7 header':'')+
-         (a.bigchance?' \u00B7 big chance':'')+'"/>';
+      const tipN=esc(p.player_name)+' \u00B7 '+lbl;
+      const tipV='xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.is_header?' \u00B7 header':'')+
+        (a.bigchance?' \u00B7 big chance':'');
+      s+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
+         '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"/>'+
+         '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r,1.9)+
+         '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';
     });
     return pitchWrap('Shot map','Open-play shots. Circle size is chance quality (xG); total '+sx.toFixed(1)+' xG from '+sh.length+' shots.',s,
       lg(AC,'Goals',g)+lg(G,'On target',ot)+lg(R,'Off target',off));
@@ -916,12 +931,27 @@ function vizPanel(grp,p){
     let s='',pr=0,bx=0,o=0;
     C.forEach(function(c2){
       const a={x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y};
-      if(c2.into_box){s+=line(a,AC,0.45,0.9);bx++}
-      else if(c2.is_progressive){s+=line(a,G,0.3,0.6);pr++}
-      else {s+=line(a,N,0.2,0.2);o++}
+      if(c2.into_box){s+=line(a,AC,0.42,0.92);bx++}
+      else if(c2.is_progressive){s+=line(a,Y,0.3,0.7);pr++}
+      else {s+=line(a,N,0.18,0.22);o++}
     });
     return pitchWrap('Carry map','Every carry of 3m or more, from where the ball arrived to where he released it.',s,
       lg(AC,'Into box',bx)+lg(G,'Progressive',pr)+lg(N,'Other carries',o));
+  }
+  if(grp==='Combined'){
+    const ps=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.ok&&a.end_x!=null});
+    let s2='',np=0,pp=0,cc=0;
+    ps.forEach(function(a){
+      if(a.prog){s2+=line(a,B,0.3,0.78);pp++} else {s2+=line(a,G,0.15,0.24);np++}
+    });
+    C.forEach(function(c2){
+      if(!c2.is_progressive)return;
+      s2+=line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},Y,0.3,0.8);cc++;
+    });
+    if(!ps.length&&!cc)return noData();
+    return pitchWrap('Everything he does on the ball',
+      'Passes, progressive passes and progressive carries on one pitch, coloured by action type rather than outcome.',
+      s2, lg(G,'Passes',np)+lg(B,'Progressive passes',pp)+lg(Y,'Progressive carries',cc));
   }
   if(grp==='Tempo'){
     const rc=(PREC||[]).filter(function(r){return r.ttr!=null&&r.ttr<=20});

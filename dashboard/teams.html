@@ -126,6 +126,7 @@ const NAV=[['Match Dashboard','index.html'],['Players','players.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
+const TPAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
 
@@ -389,6 +390,7 @@ const MAPS=[
   {k:'heat',l:'Touch heatmap',d:'Smoothed density of every on-ball action. Bright areas are where the team lives.'},
   {k:'touches',l:'Touch density',d:'Every on-ball action as a single mark. The raw version of the heatmap.'},
   {k:'def',l:'Defensive actions',d:'Where they win the ball back. Mass high up the pitch means an aggressive press.'},
+  {k:'combined',l:'Everything on the ball',d:'Passes, progressive passes and progressive carries on one pitch, coloured by action type rather than outcome.'},
   {k:'shots',l:'Shot map (for)',d:'Every shot taken. Circle size is chance quality.'},
   {k:'shotsag',l:'Shots conceded',d:'Every shot faced. Circle size is chance quality.'}
 ];
@@ -455,6 +457,13 @@ async function loadZones(team){
   ]);
   ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
 }
+/* Small hollow ring at the point the action began. Used on the maps where the
+   origin carries meaning: progressive passes, box entries and carries. */
+function origin(a,c,w,op){
+  const sx=(a.start_x!=null?a.start_x:a.x), sy=(a.start_y!=null?a.start_y:a.y);
+  return '<circle cx="'+PX(sx)+'" cy="'+PY(sy)+'" r="'+(w*1.25).toFixed(2)+'" fill="none" stroke="'+c+
+    '" stroke-width="'+(w*0.5).toFixed(2)+'" stroke-opacity="'+(op*0.85).toFixed(2)+'"/>';
+}
 /* Tapered comet, narrow at the origin and full width where the ball arrives. */
 function tline(a,c,w,op){
   const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
@@ -473,7 +482,9 @@ async function renderMaps(t){
   try{
     await loadZones(t.team);
     const m=MAPS.filter(function(x){return x.k===MP.kind})[0]||MAPS[0];
-    const G='var(--elite)',R='var(--poor)',AC='var(--accent)',B='#60a5fa',N='var(--text3)',Y='var(--avg)';
+    // Solo view: green succeeded, red failed. Multi view: passes green,
+    // progressive blue, carries yellow.
+    const G=TPAL.ok,R=TPAL.fail,AC=TPAL.box,B=TPAL.prog,N='var(--text3)',Y=TPAL.carry;
     let inner=zoneShade(),leg='';
 
     if(m.k==='passes'){
@@ -484,22 +495,24 @@ async function renderMaps(t){
     }
     else if(m.k==='prog'){
       const ps=ZONES.filter(function(a){return a.prog&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
-      ps.forEach(function(a){inner+=tline(a,a.ok?G:R,0.2,a.ok?0.3:0.34)});
-      leg='<span><i style="background:'+G+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>';
+      ps.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
+      leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span><span>Rings mark where each pass began</span>';
     }
     else if(m.k==='box'){
       const ps=ZONES.filter(function(a){return a.into_box&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
-      ps.forEach(function(a){inner+=tline(a,a.ok?AC:R,0.28,a.ok?0.55:0.4)+
-        '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.5" fill="'+(a.ok?AC:R)+'" fill-opacity="0.8"/>'});
-      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>';
+      ps.forEach(function(a){const c2=a.ok?AC:R;
+        inner+=tline(a,c2,0.3,a.ok?0.62:0.42)+origin(a,c2,0.3,a.ok?0.62:0.42)+
+        '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.5" fill="'+c2+'" fill-opacity="0.9"/>'});
+      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span><span>Rings mark where each pass began</span>';
     }
     else if(m.k==='carries'){
       let pr=0,ot=0;
       CZONES.filter(function(c){return inZone(c.start_x,c.start_y)}).forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
-        if(c.is_progressive){inner+=tline(a,G,0.2,0.34);pr++} else {inner+=tline(a,N,0.13,0.12);ot++}
+        if(c.is_progressive){inner+=tline(a,Y,0.22,0.46)+origin(a,Y,0.22,0.46);pr++}
+        else {inner+=tline(a,N,0.13,0.13);ot++}
       });
-      leg='<span><i style="background:'+G+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
+      leg='<span><i style="background:'+Y+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
           '<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>';
     }
     else if(m.k==='heat'){
@@ -512,6 +525,21 @@ async function renderMaps(t){
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.42" fill="'+AC+'" fill-opacity="0.16"/>';
       });
       leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.filter(function(a){return inZone(a.x,a.y)}).length.toLocaleString()+'</b></span>';
+    }
+    else if(m.k==='combined'){
+      const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
+      let np=0,pp=0,cc=0;
+      ps.forEach(function(a){
+        if(a.prog){inner+=tline(a,B,0.24,0.5)+origin(a,B,0.24,0.5);pp++}
+        else {inner+=tline(a,G,0.11,0.09);np++}
+      });
+      CZONES.filter(function(c){return c.is_progressive&&inZone(c.start_x,c.start_y)}).forEach(function(c){
+        const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
+        inner+=tline(a,Y,0.22,0.5)+origin({x:c.start_x,y:c.start_y},Y,0.22,0.5);cc++;
+      });
+      leg='<span><i style="background:'+G+'"></i>Passes <b>'+np.toLocaleString()+'</b></span>'+
+          '<span><i style="background:'+B+'"></i>Progressive passes <b>'+pp.toLocaleString()+'</b></span>'+
+          '<span><i style="background:'+Y+'"></i>Progressive carries <b>'+cc.toLocaleString()+'</b></span>';
     }
     else if(m.k==='def'){
       const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
@@ -530,8 +558,12 @@ async function renderMaps(t){
       sh.forEach(function(a){
         const xg=+(a.xg||0.04);sx+=xg;
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(0.45+Math.sqrt(xg)*1.7)+'" fill="'+c+
-               '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>';
+        const rr=0.45+Math.sqrt(xg)*1.7;
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+rr+'" fill="'+c+
+               '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>'+
+               '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
+               '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+
+               (a.is_goal?'Goal':'Shot')+'" data-v="xG '+xg.toFixed(3)+(a.dist_m?' \u00B7 '+a.dist_m+' m':'')+'"/>';
       });
       leg='<span><i style="background:'+AC+'"></i>Goals <b>'+g+'</b></span>'+
           '<span><i style="background:'+(forTeam?G:R)+'"></i>Shots <b>'+sh.length+'</b></span>'+
@@ -667,16 +699,21 @@ function renderRankings(){
 }
 
 function wireTips(){
-  const tip=document.getElementById('tip'),els=document.querySelectorAll('.pt');
-  for(var i=0;i<els.length;i++){(function(el){
-    el.style.cursor='crosshair';
-    el.addEventListener('mouseenter',function(){
+  const main=document.getElementById('main');
+  if(main.dataset.tipsBound)return;
+  main.dataset.tipsBound='1';
+  const tip=document.getElementById('tip');
+  main.addEventListener('mousemove',function(e){
+    const el=e.target.closest?e.target.closest('.pt,.hit'):null;
+    if(el&&el.getAttribute('data-n')){
       tip.innerHTML='<div>'+el.getAttribute('data-n')+'</div>'+
-        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+el.getAttribute('data-v')+'</div>';
-      tip.style.display='block';});
-    el.addEventListener('mousemove',function(e){tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'});
-    el.addEventListener('mouseleave',function(){tip.style.display='none'});
-  })(els[i]);}
+        '<div style="font-weight:500;color:var(--text3);font-size:10px;margin-top:2px">'+
+        (el.getAttribute('data-v')||'')+'</div>';
+      tip.style.display='block';
+      tip.style.left=(e.clientX+13)+'px';tip.style.top=(e.clientY+13)+'px';
+    } else tip.style.display='none';
+  });
+  main.addEventListener('mouseleave',function(){tip.style.display='none'});
 }
 function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
   ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
