@@ -84,6 +84,7 @@ a{color:inherit;text-decoration:none}
   padding:11px 14px;border-bottom:1px solid var(--line)}
 .ph-t{font:600 9.5px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
 .ph-a{font:500 10px/1 var(--f-mono);color:var(--dim2)}
+.tbl-cap{font:500 10.5px/1.6 var(--f-body);color:var(--dim);padding:10px 14px 9px;border-bottom:1px solid var(--line);background:var(--panel)}
 .seg{display:flex;gap:1px;background:var(--line);border-radius:2px;overflow:hidden}
 .seg button{background:var(--panel2);border:none;color:var(--dim);font:600 9.5px/1 var(--f-mono);
   padding:6px 9px;cursor:pointer;letter-spacing:.04em}
@@ -294,42 +295,80 @@ document.addEventListener('click',function(e){
 if(navigator.platform.toLowerCase().indexOf('mac')>=0)document.getElementById('kbdHint').textContent='⌘K';
 
 /* ---------- league table ---------- */
+const COL={
+  goals_pg:        {l:'GF/G',  d:'Goals scored per game',                      dp:2},
+  goals_against_pg:{l:'GA/G',  d:'Goals conceded per game',                    dp:2, low:1},
+  shots_pg:        {l:'SH/G',  d:'Shots taken per game',                       dp:1},
+  shots_against_pg:{l:'SHA/G', d:'Shots faced per game',                       dp:1, low:1},
+  possession_pct:  {l:'POSS',  d:'Share of all passes in the match',           dp:1, suf:'%'},
+  field_tilt:      {l:'TILT',  d:'Share of final-third touches \u2014 territorial control rather than raw possession', dp:1, suf:'%'},
+  ppda:            {l:'PPDA',  d:'Opponent passes allowed per defensive action in their own 60%. Lower means a more aggressive press', dp:2, low:1},
+  def_height:      {l:'LINE',  d:'Average pitch position of defensive actions. Higher means a higher line', dp:1},
+  passes_per_seq:  {l:'P/POSS',d:'Passes strung together per possession. High means patient',  dp:2},
+  direct_attack_pct:{l:'DIRECT',d:'Possessions starting in their own half that reach a shot inside 15 seconds', dp:2, suf:'%'}
+};
 const TBLS=[
-  {k:'xg',   l:'xG',      cols:['goals_pg','shots_pg'],       sort:'goals_pg'},
-  {k:'ctrl', l:'Control', cols:['possession_pct','field_tilt'],sort:'field_tilt'},
-  {k:'press',l:'Press',   cols:['ppda','passes_per_seq'],      sort:'ppda'},
-  {k:'def',  l:'Defence', cols:['goals_against_pg','ppda'],    sort:'goals_against_pg'}
+  {k:'xg',   l:'Attack',  sort:'goals_pg',         cols:['goals_pg','shots_pg','field_tilt'],
+   cap:'Ranked by goals per game. Shots and territorial tilt alongside.'},
+  {k:'ctrl', l:'Control', sort:'field_tilt',       cols:['field_tilt','possession_pct','passes_per_seq'],
+   cap:'Ranked by field tilt \u2014 where play actually happens, which separates real control from sterile possession.'},
+  {k:'press',l:'Press',   sort:'ppda',             cols:['ppda','def_height','direct_attack_pct'],
+   cap:'Ranked by PPDA, lowest first: fewest opponent passes allowed per defensive action means the most aggressive press.'},
+  {k:'def',  l:'Defence', sort:'goals_against_pg', cols:['goals_against_pg','shots_against_pg','ppda'],
+   cap:'Ranked by goals conceded per game, fewest first.'}
 ];
-const CLBL={goals_pg:'GF/G',goals_against_pg:'GA/G',possession_pct:'POSS',field_tilt:'TILT',
-  ppda:'PPDA',shots_pg:'SH/G',passes_per_seq:'P/POSS',direct_attack_pct:'DIRECT'};
-const LOWER={ppda:1,goals_against_pg:1};
 function renderSegs(){
   document.getElementById('tblSeg').innerHTML=TBLS.map(function(t){
     return '<button class="'+(TBL===t.k?'on':'')+'" onclick="TBL=\''+t.k+'\';renderSegs();renderTable()">'+t.l+'</button>'}).join('');
   document.getElementById('ldSeg').innerHTML=LDS.map(function(l){
     return '<button class="'+(LD===l.k?'on':'')+'" onclick="LD=\''+l.k+'\';renderSegs();loadLeaders()">'+l.l+'</button>'}).join('');
 }
+function fmtCol(v,c){
+  if(v==null)return'\u2014';
+  const m=COL[c]||{};
+  return (+v).toFixed(m.dp==null?1:m.dp)+(m.suf||'');
+}
 function renderTable(){
   const cfg=TBLS.filter(function(t){return t.k===TBL})[0];
-  const rows=TEAMS.slice().sort(function(a,b){
-    const d=(+b[cfg.sort])-(+a[cfg.sort]); return LOWER[cfg.sort]?-d:d;});
-  const mx=Math.max.apply(null,rows.map(function(r){return Math.abs(+r[cfg.sort])}))||1;
-  let h='<div style="max-height:390px;overflow:auto"><table><thead><tr><th class="rk">#</th><th>Club</th>'+
-    cfg.cols.map(function(c){return '<th class="num'+(c===cfg.sort?' sorted':'')+'">'+CLBL[c]+'</th>'}).join('')+
-    '<th style="width:70px"></th></tr></thead><tbody>';
+  const low=(COL[cfg.sort]||{}).low;
+  const rows=TEAMS.slice().filter(function(r){return r[cfg.sort]!=null}).sort(function(a,b){
+    const d=(+b[cfg.sort])-(+a[cfg.sort]); return low?-d:d;});
+  const vals=rows.map(function(r){return Math.abs(+r[cfg.sort])});
+  const mx=Math.max.apply(null,vals)||1, mn=Math.min.apply(null,vals);
+  let h='<div class="tbl-cap">'+cfg.cap+'</div>'+
+    '<div style="max-height:372px;overflow:auto"><table><thead><tr>'+
+    '<th class="rk">#</th><th>Club</th>'+
+    cfg.cols.map(function(c){
+      const m=COL[c]||{};
+      return '<th class="num'+(c===cfg.sort?' sorted':'')+'" title="'+esc(m.d||'')+
+             (m.low?' \u00B7 lower is better':'')+'">'+esc(m.l||c)+'</th>';
+    }).join('')+
+    '<th style="width:74px" title="Bar length is the ranked column relative to the league range"></th>'+
+    '</tr></thead><tbody>';
   rows.forEach(function(r,i){
     const v=Math.abs(+r[cfg.sort]);
-    h+='<tr onclick="location.href=\'teams.html\'"><td class="rk num">'+(i+1)+'</td>'+
+    const frac=mx===mn?1:( low ? (mx-v)/(mx-mn) : (v-mn)/(mx-mn) );
+    h+='<tr onclick="location.href=\'teams.html\'">'+
+      '<td class="rk num">'+(i+1)+'</td>'+
       '<td class="nm">'+esc(tname(r.team))+'</td>'+
-      cfg.cols.map(function(c){return '<td class="num'+(c===cfg.sort?'" style="color:var(--amber)':'"')+'>'+
-        (r[c]==null?'—':(+r[c]).toFixed(c==='goals_pg'||c==='goals_against_pg'||c==='passes_per_seq'?2:1))+'</td>'}).join('')+
-      '<td><div class="bar"><i style="width:'+Math.round(v/mx*100)+'%"></i></div></td></tr>';
+      cfg.cols.map(function(c){
+        const hot=(c===cfg.sort);
+        return '<td class="num"'+(hot?' style="color:var(--amber);font-weight:600"':'')+'>'+
+               fmtCol(r[c],c)+'</td>';
+      }).join('')+
+      '<td><div class="bar"><i style="width:'+Math.round(6+frac*94)+'%"></i></div></td></tr>';
   });
   document.getElementById('tblBody').innerHTML=h+'</tbody></table></div>';
 }
 
 /* ---------- leaders ---------- */
-const LDS=[{k:'xg_90',l:'xG'},{k:'xt_90',l:'xT'},{k:'prog_carries_90',l:'Carries'},{k:'key_pass_90',l:'Key P'}];
+const LDS=[
+ {k:'xg_90',          l:'xG',      d:'Expected goals per 90, open play'},
+ {k:'xt_90',          l:'xT',      d:'Expected Threat added per 90 by passing and carrying'},
+ {k:'prog_carries_90',l:'Carries', d:'Progressive carries per 90'},
+ {k:'key_pass_90',    l:'Key P',   d:'Passes that created a shot, per 90'},
+ {k:'padj_def_90',    l:'Defence', d:'Defensive actions per 90, adjusted for how much possession the team concedes'}
+];
 async function loadLeaders(){
   document.getElementById('ldBody').innerHTML='<div class="spin"></div>';
   try{
@@ -342,14 +381,18 @@ async function loadLeaders(){
     }
     const rows=LEAD[LD];
     const mx=rows.length?rows[0].v:1;
-    let h='<div style="max-height:390px;overflow:auto"><table><tbody>';
+    const meta=LDS.filter(function(l){return l.k===LD})[0]||{};
+    let h='<div class="tbl-cap">'+esc(meta.d||'')+'. Top 12 across the league, any role.</div>'+
+      '<div style="max-height:372px;overflow:auto"><table><thead><tr>'+
+      '<th class="rk">#</th><th>Player</th><th title="Role pool the player is ranked in">Role</th>'+
+      '<th class="num sorted">'+esc(meta.l||'')+'</th><th style="width:64px"></th></tr></thead><tbody>';
     rows.forEach(function(r,i){
       h+='<tr onclick="location.href=\'players.html?player='+encodeURIComponent(r.id)+'\'">'+
         '<td class="rk num">'+(i+1)+'</td>'+
         '<td class="nm">'+esc(r.name)+'<div style="font:500 9.5px/1.4 var(--f-mono);color:var(--dim2)">'+
         esc(tname(r.team))+'</div></td>'+
         '<td><span class="tag">'+esc(r.pool)+'</span></td>'+
-        '<td class="num" style="color:var(--amber)">'+r.v.toFixed(r.v<1?3:2)+'</td>'+
+        '<td class="num" style="color:var(--amber);font-weight:600">'+r.v.toFixed(r.v<1?3:2)+'</td>'+
         '<td><div class="bar"><i style="width:'+Math.round(r.v/mx*100)+'%"></i></div></td></tr>';
     });
     document.getElementById('ldBody').innerHTML=h+'</tbody></table></div>';
