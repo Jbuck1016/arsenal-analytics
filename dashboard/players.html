@@ -152,6 +152,13 @@ tr:hover td{background:var(--surface)}
 .foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
+.row.drill{cursor:pointer;border-radius:5px;transition:background .12s}
+.row.drill:hover{background:var(--surface2)}
+.dico{margin-left:5px;color:var(--text3);font-size:8px;opacity:.65}
+.drill-wrap{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);z-index:120;display:none;align-items:center;justify-content:center;padding:24px}
+.drill-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;width:min(980px,94vw);max-height:92vh;overflow:auto;position:relative;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+.drill-x{position:absolute;top:10px;right:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);width:26px;height:26px;border-radius:6px;cursor:pointer;font:700 15px/1 'Inter'}
+.drill-x:hover{color:var(--text)}
 .tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:50;display:none;color:var(--text)}
 .cmp-row{display:grid;grid-template-columns:1fr 130px 1fr;align-items:center;gap:10px;padding:5px 0}
 .cmp-lbl{font:600 10px/1.2 'Inter';color:var(--text2);text-align:center;cursor:help}
@@ -189,6 +196,10 @@ tr:hover td{background:var(--surface)}
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
+<div class="drill-wrap" id="drillWrap" onclick="if(event.target===this)closeDrill()">
+  <div class="drill-card"><button class="drill-x" onclick="closeDrill()">&times;</button>
+    <div id="drillBody"></div></div>
+</div>
 
 <script>
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
@@ -203,6 +214,13 @@ const NAV=[['Match Dashboard','index.html'],['Teams','teams.html']];
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
 let VZ={passMode:'prog',outcome:''};
+const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
+ 'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
+ 'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
+ 'L.A. Galaxy':'LA Galaxy'};
+function tname(t){return TEAM_DISPLAY[t]||t||''}
 const PAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
 /* Which metric groups make sense for which role. A winger has no goalkeeping
    panel; a keeper has no half-space panel. */
@@ -262,7 +280,7 @@ async function init(){
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     const ts=document.getElementById('teamSel'),teams=[];
     PLAYERS.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team)});
-    teams.sort().forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=t;ts.appendChild(o)});
+    teams.sort(function(a,b){return tname(a).localeCompare(tname(b))}).forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=tname(t);ts.appendChild(o)});
     ts.value='Los Angeles FC';
     document.getElementById('hdrSub').textContent=
       'MLS 2026 \u00B7 '+PLAYERS.length+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
@@ -336,7 +354,7 @@ function renderList(){
   el.innerHTML=rows.slice(0,300).map(function(p){
     return '<div class="pitem'+(SEL===p.player_id?' on':'')+'" onclick="pick(\''+p.player_id+'\')">'+
       '<div style="flex:1;min-width:0"><div class="pitem-nm">'+esc(p.player_name)+'</div>'+
-      '<div class="pitem-meta">'+esc(p.team)+' \u00B7 '+(+p.nineties).toFixed(1)+' \u00D7 90</div></div>'+
+      '<div class="pitem-meta">'+esc(tname(p.team))+' \u00B7 '+(+p.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '<div class="badge">'+p.pool+'</div></div>'}).join('');
 }
 let PACT=null,PCAR=null,PREC=null;
@@ -351,7 +369,7 @@ async function pick(pid){
       sbAll('mv_player_percentiles',{player_id:'eq.'+pid,select:'metric,value,pct'}),
       sbAll('mv_player_pillars',{player_id:'eq.'+pid,select:'pillar,score,ord',order:'ord.asc'}),
       sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'}),
-      sbAll('v_player_actions',{player_id:'eq.'+pid,select:'type,x,y,end_x,end_y,ok,is_shot,is_goal,is_open_play,sp_phase,prog,into_box,cross_,keypass,assist,through,head,bigchance,xg'}),
+      sbAll('v_player_actions',{player_id:'eq.'+pid,select:'type,x,y,end_x,end_y,ok,is_shot,is_goal,is_open_play,sp_phase,prog,into_box,cross_,keypass,assist,through,head,bigchance,xg,shot_outcome'}),
       sbAll('v_player_carries',{player_id:'eq.'+pid,select:'start_x,start_y,end_x,end_y,carry_m,is_progressive,into_box,ttr,release_type'}),
       sbAll('v_player_receipts',{player_id:'eq.'+pid,select:'start_x,start_y,ttr,release_type,is_carry'})
     ]);
@@ -360,12 +378,12 @@ async function pick(pid){
   }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function renderPlayer(p,pcts,pillars,dna){
-  const pm={};pcts.forEach(function(r){pm[r.metric]=r});
+  const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
   const n=POOLC[p.pool]||0,low=p.nineties<MIN90;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
-    '<div class="pmeta">'+esc(p.team)+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
+    '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
     '<div class="chips"><span class="chip">Listed: '+esc(p.modal_position||'\u2014')+'</span>'+
     '<span class="chip acc">Plays: '+esc(POOL_NAME[p.pool]||p.pool)+'</span>'+
     (p.reassigned?'<span class="chip warn">Reassigned from '+esc(p.listed_pool)+'</span>':'')+
@@ -416,6 +434,19 @@ function renderPlayer(p,pcts,pillars,dna){
   wireTips();
 }
 
+/* Metrics that can be traced back to the events that produced them. Clicking
+   the row opens a pitch of exactly those actions. */
+const DRILL={
+  pass_cmp_90:'passes', prog_cmp_90:'prog', into_box_90:'box', final_third_90:'ft',
+  through_90:'through', cross_90:'cross', key_pass_90:'key', assist_90:'assist',
+  xt_pass_90:'xtpass', xt_carry_90:'xtcarry', xt_90:'xtall', territory_90:'prog',
+  shots_90:'shots', sot_90:'sot', goals_90:'goals', xg_90:'shots', bigchance_90:'bigchance',
+  carries_90:'carries', prog_carries_90:'progcarries', carry_box_90:'carrybox',
+  takeon_90:'takeon', tackle_90:'tackle', int_90:'int', recov_90:'recov',
+  clear_90:'clear', aerial_90:'aerial', def_action_90:'def',
+  hs_passes_90:'hspass', hs_prog_90:'hsprog', hs_shots_90:'hsshot',
+  holds_90:'holds', sp_shots_90:'spshot'
+};
 function metricCard(g,pm){
   const ms=DEFS.filter(function(d){return d.grp===g});if(!ms.length)return'';
   const vals=[];ms.forEach(function(d){const r=pm[d.key];if(r&&r.pct!=null)vals.push(+r.pct)});
@@ -424,7 +455,9 @@ function metricCard(g,pm){
      (avg!=null?'<span style="color:'+tier(avg).c+'">'+avg+'</span>':'')+'</div>';
   ms.forEach(function(d){
     const r=pm[d.key],pct=r?r.pct:null,t=tier(pct==null?null:+pct);
-    h+='<div class="row"><div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
+    const dk=DRILL[d.key];
+    h+='<div class="row'+(dk?' drill':'')+'"'+(dk?' onclick="drill(\''+d.key+'\')" title="Click to see these actions on the pitch"':'')+'>'+
+       '<div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+(dk?'<span class="dico">\u25F1</span>':'')+'</div>'+
        '<div class="row-val">'+(r?fmt(r.value,d.unit):'<span class="na">n/a</span>')+'</div>'+
        '<div class="bar"><div class="bar-f" style="width:'+(pct==null?0:pct)+'%;background:'+t.c+'"></div></div>'+
        '<div class="row-pct" style="color:'+t.c+'">'+(pct==null?'':pct)+'</div></div>';
@@ -513,14 +546,14 @@ function scatterSvg(pts){
   });
   pts.filter(function(p){return !p.hi}).forEach(function(p){
     s+='<circle class="pt" cx="'+SX(p.x)+'" cy="'+SY(p.y)+'" r="5" fill="'+tier((p.px+p.py)/2).c+'" fill-opacity="0.65" '+
-       'data-n="'+esc(p.name)+' \u00B7 '+esc(p.team)+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
+       'data-n="'+esc(p.name)+' \u00B7 '+esc(tname(p.team))+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
   });
   pts.filter(function(p){return p.hi}).forEach(function(p){
     const cx=SX(p.x),cy=SY(p.y);
     const right=cx < W-190;
     s+='<circle cx="'+cx+'" cy="'+cy+'" r="10" fill="var(--accent)" fill-opacity="0.22"></circle>';
     s+='<circle class="pt" cx="'+cx+'" cy="'+cy+'" r="6.5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.6" '+
-       'data-n="'+esc(p.name)+' \u00B7 '+esc(p.team)+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
+       'data-n="'+esc(p.name)+' \u00B7 '+esc(tname(p.team))+'" data-v="'+esc(dx.label||'')+' '+p.x+' \u00B7 '+esc(dy.label||'')+' '+p.y+'"></circle>';
     s+='<text x="'+(right?cx+13:cx-13)+'" y="'+(cy+4)+'" fill="var(--accent)" font-size="12" font-weight="700" '+
        'text-anchor="'+(right?'start':'end')+'" font-family="Inter">'+esc(p.name)+'</text>';
   });
@@ -624,7 +657,7 @@ function drawScout(){
   rows.forEach(function(r,i){
     h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
        '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
-       '<td style="color:var(--text2)">'+esc(r.team)+'</td>'+
+       '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
        '<td class="num">'+r.n90.toFixed(1)+'</td>'+
        '<td class="num fit" style="color:'+tier(r.fit).c+'">'+Math.round(r.fit)+'</td>'+
        SK.metrics.map(function(m){const c=r.v[m.k];
@@ -682,10 +715,10 @@ async function renderCompare(){
     const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
     let h=ctrl+'<div class="sect" style="margin-bottom:12px"><div class="cmp-row">'+
       '<div style="text-align:right"><div style="font:800 15px/1 Inter">'+esc(pa.player_name)+'</div>'+
-      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(pa.team)+' \u00B7 '+(+pa.nineties).toFixed(1)+' \u00D7 90</div></div>'+
+      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pa.team))+' \u00B7 '+(+pa.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '<div class="cmp-lbl" style="color:var(--accent);font-weight:800">'+POOL_NAME[CMP.pool]+'</div>'+
       '<div><div style="font:800 15px/1 Inter">'+esc(pb.player_name)+'</div>'+
-      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(pb.team)+' \u00B7 '+(+pb.nineties).toFixed(1)+' \u00D7 90</div></div>'+
+      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pb.team))+' \u00B7 '+(+pb.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '</div></div><div class="grid">';
     groups.forEach(function(g){
       const ms=DEFS.filter(function(d){return d.grp===g&&(A[d.key]||B[d.key])});if(!ms.length)return;
@@ -773,13 +806,13 @@ async function renderRank(){
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
       '<th class="num" style="cursor:default">'+esc(d.label||'Value')+'</th>'+
-      '<th style="cursor:default;width:200px">Relative</th>'+
+      '<th style="cursor:default;width:200px" title="Bar length is this player\u2019s raw value as a share of the highest value shown">Value vs best shown</th>'+
       '<th class="num" style="cursor:default">Pct</th></tr></thead><tbody>';
     list.forEach(function(r,i){
       const t=tier(r.pct),w=Math.max(2,Math.abs(r.value)/mxv*100);
       h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
         '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
-        '<td style="color:var(--text2)">'+esc(r.team)+'</td>'+
+        '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
         '<td><span class="badge">'+esc(r.pool)+'</span></td>'+
         '<td class="num">'+r.n90.toFixed(1)+'</td>'+
         '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
@@ -840,6 +873,23 @@ function line(a,c,w,op,dash){
 }
 function dot(a,c,r,op){
   return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+((r||0.85)*0.68).toFixed(2)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
+}
+/* Distinct glyph per outcome: filled ring for a goal, solid for a save,
+   diamond for a block, hollow for off target. */
+function shotMark(x,y,r,c,op,oc){
+  const cx=PX(x),cy=PY(y);
+  if(oc==='goal')
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*1.7)+'" fill="none" stroke="'+c+'" stroke-width="0.2" stroke-opacity="0.55"/>'+
+           '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="1"/>';
+  if(oc==='blocked'){
+    const d=r*1.25;
+    return '<path d="M'+cx+' '+(cy-d)+'L'+(cx+d)+' '+cy+'L'+cx+' '+(cy+d)+'L'+(cx-d)+' '+cy+
+           'Z" fill="'+c+'" fill-opacity="'+op+'"/>';
+  }
+  if(oc==='off'||oc==='post')
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+c+
+           '" stroke-width="0.26" stroke-opacity="'+Math.min(1,op*1.6)+'"/>';
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
 
@@ -906,25 +956,30 @@ function vizPanel(grp,p){
     const sh=A.filter(function(a){return a.is_shot&&a.is_open_play});
     if(!sh.length)return noData();
     let s='',g=0,ot=0,off=0,sx=0;
+    let bl=0,po=0;
     sh.forEach(function(a){
       const xg=+(a.xg||0.04);sx+=xg;
       const r=0.26+Math.sqrt(xg)*0.92;
+      const oc=a.shot_outcome||(a.is_goal?'goal':(a.type==='SavedShot'?'saved':'off'));
       let c=N,op=0.5;
-      if(a.is_goal){c=AC;op=0.95;g++}
-      else if(a.type==='SavedShot'){c=G;op=0.6;ot++}
+      if(oc==='goal'){c=PAL.box;op=1;g++}
+      else if(oc==='saved'){c=G;op=0.75;ot++}
+      else if(oc==='blocked'){c='#a78bfa';op=0.6;bl++}
+      else if(oc==='post'){c=Y;op=0.8;po++}
       else{c=R;op=0.42;off++}
       const dist=Math.sqrt(Math.pow((100-a.x)*1.05,2)+Math.pow((50-a.y)*0.68,2));
       const lbl=(a.is_goal?'Goal':(a.type==='SavedShot'?'Saved':'Off target'));
       const tipN=esc(p.player_name)+' \u00B7 '+lbl;
       const tipV='xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.is_header?' \u00B7 header':'')+
         (a.bigchance?' \u00B7 big chance':'');
-      s+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
-         '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"/>'+
+      s+=shotMark(a.x,a.y,r,c,op,oc)+
          '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r*2.4,1.6)+
          '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';
     });
-    return pitchWrap('Shot map','Open-play shots. Circle size is chance quality (xG); total '+sx.toFixed(1)+' xG from '+sh.length+' shots.',s,
-      lg(AC,'Goals',g)+lg(G,'On target',ot)+lg(R,'Off target',off));
+    return pitchWrap('Shot map',
+      'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+' shots. '+
+      'Blocked attempts are shown separately \u2014 the provider files them as saves but they never reached the keeper.',s,
+      lg(PAL.box,'Goal',g)+lg(G,'Saved',ot)+lg('#a78bfa','Blocked',bl)+lg(Y,'Post',po)+lg(R,'Off target',off));
   }
   if(grp==='Carrying'){
     if(!C.length)return noData();
@@ -1060,6 +1115,105 @@ function vizPanel(grp,p){
   return noData('No pitch view for this group yet');
 }
 
+/* ---------- DRILL-DOWN ---------- */
+function xtOf(x,y){
+  const gx=Math.min(11,Math.max(0,Math.floor(x/100*12))), gy=Math.min(7,Math.max(0,Math.floor(y/100*8)));
+  return (XTG[gx]&&XTG[gx][gy])||0;
+}
+const XTG=[[0,0,0,0,0,0,0,0],[.001,.001,.001,.002,.002,.001,.001,.001],
+[.002,.003,.004,.005,.005,.004,.003,.002],[.004,.006,.008,.011,.011,.008,.006,.004],
+[.006,.009,.014,.019,.019,.014,.009,.006],[.010,.015,.022,.030,.030,.022,.015,.010],
+[.016,.024,.035,.048,.048,.035,.024,.016],[.025,.037,.054,.075,.075,.054,.037,.025],
+[.038,.056,.082,.115,.115,.082,.056,.038],[.055,.082,.122,.170,.170,.122,.082,.055],
+[.082,.120,.178,.250,.250,.178,.120,.082],[.120,.180,.270,.390,.390,.270,.180,.120]];
+
+function drill(key){
+  const p=playerOf(SEL); if(!p||!PACT)return;
+  const d=defOf(key)||{}; const kind=DRILL[key];
+  const A=PACT, C=PCAR||[];
+  const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,Y=PAL.carry,N='var(--text3)';
+  let inner='',leg='',sub='',n=0;
+  const pass=function(f,c,w,op){A.filter(f).forEach(function(a){if(a.end_x==null)return;inner+=line(a,c,w,op);n++})};
+  const carry=function(f,c,w,op){C.filter(f).forEach(function(c2){
+    inner+=line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},c,w,op);n++})};
+
+  if(kind==='passes')      pass(function(a){return a.type==='Pass'&&a.is_open_play&&a.ok},G,0.16,0.3);
+  else if(kind==='prog')   pass(function(a){return a.prog&&a.ok},B,0.3,0.75);
+  else if(kind==='box')    pass(function(a){return a.into_box&&a.ok},AC,0.34,0.9);
+  else if(kind==='ft')     pass(function(a){return a.type==='Pass'&&a.ok&&a.end_x>=66.7},G,0.22,0.5);
+  else if(kind==='through')pass(function(a){return a.through},B,0.36,0.9);
+  else if(kind==='cross')  pass(function(a){return a.cross_},AC,0.3,0.75);
+  else if(kind==='key')    pass(function(a){return a.keypass},G,0.32,0.85);
+  else if(kind==='assist') pass(function(a){return a.assist},AC,0.5,1);
+  else if(kind==='xtpass'||kind==='xtall'||kind==='xtcarry'){
+    if(kind!=='xtcarry'){
+      A.filter(function(a){return a.type==='Pass'&&a.ok&&a.is_open_play&&a.end_x!=null}).forEach(function(a){
+        const g=xtOf(a.end_x,a.end_y)-xtOf(a.x,a.y);
+        if(g<=0.004)return;
+        inner+=line(a,B,0.16+Math.min(0.5,g*7),0.35+Math.min(0.6,g*9));n++;});
+    }
+    if(kind!=='xtpass'){
+      C.filter(function(c2){return c2.is_progressive}).forEach(function(c2){
+        const g=xtOf(c2.end_x,c2.end_y)-xtOf(c2.start_x,c2.start_y);
+        if(g<=0.004)return;
+        inner+=line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},Y,0.16+Math.min(0.5,g*7),0.4);n++;});
+    }
+    sub='Only actions that added threat are drawn. Thicker and brighter means more threat added.';
+    leg=(kind!=='xtcarry'?lg(B,'Passes that added threat'):'')+(kind!=='xtpass'?lg(Y,'Carries that added threat'):'');
+  }
+  else if(kind==='carries')     carry(function(){return true},N,0.16,0.28);
+  else if(kind==='progcarries') carry(function(c2){return c2.is_progressive},Y,0.3,0.8);
+  else if(kind==='carrybox')    carry(function(c2){return c2.into_box},AC,0.34,0.9);
+  else if(kind==='shots'||kind==='sot'||kind==='goals'||kind==='bigchance'||kind==='hsshot'||kind==='spshot'){
+    const f={shots:function(a){return a.is_shot&&a.is_open_play},
+             sot:function(a){return a.is_shot&&(a.shot_outcome==='saved'||a.shot_outcome==='goal')},
+             goals:function(a){return a.is_shot&&a.is_goal},
+             bigchance:function(a){return a.is_shot&&a.bigchance},
+             hsshot:function(a){return a.is_shot&&a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))},
+             spshot:function(a){return a.is_shot&&a.sp_phase}}[kind];
+    let sx=0;
+    A.filter(f).forEach(function(a){
+      const xg=+(a.xg||0.04);sx+=xg;const r=0.26+Math.sqrt(xg)*0.92;
+      const oc=a.shot_outcome||'off';
+      const c=oc==='goal'?AC:(oc==='saved'?G:(oc==='blocked'?'#a78bfa':R));
+      inner+=shotMark(a.x,a.y,r,c,oc==='goal'?1:0.55,oc);n++;});
+    sub='Sized by chance quality. '+sx.toFixed(2)+' xG across these '+n+' shots.';
+    leg=lg(AC,'Goal')+lg(G,'Saved')+lg('#a78bfa','Blocked')+lg(R,'Off target');
+  }
+  else if(kind==='takeon'||kind==='tackle'||kind==='int'||kind==='recov'||kind==='clear'||kind==='aerial'||kind==='def'){
+    const types={takeon:['TakeOn'],tackle:['Tackle'],int:['Interception'],recov:['BallRecovery'],
+      clear:['Clearance'],aerial:['Aerial'],
+      def:['Tackle','Interception','BallRecovery','Clearance','BlockedPass','Challenge']}[kind];
+    A.filter(function(a){return types.indexOf(a.type)>=0}).forEach(function(a){
+      inner+=dot({x:a.x,y:a.y},a.ok?G:R,0.85,a.ok?0.8:0.45);n++;});
+    leg=lg(G,'Successful')+lg(R,'Unsuccessful');
+  }
+  else if(kind==='hspass'||kind==='hsprog'){
+    inner+='<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+'" fill="var(--accent)" fill-opacity="0.07"/>'+
+           '<rect x="'+PX(50)+'" y="'+PY(63.2)+'" width="'+PX(50)+'" height="'+(PY(78.9)-PY(63.2))+'" fill="var(--accent)" fill-opacity="0.07"/>';
+    pass(function(a){return a.type==='Pass'&&a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))&&
+      (kind==='hsprog'?(a.prog&&a.ok):a.ok)},kind==='hsprog'?B:G,0.26,0.6);
+  }
+  else if(kind==='holds'){
+    inner+='<rect x="'+PX(66.7)+'" y="0" width="'+PX(33.3)+'" height="68" fill="var(--accent)" fill-opacity="0.05"/>';
+    carry(function(c2){return c2.ttr>=5&&c2.end_x>=66.7},Y,0.3,0.75);
+  }
+  if(!n&&!inner){alert('No events to plot for that metric.');return}
+  if(!leg)leg='<span><b>'+n+'</b> actions</span>';
+  const r=pm_of(key);
+  document.getElementById('drillBody').innerHTML=
+    '<div class="viz-eyebrow">Behind the number</div>'+
+    '<div class="viz-title">'+esc(d.label||key)+' \u2014 '+esc(p.player_name)+'</div>'+
+    '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b> per 90 \u00B7 '+r.pct+'th percentile among '+
+      (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+
+    '<div class="pitch-box" style="height:min(58vh,540px)"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
+    'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+'</svg></div>'+
+    '<div class="viz-leg">'+leg+'</div>';
+  document.getElementById('drillWrap').style.display='flex';
+}
+let PMCACHE={};
+function pm_of(k){return PMCACHE[k]||null}
+function closeDrill(){document.getElementById('drillWrap').style.display='none'}
 function toggleDark(){document.documentElement.classList.toggle('dark')}
 init();
 </script>

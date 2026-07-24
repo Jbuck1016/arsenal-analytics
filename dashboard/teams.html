@@ -126,6 +126,13 @@ const NAV=[['Match Dashboard','index.html'],['Players','players.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
+const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
+ 'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
+ 'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
+ 'L.A. Galaxy':'LA Galaxy'};
+function tname(t){return TEAM_DISPLAY[t]||t||''}
 const TPAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
@@ -176,7 +183,7 @@ function renderList(){
   document.getElementById('tlist').innerHTML=TEAMS.slice().sort(function(a,b){
     return b.field_tilt-a.field_tilt}).map(function(t){
     return '<div class="pitem'+(SEL===t.team?' on':'')+'" onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
-      '<span class="pitem-nm">'+esc(t.team)+'</span>'+
+      '<span class="pitem-nm">'+esc(tname(t.team))+'</span>'+
       '<span class="pitem-meta">'+t.matches+'</span></div>'}).join('');
 }
 function pick(t){SEL=t;renderList();draw()}
@@ -197,7 +204,7 @@ function teamHead(t){
   const p=PCT[t.team]||{};
   const gd=(t.goals_pg-t.goals_against_pg);
   return '<div class="tcard"><div style="flex:1;min-width:230px">'+
-    '<div class="tname">'+esc(t.team)+'</div>'+
+    '<div class="tname">'+esc(tname(t.team))+'</div>'+
     '<div class="tmeta">MLS 2026 \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
     (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
     '<div class="kpis">'+
@@ -272,7 +279,7 @@ function renderLeagueMap(){
        '" fill-opacity="'+(on?1:.55)+'"/>';
     s+='<text x="'+(right?cx+11:cx-11)+'" y="'+(cy+4)+'" fill="'+(on?'var(--accent)':'var(--text3)')+
        '" font-size="'+(on?12:10)+'" font-weight="'+(on?800:500)+'" text-anchor="'+(right?'start':'end')+
-       '" font-family="Inter">'+esc(p.team)+'</text>';
+       '" font-family="Inter">'+esc(tname(p.team))+'</text>';
   });
   s+='<text x="'+(W/2)+'" y="'+(H-8)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
   s+='<text transform="translate(14,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
@@ -285,7 +292,7 @@ function renderLeagueMap(){
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="LM.y=this.value;renderLeagueMap()">'+metricOpts(LM.y)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">Highlight</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderLeagueMap()">'+
-      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(t.team)+'</option>'}).join('')+
+      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div></div>'+
     '<div class="sect">'+s+'<div class="foot">All 30 MLS teams. Dashed lines are league medians, so each quadrant is a style archetype. '+
     'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
@@ -310,7 +317,7 @@ async function renderMatches(t){
       '<th class="num" style="cursor:default">Shots</th><th class="num" style="cursor:default">Conceded</th></tr></thead><tbody>';
     list.forEach(function(r){
       h+='<tr><td style="color:var(--text2)">'+esc((r.date||'').slice(0,10))+'</td>'+
-        '<td style="font-weight:700">'+esc(r.opp||'')+'</td>'+
+        '<td style="font-weight:700">'+esc(tname(r.opp||''))+'</td>'+
         '<td><span class="wl" style="background:'+rc[r.res]+'">'+r.res+'</span> <span style="color:var(--text3)">'+r.ha+'</span></td>'+
         '<td class="num">'+r.gf+'\u2013'+r.ga+'</td>'+
         '<td class="num">'+(+r.possession_pct).toFixed(1)+'%</td>'+
@@ -453,12 +460,23 @@ async function loadZones(team){
   const r=await Promise.all([
     sbAll('v_team_actions',{team:'eq.'+team,select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
     sbAll('v_team_carries',{team:'eq.'+team,select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
-    sbAll('v_team_shots',{select:'team,player,x,y,xg,is_goal,game_id,dist_m'})
+    sbAll('v_team_shots',{select:'team,player,x,y,xg,is_goal,game_id,dist_m,outcome'})
   ]);
   ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
 }
 /* Small hollow ring at the point the action began. Used on the maps where the
    origin carries meaning: progressive passes, box entries and carries. */
+function shotMark(x,y,r,c,op,oc){
+  const cx=PX(x),cy=PY(y);
+  if(oc==='goal')
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*1.7)+'" fill="none" stroke="'+c+'" stroke-width="0.2" stroke-opacity="0.55"/>'+
+           '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="1"/>';
+  if(oc==='blocked'){const d=r*1.25;
+    return '<path d="M'+cx+' '+(cy-d)+'L'+(cx+d)+' '+cy+'L'+cx+' '+(cy+d)+'L'+(cx-d)+' '+cy+'Z" fill="'+c+'" fill-opacity="'+op+'"/>';}
+  if(oc==='off'||oc==='post')
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+c+'" stroke-width="0.26" stroke-opacity="'+Math.min(1,op*1.6)+'"/>';
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
+}
 function origin(a,c,w,op){
   const sx=(a.start_x!=null?a.start_x:a.x), sy=(a.start_y!=null?a.start_y:a.y);
   return '<circle cx="'+PX(sx)+'" cy="'+PY(sy)+'" r="'+(w*1.0).toFixed(2)+'" fill="none" stroke="'+c+
@@ -559,14 +577,16 @@ async function renderMaps(t){
         const xg=+(a.xg||0.04);sx+=xg;
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
         const rr=0.26+Math.sqrt(xg)*0.92;
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+rr+'" fill="'+c+
-               '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>'+
+        const oc=a.outcome||(a.is_goal?'goal':'off');
+        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'#a78bfa':(oc==='post'?Y:(forTeam?G:R))));
+        inner+=shotMark(a.x,a.y,rr,oc_c,a.is_goal?1:0.5,oc)+
                '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
                '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+
                (a.is_goal?'Goal':'Shot')+'" data-v="xG '+xg.toFixed(3)+(a.dist_m?' \u00B7 '+a.dist_m+' m':'')+'"/>';
       });
-      leg='<span><i style="background:'+AC+'"></i>Goals <b>'+g+'</b></span>'+
-          '<span><i style="background:'+(forTeam?G:R)+'"></i>Shots <b>'+sh.length+'</b></span>'+
+      leg='<span><i style="background:'+TPAL.box+'"></i>Goal <b>'+g+'</b></span>'+
+          '<span><i style="background:'+(forTeam?G:R)+'"></i>Saved / off <b>'+(sh.length-g)+'</b></span>'+
+          '<span><i style="background:#a78bfa"></i>Blocked shown as diamonds</span>'+
           '<span>xG <b>'+sx.toFixed(1)+'</b></span>';
     }
     main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote()+outcomeNote(),
@@ -666,7 +686,7 @@ function renderRankings(){
     const y=MT+i*BH,w=Math.max(2,Math.abs(r.value)/mx*(W-ML-90));
     const c=tier(r.pct).c,on=r.team===SEL;
     sv+='<text x="'+(ML-9)+'" y="'+(y+14)+'" fill="'+(on?'var(--accent)':'var(--text2)')+'" font-size="11" font-weight="'+(on?800:600)+
-        '" text-anchor="end" font-family="Inter">'+esc(r.team)+'</text>';
+        '" text-anchor="end" font-family="Inter">'+esc(tname(r.team))+'</text>';
     sv+='<rect x="'+ML+'" y="'+(y+4)+'" width="'+w+'" height="14" rx="3" fill="'+c+'" fill-opacity="'+(on?0.98:0.7)+'"/>';
     sv+='<text x="'+(ML+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" font-family="Inter">'+
         fmt(r.value,d.unit)+'</text>';
@@ -681,7 +701,7 @@ function renderRankings(){
     tb+='<tr'+(r.team===SEL?' style="background:var(--accent-dim)"':'')+'>'+
       '<td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
       '<td style="font-weight:700;cursor:pointer" onclick="SEL=\''+esc(r.team).replace(/'/g,"\\'")+
-      '\';TAB=\'Profile\';renderTabs();renderList();draw()">'+esc(r.team)+'</td>'+
+      '\';TAB=\'Profile\';renderTabs();renderList();draw()">'+esc(tname(r.team))+'</td>'+
       '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
       '<td class="num" style="color:'+tier(r.pct).c+';font-weight:700">'+(r.pct==null?'\u2014':r.pct)+'</td></tr>';
   });
@@ -692,7 +712,7 @@ function renderRankings(){
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="RKT.metric=this.value;renderRankings()">'+metricOpts(RKT.metric)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:220px"><span class="kpi-l">Highlight</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderRankings()">'+
-      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(t.team)+'</option>'}).join('')+
+      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div>'+
     '<div class="foot" style="margin-top:8px">Sorted best to worst, so inverted metrics like PPDA and goals conceded put the strongest team on top. '+
     (d.definition?esc(d.definition):'')+'</div></div>'+
