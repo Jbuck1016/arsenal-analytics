@@ -2231,7 +2231,35 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();}
+async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();await openDeepLink();}
+
+/* Arriving from the command bar with ?game=<id>: pick the right team so the
+   fixture is in the list, then open it. */
+async function openDeepLink(){
+  const gid=new URLSearchParams(location.search).get('game');
+  if(!gid)return;
+  try{
+    const rows=await sbAll('matches',{game_id:'eq.'+gid,
+      select:'game_id,home_team,away_team,competition,season'});
+    const m=rows&&rows[0]; if(!m)return;
+    if(TEAMS[m.home_team]&&S.team!==m.home_team){
+      S.team=m.home_team;
+      const pick=document.getElementById('teamPick');if(pick)pick.value=S.team;
+      applyTheme();initCompFilters();
+      await loadMatches();
+    }
+    if(!S.matches.some(x=>String(x.game_id)===String(gid))){
+      S.team='__ALL__';
+      const pick=document.getElementById('teamPick');if(pick)pick.value='__ALL__';
+      applyTheme();initCompFilters();
+      await loadMatches();
+    }
+    const sel=document.getElementById('matchSel');
+    if(sel){sel.value=gid;}
+    await loadMatch(gid);
+    loadSeasonStats();
+  }catch(e){console.warn('deep link failed',e)}
+}
 init();
 </script>
 </body>

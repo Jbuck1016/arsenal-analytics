@@ -247,7 +247,7 @@ function search(v){
   if(!v){resEl.classList.remove('on');HITS=[];return}
   const t=TEAMS.filter(function(x){return tname(x.team).toLowerCase().indexOf(v)>=0})
     .slice(0,5).map(function(x){return{k:'TEAM',n:tname(x.team),m:x.matches+' matches',
-      href:'teams.html'}});
+      href:'teams.html?team='+encodeURIComponent(x.team)}});
   const p=PLAYERS.filter(function(x){return (x.name||'').toLowerCase().indexOf(v)>=0})
     .slice(0,7).map(function(x){return{k:x.pool||'PL',n:x.name,m:tname(x.team)+' · '+x.n90.toFixed(1)+'×90',
       href:'players.html?player='+encodeURIComponent(x.id)}});
@@ -255,7 +255,7 @@ function search(v){
       return (tname(x.home_team)+' '+tname(x.away_team)).toLowerCase().indexOf(v)>=0})
     .slice(0,4).map(function(x){return{k:'MTCH',
       n:tname(x.home_team)+' '+x.home_score+'–'+x.away_score+' '+tname(x.away_team),
-      m:String(x.date).slice(0,10), href:'match.html'}});
+      m:String(x.date).slice(0,10), href:'match.html?game='+encodeURIComponent(x.game_id)}});
   HITS=p.concat(t,m);SEL=HITS.length?0:-1;
   if(!HITS.length){resEl.innerHTML='<div class="res-empty">no match for "'+esc(v)+'"</div>';resEl.classList.add('on');return}
   let h='';
@@ -348,7 +348,7 @@ function renderTable(){
   rows.forEach(function(r,i){
     const v=Math.abs(+r[cfg.sort]);
     const frac=mx===mn?1:( low ? (mx-v)/(mx-mn) : (v-mn)/(mx-mn) );
-    h+='<tr onclick="location.href=\'teams.html\'">'+
+    h+='<tr onclick="location.href=\'teams.html?team='+encodeURIComponent(r.team)+'\'">'+
       '<td class="rk num">'+(i+1)+'</td>'+
       '<td class="nm">'+esc(tname(r.team))+'</td>'+
       cfg.cols.map(function(c){

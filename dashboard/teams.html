@@ -167,7 +167,8 @@ async function init(){
     LANES={};(r[4]||[]).forEach(function(l){if(!LANES[l.team])LANES[l.team]={};LANES[l.team][l.lane]=l});
     document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 '+TEAMS.length+' teams \u00B7 ranked across the league';
     renderTabs();renderList();wireTips();
-    SEL=teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team;
+    const qt=new URLSearchParams(location.search).get('team');
+    SEL=(qt&&teamOf(qt))?qt:(teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team);
     pick(SEL);
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
