@@ -98,6 +98,8 @@ tr:hover td{background:var(--surface)}
 .vzb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
 .split2{display:grid;grid-template-columns:1.05fr .95fr;gap:12px;align-items:start}
 @media(max-width:1150px){.split2{grid-template-columns:1fr}}
+.mrow{cursor:pointer}
+.mrow:hover td{background:var(--accent-dim)}
 .wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
 </style>
 </head>
@@ -122,7 +124,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
-const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html']];
+const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html'],['Reference','glossary.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
@@ -226,7 +228,7 @@ function renderProfile(t){
   const p=PCT[t.team]||{};
   const groups=[];TDEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
   let h=teamHead(t)+'<div class="grid">';
-  groups.forEach(function(g){
+  groups.filter(function(g){return g!=='Channels'}).forEach(function(g){
     const ms=TDEFS.filter(function(d){return d.grp===g});
     h+='<div class="sect"><div class="sect-h"><span>'+esc(g)+'</span></div>';
     ms.forEach(function(d){
@@ -239,9 +241,10 @@ function renderProfile(t){
     h+='</div>';
   });
   h+='</div>';
-  h+='<div class="split2" style="margin-top:12px">'+attackProfile(t)+laneViz(t)+'</div>';
+  h+='<div class="split2" style="margin-top:12px;grid-template-columns:.8fr 1.2fr">'+
+     channelBlock(t)+laneViz(t)+'</div>';
   h+=legendHtml()+'<div class="foot">Percentiles are across all 30 MLS teams this season. '+
-     'PPDA and the conceded metrics are inverted so a high percentile always means better. '+'A possession ends when the opposition touch the ball or play stops for more than eight seconds.</div>';
+     'PPDA and the conceded metrics are inverted so a high percentile always means better. '+'Channel shares are descriptive, not good or bad \u2014 a high percentile just means they use that side more than most. '+'A possession ends when the opposition touch the ball or play stops for more than eight seconds.</div>';
   document.getElementById('main').innerHTML=h;
 }
 function metricOpts(sel){let o='',g='';
@@ -315,16 +318,21 @@ async function renderMatches(t){
       '<th style="cursor:default">Date</th><th style="cursor:default">Opponent</th><th style="cursor:default"></th>'+
       '<th class="num" style="cursor:default">Score</th><th class="num" style="cursor:default">Poss</th>'+
       '<th class="num" style="cursor:default">Tilt</th><th class="num" style="cursor:default">PPDA</th>'+
-      '<th class="num" style="cursor:default">Shots</th><th class="num" style="cursor:default">Conceded</th></tr></thead><tbody>';
+      '<th class="num" style="cursor:default" title="Shots taken">Shots</th>'+
+      '<th class="num" style="cursor:default" title="Shots faced">Shots ag.</th>'+
+      '<th style="cursor:default;width:22px"></th></tr></thead><tbody>';
     list.forEach(function(r){
-      h+='<tr><td style="color:var(--text2)">'+esc((r.date||'').slice(0,10))+'</td>'+
+      h+='<tr class="mrow" title="Open this fixture in the match dashboard" '+
+        'onclick="location.href=\'match.html?game='+encodeURIComponent(r.game_id)+'\'">'+
+        '<td style="color:var(--text2)">'+esc((r.date||'').slice(0,10))+'</td>'+
         '<td style="font-weight:700">'+esc(tname(r.opp||''))+'</td>'+
         '<td><span class="wl" style="background:'+rc[r.res]+'">'+r.res+'</span> <span style="color:var(--text3)">'+r.ha+'</span></td>'+
         '<td class="num">'+r.gf+'\u2013'+r.ga+'</td>'+
         '<td class="num">'+(+r.possession_pct).toFixed(1)+'%</td>'+
         '<td class="num">'+(+r.field_tilt).toFixed(1)+'%</td>'+
         '<td class="num">'+(r.ppda==null?'\u2014':(+r.ppda).toFixed(2))+'</td>'+
-        '<td class="num">'+r.shots+'</td><td class="num">'+r.opp_shots+'</td></tr>';
+        '<td class="num">'+r.shots+'</td><td class="num">'+r.opp_shots+'</td>'+
+        '<td style="color:var(--text3);text-align:right">\u203A</td></tr>';
     });
     h+='</tbody></table></div><div class="foot">Match-by-match style. Open any of these in the '+
        '<a href="match.html" style="color:var(--accent)">match dashboard</a> for the full event maps.</div></div>';
@@ -436,17 +444,18 @@ function inZone(x,y){
   if(MP.third==='def'&&!(x<33.3))return false;
   if(MP.third==='mid'&&!(x>=33.3&&x<66.7))return false;
   if(MP.third==='att'&&!(x>=66.7))return false;
-  if(MP.lane==='L'&&!(y<33.3))return false;
+  // verified from the data: low y is the attacking team's right, high y their left
+  if(MP.lane==='R'&&!(y<33.3))return false;
   if(MP.lane==='C'&&!(y>=33.3&&y<66.7))return false;
-  if(MP.lane==='R'&&!(y>=66.7))return false;
+  if(MP.lane==='L'&&!(y>=66.7))return false;
   return true;
 }
 function zoneShade(){
   if(!MP.third&&!MP.lane)return'';
   const x0=MP.third==='def'?0:(MP.third==='mid'?33.3:(MP.third==='att'?66.7:0));
   const x1=MP.third==='def'?33.3:(MP.third==='mid'?66.7:(MP.third==='att'?100:100));
-  const y0=MP.lane==='L'?0:(MP.lane==='C'?33.3:(MP.lane==='R'?66.7:0));
-  const y1=MP.lane==='L'?33.3:(MP.lane==='C'?66.7:(MP.lane==='R'?100:100));
+  const y0=MP.lane==='R'?0:(MP.lane==='C'?33.3:(MP.lane==='L'?66.7:0));
+  const y1=MP.lane==='R'?33.3:(MP.lane==='C'?66.7:(MP.lane==='L'?100:100));
   return '<rect x="'+PX(x0)+'" y="'+PY(y0)+'" width="'+PX(x1-x0)+'" height="'+PY(y1-y0)+
          '" fill="var(--accent)" fill-opacity="0.055"/>';
 }
@@ -621,32 +630,18 @@ function heatLayer(rows){
   return s2+'</g>';
 }
 /* ---------- ATTACK PROFILE ---------- */
-const BUILD_DEFS=[
-  {k:'passes_per_seq',l:'Passes per possession',hi:true,d:'How many passes they string together before losing it. High means patient.'},
-  {k:'secs_per_seq',l:'Seconds per possession',hi:true,d:'How long they keep the ball each time they win it.'},
-  {k:'long_sequence_pct',l:'Long possessions',unit:'%',hi:true,d:'Share of possessions reaching six or more passes.'},
-  {k:'direct_attack_pct',l:'Direct attacks',unit:'%',hi:true,d:'Possessions starting in their own half that reach a shot inside 15 seconds.'},
-  {k:'pct_ending_in_shot',l:'Possessions ending in a shot',unit:'%',hi:true,d:'How often keeping the ball actually produces an attempt.'},
-  {k:'ground_gained',l:'Ground gained per possession',hi:true,d:'How far up the pitch a typical possession travels.'},
-  {k:'passes_before_shot',l:'Passes before a shot',hi:true,d:'Length of the possessions that end in an attempt.'},
-  {k:'sequences_pg',l:'Possessions per game',hi:true,d:'How often they have the ball. High means a broken, transitional game.'}
-];
-function buildRank(metric,team){
-  const vals=Object.keys(BUILD).map(function(t){return +BUILD[t][metric]}).filter(function(v){return !isNaN(v)});
-  if(!vals.length)return null;
-  const v=+BUILD[team][metric];if(isNaN(v))return null;
-  const below=vals.filter(function(x){return x<v}).length;
-  return Math.round(100*below/Math.max(1,vals.length-1));
-}
-function attackProfile(t){
-  const b=BUILD&&BUILD[t.team];if(!b)return'';
-  let h='<div class="sect"><div class="sect-h"><span>How they attack</span></div>';
-  BUILD_DEFS.forEach(function(d){
-    const v=b[d.k];const pc=buildRank(d.k,t.team);const c=tier(pc);
-    h+='<div class="row"><div class="row-lbl" title="'+esc(d.d)+'">'+esc(d.l)+'</div>'+
-       '<div class="row-val">'+(v==null?'\u2014':(+v).toFixed(d.unit==='%'?1:2)+(d.unit==='%'?'%':''))+'</div>'+
-       '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+c.c+'"></div></div>'+
-       '<div class="row-pct" style="color:'+c.c+'">'+(pc==null?'':pc)+'</div></div>';
+function channelBlock(t){
+  const p=PCT[t.team]||{};
+  const ms=TDEFS.filter(function(d){return d.grp==='Channels'});
+  let h='<div class="sect"><div class="sect-h"><span>Final-third channels</span></div>'+
+    '<div class="foot" style="margin:-4px 0 10px">Where their final-third involvement happens across the width of the pitch. '+
+    'The three shares sum to 100%.</div>';
+  ms.forEach(function(d){
+    const r=p[d.key],pc=r?+r.pct:null,tc=tier(pc);
+    h+='<div class="row"><div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
+       '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
+       '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
+       '<div class="row-pct" style="color:'+tc.c+'">'+(pc==null?'':pc)+'</div></div>';
   });
   return h+'</div>';
 }
@@ -654,7 +649,8 @@ function laneViz(t){
   const L=LANES&&LANES[t.team];if(!L)return'';
   const get=function(k){return L[k]?+L[k].pct_of_final_third:0};
   const l=get('L'),c=get('C'),r=get('R');
-  const bands=[{k:'L',lbl:'Left',v:l,y0:0,y1:33.3},{k:'C',lbl:'Centre',v:c,y0:33.3,y1:66.7},{k:'R',lbl:'Right',v:r,y0:66.7,y1:100}];
+  // low y is their right, high y their left, confirmed against full-back positions
+  const bands=[{k:'R',lbl:'Right',v:r,y0:0,y1:33.3},{k:'C',lbl:'Centre',v:c,y0:33.3,y1:66.7},{k:'L',lbl:'Left',v:l,y0:66.7,y1:100}];
   const mx=Math.max(l,c,r)||1;
   let inner='';
   bands.forEach(function(b){
@@ -667,8 +663,9 @@ function laneViz(t){
            'text-anchor="middle" letter-spacing="0.4" font-family="Inter">'+b.lbl.toUpperCase()+'</text>';
   });
   const domi=l>c&&l>r?'down the left':(r>c&&r>l?'down the right':'through the middle');
-  return pitchWrap('Which side they attack',
-    'Share of final-third involvement by channel. This team works '+domi+'. Attack is left to right, so the top band is their left.',
+  return pitchWrap('Which side they attack the final third',
+    'Share of involvement in the <b>final third only</b>, split by channel. This team works '+domi+'. '+
+    'Attack runs left to right, so the top band is their right and the bottom band their left.',
     inner,
     '<span><i style="background:var(--accent)"></i>Darker band = more of their final-third play</span>');
 }
