@@ -63,8 +63,9 @@ a{color:inherit;text-decoration:none}
 .res-empty{padding:16px 13px;font:500 11px/1 var(--f-mono);color:var(--dim2)}
 
 /* ---- nav modules ---- */
-.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
-@media(max-width:860px){.mods{grid-template-columns:1fr}}
+.mods{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:1100px){.mods{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.mods{grid-template-columns:1fr}}
 .mod{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:15px 16px;
   display:block;transition:border-color .15s,background .15s;position:relative;overflow:hidden}
 .mod:hover{border-color:var(--amber-line);background:var(--panel2)}
@@ -155,6 +156,12 @@ tbody tr:hover td{background:var(--panel2)}
       <div class="mod-d">Style against the league, build-up and pressing, season maps, rankings, squads.</div>
       <div class="mod-n"><span id="nTeam">—</span><span class="mod-arrow">→</span></div>
     </a>
+    <a class="mod" href="glossary.html">
+      <div class="mod-i">04 · reference</div>
+      <div class="mod-t">Metric reference</div>
+      <div class="mod-d">Every metric defined, how it is calculated, where it sits in the league, and a worked example at each end.</div>
+      <div class="mod-n"><span id="nMetric">—</span><span class="mod-arrow">→</span></div>
+    </a>
   </div>
 
   <div class="cols">
@@ -191,7 +198,8 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
-function tname(t){return TEAM_DISPLAY[t]||t||''}
+let NAMEMAP={};
+function tname(t){return NAMEMAP[t]||TEAM_DISPLAY[t]||t||''}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
 
@@ -214,8 +222,9 @@ async function init(){
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties'}),
       sbAll('mv_player_role',{select:'player_id,pool'}),
       sbAll('matches',{select:'game_id,date,home_team,away_team,home_score,away_score',home_score:'not.is.null',order:'date.desc'}),
-      sbAll('mv_team_all',{select:'team'})
+      sbAll('team_names',{select:'event_name,match_name,display_name'})
     ]);
+    (r[4]||[]).forEach(function(m){NAMEMAP[m.event_name]=m.display_name;NAMEMAP[m.match_name]=m.display_name;});
     TEAMS=r[0];
     const rm={};r[2].forEach(function(x){rm[x.player_id]=x.pool});
     PLAYERS=r[1].map(function(p){return{id:p.player_id,name:p.player_name,team:p.team,
@@ -233,6 +242,7 @@ async function init(){
     document.getElementById('nMatch').textContent=MATCHES.length+' fixtures';
     document.getElementById('nPlayer').textContent=PLAYERS.length+' players';
     document.getElementById('nTeam').textContent=TEAMS.length+' clubs';
+    document.getElementById('nMetric').textContent='89 metrics';
 
     renderSegs();renderTable();loadLeaders();
   }catch(e){
