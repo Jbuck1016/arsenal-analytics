@@ -93,7 +93,8 @@ a{color:inherit;text-decoration:none}
 table{width:100%;border-collapse:collapse;font:500 11.5px/1.4 var(--f-mono)}
 th{text-align:left;font:600 9px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;
   color:var(--dim2);padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}
-th:hover{color:var(--dim)}
+th:hover{color:var(--text)}
+th{user-select:none}
 th.sorted{color:var(--amber)}
 td{padding:7.5px 14px;border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:none}
@@ -205,6 +206,17 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
 
 let TEAMS=[],PLAYERS=[],MATCHES=[],LEAD={},SEL=-1,HITS=[];
 let TBL='xg', LD='xg_90';
+/* Column sort cycles: best first -> worst first -> back to the view default. */
+let TSORT={col:null,dir:0}, LSORT={col:null,dir:0};
+function cycleSort(state,col){
+  if(state.col!==col){state.col=col;state.dir=1;}
+  else if(state.dir===1){state.dir=-1;}
+  else {state.col=null;state.dir=0;}
+}
+function arrow(state,col,dflt){
+  if(state.col===col)return state.dir===1?' \u2193':' \u2191';
+  return dflt?' \u2193':'';
+}
 
 async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
   while(true){const u=new URL(SB+'/rest/v1/'+t);
@@ -218,7 +230,7 @@ async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
 async function init(){
   try{
     const r=await Promise.all([
-      sbAll('mv_team_all',{select:'team,matches,goals_pg,goals_against_pg,possession_pct,field_tilt,ppda,shots_pg,passes_per_seq,direct_attack_pct'}),
+      sbAll('mv_team_all',{select:'team,matches,goals_pg,goals_against_pg,possession_pct,field_tilt,ppda,def_height,shots_pg,shots_against_pg,passes_per_seq,direct_attack_pct'}),
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties'}),
       sbAll('mv_player_role',{select:'player_id,pool'}),
       sbAll('matches',{select:'game_id,date,home_team,away_team,home_score,away_score',home_score:'not.is.null',order:'date.desc'}),
@@ -329,40 +341,53 @@ const TBLS=[
 ];
 function renderSegs(){
   document.getElementById('tblSeg').innerHTML=TBLS.map(function(t){
-    return '<button class="'+(TBL===t.k?'on':'')+'" onclick="TBL=\''+t.k+'\';renderSegs();renderTable()">'+t.l+'</button>'}).join('');
+    return '<button class="'+(TBL===t.k?'on':'')+'" onclick="TBL=\''+t.k+'\';TSORT={col:null,dir:0};renderSegs();renderTable()">'+t.l+'</button>'}).join('');
   document.getElementById('ldSeg').innerHTML=LDS.map(function(l){
-    return '<button class="'+(LD===l.k?'on':'')+'" onclick="LD=\''+l.k+'\';renderSegs();loadLeaders()">'+l.l+'</button>'}).join('');
+    return '<button class="'+(LD===l.k?'on':'')+'" onclick="LD=\''+l.k+'\';LSORT={col:null,dir:0};renderSegs();loadLeaders()">'+l.l+'</button>'}).join('');
 }
 function fmtCol(v,c){
   if(v==null)return'\u2014';
   const m=COL[c]||{};
   return (+v).toFixed(m.dp==null?1:m.dp)+(m.suf||'');
 }
+function sortTbl(c){cycleSort(TSORT,c);renderTable()}
 function renderTable(){
   const cfg=TBLS.filter(function(t){return t.k===TBL})[0];
-  const low=(COL[cfg.sort]||{}).low;
-  const rows=TEAMS.slice().filter(function(r){return r[cfg.sort]!=null}).sort(function(a,b){
-    const d=(+b[cfg.sort])-(+a[cfg.sort]); return low?-d:d;});
-  const vals=rows.map(function(r){return Math.abs(+r[cfg.sort])});
+  const active=TSORT.col||cfg.sort;
+  const low=(COL[active]||{}).low;
+  // dir 1 = best first (which for an inverted metric means lowest)
+  const dir=TSORT.col?TSORT.dir:1;
+  const rows=TEAMS.slice().filter(function(r){return r[active]!=null}).sort(function(a,b){
+    let d=(+b[active])-(+a[active]);
+    if(low)d=-d;
+    return dir===1?d:-d;});
+  const vals=rows.map(function(r){return Math.abs(+r[active])});
   const mx=Math.max.apply(null,vals)||1, mn=Math.min.apply(null,vals);
-  let h='<div class="tbl-cap">'+cfg.cap+'</div>'+
+  const cap=TSORT.col
+    ? ('Sorted by '+((COL[TSORT.col]||{}).l||TSORT.col)+', '+
+       (TSORT.dir===1?((COL[TSORT.col]||{}).low?'lowest first':'highest first')
+                     :((COL[TSORT.col]||{}).low?'highest first':'lowest first'))+
+       '. Click the header again to reverse, a third time to reset.')
+    : cfg.cap;
+  let h='<div class="tbl-cap">'+cap+'</div>'+
     '<div style="max-height:372px;overflow:auto"><table><thead><tr>'+
     '<th class="rk">#</th><th>Club</th>'+
     cfg.cols.map(function(c){
       const m=COL[c]||{};
-      return '<th class="num'+(c===cfg.sort?' sorted':'')+'" title="'+esc(m.d||'')+
-             (m.low?' \u00B7 lower is better':'')+'">'+esc(m.l||c)+'</th>';
+      return '<th class="num'+(c===active?' sorted':'')+'" onclick="sortTbl(\''+c+'\')" title="'+esc(m.d||'')+
+             (m.low?' \u00B7 lower is better':'')+' \u00B7 click to sort">'+esc(m.l||c)+
+             arrow(TSORT,c,c===cfg.sort)+'</th>';
     }).join('')+
     '<th style="width:74px" title="Bar length is the ranked column relative to the league range"></th>'+
     '</tr></thead><tbody>';
   rows.forEach(function(r,i){
-    const v=Math.abs(+r[cfg.sort]);
+    const v=Math.abs(+r[active]);
     const frac=mx===mn?1:( low ? (mx-v)/(mx-mn) : (v-mn)/(mx-mn) );
     h+='<tr onclick="location.href=\'teams.html?team='+encodeURIComponent(r.team)+'\'">'+
       '<td class="rk num">'+(i+1)+'</td>'+
       '<td class="nm">'+esc(tname(r.team))+'</td>'+
       cfg.cols.map(function(c){
-        const hot=(c===cfg.sort);
+        const hot=(c===active);
         return '<td class="num"'+(hot?' style="color:var(--amber);font-weight:600"':'')+'>'+
                fmtCol(r[c],c)+'</td>';
       }).join('')+
@@ -379,6 +404,7 @@ const LDS=[
  {k:'key_pass_90',    l:'Key P',   d:'Passes that created a shot, per 90'},
  {k:'padj_def_90',    l:'Defence', d:'Defensive actions per 90, adjusted for how much possession the team concedes'}
 ];
+function sortLd(c){cycleSort(LSORT,c);loadLeaders()}
 async function loadLeaders(){
   document.getElementById('ldBody').innerHTML='<div class="spin"></div>';
   try{
@@ -389,13 +415,29 @@ async function loadLeaders(){
         return{id:r.player_id,name:p.name,team:p.team,pool:r.pool,v:+r.value,pct:+r.pct}})
         .filter(function(r){return r.name}).sort(function(a,b){return b.v-a.v}).slice(0,12);
     }
-    const rows=LEAD[LD];
-    const mx=rows.length?rows[0].v:1;
+    let rows=LEAD[LD].slice();
+    if(LSORT.col){
+      const c=LSORT.col;
+      rows.sort(function(a,b){
+        let av,bv;
+        if(c==='name'){av=(a.name||'').toLowerCase();bv=(b.name||'').toLowerCase()}
+        else if(c==='team'){av=tname(a.team).toLowerCase();bv=tname(b.team).toLowerCase()}
+        else if(c==='pool'){av=a.pool||'';bv=b.pool||''}
+        else {av=a.v;bv=b.v}
+        if(av<bv)return LSORT.dir===1?1:-1;
+        if(av>bv)return LSORT.dir===1?-1:1;
+        return 0;});
+    }
+    const mx=Math.max.apply(null,LEAD[LD].map(function(r){return r.v}))||1;
     const meta=LDS.filter(function(l){return l.k===LD})[0]||{};
     let h='<div class="tbl-cap">'+esc(meta.d||'')+'. Top 12 across the league, any role.</div>'+
       '<div style="max-height:372px;overflow:auto"><table><thead><tr>'+
-      '<th class="rk">#</th><th>Player</th><th title="Role pool the player is ranked in">Role</th>'+
-      '<th class="num sorted">'+esc(meta.l||'')+'</th><th style="width:64px"></th></tr></thead><tbody>';
+      '<th class="rk">#</th>'+
+      '<th onclick="sortLd(\'name\')" title="Click to sort">Player'+arrow(LSORT,'name',false)+'</th>'+
+      '<th onclick="sortLd(\'pool\')" title="Role pool the player is ranked in \u00B7 click to sort">Role'+arrow(LSORT,'pool',false)+'</th>'+
+      '<th class="num'+(!LSORT.col||LSORT.col==='v'?' sorted':'')+'" onclick="sortLd(\'v\')" title="Click to sort">'+
+      esc(meta.l||'')+arrow(LSORT,'v',!LSORT.col)+'</th>'+
+      '<th style="width:64px"></th></tr></thead><tbody>';
     rows.forEach(function(r,i){
       h+='<tr onclick="location.href=\'players.html?player='+encodeURIComponent(r.id)+'\'">'+
         '<td class="rk num">'+(i+1)+'</td>'+
