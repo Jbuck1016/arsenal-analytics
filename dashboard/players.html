@@ -832,14 +832,14 @@ function line(a,c,w,op,dash){
   const shaft='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
     '" stroke-width="'+(W*0.62).toFixed(3)+'" stroke-opacity="'+(o*0.55).toFixed(3)+
     '" stroke-linecap="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
-  const ring='<circle cx="'+x1+'" cy="'+y1+'" r="'+(W*1.45).toFixed(3)+'" fill="none" stroke="'+c+
+  const ring='<circle cx="'+x1+'" cy="'+y1+'" r="'+(W*1.12).toFixed(3)+'" fill="none" stroke="'+c+
     '" stroke-width="'+(W*0.52).toFixed(3)+'" stroke-opacity="'+(o*0.8).toFixed(3)+'"/>';
-  const head='<circle cx="'+x2+'" cy="'+y2+'" r="'+(W*1.5).toFixed(3)+'" fill="'+c+
+  const head='<circle cx="'+x2+'" cy="'+y2+'" r="'+(W*1.15).toFixed(3)+'" fill="'+c+
     '" fill-opacity="'+Math.min(1,o*1.15).toFixed(3)+'"/>';
   return shaft+ring+head;
 }
 function dot(a,c,r,op){
-  return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+(r||0.85)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
+  return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+((r||0.85)*0.68).toFixed(2)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
 }
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
 
@@ -908,7 +908,7 @@ function vizPanel(grp,p){
     let s='',g=0,ot=0,off=0,sx=0;
     sh.forEach(function(a){
       const xg=+(a.xg||0.04);sx+=xg;
-      const r=0.45+Math.sqrt(xg)*1.7;
+      const r=0.26+Math.sqrt(xg)*0.92;
       let c=N,op=0.5;
       if(a.is_goal){c=AC;op=0.95;g++}
       else if(a.type==='SavedShot'){c=G;op=0.6;ot++}
@@ -920,7 +920,7 @@ function vizPanel(grp,p){
         (a.bigchance?' \u00B7 big chance':'');
       s+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+
          '" stroke="'+c+'" stroke-width="0.22" stroke-opacity="0.9"/>'+
-         '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r,1.9)+
+         '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r*2.4,1.6)+
          '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';
     });
     return pitchWrap('Shot map','Open-play shots. Circle size is chance quality (xG); total '+sx.toFixed(1)+' xG from '+sh.length+' shots.',s,

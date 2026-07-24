@@ -159,7 +159,7 @@ async function init(){
     BUILD={};(r[3]||[]).forEach(function(b){BUILD[b.team]=b});
     LANES={};(r[4]||[]).forEach(function(l){if(!LANES[l.team])LANES[l.team]={};LANES[l.team][l.lane]=l});
     document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 '+TEAMS.length+' teams \u00B7 ranked across the league';
-    renderTabs();renderList();
+    renderTabs();renderList();wireTips();
     SEL=teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team;
     pick(SEL);
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
@@ -461,7 +461,7 @@ async function loadZones(team){
    origin carries meaning: progressive passes, box entries and carries. */
 function origin(a,c,w,op){
   const sx=(a.start_x!=null?a.start_x:a.x), sy=(a.start_y!=null?a.start_y:a.y);
-  return '<circle cx="'+PX(sx)+'" cy="'+PY(sy)+'" r="'+(w*1.25).toFixed(2)+'" fill="none" stroke="'+c+
+  return '<circle cx="'+PX(sx)+'" cy="'+PY(sy)+'" r="'+(w*1.0).toFixed(2)+'" fill="none" stroke="'+c+
     '" stroke-width="'+(w*0.5).toFixed(2)+'" stroke-opacity="'+(op*0.85).toFixed(2)+'"/>';
 }
 /* Tapered comet, narrow at the origin and full width where the ball arrives. */
@@ -502,7 +502,7 @@ async function renderMaps(t){
       const ps=ZONES.filter(function(a){return a.into_box&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
       ps.forEach(function(a){const c2=a.ok?AC:R;
         inner+=tline(a,c2,0.3,a.ok?0.62:0.42)+origin(a,c2,0.3,a.ok?0.62:0.42)+
-        '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.5" fill="'+c2+'" fill-opacity="0.9"/>'});
+        '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.38" fill="'+c2+'" fill-opacity="0.92"/>'});
       leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span><span>Rings mark where each pass began</span>';
     }
     else if(m.k==='carries'){
@@ -522,7 +522,7 @@ async function renderMaps(t){
     }
     else if(m.k==='touches'){
       ZONES.filter(function(a){return inZone(a.x,a.y)}).forEach(function(a){
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.42" fill="'+AC+'" fill-opacity="0.16"/>';
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.32" fill="'+AC+'" fill-opacity="0.18"/>';
       });
       leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.filter(function(a){return inZone(a.x,a.y)}).length.toLocaleString()+'</b></span>';
     }
@@ -546,7 +546,7 @@ async function renderMaps(t){
       const ds=ZONES.filter(function(a){return col[a.type]&&inZone(a.x,a.y)});
       const cnt={};
       ds.forEach(function(a){cnt[a.type]=(cnt[a.type]||0)+1;
-        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.55" fill="'+col[a.type]+'" fill-opacity="0.5"/>'});
+        inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.4" fill="'+col[a.type]+'" fill-opacity="0.55"/>'});
       leg=Object.keys(cnt).map(function(k){
         return '<span><i style="background:'+col[k]+'"></i>'+k+' <b>'+cnt[k]+'</b></span>'}).join('');
     }
@@ -558,7 +558,7 @@ async function renderMaps(t){
       sh.forEach(function(a){
         const xg=+(a.xg||0.04);sx+=xg;
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
-        const rr=0.45+Math.sqrt(xg)*1.7;
+        const rr=0.26+Math.sqrt(xg)*0.92;
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+rr+'" fill="'+c+
                '" fill-opacity="'+(a.is_goal?0.95:0.4)+'" stroke="'+c+'" stroke-width="0.18" stroke-opacity="0.8"/>'+
                '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
@@ -571,6 +571,7 @@ async function renderMaps(t){
     }
     main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote()+outcomeNote(),
       inner,leg,mapCtrl());
+    wireTips();
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
