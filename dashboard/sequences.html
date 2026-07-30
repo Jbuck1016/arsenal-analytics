@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequence Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#C39E6D;--accent-dim:rgba(195,158,109,.10);--accent-glow:rgba(195,158,109,.22);
+ --bg:#f5f4f1;--bg2:#fff;--bg3:#fafaf8;--surface:rgba(0,0,0,.025);--surface2:rgba(0,0,0,.05);
+ --border:#e8e5e0;--border2:#d5d2cc;--text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
+ --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.07);--nb:#3f7dd6}
+html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
+ --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
+ --border:#272b35;--border2:#3a3f4b;--text:#f4f6fb;--text2:#b9c3db;--text3:#8b97b4;
+ --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35);--nb:#5aa0ff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+.hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;box-shadow:var(--shadow);z-index:10}
+.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#12141a}
+.hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
+.hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
+.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;text-decoration:none}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.lnk:hover{background:var(--surface2);color:var(--text)}
+.lnk.acc{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
+select.lnk{background:var(--bg3);color:var(--text);appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text3) 50%),linear-gradient(135deg,var(--text3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px!important}
+select.lnk:focus{border-color:var(--accent);outline:none}
+select option{background:var(--bg2);color:var(--text)}
+.main{flex:1;overflow-y:auto;padding:13px 18px}
+.empty{height:100%;display:grid;place-items:center;color:var(--text3);font:500 13px/1 'Inter'}
+.sect{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+.sect-h{font:700 10px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;display:flex;justify-content:space-between;align-items:center}
+.viz-eyebrow{font:700 8.5px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:6px}
+.viz-sub{font:500 10px/1.45 var(--f-body);color:var(--text3);margin:0 0 7px;max-width:88ch}
+.viz-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font:500 10px/1 'Inter';color:var(--text3)}
+.viz-leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.viz-leg b{font-weight:700;color:var(--text2)}
+.foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ctrl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.ctrl .fld{display:flex;flex-direction:column;gap:5px;min-width:190px}
+.kpi-l{font:700 9px/1 var(--f-body);letter-spacing:.13em;text-transform:uppercase;color:var(--text3)}
+.seg{display:flex;gap:3px;background:var(--surface);border-radius:7px;padding:3px}
+.seg button{background:none;border:none;color:var(--text3);font:600 11px/1 Inter;padding:7px 13px;border-radius:5px;cursor:pointer}
+.seg button.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 10px 7px;cursor:pointer;box-shadow:var(--shadow)}
+.scard:hover{border-color:var(--accent-glow);background:var(--surface)}
+.scard.pick{border-left:3px solid var(--accent)}
+.scard-t{font:700 12px/1.15 Inter;color:var(--accent);letter-spacing:-.01em}
+.scard-m{font:500 9.5px/1.35 Inter;color:var(--text3);margin:2px 0 6px}
+.scard-s{display:flex;justify-content:space-between;gap:6px;margin-top:5px;font:500 9.5px/1 Inter;color:var(--text3)}
+.scard-s b{font-family:'JetBrains Mono',monospace;color:var(--text2);font-weight:700}
+.pbox{width:100%;aspect-ratio:111.5 / 74}
+.pill{display:inline-block;font:700 8px/1 Inter;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:var(--accent-dim);color:var(--accent)}
+.pill.nb{background:rgba(90,160,255,.14);color:var(--nb)}
+.back{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:600 10px/1 Inter;padding:6px 11px;border-radius:6px;cursor:pointer}
+.back:hover{color:var(--text);background:var(--surface2)}
+.ov-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ov-stat{flex:1;min-width:96px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.ov-stat .l{font:700 8px/1 Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.ov-stat .v{font:700 16px/1 'JetBrains Mono',monospace;margin-top:5px;font-variant-numeric:tabular-nums}
+.split{display:grid;grid-template-columns:1.35fr .65fr;gap:12px;align-items:start}
+@media(max-width:1000px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-logo">S</div>
+  <div><div class="hdr-title">Sequence Explorer</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
+  <div class="tabs" id="tabs"></div>
+</div>
+<div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
+<script>
+const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+const HD={'apikey':AK,'Authorization':'Bearer '+AK};
+const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Reference','glossary.html']];
+const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
+ 'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
+ 'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
+ 'L.A. Galaxy':'LA Galaxy'};
+function tname(t){return TEAM_DISPLAY[t]||t||''}
+const TYPES=[['ended_shot','Ends in a shot'],['ended_goal','Ends in a goal'],['ended_in_box','Ends in the box'],
+ ['high_build','High build'],['low_build','Low build'],['structured','Structured'],['has_switch','Switch of play'],
+ ['wide_triangles','Wide triangles'],['hold_up','Hold-up'],['very_short','Very short'],['long_ball','Long'],
+ ['ends_opp_half','Ends opp half'],['end_around_box','Around the box'],['finds_central','Finds central'],['finds_wide','Finds wide']];
+
+let TEAMS=[],MATCHES={},MODE='type',TAG='ended_shot',TEAMSEL=null,CANDS=[],PICK=null,NB=[],OVERLAY=null;
+
+async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
+  while(true){const u=new URL(SB+'/rest/v1/'+t);
+    Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
+    const r=await fetch(u,{headers:Object.assign({},HD,{'Range':off+'-'+(off+PG-1),'Range-Unit':'items'})});
+    if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
+    if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
+  return all;}
+async function sbRpc(fn,body){
+  const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:Object.assign({},HD,{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(fn+' '+r.status);return await r.json();
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+
+/* ----- pitch ----- */
+function PX(x){return x*1.05}
+function PY(y){return y*0.68}
+function pitchMarks(){
+  const st='fill="none" stroke="var(--border2)" stroke-width="0.32"';
+  return '<rect x="0" y="0" width="105" height="68" '+st+'/>'+
+    '<line x1="52.5" y1="0" x2="52.5" y2="68" stroke="var(--border2)" stroke-width="0.32"/>'+
+    '<circle cx="52.5" cy="34" r="9.15" '+st+'/>'+
+    '<circle cx="52.5" cy="34" r="0.45" fill="var(--border2)"/>'+
+    '<rect x="0" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+    '<rect x="88.5" y="13.84" width="16.5" height="40.32" '+st+'/>'+
+    '<rect x="0" y="24.84" width="5.5" height="18.32" '+st+'/>'+
+    '<rect x="99.5" y="24.84" width="5.5" height="18.32" '+st+'/>'+
+    '<rect x="-1.3" y="30.34" width="1.3" height="7.32" '+st+'/>'+
+    '<rect x="105" y="30.34" width="1.3" height="7.32" '+st+'/>';
+}
+function arrow(x1,y1,x2,y2,c,w,op){
+  const X1=PX(x1),Y1=PY(y1),X2=PX(x2),Y2=PY(y2);
+  const dx=X2-X1,dy=Y2-Y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  const ux=dx/len,uy=dy/len,ah=Math.min(1.8,len*0.5),nx=-uy,ny=ux;
+  const bx=X2-ux*ah,by=Y2-uy*ah;
+  return '<line x1="'+X1.toFixed(2)+'" y1="'+Y1.toFixed(2)+'" x2="'+X2.toFixed(2)+'" y2="'+Y2.toFixed(2)+
+    '" stroke="'+c+'" stroke-width="'+w+'" stroke-opacity="'+op+'" stroke-linecap="round"/>'+
+    '<path d="M'+X2.toFixed(2)+' '+Y2.toFixed(2)+'L'+(bx+nx*ah*0.55).toFixed(2)+' '+(by+ny*ah*0.55).toFixed(2)+
+    'L'+(bx-nx*ah*0.55).toFixed(2)+' '+(by-ny*ah*0.55).toFixed(2)+'Z" fill="'+c+'" fill-opacity="'+Math.min(1,op+0.2)+'"/>';
+}
+function star(cx,cy,r,c){
+  let p='';for(let k=0;k<10;k++){const ang=-Math.PI/2+k*Math.PI/5,rr=(k%2)?r*0.42:r;
+    p+=(cx+rr*Math.cos(ang)).toFixed(2)+','+(cy+rr*Math.sin(ang)).toFixed(2)+' ';}
+  return '<polygon points="'+p.trim()+'" fill="'+c+'"/>';
+}
+/* draw one sequence trajectory. path = [{x,y,ex,ey,t}] */
+function seqTrace(path,c,shot,w,op){
+  let inner='';const pts=path||[];
+  pts.forEach(function(p){
+    if(p.ex==null||p.ey==null)return;
+    inner+=arrow(p.x,p.y,p.ex,p.ey,c,w,op);
+  });
+  if(pts.length){
+    inner+='<circle cx="'+PX(pts[0].x).toFixed(2)+'" cy="'+PY(pts[0].y).toFixed(2)+
+      '" r="1.35" fill="var(--bg2)" stroke="'+c+'" stroke-width="0.5"/>';
+    const last=pts[pts.length-1];
+    const lx=(last.ex!=null?last.ex:last.x),ly=(last.ey!=null?last.ey:last.y);
+    if(shot)inner+=star(PX(lx),PY(ly),2.1,c);
+  }
+  return inner;
+}
+function pitchSVG(inner,h){
+  return '<div class="pbox"'+(h?' style="aspect-ratio:auto;height:'+h+'"':'')+'>'+
+    '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
+    pitchMarks()+inner+'<line x1="44" y1="70" x2="62" y2="70" stroke="var(--text3)" stroke-width="0.3" stroke-opacity="0.7"/>'+
+    '<path d="M62.6 70L60.8 69.3L60.8 70.7Z" fill="var(--text3)" fill-opacity="0.7"/></svg></div>';
+}
+
+/* ----- labels ----- */
+function matchLabel(gid,team){
+  const m=MATCHES[gid];if(!m)return'';
+  const home=m.home_team===team;
+  const opp=home?m.away_team:m.home_team;
+  return esc(tname(opp))+' ('+(home?'H':'A')+')';
+}
+function tabsHtml(){
+  return NAV.map(function(n){return '<a class="tab'+(n[0]==='Sequences'?' on':'')+'" href="'+n[1]+'">'+n[0]+'</a>'}).join('');
+}
+
+async function init(){
+  try{
+    document.getElementById('tabs').innerHTML=tabsHtml();
+    const r=await Promise.all([
+      sbAll('sequences',{select:'team',is_open_play:'eq.true',limit:'1'}),
+      sbAll('matches',{select:'game_id,home_team,away_team,date'})
+    ]);
+    r[1].forEach(function(m){MATCHES[m.game_id]=m});
+    // team list from the style view (guaranteed to have sequence data)
+    TEAMS=(await sbAll('team_sequence_agg',{select:'team',order:'team.asc'})).map(function(x){return x.team});
+    TEAMSEL=TEAMS[0];
+    document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 pick a sequence, find its nearest matches across the league';
+    loadCandidates();
+  }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
+}
+
+function controls(){
+  let typeSel='<select class="lnk" onchange="TAG=this.value;loadCandidates()">'+
+    TYPES.map(function(t){return '<option value="'+t[0]+'"'+(TAG===t[0]?' selected':'')+'>'+t[1]+'</option>'}).join('')+'</select>';
+  let teamSel='<select class="lnk" onchange="TEAMSEL=this.value;loadCandidates()">'+
+    TEAMS.map(function(t){return '<option value="'+esc(t)+'"'+(TEAMSEL===t?' selected':'')+'>'+esc(tname(t))+'</option>'}).join('')+'</select>';
+  return '<div class="ctrl">'+
+    '<div class="fld" style="min-width:auto"><span class="kpi-l">Browse by</span>'+
+      '<div class="seg"><button class="'+(MODE==='type'?'on':'')+'" onclick="MODE=\'type\';loadCandidates()">Sequence type</button>'+
+      '<button class="'+(MODE==='team'?'on':'')+'" onclick="MODE=\'team\';loadCandidates()">Team</button></div></div>'+
+    (MODE==='type'?'<div class="fld"><span class="kpi-l">Type</span>'+typeSel+'</div>'
+                  :'<div class="fld"><span class="kpi-l">Team</span>'+teamSel+'</div>')+
+    '</div>';
+}
+
+async function loadCandidates(){
+  PICK=null;NB=[];OVERLAY=null;
+  const main=document.getElementById('main');
+  main.innerHTML=controls()+'<div class="sect"><div class="spin"></div></div>';
+  try{
+    let rows;
+    if(MODE==='type'){
+      rows=await sbRpc('top_sequences_by_type',{p_tag:TAG,p_n:12});
+    }else{
+      rows=await sbAll('sequences',{team:'eq.'+TEAMSEL,is_open_play:'eq.true',
+        order:'xt_sum.desc',limit:'12',
+        select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
+    }
+    CANDS=rows;
+    renderBrowse();
+  }catch(e){main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+
+function cardHtml(s,opts){
+  opts=opts||{};
+  const shot=s.ended_shot;
+  const inner=seqTrace(s.path,opts.color||'var(--accent)',shot,0.5,0.85);
+  const dist=(s.dist!=null)?'<span>dist <b>'+(+s.dist).toFixed(2)+'</b></span>':'<span>'+(s.ended_goal?'goal':(shot?'shot':'open play'))+'</span>';
+  return '<div class="scard'+(opts.pick?' pick':'')+'" onclick="'+opts.onclick+'">'+
+    '<div class="scard-t">'+esc(tname(s.team))+'</div>'+
+    '<div class="scard-m">'+matchLabel(s.game_id,s.team)+(s.start_min!=null?' \u00B7 '+s.start_min+"'":'')+'</div>'+
+    pitchSVG(inner)+
+    '<div class="scard-s"><span>xT <b>'+(+s.xt_sum).toFixed(3)+'</b></span><span>'+s.n_pass+' passes</span>'+dist+'</div></div>';
+}
+
+function renderBrowse(){
+  const main=document.getElementById('main');
+  const title=(MODE==='type')?('Top sequences \u2014 '+(TYPES.filter(function(t){return t[0]===TAG})[0]||['',''])[1])
+                             :('Top sequences \u2014 '+tname(TEAMSEL));
+  let h=controls()+'<div class="sect"><div class="sect-h"><span>'+esc(title)+'</span>'+
+    '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">ranked by xT \u00B7 click one to find its nearest matches</span></div>'+
+    '<div class="sgrid">';
+  CANDS.forEach(function(s,i){
+    h+=cardHtml(s,{onclick:'choosePick('+i+')'});
+  });
+  h+='</div></div><div class="foot">Each card is one open-play possession, drawn start (hollow ring) to finish, attacking left to right. '+
+     'A star marks a sequence that ended in a shot. Pick one and the tool finds the most similar sequences elsewhere in the league.</div>';
+  main.innerHTML=h;
+}
+
+async function choosePick(i){
+  PICK=CANDS[i];OVERLAY=null;
+  const main=document.getElementById('main');
+  main.innerHTML=controls()+'<div class="sect"><div class="spin"></div>'+
+    '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Finding similar sequences\u2026</div></div>';
+  try{
+    const hits=await sbRpc('similar_sequences',{p_seq:PICK.seq_uid,p_n:12});
+    const ids=hits.map(function(x){return '"'+x.seq_uid+'"'});
+    const paths=await sbAll('sequences',{seq_uid:'in.('+ids.join(',')+')',
+      select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
+    const pm={};paths.forEach(function(p){pm[p.seq_uid]=p});
+    NB=hits.map(function(h){return Object.assign({},pm[h.seq_uid]||{},{dist:h.dist})})
+           .filter(function(x){return x.path});
+    renderPick();
+  }catch(e){main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+
+function renderPick(){
+  const main=document.getElementById('main');
+  const shot=PICK.ended_shot;
+  const big=pitchSVG(seqTrace(PICK.path,'var(--accent)',shot,0.7,0.95));
+  let h=controls()+
+    '<div class="split"><div class="sect">'+
+      '<div class="sect-h"><span>Picked sequence</span><button class="back" onclick="renderBrowse()">\u2190 back to list</button></div>'+
+      '<span class="pill">'+esc(tname(PICK.team))+'</span> '+
+      '<span style="font:500 10px/1.4 Inter;color:var(--text3)">'+matchLabel(PICK.game_id,PICK.team)+
+        (PICK.start_min!=null?' \u00B7 '+PICK.start_min+"'":'')+'</span>'+
+      big+
+      '<div class="ov-stats">'+
+        ovStat('xT',(+PICK.xt_sum).toFixed(3))+ovStat('Passes',PICK.n_pass)+
+        ovStat('Ends',PICK.ended_goal?'goal':(shot?'shot':'open play'))+
+      '</div></div>'+
+    '<div class="sect"><div class="sect-h"><span>How to read it</span></div>'+
+      '<div class="viz-sub">This is the sequence you picked. The cards on the right are the '+NB.length+
+      ' most similar open-play sequences anywhere else in the league, by trajectory shape, length, zones and threat. '+
+      'Lower distance is a closer match. Click any of them to overlay the two on one pitch.</div>'+
+      '<div class="viz-leg"><span><i style="background:var(--accent)"></i><b>Picked</b></span>'+
+      '<span><i style="background:var(--nb)"></i><b>Comparison</b></span>'+
+      '<span>\u2605 ended in a shot</span></div></div></div>';
+  h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span>'+
+     '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">across other matches &amp; teams</span></div><div class="sgrid">';
+  NB.forEach(function(s,i){h+=cardHtml(s,{color:'var(--nb)',onclick:'openOverlay('+i+')'})});
+  h+='</div></div>';
+  main.innerHTML=h;
+}
+function ovStat(l,v){return '<div class="ov-stat"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>'}
+
+function openOverlay(i){
+  OVERLAY=NB[i];
+  const main=document.getElementById('main');
+  const inner=seqTrace(PICK.path,'var(--accent)',PICK.ended_shot,0.7,0.9)+
+              seqTrace(OVERLAY.path,'var(--nb)',OVERLAY.ended_shot,0.7,0.9);
+  let h=controls()+
+    '<div class="sect"><div class="sect-h"><span>Overlay</span>'+
+      '<button class="back" onclick="renderPick()">\u2190 back to matches</button></div>'+
+    '<div class="viz-eyebrow">Two sequences, one pitch</div>'+
+    '<div class="viz-title">'+esc(tname(PICK.team))+' vs '+esc(tname(OVERLAY.team))+' \u00B7 dist '+(+OVERLAY.dist).toFixed(2)+'</div>'+
+    '<div class="viz-sub">The picked sequence in amber, its nearest match in blue, both drawn start to finish attacking left to right.</div>'+
+    pitchSVG(inner,'min(60vh,520px)')+
+    '<div class="viz-leg">'+
+      '<span><i style="background:var(--accent)"></i><b>'+esc(tname(PICK.team))+'</b> \u00B7 '+matchLabel(PICK.game_id,PICK.team)+(PICK.start_min!=null?' '+PICK.start_min+"'":'')+'</span>'+
+      '<span><i style="background:var(--nb)"></i><b>'+esc(tname(OVERLAY.team))+'</b> \u00B7 '+matchLabel(OVERLAY.game_id,OVERLAY.team)+(OVERLAY.start_min!=null?' '+OVERLAY.start_min+"'":'')+'</span>'+
+    '</div>'+
+    '<div class="ov-stats">'+
+      ovStat('xT \u2014 picked',(+PICK.xt_sum).toFixed(3))+ovStat('xT \u2014 match',(+OVERLAY.xt_sum).toFixed(3))+
+      ovStat('Passes',PICK.n_pass+' / '+OVERLAY.n_pass)+ovStat('Distance',(+OVERLAY.dist).toFixed(2))+
+    '</div></div>'+
+    '<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span></div><div class="sgrid">';
+  NB.forEach(function(s,i){h+=cardHtml(s,{color:'var(--nb)',pick:(s.seq_uid===OVERLAY.seq_uid),onclick:'openOverlay('+i+')'})});
+  h+='</div></div>';
+  main.innerHTML=h;
+  window.scrollTo(0,0);
+}
+
+init();
+</script>
+</body>
+</html>
