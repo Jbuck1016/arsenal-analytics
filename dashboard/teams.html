@@ -123,7 +123,7 @@ tr:hover td{background:var(--surface)}
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const TABS=['Profile','Maps','Rankings','League Map','Matches','Squad'];
+const TABS=['Profile','Sequences','Maps','Rankings','League Map','Matches','Squad'];
 const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html'],['Reference','glossary.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let LM={x:'ppda',y:'field_tilt'};
@@ -198,6 +198,7 @@ async function draw(){
   const t=teamOf(SEL);if(!t)return;
   if(TAB==='Rankings')return renderRankings();
   if(TAB==='Profile')return renderProfile(t);
+  if(TAB==='Sequences')return renderSequences(t);
   main.innerHTML='<div class="spin"></div>';
   if(TAB==='Maps')return renderMaps(t);
   if(TAB==='Matches')return renderMatches(t);
@@ -715,6 +716,95 @@ function renderRankings(){
     '<div class="foot" style="margin-top:8px">Sorted best to worst, so inverted metrics like PPDA and goals conceded put the strongest team on top. '+
     (d.definition?esc(d.definition):'')+'</div></div>'+
     '<div class="split2"><div class="sect">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
+}
+
+/* ---------- SEQUENCES ---------- */
+const SEQ_AXES=[
+  ['seqs_per_match','Seqs / match',0],['passes_seq','Passes / seq',1],['seconds_seq','Seconds / seq',1],
+  ['players_seq','Players / seq',1],['very_short_pct','Very short %',0],['long_pct','Long %',0],
+  ['structured_pct','Structured %',0],['xt_seq','xT / seq',3],['ends_in_shot_pct','Ends in shot %',0],
+  ['low_build_pct','Low build %',0],['high_build_pct','High build %',0],['ends_def_third_pct','Ends def 3rd %',0],
+  ['end_att_third_pct','End att 3rd %',0],['end_in_box_pct','End in box %',0],['end_around_box_pct','Around box %',0],
+  ['finds_wide_pct','Finds wide %',0],['finds_central_pct','Finds central %',0],['wide_pass_pct','Wide pass %',0],
+  ['wide_tri_pct','Wide triangles %',0],['switches_pct','Switches %',0],['central_prog_share','Central prog %',0],
+  ['hold_up_pct','Hold up %',0],['ends_opp_half_pct','Ends opp half %',0]
+];
+const SEQ_CARDS=[
+  ['seqs_per_match','Seqs / match',0,''],['passes_seq','Passes / seq',1,''],['seconds_seq','Seconds / seq',1,''],
+  ['players_seq','Players / seq',1,''],['xt_seq','xT / seq',3,''],['ends_in_shot_pct','Ends in shot',0,'%'],
+  ['high_build_pct','High build',0,'%'],['low_build_pct','Low build',0,'%'],['structured_pct','Structured',0,'%'],
+  ['ends_opp_half_pct','Ends opp half',0,'%'],['end_att_third_pct','End att third',0,'%'],['end_in_box_pct','End in box',0,'%'],
+  ['very_short_pct','Very short',0,'%'],['long_pct','Long',0,'%'],['switches_pct','Switches',0,'%'],
+  ['wide_tri_pct','Wide triangles',0,'%'],['hold_up_pct','Hold up',0,'%'],['central_prog_share','Central prog',0,'%'],
+  ['finds_central_pct','Finds central',0,'%'],['finds_wide_pct','Finds wide',0,'%'],['wide_pass_pct','Wide passes',0,'%'],
+  ['end_around_box_pct','Around box',0,'%']
+];
+async function renderSequences(t){
+  const main=document.getElementById('main');
+  main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
+    '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Loading sequence style\u2026</div></div>';
+  try{
+    const r=await Promise.all([
+      sbAll('team_sequence_agg',{team:'eq.'+t.team,select:'*'}),
+      sbAll('team_sequence_style',{team:'eq.'+t.team,select:'metric,raw,z'})
+    ]);
+    const a=(r[0]||[])[0];
+    if(!a){main.innerHTML=teamHead(t)+'<div class="empty">No sequence data for this team yet.</div>';return}
+    const Z={},RAW={};(r[1]||[]).forEach(function(x){Z[x.metric]=x.z==null?0:+x.z;RAW[x.metric]=+x.raw});
+    let cards='<div class="sect"><div class="sect-h"><span>Sequence output</span>'+
+      '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">'+
+      a.matches+' matches \u00B7 open play</span></div><div class="kpis" style="margin-bottom:0">';
+    SEQ_CARDS.forEach(function(c){
+      const v=a[c[0]];if(v==null)return;
+      const val=(+v).toFixed(c[2])+(c[3]==='%'?'%':'');
+      cards+='<div class="kpi" style="min-width:104px"><div class="kpi-l">'+esc(c[1])+
+        '</div><div class="kpi-v" style="font-size:19px">'+val+'</div></div>';
+    });
+    cards+='</div></div>';
+    const radar=seqRadar(t,Z,RAW);
+    main.innerHTML=teamHead(t)+cards+radar+
+      '<div class="foot">Sequence style is z-scored against the 30 MLS teams this season, so the dashed ring is the league mean and every ring out is one standard deviation. '+
+      'A 30-team pool is small, so read the extreme spokes as signal and the near-mean ones lightly. '+
+      'Hold-up and central-prog use deliberately strict definitions \u2014 see the glossary. '+
+      'Open play only; a possession is a run of controlled touches by one team, ended by a turnover, stoppage or set piece.</div>';
+    wireTips();
+  }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
+function seqRadar(t,Z,RAW){
+  const N=SEQ_AXES.length, cx=360, cy=330, R=205, zmin=-2.5, zmax=2.5;
+  function rad(z){const zc=Math.max(zmin,Math.min(zmax,z));return (zc-zmin)/(zmax-zmin)*R}
+  function pt(i,rr){const ang=(-90+i*360/N)*Math.PI/180;return[cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)]}
+  let s='<svg viewBox="0 0 720 660" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 300px);display:block">';
+  [-2,-1,0,1,2].forEach(function(z){
+    const rr=rad(z),dash=(z===0);
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr.toFixed(1)+'" fill="none" stroke="'+(dash?'var(--accent)':'var(--border)')+
+       '" stroke-opacity="'+(dash?0.75:0.5)+'"'+(dash?' stroke-dasharray="5 4"':'')+' stroke-width="'+(dash?1:0.8)+'"/>';
+    s+='<text x="'+cx+'" y="'+(cy-rr-2).toFixed(1)+'" fill="var(--text3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">'+(z>0?'+':'')+z+'\u03c3</text>';
+  });
+  for(let i=0;i<N;i++){const p=pt(i,R);
+    s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="var(--border)" stroke-opacity="0.4" stroke-width="0.6"/>';
+  }
+  let poly='';
+  for(let i=0;i<N;i++){const z=Z[SEQ_AXES[i][0]]==null?0:Z[SEQ_AXES[i][0]];const p=pt(i,rad(z));poly+=p[0].toFixed(1)+','+p[1].toFixed(1)+' '}
+  s+='<polygon points="'+poly.trim()+'" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+  for(let i=0;i<N;i++){const z=Z[SEQ_AXES[i][0]]==null?0:Z[SEQ_AXES[i][0]];const p=pt(i,rad(z));
+    s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.4" fill="var(--accent)"/>';}
+  for(let i=0;i<N;i++){
+    const ax=SEQ_AXES[i],lp=pt(i,R+15);
+    const ca=Math.cos((-90+i*360/N)*Math.PI/180);
+    const anchor=ca>0.2?'start':(ca<-0.2?'end':'middle');
+    const raw=RAW[ax[0]];
+    const pct=(ax[0].indexOf('_pct')>=0||ax[0]==='central_prog_share');
+    const rawtxt=raw==null?'':((+raw).toFixed(ax[2])+(pct?'%':''));
+    s+='<text x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+'" fill="var(--text2)" font-size="10" font-weight="600" text-anchor="'+anchor+'" font-family="Inter">'+esc(ax[1])+'</text>';
+    s+='<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+11).toFixed(1)+'" fill="var(--accent)" font-size="10.5" font-weight="700" text-anchor="'+anchor+'" font-family="JetBrains Mono,monospace">'+rawtxt+'</text>';
+  }
+  s+='</svg>';
+  return '<div class="sect" style="margin-top:12px"><div class="viz-eyebrow">Season style</div>'+
+    '<div class="viz-title">'+esc(tname(t.team))+' \u2014 sequence style</div>'+
+    '<div class="viz-sub">Every spoke is a z-score versus the 30-team pool (dashed ring = league mean, rings every 1\u03c3). '+
+    'The figure at each spoke is '+esc(tname(t.team))+'\u2019s raw value.</div>'+
+    s+'</div>';
 }
 
 function wireTips(){
