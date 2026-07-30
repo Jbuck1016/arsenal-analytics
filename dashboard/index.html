@@ -230,7 +230,7 @@ async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
 async function init(){
   try{
     const r=await Promise.all([
-      sbAll('mv_team_all',{select:'team,matches,goals_pg,goals_against_pg,possession_pct,field_tilt,ppda,def_height,shots_pg,shots_against_pg,passes_per_seq,direct_attack_pct'}),
+      sbAll('mv_team_all',{select:'team,matches,goals_pg,goals_against_pg,possession_pct,field_tilt,ppda,def_height,shots_pg,shots_against_pg,passes_per_seq'}),
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties'}),
       sbAll('mv_player_role',{select:'player_id,pool'}),
       sbAll('matches',{select:'game_id,date,home_team,away_team,home_score,away_score',home_score:'not.is.null',order:'date.desc'}),
@@ -334,7 +334,7 @@ const TBLS=[
    cap:'Ranked by goals per game. Shots and territorial tilt alongside.'},
   {k:'ctrl', l:'Control', sort:'field_tilt',       cols:['field_tilt','possession_pct','passes_per_seq'],
    cap:'Ranked by field tilt \u2014 where play actually happens, which separates real control from sterile possession.'},
-  {k:'press',l:'Press',   sort:'ppda',             cols:['ppda','def_height','direct_attack_pct'],
+  {k:'press',l:'Press',   sort:'ppda',             cols:['ppda','def_height'],
    cap:'Ranked by PPDA, lowest first: fewest opponent passes allowed per defensive action means the most aggressive press.'},
   {k:'def',  l:'Defence', sort:'goals_against_pg', cols:['goals_against_pg','shots_against_pg','ppda'],
    cap:'Ranked by goals conceded per game, fewest first.'}
