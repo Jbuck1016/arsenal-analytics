@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MLS 2026 · Analytics</title>
@@ -11,6 +12,14 @@
   --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
   --f-disp:'Archivo','Inter',system-ui,sans-serif;
   --f-body:'Inter',system-ui,sans-serif;
+  /* light — warm paper terminal */
+  --bg:#f4f2ec;--panel:#fbfaf6;--panel2:#efece4;
+  --line:#e4e0d6;--line2:#d3ccbf;
+  --text:#191c22;--dim:#5a6270;--dim2:#8b93a0;
+  --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
+  --green:#12855a;--red:#cc4038;--blue:#2f6fd0;
+}
+html.dark{
   --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
   --line:#1c222c;--line2:#2b333f;
   --text:#e8eef6;--dim:#8794a6;--dim2:#5b6675;
@@ -123,6 +132,7 @@ tbody tr:hover td{background:var(--panel2)}
     <div class="sys-top">
       <span class="sys-mark">▐</span>
       <span class="sys-title">MLS 2026 — Analytics</span>
+      <button id="themeBtn" onclick="toggleTheme(this)" title="Toggle light / dark" style="margin-left:auto;align-self:center;background:none;border:1px solid var(--line2);color:var(--dim);font:600 13px/1 var(--f-mono);width:30px;height:24px;border-radius:5px;cursor:pointer">&#9728;</button>
     </div>
     <div class="sys-line" id="sysLine">
       <span class="dotlive"></span> connecting<span class="blink">_</span>
@@ -452,6 +462,10 @@ async function loadLeaders(){
 }
 
 init();
+</script>
+<script>
+function toggleTheme(b){var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}b.innerHTML=d?'&#9728;':'&#9789;';}
+(function(){var b=document.getElementById('themeBtn');if(b)b.innerHTML=document.documentElement.classList.contains('dark')?'&#9728;':'&#9789;';})();
 </script>
 </body>
 </html>

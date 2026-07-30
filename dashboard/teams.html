@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Team Profiles</title>
@@ -111,7 +112,7 @@ tr:hover td{background:var(--surface)}
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
     <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
-    <button class="lnk" onclick="document.documentElement.classList.toggle('dark')">Theme</button>
+    <button class="lnk" onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}">Theme</button>
   </div>
 </div>
 <div class="wrap">
