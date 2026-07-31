@@ -32,6 +32,25 @@ DEFAULT_LEAGUE = "ENG-Premier League"
 DEFAULT_SEASON = "2526"
 SLEEP_BETWEEN_MATCHES = 8
 
+# --- safety guard: only the 30 MLS teams may load into this (MLS) database. ---
+# team_names.match_name holds the schedule-form names of the 30 MLS clubs.
+# This stops a misconfigured/bare run (which defaults to Arsenal) from polluting
+# the MLS tables. If you ever revive the Arsenal project, point it at a
+# separate Supabase — this database is MLS-only.
+_MLS_NAMES: set[str] | None = None
+
+
+def _mls_schedule_names(sb: Client) -> set[str]:
+    global _MLS_NAMES
+    if _MLS_NAMES is None:
+        try:
+            resp = sb.table("team_names").select("match_name").execute()
+            _MLS_NAMES = {r["match_name"] for r in (resp.data or []) if r.get("match_name")}
+        except Exception as e:
+            print(f"  ~~ guard: could not load MLS whitelist ({e}); guard disabled this run")
+            _MLS_NAMES = set()
+    return _MLS_NAMES
+
 
 def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -269,6 +288,13 @@ def upsert_events(sb: Client, game_data: dict, game_id: str) -> int:
 def process_match(
     sb: Client, ws: sd.WhoScored, sched_row: pd.Series, league: str, season: str
 ) -> tuple[str, int]:
+    game_id = str(sched_row.get("game_id"))
+    home = _str_or_none(sched_row.get("home_team"))
+    away = _str_or_none(sched_row.get("away_team"))
+    wl = _mls_schedule_names(sb)
+    if wl and (home not in wl or away not in wl):
+        print(f"  ~~ SKIP non-MLS match ({home} vs {away}) — guard: this DB is MLS-only")
+        return game_id, 0
     game_id = upsert_match(sb, sched_row, league, season)
     print(f"  -> match row upserted (game_id={game_id})")
     game_data = ensure_event_json(ws, game_id, league, season)
