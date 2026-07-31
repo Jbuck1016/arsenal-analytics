@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Player Fingerprints</title>
@@ -223,7 +224,7 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const MIN90=6;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
-const TABS=['Player','Rank','Scatter','Scout','Compare'];
+const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
 const NAV=[['Home','index.html'],['Match','match.html'],['Teams','teams.html'],['Reference','glossary.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
@@ -266,6 +267,66 @@ async function sbAll(tbl,p){
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+async function sbRpc(fn,body){
+  const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({},HD,{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(fn+' '+r.status);return await r.json();
+}
+const CHAIN_ROLES=[['initiator','Initiator'],['controller','Controller'],['bridge','Bridge'],['progressor','Progressor'],
+  ['carrier','Carrier'],['vertical','Vertical'],['support_angle','Support angle'],['individual','Individual'],
+  ['creator','Creator'],['box_threat','Box threat'],['finisher','Finisher']];
+function tempoLabel(h){if(h==null)return '\u2014';if(h>=3.3)return 'Holds';if(h<=2.5)return 'Quick release';return 'Balanced';}
+async function renderChainRoles(pid){
+  const p=playerOf(pid),main=document.getElementById('main');main.innerHTML='<div class="spin"></div>';
+  try{
+    const res=await Promise.all([
+      sbAll('player_chain_pct',{player_id:'eq.'+pid,select:'role,raw,pct'}),
+      sbAll('player_chain_roles',{player_id:'eq.'+pid,select:'*'}),
+      sbRpc('similar_players_chain',{p_id:pid,p_n:13})
+    ]);
+    const pm={};res[0].forEach(function(r){pm[r.role]=r});
+    const cr=res[1][0];
+    if(!cr){main.innerHTML='<div class="empty">No chain-role profile for '+esc(p?p.player_name:'this player')+' \u2014 outfield players with 120+ possession involvements only.</div>';return}
+    const sims=res[2]||[];
+    let h='<div class="pcard"><div class="pcard-l">'+
+      '<div class="pname">'+esc(p?p.player_name:cr.player)+'</div>'+
+      '<div class="pmeta">'+esc(tname(cr.team))+' \u00B7 '+esc(cr.pos)+' \u00B7 '+cr.inv+' involvements \u00B7 xT '+(+cr.player_xt).toFixed(2)+' \u00B7 '+tempoLabel(cr.hold_secs)+'</div>'+
+      '<div class="chips"><span class="chip acc">Chain roles</span><span class="chip">Hold '+(+cr.hold_secs).toFixed(2)+'s</span></div></div>'+
+      '<div class="pcard-r"><div class="pool-lbl">Ranked against</div><div class="pool-val">'+esc(cr.pos)+'</div>'+
+      '<div class="pool-sub">MLS 2026 \u00B7 by position</div></div></div>';
+    h+='<div class="sect"><div class="sect-h"><span>Chain roles \u2014 percentile vs position</span></div>';
+    CHAIN_ROLES.forEach(function(rr){
+      const r=pm[rr[0]],pct=r?+r.pct:null,t=tier(pct);
+      const rawtxt=r?(rr[0]==='controller'?(+r.raw).toFixed(2)+'s':(+r.raw).toFixed(0)+'%'):'\u2014';
+      h+='<div class="row"><div class="row-lbl" style="cursor:default;border-bottom:none">'+rr[1]+'</div>'+
+         '<div class="row-val">'+rawtxt+'</div>'+
+         '<div class="bar"><div class="bar-f" style="width:'+(pct==null?0:pct)+'%;background:'+t.c+'"></div></div>'+
+         '<div class="row-pct" style="color:'+t.c+'">'+(pct==null?'':pct)+'</div></div>';
+    });
+    h+='</div>';
+    h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Most similar players</span>'+
+       '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">cosine on z-scored role profile, same position</span></div>'+
+       '<div style="overflow:auto"><table><thead><tr>'+
+       '<th style="cursor:default">Player</th><th style="cursor:default">Pos</th><th style="cursor:default">Team</th>'+
+       '<th class="num" style="cursor:default">Sim</th><th class="num" style="cursor:default">Inv</th><th class="num" style="cursor:default">xT</th>'+
+       '<th style="cursor:default">Tempo</th><th class="num" style="cursor:default">Init</th><th class="num" style="cursor:default">Ctrl</th>'+
+       '<th class="num" style="cursor:default">Bridge</th><th class="num" style="cursor:default">Prog</th><th class="num" style="cursor:default">Carry</th>'+
+       '<th class="num" style="cursor:default">Vert</th><th class="num" style="cursor:default">Supp</th></tr></thead><tbody>';
+    sims.forEach(function(s){
+      h+='<tr><td style="font-weight:700">'+esc(s.player)+'</td><td style="color:var(--text2)">'+esc(s.pos)+'</td>'+
+        '<td style="color:var(--text2)">'+esc(tname(s.team))+'</td>'+
+        '<td class="num" style="font-weight:700;color:var(--accent)">'+(+s.sim_pct).toFixed(1)+'%</td>'+
+        '<td class="num">'+s.inv+'</td><td class="num">'+(+s.player_xt).toFixed(1)+'</td>'+
+        '<td style="color:var(--text2)">'+tempoLabel(s.hold_secs)+'</td>'+
+        '<td class="num">'+(+s.initiator).toFixed(0)+'</td><td class="num">'+(+s.hold_secs).toFixed(1)+'</td>'+
+        '<td class="num">'+(+s.bridge).toFixed(0)+'</td><td class="num">'+(+s.progressor).toFixed(0)+'</td>'+
+        '<td class="num">'+(+s.carrier).toFixed(0)+'</td><td class="num">'+(+s.vertical).toFixed(0)+'</td>'+
+        '<td class="num">'+(+s.support_angle).toFixed(0)+'</td></tr>';
+    });
+    h+='</tbody></table></div><div class="foot">Cosine similarity on the z-scored eleven-role profile, within position. '+
+       'Ctrl is average hold seconds; the other role columns are share of involvements. Pool is 30 MLS teams, so extreme roles are the signal.</div></div>';
+    main.innerHTML=h;
+  }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
+}
 function tier(p){
   if(p==null)return{c:'var(--text3)'};
   if(p>=80)return{c:'var(--elite)'};if(p>=60)return{c:'var(--above)'};
@@ -317,8 +378,9 @@ function renderTabs(){
 }
 function setTab(t){
   TAB=t;renderTabs();
-  document.getElementById('side').classList.toggle('hide',t!=='Player');
+  document.getElementById('side').classList.toggle('hide',t!=='Player'&&t!=='Chain roles');
   if(t==='Player'){ if(SEL){pick(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
+  else if(t==='Chain roles'){ if(SEL){renderChainRoles(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
   else if(t==='Rank')renderRank();
   else if(t==='Scatter')renderScatter();
   else if(t==='Scout')renderScout();
@@ -374,6 +436,7 @@ function renderList(){
 }
 let PACT=null,PCAR=null,PREC=null;
 async function pick(pid){
+  if(TAB==='Chain roles'){SEL=pid;renderTabs();document.getElementById('side').classList.remove('hide');renderList();return renderChainRoles(pid);}
   SEL=pid;TAB='Player';renderTabs();
   document.getElementById('side').classList.remove('hide');
   renderList();
@@ -1322,7 +1385,7 @@ function drill(key){
   document.getElementById('drillWrap').style.display='flex';
 }
 
-function toggleDark(){document.documentElement.classList.toggle('dark')}
+function toggleDark(){var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}}
 init();
 </script>
 </body>
