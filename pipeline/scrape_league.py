@@ -174,6 +174,24 @@ def main() -> int:
     print(f"  remaining: {n - succeeded - failed}", flush=True)
     if n - succeeded - failed > 0:
         print("  (re-run the same command to resume — it only scrapes what's still missing)", flush=True)
+    # --- auto-rebuild: new games make every analytics layer stale ---
+    if succeeded > 0:
+        print("\n=== Rebuild ===", flush=True)
+        steps = ["preflight", "metrics", "sequences", "players", "seqfz", "verify"]
+        try:
+            for step in steps:
+                resp = sb.rpc("rebuild_step", {"p_step": step}).execute()
+                print(f"  {step:<10} -> {resp.data}", flush=True)
+            print("  site is live with the new games.", flush=True)
+        except Exception as e:  # noqa: BLE001 - surface it, keep the loaded data
+            print(f"\n  !! rebuild failed: {e}", file=sys.stderr, flush=True)
+            print("  data loaded fine, but the analytics layers did NOT rebuild.",
+                  file=sys.stderr, flush=True)
+            print("  re-run once fixed: python pipeline\\scrape_league.py", file=sys.stderr, flush=True)
+            return 1
+    else:
+        print("\n  no new games -- analytics already current, skipping rebuild.", flush=True)
+
     return 0
 
 
