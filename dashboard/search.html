@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Search · MLS 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
+<style>
+:root{
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-body:'Inter',system-ui,sans-serif;
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#6a6960;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark{
+  --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
+  --line:#1c222c;--line2:#2b333f;
+  --text:#e8eef6;--dim:#8794a6;--dim2:#5b6675;
+  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
+  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+
+.sys{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px 15px;margin-bottom:14px}
+.sys-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.sys-title{font:700 13px/1 var(--f-mono)}
+.sys-title b{color:var(--amber)}
+.spacer{flex:1}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{font:600 9.5px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);
+  border-radius:3px;padding:6px 9px;text-transform:uppercase;letter-spacing:.06em}
+.nav a:hover{color:var(--amber);border-color:var(--amber-line)}
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px}
+.tbtn:hover{color:var(--amber)}
+.sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:7px}
+.sys-line b{color:var(--text)}
+
+.layout{display:grid;grid-template-columns:270px 1fr;gap:14px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+.side{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:13px 14px;
+  position:sticky;top:12px}
+@media(max-width:900px){.side{position:static}}
+.fg{margin-bottom:15px}
+.fg:last-child{margin-bottom:0}
+.fl{font:700 9px/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.fl .hint{color:var(--dim2);letter-spacing:.02em;font-weight:500;text-transform:none;font-size:9.5px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font:600 10px/1 var(--f-mono);color:var(--dim);background:var(--panel2);
+  border:1px solid var(--line2);border-radius:3px;padding:6px 9px;cursor:pointer;user-select:none}
+.chip:hover{border-color:var(--amber-line);color:var(--text)}
+.chip.on{background:var(--amber-dim);color:var(--amber);border-color:var(--amber-line)}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.row:last-child{margin-bottom:0}
+input[type=range]{flex:1;accent-color:var(--amber);height:3px;cursor:pointer}
+.val{font:600 10.5px/1 var(--f-mono);color:var(--text);min-width:46px;text-align:right}
+select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line2);
+  border-radius:3px;padding:7px 8px;font:500 11px/1.2 var(--f-mono);cursor:pointer}
+select:focus{outline:none;border-color:var(--amber-line)}
+.trait-row{display:grid;grid-template-columns:1fr 74px;gap:6px;margin-bottom:6px;align-items:center}
+.trait-row .mini{display:flex;align-items:center;gap:5px}
+.trait-row input[type=range]{height:3px}
+.tval{font:600 9.5px/1 var(--f-mono);color:var(--amber);min-width:28px;text-align:right}
+.btn{width:100%;background:var(--panel2);color:var(--dim);border:1px solid var(--line2);
+  border-radius:3px;padding:8px;font:600 10px/1 var(--f-mono);letter-spacing:.06em;
+  text-transform:uppercase;cursor:pointer;margin-top:9px}
+.btn:hover{color:var(--amber);border-color:var(--amber-line)}
+.presets{display:flex;flex-direction:column;gap:4px}
+.preset{text-align:left;background:transparent;border:1px solid var(--line2);border-radius:3px;
+  color:var(--dim);padding:7px 9px;font:500 10.5px/1.3 var(--f-body);cursor:pointer}
+.preset:hover{color:var(--amber);border-color:var(--amber-line);background:var(--amber-dim)}
+
+.main{border:1px solid var(--line);background:var(--panel);border-radius:3px;overflow:hidden}
+.mh{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.mh-t{font:700 10px/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+.mh-n{font:600 10px/1 var(--f-mono);color:var(--dim)}
+.mh-n b{color:var(--text)}
+.sortsel{width:auto;min-width:190px;margin-left:auto}
+table{width:100%;border-collapse:collapse}
+th{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);
+  text-align:right;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel2)}
+th.l,td.l{text-align:left}
+td{font:500 11.5px/1.35 var(--f-mono);padding:9px 8px;border-bottom:1px solid var(--line);
+  text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel2)}
+.rk{color:var(--dim2);font-size:10px}
+.pn{font-family:var(--f-body);font-weight:600;font-size:12.5px}
+.tm{color:var(--dim);font-size:10px}
+.metric{color:var(--amber);font-weight:700}
+.pbar{display:inline-block;width:52px;height:4px;background:var(--line2);border-radius:2px;
+  overflow:hidden;vertical-align:middle;margin-left:6px}
+.pbar i{display:block;height:100%;background:var(--amber)}
+.empty{padding:34px 16px;text-align:center;font:500 11px/1.6 var(--f-mono);color:var(--dim2)}
+.foot{margin-top:14px;font:500 10px/1.7 var(--f-mono);color:var(--dim2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sys">
+    <div class="sys-top">
+      <span class="dot"></span>
+      <span class="sys-title">MLS 2026 — <b>Player search</b></span>
+      <span class="spacer"></span>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="insights.html">Insights</a>
+        <a href="players.html">Players</a>
+        <a href="teams.html">Teams</a>
+        <a href="sequences.html">Sequences</a>
+      </nav>
+      <div class="tbtn" id="themeBtn">☾</div>
+    </div>
+    <div class="sys-line" id="sysLine">loading index…</div>
+  </div>
+
+  <div class="layout">
+    <div class="side">
+      <div class="fg">
+        <div class="fl">Shortcuts</div>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">Position</div>
+        <div class="chips" id="poolChips"></div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">Side</div>
+        <div class="chips" id="sideChips"></div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">Age <span class="hint">max</span></div>
+        <div class="row">
+          <input type="range" id="ageMax" min="16" max="40" value="40">
+          <span class="val" id="ageMaxV">any</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">Minutes <span class="hint">min 90s</span></div>
+        <div class="row">
+          <input type="range" id="minN" min="0" max="25" value="6">
+          <span class="val" id="minNV">6</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">Traits <span class="hint">min pct in pool</span></div>
+        <div id="traits"></div>
+      </div>
+
+      <button class="btn" id="reset">Reset filters</button>
+      <button class="btn" id="copy">Copy shortlist</button>
+    </div>
+
+    <div class="main">
+      <div class="mh">
+        <span class="mh-t">Shortlist</span>
+        <span class="mh-n" id="count">—</span>
+        <select class="sortsel" id="sortSel"></select>
+      </div>
+      <div id="results"><div class="empty">loading…</div></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+const HD={'apikey':AK,'Authorization':'Bearer '+AK};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+
+async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
+  while(true){const u=new URL(SB+'/rest/v1/'+t);
+    Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
+    const r=await fetch(u,{headers:Object.assign({},HD,{'Range':off+'-'+(off+PG-1),'Range-Unit':'items'})});
+    if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
+    if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
+  return all;}
+
+/* traits = the 11 chain roles; filtering is on within-pool percentile */
+const TRAITS=[
+  ['progressor','Ball progression'],['creator','Chance creation'],['carrier','Ball carrying'],
+  ['box_threat','Box threat'],['finisher','Finishing'],['individual','1v1 dribbling'],
+  ['initiator','Build-up initiation'],['bridge','Third-man bridging'],['vertical','Vertical passing'],
+  ['support_angle','Diagonal support'],['hold_secs','Tempo (holds ball)']
+];
+
+/* sortable metrics, grouped */
+const SORTS=[
+  ['Threat',[['xt_90','xT per 90'],['xt_carry_90','xT from carries'],['xt_pass_90','xT from passes'],['player_xt','Total chain xT']]],
+  ['Carrying',[['prog_carries_90','Progressive carries'],['carry_box_90','Carries into box'],['carries_90','Carries'],['takeon_90','Take-ons'],['mean_carry_m','Avg carry distance']]],
+  ['Creation',[['xa_90','xA per 90'],['key_pass_90','Key passes'],['sca_90','Shot-creating actions'],['bcc_90','Big chances created'],['assist_90','Assists']]],
+  ['Progression',[['prog_cmp_90','Progressive passes'],['into_box_90','Passes into box'],['final_third_90','Final-third passes'],['through_90','Through balls'],['cross_90','Crosses']]],
+  ['Shooting',[['xg_90','xG per 90'],['goals_90','Goals'],['shots_90','Shots'],['xg_per_shot','xG per shot'],['finishing','Finishing over xG']]],
+  ['Defending',[['def_action_90','Defensive actions'],['tackle_90','Tackles'],['int_90','Interceptions'],['recov_90','Recoveries'],['counterpress_90','Counterpressures'],['aerial_90','Aerials won']]],
+  ['Other',[['nineties','Minutes (90s)'],['age_seen','Age'],['height_cm','Height']]]
+];
+
+const POOLS=['CB','FB','CM','AM','W','ST'];
+const SIDES=[['L','Left'],['C','Central'],['R','Right']];
+
+const PRESETS=[
+  {n:'Young progressive centre-backs',f:{pools:['CB'],sides:[],age:23,minN:6,traits:{progressor:70},sort:'prog_cmp_90'}},
+  {n:'Efficient wide carriers',f:{pools:['W'],sides:[],age:40,minN:6,traits:{carrier:70},sort:'xt_carry_90'}},
+  {n:'Creative eights',f:{pools:['CM'],sides:[],age:40,minN:6,traits:{creator:70},sort:'xa_90'}},
+  {n:'Poachers (box threat)',f:{pools:['ST'],sides:[],age:40,minN:6,traits:{box_threat:75},sort:'xg_90'}},
+  {n:'Under-21 breakouts',f:{pools:[],sides:[],age:21,minN:5,traits:{},sort:'xt_90'}}
+];
+
+let ROWS=[],PCT={},STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};
+
+/* percentile of every numeric field, computed WITHIN position pool */
+function buildPct(rows){
+  const fields=new Set();
+  TRAITS.forEach(function(t){fields.add(t[0])});
+  SORTS.forEach(function(g){g[1].forEach(function(m){fields.add(m[0])})});
+  const byPool={};
+  rows.forEach(function(r){(byPool[r.pool]=byPool[r.pool]||[]).push(r)});
+  const out={};
+  Object.keys(byPool).forEach(function(pool){
+    const list=byPool[pool];
+    out[pool]={};
+    fields.forEach(function(f){
+      const vals=list.map(function(r){return r[f]}).filter(function(v){return v!=null}).sort(function(a,b){return a-b});
+      out[pool][f]=vals;
+    });
+  });
+  return out;
+}
+function pctOf(r,f){
+  const vals=(PCT[r.pool]||{})[f];
+  const v=r[f];
+  if(!vals||!vals.length||v==null)return null;
+  let lo=0,hi=vals.length;
+  while(lo<hi){const mid=(lo+hi)>>1; if(vals[mid]<v)lo=mid+1;else hi=mid;}
+  return Math.round(100*lo/Math.max(1,vals.length-1));
+}
+
+function fmt(v,f){
+  if(v==null)return '—';
+  if(f==='age_seen'||f==='height_cm')return String(v);
+  if(f==='nineties')return (+v).toFixed(1);
+  if(Math.abs(v)>=100)return (+v).toFixed(0);
+  if(Math.abs(v)>=10)return (+v).toFixed(1);
+  return (+v).toFixed(2);
+}
+function sortLabel(k){
+  let l=k;SORTS.forEach(function(g){g[1].forEach(function(m){if(m[0]===k)l=m[1]})});return l;
+}
+
+function apply(){
+  let out=ROWS.filter(function(r){
+    if(STATE.pools.length&&STATE.pools.indexOf(r.pool)<0)return false;
+    if(STATE.sides.length&&STATE.sides.indexOf(r.side)<0)return false;
+    if(STATE.age<40&&(r.age_seen==null||r.age_seen>STATE.age))return false;
+    if((r.nineties||0)<STATE.minN)return false;
+    for(const t in STATE.traits){
+      const need=STATE.traits[t]; if(!need)continue;
+      const p=pctOf(r,t); if(p==null||p<need)return false;
+    }
+    return true;
+  });
+  const s=STATE.sort;
+  out=out.filter(function(r){return r[s]!=null})
+         .sort(function(a,b){return b[s]-a[s]});
+  render(out);
+}
+
+function render(rows){
+  document.getElementById('count').innerHTML='<b>'+rows.length+'</b> players';
+  const host=document.getElementById('results');
+  if(!rows.length){host.innerHTML='<div class="empty">no players match these filters<br>try widening age, minutes, or trait thresholds</div>';return;}
+  const s=STATE.sort;
+  let h='<table><thead><tr>'
+    +'<th class="l">#</th><th class="l">Player</th><th class="l">Team</th><th>Pos</th>'
+    +'<th>Age</th><th>90s</th><th>'+esc(sortLabel(s))+'</th><th>Pool pct</th></tr></thead><tbody>';
+  rows.slice(0,60).forEach(function(r,i){
+    const p=pctOf(r,s);
+    h+='<tr>'
+      +'<td class="l rk">'+(i+1)+'</td>'
+      +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+      +'<td class="l tm">'+esc(r.team)+'</td>'
+      +'<td>'+esc(r.pos)+'</td>'
+      +'<td>'+(r.age_seen==null?'—':r.age_seen)+'</td>'
+      +'<td>'+(r.nineties==null?'—':(+r.nineties).toFixed(1))+'</td>'
+      +'<td class="metric">'+fmt(r[s],s)+'</td>'
+      +'<td>'+(p==null?'—':p)+'<span class="pbar"><i style="width:'+(p||0)+'%"></i></span></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  if(rows.length>60)h+='<div class="empty">showing top 60 of '+rows.length+'</div>';
+  host.innerHTML=h;
+}
+
+/* ---------- UI wiring ---------- */
+function chip(label,on){return '<span class="chip'+(on?' on':'')+'" data-v="'+esc(label)+'">'+esc(label)+'</span>'}
+function paintChips(){
+  document.getElementById('poolChips').innerHTML=POOLS.map(function(p){return chip(p,STATE.pools.indexOf(p)>=0)}).join('');
+  document.getElementById('sideChips').innerHTML=SIDES.map(function(s){
+    return '<span class="chip'+(STATE.sides.indexOf(s[0])>=0?' on':'')+'" data-v="'+s[0]+'">'+s[1]+'</span>'}).join('');
+}
+function paintTraits(){
+  document.getElementById('traits').innerHTML=TRAITS.map(function(t){
+    const v=STATE.traits[t[0]]||0;
+    return '<div class="trait-row"><span style="font:500 10.5px/1.2 var(--f-body);color:'
+      +(v?'var(--text)':'var(--dim)')+'">'+esc(t[1])+'</span>'
+      +'<div class="mini"><input type="range" min="0" max="95" step="5" value="'+v+'" data-t="'+t[0]+'">'
+      +'<span class="tval">'+(v?v:'–')+'</span></div></div>';
+  }).join('');
+}
+function paintSorts(){
+  document.getElementById('sortSel').innerHTML=SORTS.map(function(g){
+    return '<optgroup label="'+esc(g[0])+'">'+g[1].map(function(m){
+      return '<option value="'+m[0]+'"'+(m[0]===STATE.sort?' selected':'')+'>'+esc(m[1])+'</option>'}).join('')+'</optgroup>';
+  }).join('');
+}
+function paintRanges(){
+  document.getElementById('ageMax').value=STATE.age;
+  document.getElementById('ageMaxV').textContent=STATE.age>=40?'any':STATE.age;
+  document.getElementById('minN').value=STATE.minN;
+  document.getElementById('minNV').textContent=STATE.minN;
+}
+function paintAll(){paintChips();paintTraits();paintSorts();paintRanges();apply();}
+
+document.getElementById('poolChips').addEventListener('click',function(e){
+  const c=e.target.closest('.chip'); if(!c)return;
+  const v=c.dataset.v,i=STATE.pools.indexOf(v);
+  if(i>=0)STATE.pools.splice(i,1);else STATE.pools.push(v);
+  paintChips();apply();
+});
+document.getElementById('sideChips').addEventListener('click',function(e){
+  const c=e.target.closest('.chip'); if(!c)return;
+  const v=c.dataset.v,i=STATE.sides.indexOf(v);
+  if(i>=0)STATE.sides.splice(i,1);else STATE.sides.push(v);
+  paintChips();apply();
+});
+document.getElementById('traits').addEventListener('input',function(e){
+  const r=e.target; if(r.type!=='range')return;
+  const t=r.dataset.t,v=+r.value;
+  if(v>0)STATE.traits[t]=v;else delete STATE.traits[t];
+  r.parentElement.querySelector('.tval').textContent=v?v:'–';
+  r.closest('.trait-row').firstElementChild.style.color=v?'var(--text)':'var(--dim)';
+  apply();
+});
+document.getElementById('ageMax').addEventListener('input',function(e){
+  STATE.age=+e.target.value;
+  document.getElementById('ageMaxV').textContent=STATE.age>=40?'any':STATE.age;apply();
+});
+document.getElementById('minN').addEventListener('input',function(e){
+  STATE.minN=+e.target.value;document.getElementById('minNV').textContent=STATE.minN;apply();
+});
+document.getElementById('sortSel').addEventListener('change',function(e){STATE.sort=e.target.value;apply();});
+document.getElementById('reset').addEventListener('click',function(){
+  STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};paintAll();
+});
+document.getElementById('copy').addEventListener('click',function(){
+  const rowsEl=document.querySelectorAll('#results tbody tr');
+  let txt='';
+  rowsEl.forEach(function(tr){
+    const c=tr.querySelectorAll('td');
+    txt+=[c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText,c[6].innerText].join('\t')+'\n';
+  });
+  navigator.clipboard.writeText(txt).then(function(){
+    const b=document.getElementById('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy shortlist'},1400);
+  }).catch(function(){});
+});
+document.getElementById('presets').innerHTML=PRESETS.map(function(p,i){
+  return '<button class="preset" data-i="'+i+'">'+esc(p.n)+'</button>'}).join('');
+document.getElementById('presets').addEventListener('click',function(e){
+  const b=e.target.closest('.preset'); if(!b)return;
+  const f=PRESETS[+b.dataset.i].f;
+  STATE={pools:f.pools.slice(),sides:f.sides.slice(),age:f.age,minN:f.minN,
+         traits:Object.assign({},f.traits),sort:f.sort};
+  paintAll();
+});
+function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
+document.getElementById('themeBtn').addEventListener('click',function(){
+  const d=document.documentElement.classList.toggle('dark');
+  try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
+  paintThemeBtn();
+});
+
+async function init(){
+  paintThemeBtn();
+  try{
+    ROWS=await sbAll('player_search',{select:'*'});
+    PCT=buildPct(ROWS);
+    const withAge=ROWS.filter(function(r){return r.age_seen!=null}).length;
+    document.getElementById('sysLine').innerHTML=
+      '<b>'+ROWS.length+'</b> outfield players · <b>'+withAge+'</b> with age · '
+      +'traits ranked within position pool · min 6 nineties by default';
+    document.getElementById('foot').textContent=
+      'Percentiles are computed within position pool, not across the whole league. '
+      +'Age is a snapshot at match time, not date of birth.';
+    paintAll();
+  }catch(err){
+    document.getElementById('results').innerHTML='<div class="empty">could not load index ('+esc(err.message)+')</div>';
+    document.getElementById('sysLine').textContent='load failed';
+  }
+}
+init();
+</script>
+</body>
+</html>
