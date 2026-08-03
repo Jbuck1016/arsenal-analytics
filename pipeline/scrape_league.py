@@ -177,7 +177,16 @@ def main() -> int:
     # --- auto-rebuild: new games make every analytics layer stale ---
     if succeeded > 0:
         print("\n=== Rebuild ===", flush=True)
-        steps = ["preflight", "metrics", "sequences", "players", "seqfz", "verify"]
+        # bio (age/height/weight) is in the cached match json the scrape just wrote
+        try:
+            from backfill_bio import run_backfill
+            b = run_backfill(sb, quiet=True)
+            print(f"  bio        -> {b.get('written',0)} players "
+                  f"(age {b.get('with_age',0)}, ht {b.get('with_height',0)})", flush=True)
+        except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
+            print(f"  bio        -> skipped ({e})", flush=True)
+        steps = ["preflight", "metrics", "sequences", "players", "seqfz",
+                 "search", "insights", "verify"]
         try:
             for step in steps:
                 resp = sb.rpc("rebuild_step", {"p_step": step}).execute()
