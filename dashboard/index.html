@@ -4,7 +4,7 @@
 <script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLS 2026 · Analytics</title>
+<title>MLS 2026 ┬╖ Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -12,7 +12,7 @@
   --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
   --f-disp:'Archivo','Inter',system-ui,sans-serif;
   --f-body:'Inter',system-ui,sans-serif;
-  /* light — warm paper terminal */
+  /* light ΓÇö warm paper terminal */
   --bg:#f4f2ec;--panel:#fbfaf6;--panel2:#efece4;
   --line:#e4e0d6;--line2:#d3ccbf;
   --text:#191c22;--dim:#5a6270;--dim2:#8b93a0;
@@ -130,8 +130,8 @@ tbody tr:hover td{background:var(--panel2)}
 
   <div class="sys">
     <div class="sys-top">
-      <span class="sys-mark">▐</span>
-      <span class="sys-title">MLS 2026 — Analytics</span>
+      <span class="sys-mark">ΓûÉ</span>
+      <span class="sys-title">MLS 2026 ΓÇö Analytics</span>
       <button id="themeBtn" onclick="toggleTheme(this)" title="Toggle light / dark" style="margin-left:auto;align-self:center;background:none;border:1px solid var(--line2);color:var(--dim);font:600 13px/1 var(--f-mono);width:30px;height:24px;border-radius:5px;cursor:pointer">&#9728;</button>
     </div>
     <div class="sys-line" id="sysLine">
@@ -142,7 +142,7 @@ tbody tr:hover td{background:var(--panel2)}
   <div class="cmd">
     <div class="cmd-box">
       <span class="cmd-caret">&gt;</span>
-      <input id="q" placeholder="search a player, team or match…" autocomplete="off" spellcheck="false">
+      <input id="q" placeholder="search a player, team or matchΓÇª" autocomplete="off" spellcheck="false">
       <span class="kbd" id="kbdHint">/</span>
     </div>
     <div class="res" id="res"></div>
@@ -150,28 +150,40 @@ tbody tr:hover td{background:var(--panel2)}
 
   <div class="mods">
     <a class="mod" href="match.html">
-      <div class="mod-i">01 · match</div>
+      <div class="mod-i">01 ┬╖ match</div>
       <div class="mod-t">Match analysis</div>
       <div class="mod-d">Any fixture in the league, event by event. Pass maps, networks, pressure, momentum, shape.</div>
-      <div class="mod-n"><span id="nMatch">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMatch">ΓÇö</span><span class="mod-arrow">ΓåÆ</span></div>
     </a>
     <a class="mod" href="players.html">
-      <div class="mod-i">02 · players</div>
+      <div class="mod-i">02 ┬╖ players</div>
       <div class="mod-t">Player fingerprints</div>
       <div class="mod-d">Percentile profiles against role, DNA pillars, pitch maps, scatter, scout ranking.</div>
-      <div class="mod-n"><span id="nPlayer">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nPlayer">ΓÇö</span><span class="mod-arrow">ΓåÆ</span></div>
     </a>
     <a class="mod" href="teams.html">
-      <div class="mod-i">03 · teams</div>
+      <div class="mod-i">03 ┬╖ teams</div>
       <div class="mod-t">Team profiles</div>
       <div class="mod-d">Style against the league, build-up and pressing, season maps, rankings, squads.</div>
-      <div class="mod-n"><span id="nTeam">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nTeam">ΓÇö</span><span class="mod-arrow">ΓåÆ</span></div>
     </a>
     <a class="mod" href="glossary.html">
-      <div class="mod-i">04 · reference</div>
+      <div class="mod-i">04 ┬╖ reference</div>
       <div class="mod-t">Metric reference</div>
       <div class="mod-d">Every metric defined, how it is calculated, where it sits in the league, and a worked example at each end.</div>
-      <div class="mod-n"><span id="nMetric">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMetric">ΓÇö</span><span class="mod-arrow">ΓåÆ</span></div>
+    </a>
+    <a class="mod" href="insights.html">
+      <div class="mod-i">05 · insights</div>
+      <div class="mod-t">Scouting insights</div>
+      <div class="mod-d">Recruitment reads generated from the data: standout profiles by pool, key-man risk, and how each side actually plays.</div>
+      <div class="mod-n"><span id="nInsight">—</span><span class="mod-arrow">→</span></div>
+    </a>
+    <a class="mod" href="sequences.html">
+      <div class="mod-i">06 · sequences</div>
+      <div class="mod-t">Possession sequences</div>
+      <div class="mod-d">Every possession chain in the league, searchable by shape and pattern, with similarity across teams.</div>
+      <div class="mod-n"><span id="nSeq">—</span><span class="mod-arrow">→</span></div>
     </a>
   </div>
 
@@ -193,9 +205,9 @@ tbody tr:hover td{background:var(--panel2)}
   </div>
 
   <div class="foot" id="foot">
-    <span>data · whoscored</span><span class="sep">/</span>
-    <span>xg · fitted on this season, r=0.975 vs opta</span><span class="sep">/</span>
-    <span>percentiles · within role, 6+ nineties</span>
+    <span>data ┬╖ whoscored</span><span class="sep">/</span>
+    <span>xg ┬╖ fitted on this season, r=0.975 vs opta</span><span class="sep">/</span>
+    <span>percentiles ┬╖ within role, 6+ nineties</span>
   </div>
 </div>
 
@@ -204,7 +216,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
@@ -265,6 +277,21 @@ async function init(){
     document.getElementById('nPlayer').textContent=PLAYERS.length+' players';
     document.getElementById('nTeam').textContent=TEAMS.length+' clubs';
     document.getElementById('nMetric').textContent='89 metrics';
+    // insights + sequences counters (head requests, non-blocking)
+    (async function(){
+      try{
+        const u=new URL(SB+'/rest/v1/insights'); u.searchParams.set('select','id');
+        const r=await fetch(u,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
+        const cr=r.headers.get('content-range'); const n=cr?cr.split('/')[1]:null;
+        if(n) document.getElementById('nInsight').textContent=n+' reads';
+      }catch(e){}
+      try{
+        const u2=new URL(SB+'/rest/v1/sequences'); u2.searchParams.set('select','seq_uid');
+        const r2=await fetch(u2,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
+        const cr2=r2.headers.get('content-range'); const n2=cr2?cr2.split('/')[1]:null;
+        if(n2) document.getElementById('nSeq').textContent=(+n2).toLocaleString()+' chains';
+      }catch(e){}
+    })();
 
     renderSegs();renderTable();loadLeaders();
   }catch(e){
@@ -281,12 +308,12 @@ function search(v){
     .slice(0,5).map(function(x){return{k:'TEAM',n:tname(x.team),m:x.matches+' matches',
       href:'teams.html?team='+encodeURIComponent(x.team)}});
   const p=PLAYERS.filter(function(x){return (x.name||'').toLowerCase().indexOf(v)>=0})
-    .slice(0,7).map(function(x){return{k:x.pool||'PL',n:x.name,m:tname(x.team)+' · '+x.n90.toFixed(1)+'×90',
+    .slice(0,7).map(function(x){return{k:x.pool||'PL',n:x.name,m:tname(x.team)+' ┬╖ '+x.n90.toFixed(1)+'├ù90',
       href:'players.html?player='+encodeURIComponent(x.id)}});
   const m=MATCHES.filter(function(x){
       return (tname(x.home_team)+' '+tname(x.away_team)).toLowerCase().indexOf(v)>=0})
     .slice(0,4).map(function(x){return{k:'MTCH',
-      n:tname(x.home_team)+' '+x.home_score+'–'+x.away_score+' '+tname(x.away_team),
+      n:tname(x.home_team)+' '+x.home_score+'ΓÇô'+x.away_score+' '+tname(x.away_team),
       m:String(x.date).slice(0,10), href:'match.html?game='+encodeURIComponent(x.game_id)}});
   HITS=p.concat(t,m);SEL=HITS.length?0:-1;
   if(!HITS.length){resEl.innerHTML='<div class="res-empty">no match for "'+esc(v)+'"</div>';resEl.classList.add('on');return}
@@ -324,7 +351,7 @@ document.addEventListener('keydown',function(e){
 document.addEventListener('click',function(e){
   if(!e.target.closest('.cmd'))resEl.classList.remove('on');
 });
-if(navigator.platform.toLowerCase().indexOf('mac')>=0)document.getElementById('kbdHint').textContent='⌘K';
+if(navigator.platform.toLowerCase().indexOf('mac')>=0)document.getElementById('kbdHint').textContent='ΓîÿK';
 
 /* ---------- league table ---------- */
 const COL={
