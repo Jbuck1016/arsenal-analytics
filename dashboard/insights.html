@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insights · MLS 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+/* pre-paint theme so there is no flash */
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
+<style>
+:root{
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-body:'Inter',system-ui,sans-serif;
+  /* light (warm paper) */
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#6a6960;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.30);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark:root, html.dark{
+  --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
+  --line:#1c222c;--line2:#2b333f;
+  --text:#e8eef6;--dim:#8794a6;--dim2:#5b6675;
+  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
+  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 60px}
+a{color:inherit;text-decoration:none}
+
+/* header */
+.sys{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:13px 16px;margin-bottom:16px}
+.sys-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 8px var(--green)}
+.sys-title{font:700 13px/1 var(--f-mono);letter-spacing:.02em;color:var(--text)}
+.sys-title b{color:var(--amber)}
+.sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:8px}
+.sys-line b{color:var(--text);font-weight:600}
+.spacer{flex:1}
+.nav{display:flex;gap:2px}
+.nav a{font:600 9.5px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);
+  border-radius:3px;padding:6px 9px;text-transform:uppercase;letter-spacing:.06em}
+.nav a:hover{color:var(--amber);border-color:var(--amber-line)}
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px}
+.tbtn:hover{color:var(--amber);border-color:var(--amber-line)}
+
+/* filter */
+.filter{display:flex;gap:1px;background:var(--line);border-radius:3px;overflow:hidden;margin:0 0 18px;width:max-content}
+.filter button{background:var(--panel2);border:none;color:var(--dim);font:600 10px/1 var(--f-mono);
+  letter-spacing:.05em;text-transform:uppercase;padding:9px 15px;cursor:pointer}
+.filter button.on{background:var(--amber-dim);color:var(--amber)}
+
+/* sections */
+.sec{margin-bottom:26px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 11px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.sec-t{font:700 10px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
+.sec-b{font:500 10.5px/1.5 var(--f-body);color:var(--dim)}
+.sec-n{font:600 9.5px/1 var(--f-mono);color:var(--dim2);margin-left:auto}
+
+/* cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:14px 15px;
+  display:flex;flex-direction:column;gap:8px;transition:border-color .14s,background .14s}
+.card:hover{border-color:var(--amber-line);background:var(--panel2)}
+.card-h{font:700 13.5px/1.35 var(--f-body);color:var(--text);letter-spacing:-.01em}
+.card-d{font:400 12px/1.55 var(--f-body);color:var(--dim)}
+.card-f{display:flex;align-items:center;gap:9px;margin-top:2px;flex-wrap:wrap}
+.chip{font:600 9px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);
+  border-radius:3px;padding:4px 7px;letter-spacing:.02em;white-space:nowrap}
+.chip b{color:var(--text)}
+.badge{font:600 8.5px/1 var(--f-mono);border-radius:3px;padding:4px 7px;text-transform:uppercase;letter-spacing:.08em}
+.badge.high{color:var(--green);border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+.badge.medium{color:var(--dim);border:1px solid var(--line2)}
+.ev{margin-left:auto;font:600 9.5px/1 var(--f-mono);color:var(--amber);border:1px solid var(--amber-line);
+  border-radius:3px;padding:5px 8px}
+.ev:hover{background:var(--amber-dim)}
+.empty{grid-column:1/-1;font:500 11px/1 var(--f-mono);color:var(--dim2);padding:22px 4px;text-align:center}
+
+.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+  font:500 10px/1.8 var(--f-mono);color:var(--dim2);display:flex;gap:8px;flex-wrap:wrap}
+.foot .sep{color:var(--line2)}
+.load{font:500 12px/1 var(--f-mono);color:var(--dim2);padding:40px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sys">
+    <div class="sys-top">
+      <span class="dot"></span>
+      <span class="sys-title">MLS 2026 — <b>Insights</b></span>
+      <span class="spacer"></span>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="teams.html">Teams</a>
+        <a href="players.html">Players</a>
+        <a href="sequences.html">Sequences</a>
+      </nav>
+      <div class="tbtn" id="themeBtn" title="Toggle theme">☾</div>
+    </div>
+    <div class="sys-line" id="sysLine">reading insights…</div>
+  </div>
+
+  <div class="filter" id="filter">
+    <button data-f="all" class="on">All</button>
+    <button data-f="sd">Recruitment</button>
+    <button data-f="tactical">Tactical</button>
+  </div>
+
+  <div id="content"><div class="load">loading…</div></div>
+
+  <div class="foot">
+    <span>reads · generated from sequence + chain-role data</span><span class="sep">/</span>
+    <span>deterministic · every claim traces to the numbers</span><span class="sep">/</span>
+    <span id="footGen"></span>
+  </div>
+
+</div>
+
+<script>
+const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+const HD={'apikey':AK,'Authorization':'Bearer '+AK};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+
+async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
+  while(true){const u=new URL(SB+'/rest/v1/'+t);
+    Object.keys(p).forEach(function(k){u.searchParams.set(k,p[k])});
+    const r=await fetch(u,{headers:Object.assign({},HD,{'Range':off+'-'+(off+PG-1),'Range-Unit':'items'})});
+    if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
+    if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
+  return all;}
+
+/* section layout, SD first */
+const SECTIONS=[
+  {id:'standout', lens:'sd', match:function(d){return d==='standout_profile'},
+   title:'Recruitment · Standout profiles',
+   blurb:'Players who top their positional pool for a chain role. Shortlist anchors.'},
+  {id:'keyman', lens:'sd', match:function(d){return d==='key_man'},
+   title:'Recruitment · Key-man risk',
+   blurb:'Roles a side leans on one player for, with no close deputy behind him.'},
+  {id:'identity', lens:'tactical', match:function(d){return ['sterile_control','vertical_identity','territorial'].indexOf(d)>=0},
+   title:'Tactical · Team identity',
+   blurb:'How sides control, threaten, and occupy territory.'},
+  {id:'style', lens:'tactical', match:function(d){return ['central_funnel','byline_team'].indexOf(d)>=0},
+   title:'Tactical · Progression route',
+   blurb:'Where each side chooses to move the ball forward.'}
+];
+
+function evLink(ins){
+  var e=ins.evidence||{};
+  if(e.player_id) return '<a class="ev" href="players.html?player='+encodeURIComponent(e.player_id)+'">profile →</a>';
+  if(e.team) return '<a class="ev" href="teams.html?team='+encodeURIComponent(e.team)+'">team →</a>';
+  return '';
+}
+function primaryChip(ins){
+  var m=ins.metrics||{};
+  if(ins.detector==='standout_profile') return '<span class="chip">pool <b>'+esc(m.pool)+'</b></span><span class="chip"><b>'+esc(m.inv)+'</b> inv</span>';
+  if(ins.detector==='key_man') return '<span class="chip">share <b>'+esc(m.share_pct)+'%</b></span>';
+  if(m.xt_rank) return '<span class="chip">xT rank <b>'+esc(m.xt_rank)+'</b></span>';
+  var k=Object.keys(m)[0];
+  return k?'<span class="chip">'+esc(k.replace(/_/g,' '))+' <b>'+esc(m[k])+'</b></span>':'';
+}
+function card(ins){
+  return '<div class="card">'
+    +'<div class="card-h">'+esc(ins.headline)+'</div>'
+    +'<div class="card-d">'+esc(ins.detail)+'</div>'
+    +'<div class="card-f">'+primaryChip(ins)
+    +'<span class="badge '+esc(ins.confidence)+'">'+esc(ins.confidence)+'</span>'
+    +evLink(ins)+'</div>'
+    +'</div>';
+}
+
+function render(all){
+  var host=document.getElementById('content'); host.innerHTML='';
+  SECTIONS.forEach(function(s){
+    var rows=all.filter(function(d){return s.match(d.detector)})
+                .sort(function(a,b){return (b.score||0)-(a.score||0)});
+    if(!rows.length) return;
+    var sec=document.createElement('div');
+    sec.className='sec'; sec.dataset.lens=s.lens;
+    sec.innerHTML='<div class="sec-h"><span class="sec-t">'+esc(s.title)+'</span>'
+      +'<span class="sec-b">'+esc(s.blurb)+'</span>'
+      +'<span class="sec-n">'+rows.length+'</span></div>'
+      +'<div class="grid">'+rows.map(card).join('')+'</div>';
+    host.appendChild(sec);
+  });
+  if(!host.children.length) host.innerHTML='<div class="empty">no insights yet — run the rebuild.</div>';
+}
+
+function applyFilter(f){
+  document.querySelectorAll('#filter button').forEach(function(b){b.classList.toggle('on',b.dataset.f===f)});
+  document.querySelectorAll('#content .sec').forEach(function(sec){
+    sec.style.display=(f==='all'||sec.dataset.lens===f)?'':'none';
+  });
+}
+
+/* theme */
+function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
+document.getElementById('themeBtn').addEventListener('click',function(){
+  var dark=document.documentElement.classList.toggle('dark');
+  try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}
+  paintThemeBtn();
+});
+document.getElementById('filter').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(b) applyFilter(b.dataset.f);
+});
+
+async function init(){
+  paintThemeBtn();
+  try{
+    var all=await sbAll('insights',{select:'*',order:'score.desc'});
+    render(all);
+    applyFilter('all');
+    var gen = all.length && all[0].generated_at ? new Date(all[0].generated_at) : null;
+    var counts = all.reduce(function(a,d){a[d.lens]=(a[d.lens]||0)+1;return a},{});
+    document.getElementById('sysLine').innerHTML=
+      '<b>'+all.length+'</b> reads across the league · <b>'+(counts.sd||0)+'</b> recruitment · <b>'
+      +(counts.tactical||0)+'</b> tactical · regenerated each matchweek';
+    document.getElementById('footGen').textContent = gen ? ('built '+gen.toISOString().slice(0,10)) : '';
+  }catch(err){
+    document.getElementById('content').innerHTML='<div class="empty">could not load insights ('+esc(err.message)+')</div>';
+    document.getElementById('sysLine').textContent='load failed';
+  }
+}
+init();
+</script>
+</body>
+</html>
