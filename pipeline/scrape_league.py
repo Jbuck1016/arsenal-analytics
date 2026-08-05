@@ -186,6 +186,7 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
             print(f"  bio        -> skipped ({e})", flush=True)
         steps = ["preflight", "metrics", "sequences", "players", "seqfz",
+                 "state", "chains", "traj", "profiles", "teamstyle",
                  "search", "insights", "verify"]
         try:
             for step in steps:
