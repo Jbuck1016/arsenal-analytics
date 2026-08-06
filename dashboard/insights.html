@@ -55,6 +55,12 @@ a{color:inherit;text-decoration:none}
 .filter button{background:var(--panel2);border:none;color:var(--dim);font:600 10px/1 var(--f-mono);
   letter-spacing:.05em;text-transform:uppercase;padding:9px 15px;cursor:pointer}
 .filter button.on{background:var(--amber-dim);color:var(--amber)}
+.controls{display:flex;gap:10px;align-items:center;margin:0 0 18px;flex-wrap:wrap}
+.controls .filter{margin:0}
+#teamSel{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:3px;
+  padding:8px 10px;font:600 10px/1 var(--f-mono);letter-spacing:.04em;cursor:pointer;min-width:190px}
+#teamSel:focus{outline:none;border-color:var(--amber-line)}
+#teamSel option[data-zero="1"]{color:var(--dim2)}
 
 /* sections */
 .sec{margin-bottom:26px}
@@ -108,10 +114,13 @@ a{color:inherit;text-decoration:none}
     <div class="sys-line" id="sysLine">reading insights…</div>
   </div>
 
-  <div class="filter" id="filter">
-    <button data-f="all" class="on">All</button>
-    <button data-f="sd">Recruitment</button>
-    <button data-f="tactical">Tactical</button>
+  <div class="controls">
+    <div class="filter" id="filter">
+      <button data-f="all" class="on">All</button>
+      <button data-f="sd">Recruitment</button>
+      <button data-f="tactical">Tactical</button>
+    </div>
+    <select id="teamSel"><option value="all">All teams</option></select>
   </div>
 
   <div id="content"><div class="load">loading…</div></div>
@@ -179,29 +188,66 @@ function card(ins){
     +'</div>';
 }
 
-function render(all){
-  var host=document.getElementById('content'); host.innerHTML='';
-  SECTIONS.forEach(function(s){
-    var rows=all.filter(function(d){return s.match(d.detector)})
-                .sort(function(a,b){return (b.score||0)-(a.score||0)});
-    if(!rows.length) return;
-    var sec=document.createElement('div');
-    sec.className='sec'; sec.dataset.lens=s.lens;
-    sec.innerHTML='<div class="sec-h"><span class="sec-t">'+esc(s.title)+'</span>'
-      +'<span class="sec-b">'+esc(s.blurb)+'</span>'
-      +'<span class="sec-n">'+rows.length+'</span></div>'
-      +'<div class="grid">'+rows.map(card).join('')+'</div>';
-    host.appendChild(sec);
+var ALL=[], STATE={lens:'all', team:'all'};
+
+function visible(){
+  return ALL.filter(function(d){
+    if(STATE.lens!=='all' && d.lens!==STATE.lens) return false;
+    if(STATE.team!=='all' && d.team!==STATE.team) return false;
+    return true;
   });
-  if(!host.children.length) host.innerHTML='<div class="empty">no insights yet — run the rebuild.</div>';
 }
 
-function applyFilter(f){
-  document.querySelectorAll('#filter button').forEach(function(b){b.classList.toggle('on',b.dataset.f===f)});
-  document.querySelectorAll('#content .sec').forEach(function(sec){
-    sec.style.display=(f==='all'||sec.dataset.lens===f)?'':'none';
+function render(){
+  var rows=visible();
+  var host=document.getElementById('content'); host.innerHTML='';
+  SECTIONS.forEach(function(s){
+    var sub=rows.filter(function(d){return s.match(d.detector)})
+                .sort(function(a,b){return (b.score||0)-(a.score||0)});
+    if(!sub.length) return;
+    var sec=document.createElement('div');
+    sec.className='sec';
+    sec.innerHTML='<div class="sec-h"><span class="sec-t">'+esc(s.title)+'</span>'
+      +'<span class="sec-b">'+esc(s.blurb)+'</span>'
+      +'<span class="sec-n">'+sub.length+'</span></div>'
+      +'<div class="grid">'+sub.map(card).join('')+'</div>';
+    host.appendChild(sec);
   });
+  if(!host.children.length){
+    var why = STATE.team!=='all'
+      ? esc(STATE.team)+' isn\'t flagged by any current detector.<br>'
+        +'That means nothing about them sits far enough from the league norm to be worth calling out yet.'
+      : 'no insights match this filter.';
+    host.innerHTML='<div class="empty">'+why+'</div>';
+  }
+  var n=rows.length;
+  document.getElementById('sysLine').innerHTML =
+    '<b>'+n+'</b> read'+(n===1?'':'s')
+    + (STATE.team==='all' ? ' across the league' : ' for '+esc(STATE.team))
+    + ' \u00b7 regenerated each matchweek';
 }
+
+function buildTeamSelect(){
+  var counts={};
+  ALL.forEach(function(d){ if(d.team) counts[d.team]=(counts[d.team]||0)+1; });
+  var teams=Object.keys(counts).sort();
+  var sel=document.getElementById('teamSel');
+  sel.innerHTML='<option value="all">All teams ('+ALL.length+')</option>'
+    + teams.map(function(t){
+        return '<option value="'+esc(t)+'">'+esc(t)+' ('+counts[t]+')</option>';
+      }).join('');
+}
+
+document.getElementById('filter').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  STATE.lens=b.dataset.f;
+  document.querySelectorAll('#filter button').forEach(function(x){
+    x.classList.toggle('on', x.dataset.f===STATE.lens)});
+  render();
+});
+document.getElementById('teamSel').addEventListener('change',function(e){
+  STATE.team=e.target.value; render();
+});
 
 /* theme */
 function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
@@ -217,14 +263,10 @@ document.getElementById('filter').addEventListener('click',function(e){
 async function init(){
   paintThemeBtn();
   try{
-    var all=await sbAll('insights',{select:'*',order:'score.desc'});
-    render(all);
-    applyFilter('all');
-    var gen = all.length && all[0].generated_at ? new Date(all[0].generated_at) : null;
-    var counts = all.reduce(function(a,d){a[d.lens]=(a[d.lens]||0)+1;return a},{});
-    document.getElementById('sysLine').innerHTML=
-      '<b>'+all.length+'</b> reads across the league · <b>'+(counts.sd||0)+'</b> recruitment · <b>'
-      +(counts.tactical||0)+'</b> tactical · regenerated each matchweek';
+    ALL=await sbAll('insights',{select:'*',order:'score.desc'});
+    buildTeamSelect();
+    render();
+    var gen = ALL.length && ALL[0].generated_at ? new Date(ALL[0].generated_at) : null;
     document.getElementById('footGen').textContent = gen ? ('built '+gen.toISOString().slice(0,10)) : '';
   }catch(err){
     document.getElementById('content').innerHTML='<div class="empty">could not load insights ('+esc(err.message)+')</div>';
