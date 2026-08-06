@@ -169,6 +169,8 @@ tr:hover td{background:var(--surface)}
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
 .row.drill{cursor:pointer;border-radius:5px;transition:background .12s}
+.val-link{font-weight:700;cursor:pointer;border-bottom:1px dotted var(--text3);padding-bottom:1px}
+.val-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .row.drill:hover{background:var(--surface2)}
 .dico{margin-left:5px;color:var(--text3);font-size:8px;opacity:.65}
 .drill-wrap{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);z-index:120;display:none;align-items:center;justify-content:center;padding:24px}
@@ -889,7 +891,8 @@ async function renderRank(){
       '<div style="max-height:calc(100vh - 408px);min-height:260px;overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
-      '<th class="num" style="cursor:default">'+esc(d.label||'Value')+'</th>'+
+      '<th class="num" style="cursor:default" title="Click any value to see the actions behind it">'+
+      esc(d.label||'Value')+(DRILL[RK.metric]?' \u25F0':'')+'</th>'+
       '<th style="cursor:default;width:200px" title="Bar length is this player\u2019s raw value as a share of the highest value shown">Value vs best shown</th>'+
       '<th class="num" style="cursor:default">Pct</th></tr></thead><tbody>';
     list.forEach(function(r,i){
@@ -899,7 +902,10 @@ async function renderRank(){
         '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
         '<td><span class="badge">'+esc(r.pool)+'</span></td>'+
         '<td class="num">'+r.n90.toFixed(1)+'</td>'+
-        '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
+        '<td class="num">'+(DRILL[RK.metric]
+           ? '<span class="val-link" onclick="drillFor(\''+r.id+'\',\''+RK.metric+'\')" '+
+             'title="Click to plot these actions on the pitch">'+fmt(r.value,d.unit)+'</span>'
+           : '<span style="font-weight:700">'+fmt(r.value,d.unit)+'</span>')+'</td>'+
         '<td><div class="bar"><div class="bar-f" style="width:'+w+'%;background:'+t.c+'"></div></div></td>'+
         '<td class="num" style="color:'+t.c+';font-weight:700">'+r.pct+'</td></tr>';
     });
@@ -1300,6 +1306,24 @@ function xtOf(x,y){
 }
 function pm_of(k){return PMCACHE[k]||null}
 function closeDrill(){document.getElementById('drillWrap').style.display='none'}
+
+/* Plot the actions behind a value for ANY player, without changing the current selection. */
+async function drillFor(pid,key){
+  if(!DRILL[key]){alert('No pitch view for that metric yet.');return}
+  if(pid===SEL&&PACT){drill(key);return}
+  const prev={SEL:SEL,PACT:PACT,PCAR:PCAR,PMCACHE:PMCACHE};
+  try{
+    const res=await Promise.all([
+      sbAll('v_player_actions',{player_id:'eq.'+pid,select:'type,x,y,end_x,end_y,ok,is_shot,is_goal,is_open_play,sp_phase,prog,into_box,cross_,keypass,assist,through,head,bigchance,xg,shot_outcome'}),
+      sbAll('v_player_carries',{player_id:'eq.'+pid,select:'start_x,start_y,end_x,end_y,carry_m,is_progressive,into_box,ttr,release_type'}),
+      sbAll('mv_player_percentiles',{player_id:'eq.'+pid,select:'metric,value,pct'})
+    ]);
+    SEL=pid;PACT=res[0];PCAR=res[1];
+    const pm={};res[2].forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
+    drill(key);
+  }catch(e){alert('Could not load actions: '+e.message)}
+  finally{SEL=prev.SEL;PACT=prev.PACT;PCAR=prev.PCAR;PMCACHE=prev.PMCACHE}
+}
 function drill(key){
   const p=playerOf(SEL); if(!p||!PACT)return;
   const d=defOf(key)||{}; const kind=DRILL[key];
