@@ -186,8 +186,8 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
             print(f"  bio        -> skipped ({e})", flush=True)
         steps = ["preflight", "metrics", "sequences", "players", "seqfz",
-                 "state", "chains", "traj", "profiles", "teamstyle",
-                 "search", "insights", "verify"]
+                 "state", "chains", "traj", "profiles", "usage", "teamstyle",
+                 "search", "percentiles", "insights", "verify"]
         try:
             for step in steps:
                 resp = sb.rpc("rebuild_step", {"p_step": step}).execute()
