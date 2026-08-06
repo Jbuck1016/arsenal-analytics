@@ -272,7 +272,7 @@ def main() -> int:
         print("\nNothing new to scrape.", flush=True)
         return 0
 
-    ok = fail = 0
+    ok = fail = no_events = 0
     for i, row in enumerate(todo, 1):
         gid = str(_int_or_none(row.get("game_id")) or row.get("game_id"))
         print(f"\n[{i}/{len(todo)}] {row.get('home_team')} vs {row.get('away_team')} ({gid})", flush=True)
@@ -281,10 +281,29 @@ def main() -> int:
             path = cached_event_json_path(ws, gid, league, season)
             if not path.is_file():
                 ws.read_events(match_id=int(gid), output_fmt="raw")
-            with path.open(encoding="utf-8") as fh:
-                game_data = json.load(fh)
 
+            game_data = None
+            if path.is_file():
+                try:
+                    with path.open(encoding="utf-8") as fh:
+                        game_data = json.load(fh)
+                except json.JSONDecodeError:
+                    game_data = None
+
+            # Fixture and result always get stored, even with no event feed behind it.
             upsert_cup_match(sb, row, league, season)
+
+            if not isinstance(game_data, dict) or not game_data.get("events"):
+                print("  -> no event data published for this fixture "
+                      "(result stored, no events)", flush=True)
+                purge_null_cache(ws, gid, league, season)
+                no_events += 1
+                if i < len(todo):
+                    gap = random.randint(args.min_gap, args.max_gap)
+                    print(f"  ... waiting {gap}s", flush=True)
+                    time.sleep(gap)
+                continue
+
             upsert_cup_players_and_lineups(sb, game_data, gid)
             n = upsert_cup_events(sb, game_data, gid)
             record_cup_clubs(sb, game_data, row)
@@ -300,8 +319,13 @@ def main() -> int:
             time.sleep(gap)
 
     print("\n=== Summary ===", flush=True)
-    print(f"  succeeded: {ok}", flush=True)
-    print(f"  failed:    {fail}", flush=True)
+    print(f"  with events:   {ok}", flush=True)
+    print(f"  no event feed: {no_events}", flush=True)
+    print(f"  failed:        {fail}", flush=True)
+    if no_events and not ok:
+        print("\n  WhoScored lists these fixtures but publishes no match-centre event", flush=True)
+        print("  data for them. Results are stored; sequence/chain analytics are not", flush=True)
+        print("  possible for this competition from this source.", flush=True)
     print("\nCup data is isolated in matches_cup / lineups_cup / events_cup.", flush=True)
     print("MLS analytics are untouched. Cup analytics are a separate build.", flush=True)
     return 0 if fail == 0 else 1
