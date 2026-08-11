@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Field Guide · MLS 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
+<style>
+:root{
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-body:'Inter',system-ui,sans-serif;
+  --f-read:'Newsreader',Georgia,serif;
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark{
+  --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
+  --line:#1c222c;--line2:#2b333f;
+  --text:#e8eef6;--dim:#9aa7b8;--dim2:#5b6675;
+  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
+  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--amber);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 18px 80px;display:grid;
+  grid-template-columns:230px 1fr;gap:26px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+/* header */
+.sys{grid-column:1/-1;border:1px solid var(--line);background:var(--panel);border-radius:3px;
+  padding:13px 16px;margin-bottom:6px}
+.sys-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.sys-title{font:700 13px/1 var(--f-mono)}
+.sys-title b{color:var(--amber)}
+.spacer{flex:1}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{font:600 9.5px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);
+  border-radius:3px;padding:6px 9px;text-transform:uppercase;letter-spacing:.06em}
+.nav a:hover{color:var(--amber);border-color:var(--amber-line);text-decoration:none}
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px}
+.sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:8px}
+
+/* table of contents */
+.toc{position:sticky;top:14px;border:1px solid var(--line);background:var(--panel);
+  border-radius:3px;padding:13px 14px}
+@media(max-width:900px){.toc{position:static}}
+.toc h4{font:700 9px/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 10px}
+.toc ol{margin:0;padding-left:17px}
+.toc li{margin-bottom:5px}
+.toc a{font:500 11.5px/1.4 var(--f-body);color:var(--dim)}
+.toc a:hover{color:var(--amber)}
+.toc .sub{list-style:none;padding-left:8px;margin:4px 0 0}
+.toc .sub a{font-size:10.5px;color:var(--dim2)}
+
+/* content */
+.doc{min-width:0}
+h2{font:700 22px/1.25 var(--f-body);letter-spacing:-.02em;margin:34px 0 4px;
+  padding-top:16px;border-top:1px solid var(--line)}
+h2:first-child{margin-top:0;border-top:none;padding-top:0}
+h2 .n{font:700 11px/1 var(--f-mono);color:var(--amber);display:block;margin-bottom:7px;letter-spacing:.1em}
+h3{font:700 15px/1.3 var(--f-body);margin:24px 0 6px;color:var(--text)}
+h4{font:700 12px/1.3 var(--f-mono);letter-spacing:.05em;margin:18px 0 5px;color:var(--amber)}
+p{margin:0 0 12px;font-size:14.5px;color:var(--text)}
+.lead{font-family:var(--f-read);font-size:17px;line-height:1.6;color:var(--dim)}
+ul,ol{margin:0 0 13px;padding-left:20px}
+li{margin-bottom:6px;font-size:14.5px}
+code{font:600 12.5px var(--f-mono);background:var(--panel2);border:1px solid var(--line);
+  border-radius:3px;padding:1px 5px;color:var(--amber)}
+strong{font-weight:700}
+em{font-style:italic;color:var(--dim)}
+
+.box{border:1px solid var(--line);background:var(--panel);border-radius:3px;
+  padding:13px 15px;margin:14px 0}
+.box.warn{border-color:var(--amber-line);background:var(--amber-dim)}
+.box.data{background:var(--panel2)}
+.box h5{font:700 9px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 8px}
+.box p:last-child,.box ul:last-child,.box ol:last-child{margin-bottom:0}
+
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);
+  text-align:left;padding:8px;border-bottom:1px solid var(--line2);background:var(--panel2)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-size:12px}
+tbody tr:last-child td{border-bottom:none}
+
+.steps{counter-reset:s;list-style:none;padding-left:0}
+.steps li{counter-increment:s;position:relative;padding-left:30px;margin-bottom:10px}
+.steps li:before{content:counter(s);position:absolute;left:0;top:1px;width:20px;height:20px;
+  border-radius:50%;background:var(--amber-dim);border:1px solid var(--amber-line);
+  color:var(--amber);font:700 10px/19px var(--f-mono);text-align:center}
+
+/* quiz */
+.q{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:14px 15px;margin:12px 0}
+.q-t{font-weight:600;font-size:14.5px;margin-bottom:10px}
+.opt{display:block;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  padding:9px 11px;margin-bottom:6px;cursor:pointer;font-size:13.5px;transition:.12s}
+.opt:hover{border-color:var(--amber-line)}
+.opt.correct{border-color:var(--green);background:color-mix(in srgb,var(--green) 12%,transparent)}
+.opt.wrong{border-color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent)}
+.opt.locked{cursor:default}
+.exp{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--dim)}
+.exp.show{display:block}
+.score{position:sticky;bottom:14px;border:1px solid var(--amber-line);background:var(--panel);
+  border-radius:3px;padding:11px 14px;margin-top:16px;font:600 12px var(--f-mono);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.score b{color:var(--amber);font-size:15px}
+.btn{border:1px solid var(--line2);background:var(--panel2);color:var(--dim);border-radius:3px;
+  padding:7px 12px;font:600 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.btn:hover{color:var(--amber);border-color:var(--amber-line)}
+
+details{border:1px solid var(--line);border-radius:3px;background:var(--panel);
+  padding:10px 13px;margin-bottom:9px}
+details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--text)}
+details[open] summary{margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+details p:last-child{margin-bottom:0}
+
+.foot{grid-column:1/-1;margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
+  font:500 10.5px/1.8 var(--f-mono);color:var(--dim2)}
+
+@media print{
+  .toc,.nav,.tbtn,.score,.btn,.noprint{display:none!important}
+  .wrap{display:block;max-width:100%;padding:0}
+  body{background:#fff;color:#000}
+  h2{page-break-after:avoid;border-top:1px solid #ccc}
+  .q,.box,table,details{page-break-inside:avoid}
+  details{border:1px solid #ccc}
+  details:not([open]) > *:not(summary){display:block!important}
+  a{color:#000;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sys">
+    <div class="sys-top">
+      <span class="dot"></span>
+      <span class="sys-title">MLS 2026 — <b>Field Guide</b></span>
+      <span class="spacer"></span>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="insights.html">Insights</a>
+        <a href="search.html">Search</a>
+        <a href="players.html">Players</a>
+        <a href="teams.html">Teams</a>
+        <a href="sequences.html">Sequences</a>
+      </nav>
+      <div class="tbtn" id="themeBtn">☾</div>
+      <button class="btn noprint" onclick="window.print()">Save as PDF</button>
+    </div>
+    <div class="sys-line">
+      A working manual for the platform — what each metric means, how to read the maps,
+      how to build a shortlist, and where the numbers will mislead you.
+    </div>
+  </div>
+
+  <aside class="toc noprint">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#s1">What this is</a></li>
+      <li><a href="#s2">How the data is built</a></li>
+      <li><a href="#s3">The metric families</a>
+        <ul class="sub">
+          <li><a href="#s3a">Expected threat</a></li>
+          <li><a href="#s3b">Sequences</a></li>
+          <li><a href="#s3c">Chain roles</a></li>
+          <li><a href="#s3d">Pass trajectory</a></li>
+          <li><a href="#s3e">Chain position</a></li>
+          <li><a href="#s3f">Squad role</a></li>
+          <li><a href="#s3g">Game state</a></li>
+        </ul>
+      </li>
+      <li><a href="#s4">Reading the maps</a></li>
+      <li><a href="#s5">Building shortlists</a></li>
+      <li><a href="#s6">Worked cases</a></li>
+      <li><a href="#s7">Traps and judgment</a></li>
+      <li><a href="#s8">Test yourself</a></li>
+      <li><a href="#s9">Quick reference</a></li>
+    </ol>
+  </aside>
+
+  <main class="doc">
+
+  <!-- ============ 1 ============ -->
+  <h2 id="s1"><span class="n">01</span>What this is, and what it isn't</h2>
+  <p class="lead">This platform turns raw match events into judgments about how teams play and
+  what players actually do. It is a scouting instrument, not a stats dump. Everything in it
+  is built to answer one of two questions: <em>what kind of player is this</em>, and
+  <em>what kind of team is this</em>.</p>
+
+  <p>Every number you will see comes from one source: event data scraped from WhoScored,
+  covering <strong>254 played matches and 393,129 individual events</strong> across the
+  2026 MLS season to date. Nothing is bought, nothing is estimated from box scores.</p>
+
+  <h3>What it is good at</h3>
+  <ul>
+    <li><strong>Style description.</strong> How a side builds, where they progress, how they
+    behave when losing. These are the most reliable outputs because they aggregate thousands
+    of possessions.</li>
+    <li><strong>Role identification.</strong> What a player does with the ball relative to
+    others in his position. Not how good he is — what he <em>is</em>.</li>
+    <li><strong>Finding profiles you specify.</strong> The search tool answers questions like
+    "left-footed right-sided carriers under 23" in a way a stats site cannot.</li>
+  </ul>
+
+  <h3>What it cannot do</h3>
+  <div class="box warn">
+    <h5>Honest limitations</h5>
+    <ul>
+      <li><strong>No off-ball information.</strong> Event data records the player on the ball.
+      A striker's runs that drag a centre-back out of position are invisible. Defensive
+      positioning is invisible. This is the single biggest limitation and it never goes away.</li>
+      <li><strong>No defender positions.</strong> We can see where a pass started and ended,
+      not who was between those points. This is why passes are labelled by
+      <em>trajectory</em>, not as "line-breaking" — we cannot verify a line was broken.</li>
+      <li><strong>Unused substitutes are invisible.</strong> Squad data only contains players
+      who touched the ball. "Fringe" means plays rarely and late, not "end of the bench".</li>
+      <li><strong>Age is a snapshot.</strong> WhoScored reports age at match time, not date of
+      birth, so a player can read a year light. We store the highest age observed.</li>
+      <li><strong>One season.</strong> Roughly 17 games per side. Team style is firm at this
+      sample; individual finishing and anything rate-based on low volume is not.</li>
+    </ul>
+  </div>
+
+  <p>A scout who knows these limits will get far more out of this than one who doesn't.
+  Most bad conclusions from event data come from forgetting what the data cannot see.</p>
+
+  <!-- ============ 2 ============ -->
+  <h2 id="s2"><span class="n">02</span>How the data is built</h2>
+  <p>Everything is a layer on top of the layer below. Understanding this order explains why
+  some numbers are trustworthy and others need care.</p>
+
+  <ol class="steps">
+    <li><strong>Events.</strong> Every pass, carry, tackle, shot, with coordinates, outcome,
+    and qualifiers. 393,129 of them. This is the raw material.</li>
+    <li><strong>Possession sequences.</strong> Events grouped into unbroken spells of control
+    by one team. 65,186 sequences. A sequence ends when the ball is lost, the game stops, or
+    a set piece intervenes.</li>
+    <li><strong>Team style.</strong> Sequences aggregated per club, then standardised against
+    the league so every trait reads as "how unusual is this".</li>
+    <li><strong>Player involvement.</strong> Each player's touches mapped back onto the
+    sequence they belong to, and where in that sequence they occurred.</li>
+    <li><strong>Chain roles.</strong> What share of a player's involvements look like
+    initiating, progressing, carrying, finishing, and so on.</li>
+    <li><strong>Percentiles.</strong> Every metric ranked within position pool, so a
+    centre-back is compared against centre-backs.</li>
+  </ol>
+
+  <div class="box data">
+    <h5>League benchmarks — memorise these</h5>
+    <p>You cannot judge whether a number is high without knowing the middle. For MLS 2026:</p>
+    <table>
+      <tr><th>Benchmark</th><th class="num">League average</th></tr>
+      <tr><td>Passes per possession</td><td class="num">3.61</td></tr>
+      <tr><td>Seconds per possession</td><td class="num">10.2</td></tr>
+      <tr><td>xT per possession</td><td class="num">0.0164</td></tr>
+      <tr><td>Possessions ending in a shot</td><td class="num">9.2%</td></tr>
+    </table>
+    <p>A side averaging five passes per possession is not "slightly above average", it is a
+    long way out. The spread is narrower than intuition suggests.</p>
+  </div>
+
+  <!-- ============ 3 ============ -->
+  <h2 id="s3"><span class="n">03</span>The metric families</h2>
+  <p class="lead">Seven families. Each answers a different question. The skill is knowing
+  which one to reach for.</p>
+
+  <h3 id="s3a">Expected threat (xT)</h3>
+  <p>Divide the pitch into a grid. Each cell has a value: the probability a possession
+  starting there ends in a goal. Move the ball from a low-value cell to a high-value one and
+  you have added threat. That difference is xT.</p>
+  <p>It is the platform's core currency because it values <strong>moving the ball</strong>,
+  not just the final action. A midfielder who never shoots can generate serious xT.</p>
+
+  <div class="box">
+    <h5>Why xT beats counting passes</h5>
+    <p>A completed pass in your own half from one centre-back to another adds essentially
+    nothing. A completed pass from the halfway line into the channel behind the full-back
+    adds a lot. Pass completion percentage treats them identically. xT does not.</p>
+    <p><strong>Read it as:</strong> per 90, split into <code>xt_pass_90</code> and
+    <code>xt_carry_90</code>. Carrying and passing are different skills and separating them
+    is often where the insight is.</p>
+  </div>
+
+  <p><strong>The trap:</strong> xT rewards risk-free progression. A player who only ever plays
+  the safe forward pass in front of a low block accumulates xT without ever unlocking anything.
+  Always read xT alongside chance creation.</p>
+
+  <h3 id="s3b">Sequences and team style</h3>
+  <p>Every possession is tagged with how it started, how it travelled, and how it ended. Those
+  tags aggregate into a style profile: does a side build from deep, go over the top, work the
+  ball wide, switch play, hold it up.</p>
+
+  <p>The important refinement is <strong>route productivity</strong>. Knowing a side goes
+  through the middle 35% of the time is trivia. Knowing that route produces a shot far more
+  often than the league average is a scouting report.</p>
+
+  <div class="box data">
+    <h5>Real examples</h5>
+    <table>
+      <tr><th>Side</th><th>Signature route</th><th class="num">Share</th><th>Verdict</th></tr>
+      <tr><td>Inter Miami</td><td>Through the middle</td><td class="num">34.9%</td><td>Effective</td></tr>
+      <tr><td>San Diego</td><td>Patient build</td><td class="num">24.6%</td><td>Unproductive</td></tr>
+    </table>
+    <p>Miami funnelling centrally is Messi and Busquets in a phone box, and it works. San Diego
+    build patiently and it does not pay — the definition of sterile possession, and a squad
+    with a specific hole in it.</p>
+  </div>
+
+  <h3 id="s3c">Chain roles</h3>
+  <p>Eleven behaviours, each expressed as a share of a player's total involvements: Initiator,
+  Bridge, Progressor, Carrier, Vertical, Support angle, Individual, Creator, Box threat,
+  Finisher, Tempo.</p>
+  <p>These describe <strong>function, not quality</strong>. A poor player and an excellent one
+  can share a role profile. That separation is deliberate: figure out what a player is, then
+  ask separately how well he does it.</p>
+
+  <div class="box data">
+    <h5>Archetypes from the current data</h5>
+    <table>
+      <tr><th>Player</th><th>Archetype</th></tr>
+      <tr><td>Lionel Messi</td><td>Finisher / Vertical Passer</td></tr>
+      <tr><td>Carles Gil</td><td>Progressor / Third-Man Bridge</td></tr>
+      <tr><td>Rodrigo De Paul</td><td>Third-Man Bridge / Carrier</td></tr>
+      <tr><td>Héctor Herrera</td><td>Third-Man Bridge / Tempo Setter</td></tr>
+    </table>
+    <p>Note Messi reads as a finisher rather than a creator. At 39 he is positioned to end
+    moves, not build them. The data captures the change in role without being told.</p>
+  </div>
+
+  <h3 id="s3d">Pass trajectory</h3>
+  <p>Forward passes classified by <em>how</em> they travel and <em>where</em> they land.
+  Over (chipped or long), around (worked laterally), or through (played on the floor between
+  bodies). Landing inside, in behind, or outside.</p>
+  <p>This is the closest thing to describing a passing style rather than counting passes.</p>
+
+  <div class="box data">
+    <h5>Carles Gil's distribution</h5>
+    <p>Over 27.1% · Around 67.4% · Through 5.5%<br>
+    Inside 22.6% · In behind 45.6% · Outside 31.9%</p>
+    <p>Overwhelmingly a worker of angles rather than a chipper. Nearly half his forward passes
+    land in behind, which is why he creates from deep rather than in the box.</p>
+  </div>
+
+  <div class="box warn">
+    <h5>Read the label carefully</h5>
+    <p>This is <strong>trajectory</strong>, not "line-breaking". We know the ball's path, not
+    the defenders' positions. A through-pass classification means the ball travelled on the
+    floor into a central area; it does not prove a line was split.</p>
+  </div>
+
+  <h3 id="s3e">Chain-position value</h3>
+  <p>Almost nobody measures this and it may be the platform's most distinctive output. For
+  every possession that ended in a shot, which players were involved <strong>three or more
+  actions before the end</strong>?</p>
+  <p>The assist and key pass are already well counted. The pass that starts the move is not.</p>
+
+  <div class="box data">
+    <h5>Early involvement in shot-ending chains, per 90</h5>
+    <table>
+      <tr><th>Player</th><th>Club</th><th class="num">Value</th></tr>
+      <tr><td>Héctor Herrera</td><td>Houston</td><td class="num">7.02</td></tr>
+      <tr><td>Jeppe Tverskov</td><td>San Diego</td><td class="num">5.57</td></tr>
+      <tr><td>Tristan Muyumba</td><td>Atlanta</td><td class="num">5.16</td></tr>
+      <tr><td>Manu Duah</td><td>San Diego</td><td class="num">5.08</td></tr>
+    </table>
+    <p>Deep midfielders and a ball-playing centre-back — precisely the players whose
+    contribution disappears from conventional metrics. If you want the man whose team's
+    dangerous moves run <em>through</em> him rather than end with him, this is the column.</p>
+  </div>
+
+  <h3 id="s3f">Squad role and leverage</h3>
+  <p>Two axes. <strong>Selection share</strong> is minutes played as a proportion of minutes
+  available while the player was at the club, so a July signing is not punished for games he
+  could not have played. <strong>Leverage</strong> is the share of his minutes played with the
+  score within one goal.</p>
+
+  <div class="box warn">
+    <h5>The minutes-inflated trap</h5>
+    <p>A player with strong per-90 numbers accumulated at 3-0 is not the same as one producing
+    at 1-1. Leverage separates them, and it is invisible in every conventional stat.</p>
+    <p>Current flags include <strong>Dejan Joveljić</strong> (98.5% of available minutes but
+    71.8% leverage) and <strong>Braian Ojeda</strong> (98.3% / 68.2%). Both play almost
+    everything; a disproportionate share of it comes with the game already decided.</p>
+    <p>This does not make them bad players. It means their rate stats deserve a second look
+    before you pay for them.</p>
+  </div>
+
+  <h3 id="s3g">Game state</h3>
+  <p>Every possession is tagged with the score at the moment it began. That single addition
+  unlocks the difference between a team's <em>identity</em> and its <em>reaction</em>.</p>
+
+  <div class="box data">
+    <h5>Directness by game state</h5>
+    <table>
+      <tr><th>Side</th><th class="num">Winning</th><th class="num">Losing</th><th class="num">Swing</th></tr>
+      <tr><td>Portland</td><td class="num">0.318</td><td class="num">0.377</td><td class="num">+0.059</td></tr>
+      <tr><td>Chicago</td><td class="num">0.383</td><td class="num">0.424</td><td class="num">+0.041</td></tr>
+    </table>
+    <p>Portland change character sharply when chasing. A side whose numbers barely move
+    between states has a settled identity; a side that swings hard is reactive. Both are
+    useful to know before you play them.</p>
+  </div>
+
+  <!-- ============ 4 ============ -->
+  <h2 id="s4"><span class="n">04</span>Reading the maps</h2>
+  <p class="lead">On the Players page, click any value in a ranking table to plot the actions
+  behind it. The number tells you how much; the map tells you where, and where is usually the
+  more useful half.</p>
+
+  <h3>Pass maps</h3>
+  <p>Look for three things, in this order:</p>
+  <ol>
+    <li><strong>Origin cluster.</strong> Where does he receive? A midfielder whose passes all
+    start in his own half is a different player from one starting between the lines, even with
+    identical volume.</li>
+    <li><strong>Direction and fan.</strong> A narrow fan pointing forward means a specialist.
+    A wide fan means a distributor. Neither is better; they suit different systems.</li>
+    <li><strong>The empty regions.</strong> What he never attempts is as informative as what he
+    does. A deep midfielder with no passes into the left channel may have a genuine limitation.</li>
+  </ol>
+
+  <h3>Carry maps</h3>
+  <p>Carries show ball-progression under his own power. Long lines from deep are a
+  ball-carrying midfielder; short repeated lines near the touchline are a winger isolating a
+  full-back.</p>
+  <p><strong>Watch for:</strong> carries that end in the same place repeatedly. That is usually
+  a player who runs into a wall — carrying without penetrating.</p>
+
+  <h3>Shot maps</h3>
+  <p>Point position is shot location, size should be read as chance quality. The question is
+  never "how many" but "from where".</p>
+  <ul>
+    <li>Tight cluster inside the six-yard box: a genuine penalty-box striker.</li>
+    <li>Scattered attempts from 25 yards: either a specialist or a player with poor shot
+    selection. The conversion column tells you which.</li>
+    <li>Everything from one side of the box: a cutting-in wide forward, not a centre-forward.</li>
+  </ul>
+
+  <h3>xT maps</h3>
+  <p>The newest view, and the one requiring the most care. Each arrow is a pass or carry
+  weighted by threat added.</p>
+
+  <div class="box warn">
+    <h5>Keep the negatives visible</h5>
+    <p>A backwards pass subtracts threat. Showing only positive actions flatters everybody
+    equally and teaches you nothing. A player whose map is dense with small positives and few
+    negatives is a low-risk progressor; one with large positives and large negatives is a
+    gambler. Both exist and you should be able to tell them apart at a glance.</p>
+  </div>
+
+  <!-- ============ 5 ============ -->
+  <h2 id="s5"><span class="n">05</span>Building a shortlist</h2>
+  <p class="lead">The Search page is the recruitment tool. It loads every profiled player once
+  and filters instantly, so exploration is cheap — change a slider and look again.</p>
+
+  <h4>The method</h4>
+  <ol class="steps">
+    <li><strong>Define the role, not the position.</strong> "Left centre-back" is a position.
+    "A centre-back who can carry out of pressure and hit a diagonal" is a role. Only the second
+    can be searched.</li>
+    <li><strong>Set the pool and the floor first.</strong> Position pool, then minimum 90s.
+    Six is the sensible default; below that, rate stats are noise.</li>
+    <li><strong>Add one behavioural filter.</strong> Trait sliders filter on percentile within
+    pool. Start with one at 70 and see how many survive.</li>
+    <li><strong>Sort by the thing that matters.</strong> Filtering decides who qualifies;
+    sorting decides who leads. "Efficient" is not one number — choose whether you mean threat
+    generated, volume, or penetration.</li>
+    <li><strong>Read the survivors as profiles, not ranks.</strong> Open two or three cards
+    and compare. The list is a starting point, never an answer.</li>
+  </ol>
+
+  <div class="box data">
+    <h5>Worked example: the original question</h5>
+    <p><em>"The most efficient right-sided carriers who are left-footed."</em></p>
+    <p>Pool: wide. Side: right. Foot: left. Floor: 6 nineties. Sort: xT from carries.</p>
+    <table>
+      <tr><th>Player</th><th>Club</th><th class="num">Age</th><th class="num">xT/carry 90</th></tr>
+      <tr><td>Gabriel Pec</td><td>LA Galaxy</td><td class="num">25</td><td class="num">0.381</td></tr>
+      <tr><td>Cavan Sullivan</td><td>Philadelphia</td><td class="num">16</td><td class="num">0.376</td></tr>
+      <tr><td>Aiden Hezarkhani</td><td>Salt Lake</td><td class="num">19</td><td class="num">0.338</td></tr>
+      <tr><td>Anders Dreyer</td><td>San Diego</td><td class="num">28</td><td class="num">0.329</td></tr>
+    </table>
+    <p>Note what this surfaced: an established international, a sixteen-year-old, and two in
+    between. That age spread is the point — the query described a <em>profile</em> and the
+    tool returned everyone who fits it regardless of reputation.</p>
+  </div>
+
+  <!-- ============ 6 ============ -->
+  <h2 id="s6"><span class="n">06</span>Worked cases</h2>
+
+  <details>
+    <summary>Case 1 — We need a ball-playing centre-back under 23</summary>
+    <p><strong>Approach.</strong> Pool CB, age cap 23, floor 6 nineties, progression trait at
+    70th percentile, sorted by progressive passes per 90.</p>
+    <p><strong>Result.</strong> Justin Che (New York, 22) at 11.36 progressive passes per 90,
+    Olwethu Makhanya (Philadelphia, 22) at 8.08, Lucas Herrington (Colorado, 18) at 7.47.</p>
+    <p><strong>Now think.</strong> Volume is not quality. Open each card and check progressive
+    pass <em>completion</em>. A defender attempting many and completing few may be forced into
+    it by a poor structure rather than choosing it. Then check chain-position value: does his
+    progression actually feed moves that end in shots?</p>
+  </details>
+
+  <details>
+    <summary>Case 2 — Our striker's numbers look great. Should we trust them?</summary>
+    <p><strong>Approach.</strong> Check the game-state adjusted output before anything else.</p>
+    <p><strong>Result.</strong> Sam Surridge reads 0.544 raw xG per 90, but 0.452 once
+    weighted for whether the game was live. Rafael Navarro drops from 0.401 to 0.320.</p>
+    <p><strong>Now think.</strong> Neither is a bad player, but a meaningful share of their
+    output arrived in games already decided. Cross-check leverage on the squad-role view. If
+    selection share is high and leverage is low, you are looking at a player whose rate stats
+    are inflated by garbage time.</p>
+  </details>
+
+  <details>
+    <summary>Case 3 — How do we beat this team?</summary>
+    <p><strong>Approach.</strong> Team page press profile plus the route breakdown.</p>
+    <p><strong>Result.</strong> Philadelphia contain direct play 2.38 standard deviations
+    better than the league, but are neutral against short build-up (-0.11). Salt Lake are
+    similar: excellent against direct (1.82), unremarkable against short (0.02).</p>
+    <p><strong>Now think.</strong> Going long against either is playing to their strength. The
+    plan is patient build and playing through them, and the personnel question follows from
+    that: do we have midfielders who can receive under pressure?</p>
+  </details>
+
+  <details>
+    <summary>Case 4 — Find me a cheaper version of a player we can't afford</summary>
+    <p><strong>Approach.</strong> Open the target's card, read the "a bit like" comparisons,
+    then use the full similarity function which compares across 32 dimensions rather than
+    chain roles alone.</p>
+    <p><strong>Now think.</strong> Similarity is stylistic, not qualitative. The closest match
+    to an elite player is often a player who does the same things less well — which is exactly
+    what you want if the price gap is large and the system fit matters more than peak quality.
+    Always check squad role: a similar profile who is a rotation player at a weaker club is a
+    different proposition from a key player.</p>
+  </details>
+
+  <!-- ============ 7 ============ -->
+  <h2 id="s7"><span class="n">07</span>Traps and judgment</h2>
+  <p class="lead">Everything below has caught someone out. Most of them have caught me.</p>
+
+  <h4>The pool trap</h4>
+  <p>Percentiles are computed within position pool. A player at the 85th percentile for
+  progression among wingers is not comparable to the 85th percentile among centre-backs — the
+  underlying distributions are completely different. Always know which pool you are reading.</p>
+
+  <h4>The small-sample trap</h4>
+  <p>Six nineties is the floor for a reason. Below it, finishing metrics in particular are
+  close to meaningless: a player can be at the 99th percentile for conversion on four goals
+  from six shots. Role percentages stabilise faster than rate stats.</p>
+
+  <h4>The style-is-not-quality trap</h4>
+  <p>Chain roles describe function. A player can be the league's most extreme progressor and
+  a poor footballer. The archetype tells you where he fits; the metrics tell you how well.</p>
+
+  <h4>The team-effect trap</h4>
+  <p>A midfielder at a possession-dominant side will accumulate progressive passes because his
+  team has the ball more. Some of what looks like individual quality is team context. Compare
+  within similar teams where you can, and treat volume metrics with more suspicion than
+  efficiency ones.</p>
+
+  <h4>The absence-of-evidence trap</h4>
+  <p>If a player shows nothing for aerial duels, that may mean he is poor in the air — or that
+  his team never puts him in aerial situations. Event data records what happened, not what
+  was possible.</p>
+
+  <div class="box warn">
+    <h5>The single most useful habit</h5>
+    <p>Before believing any number, ask: <em>what would make this number high for a reason
+    other than the one I'm assuming?</em> Nearly every mistake in scouting analytics is an
+    unexamined alternative explanation.</p>
+  </div>
+
+  <!-- ============ 8 ============ -->
+  <h2 id="s8"><span class="n">08</span>Test yourself</h2>
+  <p class="lead">Three kinds. The quiz checks comprehension, the exercises check reasoning,
+  the tasks check that you can actually drive the tool.</p>
+
+  <h3>Part A — Comprehension quiz</h3>
+  <p>Ten questions. Click an answer to see whether it's right and why.</p>
+  <div id="quiz"></div>
+  <div class="score noprint" id="score">
+    <span>Score: <b id="scoreVal">0 / 0</b></span>
+    <span id="scoreMsg" style="color:var(--dim)"></span>
+    <button class="btn" onclick="resetQuiz()">Reset</button>
+  </div>
+
+  <h3>Part B — Reasoning exercises</h3>
+  <p>Written answers. Think first, then open the model answer. There is usually more than one
+  defensible response — the reasoning matters more than matching mine.</p>
+
+  <details>
+    <summary>B1. A winger sits at the 95th percentile for take-ons but the 20th for xT from
+    carries. What is happening, and would you sign him?</summary>
+    <p>He beats his man frequently but the ball does not end up in more dangerous places
+    afterwards. Three plausible explanations: he dribbles laterally or backwards; he beats his
+    man in low-value areas; or he takes on so often that successful attempts are diluted by a
+    poor success rate — check take-on percentage to separate these.</p>
+    <p>Whether to sign depends on system. In a side that needs someone to hold width and
+    occupy a full-back, the take-ons have value even without progression. In a side that needs
+    penetration, this profile is decorative. The metric does not answer the question; it tells
+    you which question to ask the coach.</p>
+  </details>
+
+  <details>
+    <summary>B2. Two centre-backs have identical progressive pass volume. One has far higher
+    chain-position value. What does that tell you?</summary>
+    <p>Volume says they attempt the same amount of progression. Chain-position value says one
+    of them progresses into moves that actually end in shots, while the other's progression
+    dissipates. That is the difference between a defender who breaks lines usefully and one
+    who moves the ball forward into a dead end.</p>
+    <p>Caveat: team quality contaminates this. A centre-back at a side with excellent forwards
+    will look better on chain-position value regardless of his own contribution. Compare their
+    teams' shot-ending rates before concluding.</p>
+  </details>
+
+  <details>
+    <summary>B3. Your side is 68% possession and bottom-third for xT per possession. Diagnose
+    it, and say what you would buy.</summary>
+    <p>Sterile control. The side can keep the ball but cannot move it into dangerous areas.
+    Check the route breakdown to find where possessions die: if the signature route is patient
+    build with an unproductive verdict, the problem is the final third, not the build-up.</p>
+    <p>Then check the squad for a chance-creation gap. If no player is above the 60th
+    percentile in-pool for creation, the diagnosis is straightforward. What you buy is a
+    line-breaking passer or a runner in behind, and which one depends on whether opponents are
+    sitting deep against you — a side facing low blocks needs the passer.</p>
+  </details>
+
+  <details>
+    <summary>B4. A player is flagged minutes-inflated. Give two reasons this might be unfair.</summary>
+    <p>First, he may play for a dominant side that wins by three regularly, so low leverage
+    reflects his team rather than his usage — the flag is measured against league-wide
+    leverage, so a whole squad can be caught.</p>
+    <p>Second, a substitute who habitually comes on to close out games will have low leverage
+    by design; that is a defined and valuable role, not a sign his output is hollow. The flag
+    is a prompt to look closer, never a verdict.</p>
+  </details>
+
+  <details>
+    <summary>B5. Why is "line-breaking passes" labelled "pass trajectory" here, and why does
+    that distinction matter for a scouting report?</summary>
+    <p>Because we have the ball's path but not the defenders' positions. We can say a pass
+    travelled on the floor into a central area; we cannot say it split a defensive line.</p>
+    <p>It matters because a scouting report that claims verified line-breaking is making a
+    claim the data does not support. If challenged in a meeting, you would have to concede the
+    point, which undermines everything else in the document. Precision about what a metric
+    proves is what makes the rest credible.</p>
+  </details>
+
+  <h3>Part C — Tasks in the tool</h3>
+  <p>Do these in the site itself. Each has a checkable answer.</p>
+
+  <details>
+    <summary>C1. Find the three most creative attacking midfielders under 25 with at least
+    eight 90s. Which one has the lowest pass completion, and why might that be acceptable?</summary>
+    <p><strong>How:</strong> Search → pool AM → age 25 → minutes 8 → creation trait 70 → sort
+    by xA per 90.</p>
+    <p><strong>The point:</strong> creators often complete fewer passes because through balls
+    and passes in behind fail more often than safe ones. Low completion in a high-creation
+    profile is frequently a feature. Check whether his incomplete passes are ambitious ones by
+    opening the pass map.</p>
+  </details>
+
+  <details>
+    <summary>C2. Pick any team. Identify their signature route and whether it pays off. Then
+    name one opponent trait that would neutralise them.</summary>
+    <p><strong>How:</strong> Insights → filter by that team → read the team profile card.</p>
+    <p><strong>The point:</strong> a side reliant on one productive route is vulnerable to an
+    opponent strong against exactly that route. Cross-reference with the press profile of the
+    teams they play worst against.</p>
+  </details>
+
+  <details>
+    <summary>C3. Use the rankings drill-through: pick the league leader for xT from passing,
+    plot his actions, and describe his passing shape in one sentence.</summary>
+    <p><strong>How:</strong> Players → Rank tab → metric xT from passing → click the top value.</p>
+    <p><strong>The point:</strong> this is the habit worth building. Never accept a ranking
+    without looking at the actions behind it. A single map will tell you in seconds whether the
+    number reflects what you assumed.</p>
+  </details>
+
+  <details>
+    <summary>C4. Find a player whose archetype does not match his listed position, and explain
+    whether it is a misuse or a deliberate tactical choice.</summary>
+    <p><strong>How:</strong> Insights → Recruitment → look for misfit profiles.</p>
+    <p><strong>The point:</strong> a striker reading as a Link Player is usually a false nine
+    by design. A centre-back reading as a Carrier may be covering for a lack of midfield
+    progression. Distinguishing intent from accident requires watching the games — the data
+    only flags the anomaly.</p>
+  </details>
+
+  <!-- ============ 9 ============ -->
+  <h2 id="s9"><span class="n">09</span>Quick reference</h2>
+  <table>
+    <tr><th>Term</th><th>Meaning</th><th>Watch for</th></tr>
+    <tr><td>xT</td><td>Threat added by moving the ball between pitch zones</td><td>Rewards safe progression; pair with creation</td></tr>
+    <tr><td>Sequence</td><td>Unbroken spell of possession by one team</td><td>Ends on loss, stoppage, or set piece</td></tr>
+    <tr><td>Chain role</td><td>Share of involvements matching a behaviour</td><td>Function, not quality</td></tr>
+    <tr><td>Pool</td><td>Position group used for percentile comparison</td><td>CB, FB, CM, AM, W, ST</td></tr>
+    <tr><td>Trajectory</td><td>Over / around / through, by destination</td><td>Not verified line-breaking</td></tr>
+    <tr><td>Chain-position value</td><td>Early involvement in shot-ending moves</td><td>Contaminated by team quality</td></tr>
+    <tr><td>Selection share</td><td>Minutes as a share of minutes available</td><td>Availability-adjusted, not raw</td></tr>
+    <tr><td>Leverage</td><td>Share of minutes with the score within one</td><td>Low = output may be inflated</td></tr>
+    <tr><td>Directness</td><td>Net upfield progress per unit of ball travel</td><td>Compare across game states</td></tr>
+    <tr><td>Archetype</td><td>Two highest-ranked chain roles</td><td>Descriptive label, not a grade</td></tr>
+  </table>
+
+  </main>
+
+  <div class="foot">
+    Built from 254 matches and 393,129 events · MLS 2026 · every figure in this guide is drawn
+    from the live database and will drift as the season progresses.
+  </div>
+</div>
+
+<script>
+const QUIZ=[
+  {q:"A midfielder has high xT from passing but very few key passes. What is the most likely explanation?",
+   a:["He is being credited for his teammates' work",
+      "He progresses the ball into good areas but others play the final ball",
+      "The metric is broken for midfielders",
+      "He takes a lot of shots"],
+   c:1,e:"xT rewards moving the ball into more dangerous zones. A deep progressor can generate large xT without ever playing the pass that creates a shot. This is the distinction between building and finishing a move."},
+
+  {q:"Why are percentiles calculated within position pool rather than across the whole league?",
+   a:["It makes the numbers look better",
+      "Because the underlying distributions differ enormously by position",
+      "To reduce computation",
+      "Because positions are fixed in modern football"],
+   c:1,e:"A centre-back and a winger have completely different distributions for almost every metric. Ranking them together would make every winger look like an elite progressor and every defender look poor."},
+
+  {q:"A team ranks 2nd for passes per possession and 28th for xT per possession. What is this?",
+   a:["A high-pressing side","A counter-attacking side","Sterile control","A direct side"],
+   c:2,e:"Dominating the ball without generating threat. The side can keep possession but cannot move it into dangerous areas — usually a final-third personnel problem rather than a build-up one."},
+
+  {q:"A pass is classified as 'through'. What does that prove?",
+   a:["It split a defensive line",
+      "It travelled on the floor into a central area",
+      "It beat the last defender",
+      "It was a assist"],
+   c:1,e:"We have the ball's path but not defender positions. Trajectory classification describes how the ball travelled, not what it beat. Claiming verified line-breaking would overstate what the data supports."},
+
+  {q:"A player has 98% selection share but 68% leverage. What does that mean?",
+   a:["He is his team's best player",
+      "He plays almost every minute, but much of it with the game decided",
+      "He is injured often",
+      "He plays in a weak league"],
+   c:1,e:"High selection means the manager plays him whenever available. Low leverage means a disproportionate share of those minutes came when the score was already beyond one goal — so his per-90 numbers deserve scrutiny."},
+
+  {q:"Why is 'chain-position value' contaminated by team quality?",
+   a:["It isn't",
+      "Because a player at a side with good forwards will appear in more shot-ending moves",
+      "Because it only counts goals",
+      "Because it excludes defenders"],
+   c:1,e:"The metric counts early involvement in possessions that ended in a shot. If your teammates are good at producing shots, you appear more often regardless of your own contribution. Compare within similar teams."},
+
+  {q:"What is the minimum sample the guide recommends before trusting rate statistics?",
+   a:["2 nineties","6 nineties","20 nineties","No minimum needed"],
+   c:1,e:"Six is the working floor. Below that, finishing and conversion metrics in particular are close to random. Role percentages stabilise sooner than rate stats, but six is a sensible default across the board."},
+
+  {q:"A side's directness barely changes between winning and losing. What does that suggest?",
+   a:["The data is wrong",
+      "A settled identity that does not chase the game",
+      "They are a poor team",
+      "They score too early"],
+   c:1,e:"A stable profile across game states indicates a side committed to a way of playing. A large swing indicates a reactive side. Neither is inherently better, but it tells you what to expect when you go a goal up against them."},
+
+  {q:"Chain roles describe a player's function. What do they NOT tell you?",
+   a:["Where he touches the ball","How often he does each thing","How well he does it","His position group"],
+   c:2,e:"Roles are deliberately separated from quality. The league's most extreme progressor could be a poor player. Establish what a player is first, then assess how well he does it using the metrics."},
+
+  {q:"On an xT map, why should negative actions stay visible?",
+   a:["To make the map look busier",
+      "Because hiding them flatters everyone and hides risk profile",
+      "They are more important than positives",
+      "To fill empty space"],
+   c:1,e:"Backwards passes subtract threat. A map of positives only makes every player look productive. Seeing both reveals whether someone is a low-risk accumulator or a high-variance gambler — a real difference in how they'd fit a system."}
+];
+
+let answered={};
+function renderQuiz(){
+  const host=document.getElementById('quiz');
+  host.innerHTML=QUIZ.map(function(item,i){
+    return '<div class="q" id="q'+i+'">'
+      +'<div class="q-t">'+(i+1)+'. '+item.q+'</div>'
+      +item.a.map(function(opt,j){
+        return '<div class="opt" data-q="'+i+'" data-o="'+j+'">'+opt+'</div>'}).join('')
+      +'<div class="exp" id="e'+i+'">'+item.e+'</div></div>';
+  }).join('');
+}
+document.addEventListener('click',function(ev){
+  const el=ev.target.closest('.opt'); if(!el) return;
+  const qi=+el.dataset.q, oi=+el.dataset.o;
+  if(answered[qi]!==undefined) return;
+  answered[qi]=oi;
+  const wrap=document.getElementById('q'+qi);
+  wrap.querySelectorAll('.opt').forEach(function(o){
+    o.classList.add('locked');
+    const j=+o.dataset.o;
+    if(j===QUIZ[qi].c) o.classList.add('correct');
+    else if(j===oi) o.classList.add('wrong');
+  });
+  document.getElementById('e'+qi).classList.add('show');
+  updateScore();
+});
+function updateScore(){
+  const done=Object.keys(answered).length;
+  let right=0;
+  Object.keys(answered).forEach(function(k){ if(answered[k]===QUIZ[k].c) right++ });
+  document.getElementById('scoreVal').textContent=right+' / '+done;
+  const msg=document.getElementById('scoreMsg');
+  if(done<QUIZ.length){ msg.textContent=(QUIZ.length-done)+' remaining'; return }
+  const pct=right/QUIZ.length;
+  msg.textContent = pct===1 ? 'Full marks.'
+    : pct>=0.8 ? 'Strong — you can drive this tool.'
+    : pct>=0.5 ? 'Reasonable. Re-read the traps section.'
+    : 'Worth working back through sections 3 and 7.';
+}
+function resetQuiz(){ answered={}; renderQuiz(); document.getElementById('scoreVal').textContent='0 / 0';
+  document.getElementById('scoreMsg').textContent=''; }
+renderQuiz();
+
+function paintThemeBtn(){document.getElementById('themeBtn').textContent=
+  document.documentElement.classList.contains('dark')?'☀':'☾';}
+document.getElementById('themeBtn').addEventListener('click',function(){
+  const d=document.documentElement.classList.toggle('dark');
+  try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
+  paintThemeBtn();
+});
+paintThemeBtn();
+</script>
+</body>
+</html>
