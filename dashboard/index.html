@@ -185,6 +185,18 @@ tbody tr:hover td{background:var(--panel2)}
       <div class="mod-d">Every possession chain in the league, searchable by shape and pattern, with similarity across teams.</div>
       <div class="mod-n"><span id="nSeq">—</span><span class="mod-arrow">→</span></div>
     </a>
+    <a class="mod" href="search.html">
+      <div class="mod-i">07 · search</div>
+      <div class="mod-t">Player search</div>
+      <div class="mod-d">Build a shortlist from behavioural traits: position, side, age, foot, and role percentiles within pool.</div>
+      <div class="mod-n"><span id="nSearch">—</span><span class="mod-arrow">→</span></div>
+    </a>
+    <a class="mod" href="guide.html">
+      <div class="mod-i">08 · guide</div>
+      <div class="mod-t">Field guide</div>
+      <div class="mod-d">How every metric is built, how to read the maps, how to build a shortlist, and where the numbers mislead. With tests.</div>
+      <div class="mod-n"><span>manual</span><span class="mod-arrow">→</span></div>
+    </a>
   </div>
 
   <div class="cols">
@@ -290,6 +302,12 @@ async function init(){
         const r2=await fetch(u2,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
         const cr2=r2.headers.get('content-range'); const n2=cr2?cr2.split('/')[1]:null;
         if(n2) document.getElementById('nSeq').textContent=(+n2).toLocaleString()+' chains';
+      }catch(e){}
+      try{
+        const u3=new URL(SB+'/rest/v1/player_search'); u3.searchParams.set('select','player_id');
+        const r3=await fetch(u3,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
+        const cr3=r3.headers.get('content-range'); const n3=cr3?cr3.split('/')[1]:null;
+        if(n3) document.getElementById('nSearch').textContent=n3+' players';
       }catch(e){}
     })();
 
