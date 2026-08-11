@@ -4,7 +4,7 @@
 <script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metrics Validation — MLS 2026 Analytics</title>
+<title>Metrics Validation ΓÇö MLS 2026 Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -51,7 +51,7 @@ td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:ta
 .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font:500 11px/1.7 var(--f-mono);color:var(--dim2)}
 ul{margin:8px 0 8px 2px;padding:0;list-style:none}
 li{font:400 13px/1.6 var(--f-body);padding-left:18px;position:relative;margin:5px 0}
-li:before{content:'—';position:absolute;left:0;color:var(--amber)}
+li:before{content:'ΓÇö';position:absolute;left:0;color:var(--amber)}
 .kfig{font-family:var(--f-mono);font-weight:700;color:var(--amber)}
 @media print{.nav{display:none}body{max-width:100%}.card,.m{break-inside:avoid}h2{break-after:avoid}}
 </style>
@@ -64,26 +64,26 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
     <button onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){};this.innerHTML=d?'&#9728;':'&#9789;'">&#9728;</button>
     <a href="index.html">&larr; Site</a>
   </div>
-  <div class="sub">MLS 2026 · 223 matches · 724 players · how the numbers behind this platform were checked</div>
+  <div class="sub">MLS 2026 ┬╖ 223 matches ┬╖ 724 players ┬╖ how the numbers behind this platform were checked</div>
 </div>
 
 <p class="lede">Every metric on this platform was tested against three independent standards before it shipped. This page documents that process, with real examples, and is deliberate about what validation can and cannot prove.</p>
 
-<p class="dim">A note on honesty up front: face validity — checking that the leaders and laggards are who you'd expect — proves a metric isn't broken and behaves as designed. It is not external ground truth. Where ground truth exists (xG, xT), we use it. Where a public reference exists (sequence structure), we benchmark to it. Everywhere else, face validity plus internal cross-consistency is the standard, and its limits are stated at the end.</p>
+<p class="dim">A note on honesty up front: face validity ΓÇö checking that the leaders and laggards are who you'd expect ΓÇö proves a metric isn't broken and behaves as designed. It is not external ground truth. Where ground truth exists (xG, xT), we use it. Where a public reference exists (sequence structure), we benchmark to it. Everywhere else, face validity plus internal cross-consistency is the standard, and its limits are stated at the end.</p>
 
 <div class="methods">
-  <div class="m"><b>1 · Model fit</b><span>Modelled metrics scored against an external reference by correlation.</span></div>
-  <div class="m"><b>2 · Reference benchmark</b><span>Engine output compared to published figures from an independent tool.</span></div>
-  <div class="m"><b>3 · Face validity + cross-consistency</b><span>Leaders match expectation, and independent metrics agree on the same picture.</span></div>
+  <div class="m"><b>1 ┬╖ Model fit</b><span>Modelled metrics scored against an external reference by correlation.</span></div>
+  <div class="m"><b>2 ┬╖ Reference benchmark</b><span>Engine output compared to published figures from an independent tool.</span></div>
+  <div class="m"><b>3 ┬╖ Face validity + cross-consistency</b><span>Leaders match expectation, and independent metrics agree on the same picture.</span></div>
 </div>
 
-<h2><span class="n">01</span> Model fit — xG & xT</h2>
+<h2><span class="n">01</span> Model fit ΓÇö xG & xT</h2>
 <p>The expected-goals and expected-threat models are the platform's two modelled quantities, so they get the strongest test available: correlation against an external Opta reference on the same events.</p>
 <div class="card">
-<p style="margin:0">Both models fit the reference at <span class="kfig">r = 0.975</span>. As an internal cross-check, sequences that end in a shot carry <span class="kfig">5×</span> the expected threat of those that don't (<span class="kfig">0.061</span> vs <span class="kfig">0.012</span> xT), and xT correlates with a sequence ending in a shot at <span class="kfig">0.34</span> — the threat measure rises exactly where danger does.</p>
+<p style="margin:0">Both models fit the reference at <span class="kfig">r = 0.975</span>. As an internal cross-check, sequences that end in a shot carry <span class="kfig">5├ù</span> the expected threat of those that don't (<span class="kfig">0.061</span> vs <span class="kfig">0.012</span> xT), and xT correlates with a sequence ending in a shot at <span class="kfig">0.34</span> ΓÇö the threat measure rises exactly where danger does.</p>
 </div>
 
-<h2><span class="n">02</span> Reference benchmark — the sequence engine</h2>
+<h2><span class="n">02</span> Reference benchmark ΓÇö the sequence engine</h2>
 <p>The possession-sequence engine was built from raw event data, so its segmentation rules could have been cut anywhere. To check they were cut in the right places, its output was compared to Julio Costa's published sequence numbers for Benfica. Passes-per-sequence and duration are league-independent structural quantities, so a match there means the chains themselves are being formed correctly.</p>
 <table>
 <thead><tr><th>Sequence metric</th><th class="num">Ours (MLS)</th><th class="num">Reference (Benfica)</th><th>Read</th></tr></thead>
@@ -96,7 +96,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 </table>
 <p class="dim">57,762 open-play sequences across 223 matches. The two structural metrics land on the reference almost exactly, which is the tell that segmentation is sound; the shot rate is lower because MLS is more transitional than Benfica in a weaker league.</p>
 
-<h2><span class="n">03</span> Face validity — team metrics</h2>
+<h2><span class="n">03</span> Face validity ΓÇö team metrics</h2>
 <p>For every team metric, the extremes should be the teams you'd name yourself. They are.</p>
 <table>
 <thead><tr><th>Metric</th><th>Top</th><th class="num">Value</th><th>Bottom</th><th class="num">Value</th></tr></thead>
@@ -109,38 +109,54 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 <tr><td>Goals conceded per game</td><td>Nashville</td><td class="num">0.73</td><td>Orlando City</td><td class="num">2.87</td></tr>
 </tbody>
 </table>
-<p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots — one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
+<p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots ΓÇö one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
 
-<h2><span class="n">04</span> Face validity — player chain-roles</h2>
+<h2><span class="n">04</span> Face validity ΓÇö player chain-roles</h2>
 <p>Player roles are assigned purely from what a player does inside possessions, with no knowledge of their position. So if the roles are real, position should fall out on its own. It does, cleanly, for all eleven.</p>
 <table>
 <thead><tr><th>Role</th><th>Who tops it</th><th>Verdict</th></tr></thead>
 <tbody>
-<tr><td>Finisher</td><td>Preston Judd, Brian White (forwards)</td><td class="tick">✓ forwards</td></tr>
-<tr><td>Box threat</td><td>Judd, White, Lobjanidze (forwards)</td><td class="tick">✓ poachers</td></tr>
-<tr><td>Carrier</td><td>Werner, Allende, Cowell (wingers)</td><td class="tick">✓ dribblers</td></tr>
-<tr><td>Individual (take-ons)</td><td>Minoungou, Jaime (wingers)</td><td class="tick">✓ 1v1 players</td></tr>
-<tr><td>Support angle (diagonals)</td><td>Jeong, Pellegrino, Mighten (wide fwds)</td><td class="tick">✓ channel runners</td></tr>
-<tr><td>Creator</td><td>Kelsy, Sabaly (attackers)</td><td class="tick">✓ chance makers</td></tr>
-<tr><td>Initiator</td><td>Jones, Larsen, Harriel (defenders)</td><td class="tick">✓ build from back</td></tr>
-<tr><td>Bridge</td><td>Maher, Miller, Long (centre-backs)</td><td class="tick">✓ ball-playing CBs</td></tr>
-<tr><td>Progressor</td><td>Kamal Miller (ball-playing CB)</td><td class="tick">✓ deep progressor</td></tr>
-<tr><td>Controller — quick release</td><td>Piette (holding mid, 2.1s)</td><td class="tick">✓ one-touch</td></tr>
+<tr><td>Finisher</td><td>Preston Judd, Brian White (forwards)</td><td class="tick">Γ£ô forwards</td></tr>
+<tr><td>Box threat</td><td>Judd, White, Lobjanidze (forwards)</td><td class="tick">Γ£ô poachers</td></tr>
+<tr><td>Carrier</td><td>Werner, Allende, Cowell (wingers)</td><td class="tick">Γ£ô dribblers</td></tr>
+<tr><td>Individual (take-ons)</td><td>Minoungou, Jaime (wingers)</td><td class="tick">Γ£ô 1v1 players</td></tr>
+<tr><td>Support angle (diagonals)</td><td>Jeong, Pellegrino, Mighten (wide fwds)</td><td class="tick">Γ£ô channel runners</td></tr>
+<tr><td>Creator</td><td>Kelsy, Sabaly (attackers)</td><td class="tick">Γ£ô chance makers</td></tr>
+<tr><td>Initiator</td><td>Jones, Larsen, Harriel (defenders)</td><td class="tick">Γ£ô build from back</td></tr>
+<tr><td>Bridge</td><td>Maher, Miller, Long (centre-backs)</td><td class="tick">Γ£ô ball-playing CBs</td></tr>
+<tr><td>Progressor</td><td>Kamal Miller (ball-playing CB)</td><td class="tick">Γ£ô deep progressor</td></tr>
+<tr><td>Controller ΓÇö quick release</td><td>Piette (holding mid, 2.1s)</td><td class="tick">Γ£ô one-touch</td></tr>
 </tbody>
 </table>
-<p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements — a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
+<p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements ΓÇö a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
 
-<h2><span class="n">05</span> Similarity — does "similar" mean similar</h2>
+<h2><span class="n">04b</span> Face validity &mdash; the impact composite</h2>
+<p>The DNA layer condenses every pillar into two numbers per player: <b>impact</b>, weighted towards the pillars that matter for his position, and <b>completeness</b>, a penalised average that punishes a glaring weakness. The test is whether the top of that list reads like a list of the league's best players.</p>
+<table>
+<thead><tr><th>Player</th><th>Club</th><th>Pool</th><th class="num">Impact</th><th class="num">Completeness</th><th>Top pillar</th></tr></thead>
+<tbody>
+<tr><td>Frankie Westfield</td><td>Philadelphia</td><td>FB</td><td class="num">100</td><td class="num">99</td><td>Creation</td></tr>
+<tr><td>Lionel Messi</td><td>Inter Miami</td><td>AM</td><td class="num">100</td><td class="num">96</td><td>Creation</td></tr>
+<tr><td>Jack McGlynn</td><td>Houston</td><td>CM</td><td class="num">100</td><td class="num">89</td><td>Progression</td></tr>
+<tr><td>Jackson Ragen</td><td>Seattle</td><td>CB</td><td class="num">99</td><td class="num">99</td><td>Progression</td></tr>
+<tr><td>Andy N&aacute;jar</td><td>Nashville</td><td>FB</td><td class="num">99</td><td class="num">98</td><td>Progression</td></tr>
+<tr><td>Sebastian Berhalter</td><td>Vancouver</td><td>CM</td><td class="num">98</td><td class="num">100</td><td>Creation</td></tr>
+</tbody>
+</table>
+<p><b>Two things are worth noting.</b> First, the list is not dominated by forwards: full-backs, a centre-back and midfielders lead it, because impact is weighted by what matters for each position rather than by attacking output. That is the intended behaviour, and it is the opposite of what a naive composite produces.</p>
+<p>Second, <b>impact and completeness genuinely diverge</b>. Milan Iloski also scores 100 for impact but only 71 for completeness &mdash; elite at what his position demands, with a clear hole elsewhere. Berhalter is the inverse, 98 impact but a perfect 100 completeness. A single rating would collapse those two very different players into the same number, which is exactly why there are two.</p>
+
+<h2><span class="n">05</span> Similarity ΓÇö does "similar" mean similar</h2>
 <p>The similarity engines find nearest neighbours by cosine on z-scored profiles. The test is whether the matches are ones a scout would nod at.</p>
 <div class="card">
-<p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players — Fernández, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
-<p style="margin:6px 0 0"><b>Team.</b> Inter Miami's closest stylistic peers are Real Salt Lake and LAFC — the league's possession-and-penetrate cluster.</p>
+<p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players ΓÇö Fern├índez, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
+<p style="margin:6px 0 0"><b>Team.</b> Inter Miami's closest stylistic peers are Real Salt Lake and LAFC ΓÇö the league's possession-and-penetrate cluster.</p>
 </div>
 
-<h2><span class="n">06</span> What we found wrong — and fixed</h2>
+<h2><span class="n">06</span> What we found wrong ΓÇö and fixed</h2>
 <p>Validation only means something if it can fail. It did, repeatedly, and each catch is documented here because a process that never finds anything isn't testing anything.</p>
 <ul>
-<li><b>xT grid mis-indexed.</b> The lookup assumed a 16×6 grid; the real grid is 12×8. Every advanced-third action was silently reading an empty cell. Caught when box-edge lookups returned null, fixed, re-validated against a sane season total.</li>
+<li><b>xT grid mis-indexed.</b> The lookup assumed a 16├ù6 grid; the real grid is 12├ù8. Every advanced-third action was silently reading an empty cell. Caught when box-edge lookups returned null, fixed, re-validated against a sane season total.</li>
 <li><b>Sequences over-segmented (v1).</b> First pass gave 1.77 passes per sequence, half the reference. Cause: aerial duels and defensive touches were being allowed to define possession, chopping real chains into fragments. Restricting possession to controlled touches brought it to 3.55, on reference.</li>
 <li><b>Central-progression band too wide.</b> Defining "central" as the full box width credited 60% of progression as central. Narrowed to a true middle-third corridor, it dropped to a meaningful 30%.</li>
 <li><b>Bridge role too loose.</b> "Any mid-chain forward pass" put a goalkeeper on top at 60%. Redefined as a pass that actually advances the ball a third, it now surfaces ball-playing centre-backs at ~20%, matching the reference scale.</li>
@@ -149,15 +165,15 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 
 <h2><span class="n">07</span> Known limitations</h2>
 <ul>
-<li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15–30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
+<li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15ΓÇô30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
 <li><b>Tempo resolution.</b> Event timestamps are whole-second, so a single player's hold time is coarse. Averaged over 1,000+ involvements it separates holders from quick-releasers reliably, but it is not sub-second precise.</li>
-<li><b>Proxy definitions.</b> A few metrics — hold-up, support angle, wide triangles — are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
+<li><b>Proxy definitions.</b> A few metrics ΓÇö hold-up, support angle, wide triangles ΓÇö are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
 <li><b>Face validity is not ground truth.</b> Outside xG and xT, these checks confirm metrics behave as designed and agree with each other and with football sense. They do not claim to be externally verified truth, and this page does not pretend otherwise.</li>
 </ul>
 
 <div class="foot">
-data · whoscored · xg & xt fitted r=0.975 vs opta · sequences benchmarked vs published reference · face validity + cross-consistency across 30 teams<br>
-generated from the live database · figures reproducible from the platform
+data ┬╖ whoscored ┬╖ xg & xt fitted r=0.975 vs opta ┬╖ sequences benchmarked vs published reference ┬╖ face validity + cross-consistency across 30 teams<br>
+generated from the live database ┬╖ figures reproducible from the platform
 </div>
 </body>
 </html>

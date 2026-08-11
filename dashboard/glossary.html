@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metric reference · MLS 2026</title>
+<title>Metric reference ┬╖ MLS 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -11,6 +11,13 @@
   --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
   --f-disp:'Archivo','Inter',system-ui,sans-serif;
   --f-body:'Inter',system-ui,sans-serif;
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark{
   --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
   --line:#1c222c;--line2:#2b333f;
   --text:#e8eef6;--dim:#8794a6;--dim2:#5b6675;
@@ -91,23 +98,34 @@ a{color:inherit;text-decoration:none}
 .spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--amber);
   border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px;
+  margin-left:auto;flex-shrink:0}
+.tbtn:hover{color:var(--amber);border-color:var(--amber-line)}
 </style>
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
 </head>
 <body>
 
 <div class="hdr">
-  <span class="hdr-mark">▐</span>
-  <div><div class="hdr-t">Metric reference</div><div class="hdr-s" id="hs">loading…</div></div>
+  <span class="hdr-mark">ΓûÉ</span>
+  <div><div class="hdr-t">Metric reference</div><div class="hdr-s" id="hs">loadingΓÇª</div></div>
   <div class="nav">
-    <a href="index.html">Home</a><a href="match.html">Match</a>
+    <a href="index.html">Home</a><a href="insights.html">Insights</a>
+    <a href="search.html">Search</a><a href="match.html">Match</a>
     <a href="players.html">Players</a><a href="teams.html">Teams</a>
+    <a href="sequences.html">Sequences</a><a href="guide.html">Guide</a>
     <a class="on" href="glossary.html">Reference</a>
   </div>
+  <div class="tbtn" id="themeBtn">☾</div>
 </div>
 
 <div class="wrap">
   <div class="side">
-    <div class="side-top"><input class="q" id="q" placeholder="filter metrics…" autocomplete="off" spellcheck="false"></div>
+    <div class="side-top"><input class="q" id="q" placeholder="filter metricsΓÇª" autocomplete="off" spellcheck="false"></div>
     <div class="list" id="list"></div>
   </div>
   <div class="main" id="main"><div class="empty">Choose a metric</div></div>
@@ -118,7 +136,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
@@ -148,8 +166,8 @@ async function init(){
     DEFS=r[0];
     r[1].forEach(function(e){EX[e.metric]=e});
     document.getElementById('hs').textContent=
-      DEFS.length+' metrics · '+[...new Set(DEFS.map(function(d){return d.grp}))].length+
-      ' groups · examples drawn from players with 8+ nineties';
+      DEFS.length+' metrics ┬╖ '+[...new Set(DEFS.map(function(d){return d.grp}))].length+
+      ' groups ┬╖ examples drawn from players with 8+ nineties';
     renderList();
     const q=new URLSearchParams(location.search).get('m');
     open(q&&DEFS.some(function(d){return d.key===q})?q:DEFS[0].key);
@@ -179,10 +197,10 @@ async function open(k){
   const d=DEFS.filter(function(x){return x.key===k})[0];if(!d)return;
   const e=EX[k];
   const unit=d.unit==='%'?'%':(d.unit==='m'?' m':(d.unit==='s'?' s':''));
-  const fmt=function(v){return v==null?'—':(+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
+  const fmt=function(v){return v==null?'ΓÇö':(+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
 
   let h='<div class="entry">'+
-    '<div class="e-eye">'+esc(d.grp)+(d.higher_is_better===false?' · lower is better':'')+'</div>'+
+    '<div class="e-eye">'+esc(d.grp)+(d.higher_is_better===false?' ┬╖ lower is better':'')+'</div>'+
     '<div class="e-t">'+esc(d.label)+'</div>'+
     '<div class="e-k">'+esc(d.key)+'</div>'+
     '<div class="e-d">'+esc(d.definition||'')+'</div>';
@@ -245,9 +263,9 @@ function exCard(label,p,unit){
   return '<div class="ex-c" onclick="location.href=\'players.html?player='+encodeURIComponent(p.id)+'\'">'+
     '<div class="ex-l">'+label+'</div>'+
     '<div class="ex-n">'+esc(p.n)+'</div>'+
-    '<div class="ex-m">'+esc(tname(p.t))+' · '+esc(POOL_NAME[p.p]||p.p)+'</div>'+
+    '<div class="ex-m">'+esc(tname(p.t))+' ┬╖ '+esc(POOL_NAME[p.p]||p.p)+'</div>'+
     '<div class="ex-v">'+(+p.v).toLocaleString(undefined,{maximumFractionDigits:3})+unit+'</div>'+
-    '<div class="ex-go">open profile →</div></div>';
+    '<div class="ex-go">open profile ΓåÆ</div></div>';
 }
 
 function readLine(d,best,worst,med,unit){
@@ -255,8 +273,8 @@ function readLine(d,best,worst,med,unit){
   if(!best||!best.n)return '';
   const dir=(d.higher_is_better===false)?'lowest':'highest';
   return '<b>'+esc(best.n)+'</b> posts the '+dir+' figure in the league at <b>'+u(best.v)+
-    '</b>, against a median of <b>'+u(med)+'</b> — roughly '+
-    (med&&+med!==0?(Math.abs(+best.v/+med)).toFixed(1)+'×':'well clear of')+
+    '</b>, against a median of <b>'+u(med)+'</b> ΓÇö roughly '+
+    (med&&+med!==0?(Math.abs(+best.v/+med)).toFixed(1)+'├ù':'well clear of')+
     ' the typical player. At the other end, <b>'+esc(worst.n)+'</b> records '+u(worst.v)+
     '. Click either card to see the full profile and the actions behind the number.';
 }
@@ -281,6 +299,18 @@ function caveat(k){
   return C[k]||'';
 }
 init();
+
+function paintThemeBtn(){var b=document.getElementById('themeBtn');
+  if(b) b.textContent=document.documentElement.classList.contains('dark')?'\u2600':'\u263e';}
+(function(){var b=document.getElementById('themeBtn');
+  if(!b) return;
+  b.addEventListener('click',function(){
+    var d=document.documentElement.classList.toggle('dark');
+    try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+})();
 </script>
 </body>
 </html>

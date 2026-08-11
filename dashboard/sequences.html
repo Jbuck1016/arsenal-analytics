@@ -7,10 +7,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--accent:#C39E6D;--accent-dim:rgba(195,158,109,.10);--accent-glow:rgba(195,158,109,.22);
- --bg:#f5f4f1;--bg2:#fff;--bg3:#fafaf8;--surface:rgba(0,0,0,.025);--surface2:rgba(0,0,0,.05);
- --border:#e8e5e0;--border2:#d5d2cc;--text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
- --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.07);--nb:#3f7dd6}
+:root{
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-disp:'Archivo','Inter',system-ui,sans-serif;
+  --f-body:'Inter',system-ui,sans-serif;
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark{
+  --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
+  --line:#1c222c;--line2:#2b333f;
+  --text:#e8eef6;--dim:#8794a6;--dim2:#5b6675;
+  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
+  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+}
 html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
  --bg:#0d0f14;--bg2:#161920;--bg3:#1e222b;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
  --border:#272b35;--border2:#3a3f4b;--text:#f4f6fb;--text2:#b9c3db;--text3:#8b97b4;
@@ -73,22 +86,31 @@ select option{background:var(--bg2);color:var(--text)}
 .ov-stat .v{font:700 16px/1 'JetBrains Mono',monospace;margin-top:5px;font-variant-numeric:tabular-nums}
 .split{display:grid;grid-template-columns:1.35fr .65fr;gap:12px;align-items:start}
 @media(max-width:1000px){.split{grid-template-columns:1fr}}
+
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px;
+  margin-left:auto;flex-shrink:0}
+.tbtn:hover{color:var(--amber);border-color:var(--amber-line)}
 </style>
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-logo">S</div>
   <div><div class="hdr-title">Sequence Explorer</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
   <div class="tabs" id="tabs"></div>
+  <div class="tbtn" id="themeBtn">☾</div>
 </div>
 <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 <script>
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const NAV=[['Home','index.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Reference','glossary.html']];
+const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Guide','guide.html'],['Reference','glossary.html']];
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
@@ -331,6 +353,18 @@ function openOverlay(i){
 }
 
 init();
+
+function paintThemeBtn(){var b=document.getElementById('themeBtn');
+  if(b) b.textContent=document.documentElement.classList.contains('dark')?'\u2600':'\u263e';}
+(function(){var b=document.getElementById('themeBtn');
+  if(!b) return;
+  b.addEventListener('click',function(){
+    var d=document.documentElement.classList.toggle('dark');
+    try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+})();
 </script>
 </body>
 </html>
