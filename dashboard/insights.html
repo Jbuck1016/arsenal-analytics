@@ -77,6 +77,8 @@ a{color:inherit;text-decoration:none}
 .card:hover{border-color:var(--amber-line);background:var(--panel2)}
 .card-h{font:700 13.5px/1.35 var(--f-body);color:var(--text);letter-spacing:-.01em}
 .card-d{font:400 12px/1.55 var(--f-body);color:var(--dim)}
+.card-note{font:400 11.5px/1.6 var(--f-body);color:var(--dim2);border-left:2px solid var(--amber-line);
+  padding-left:9px;margin-top:2px;font-style:italic}
 .card-f{display:flex;align-items:center;gap:9px;margin-top:2px;flex-wrap:wrap}
 .chip{font:600 9px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);
   border-radius:3px;padding:4px 7px;letter-spacing:.02em;white-space:nowrap}
@@ -184,6 +186,7 @@ function card(ins){
   return '<div class="card">'
     +'<div class="card-h">'+esc(ins.headline)+'</div>'
     +'<div class="card-d">'+esc(ins.detail)+'</div>'
+    +(ins.note?'<div class="card-note">'+esc(ins.note)+'</div>':'')
     +'<div class="card-f">'+primaryChip(ins)
     +'<span class="badge '+esc(ins.confidence)+'">'+esc(ins.confidence)+'</span>'
     +evLink(ins)+'</div>'

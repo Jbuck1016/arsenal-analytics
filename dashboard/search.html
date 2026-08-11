@@ -47,6 +47,25 @@ a{color:inherit;text-decoration:none}
 .sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:7px}
 .sys-line b{color:var(--text)}
 
+.ask{display:flex;gap:8px;margin:0 0 14px}
+#askInput{flex:1;background:var(--panel);color:var(--text);border:1px solid var(--line2);
+  border-radius:3px;padding:12px 14px;font:500 13.5px/1.3 var(--f-body)}
+#askInput:focus{outline:none;border-color:var(--amber-line)}
+#askInput::placeholder{color:var(--dim2)}
+.askbtn{white-space:nowrap;padding:0 18px}
+.ans{border:1px solid var(--amber-line);background:var(--panel);border-radius:3px;
+  padding:13px 15px;margin:0 0 14px}
+.ans-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.ans-t{font:700 10px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.parse{font:500 10.5px/1.5 var(--f-mono);color:var(--dim)}
+.parse b{color:var(--text)}
+.pill{display:inline-block;font:600 9px/1 var(--f-mono);border:1px solid var(--line2);
+  border-radius:3px;padding:4px 7px;margin-right:4px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.ans .close{margin-left:auto;cursor:pointer;color:var(--dim);font:600 10px var(--f-mono)}
+.ans .close:hover{color:var(--amber)}
+.ex{font:500 10.5px/1.7 var(--f-mono);color:var(--dim2);margin:-6px 0 14px}
+.ex span{cursor:pointer;border-bottom:1px dotted var(--line2)}
+.ex span:hover{color:var(--amber)}
 .layout{display:grid;grid-template-columns:270px 1fr;gap:14px;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr}}
 
@@ -130,7 +149,14 @@ tbody tr:hover{background:var(--panel2)}
     <div class="sys-line" id="sysLine">loading index…</div>
   </div>
 
-  <div class="layout">
+  <div class="ask">
+    <input id="askInput" type="text" autocomplete="off"
+      placeholder="Ask in plain English — e.g. ten players most similar to Cade Cowell in expected threat creation">
+    <button class="btn askbtn" id="askGo">Ask</button>
+  </div>
+  <div id="askOut"></div>
+
+  <div class="layout" id="facetLayout">
     <div class="side">
       <div class="fg">
         <div class="fl">Shortcuts</div>
@@ -199,6 +225,98 @@ async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
     if(!r.ok)throw new Error(t+' '+r.status);const d=await r.json();
     if(!Array.isArray(d)||!d.length)break;all=all.concat(d);if(d.length<PG)break;off+=PG;}
   return all;}
+
+async function sbRpc(fn, body){
+  const r = await fetch(SB+'/rest/v1/rpc/'+fn, {method:'POST',
+    headers:Object.assign({},HD,{'Content-Type':'application/json'}), body:JSON.stringify(body||{})});
+  if(!r.ok) throw new Error(fn+' '+r.status);
+  return await r.json();
+}
+
+const EXAMPLES=[
+  'ten players most similar to Cade Cowell',
+  'ten players most similar to Cade Cowell in expected threat creation',
+  'best left footed right sided wingers at carrying under 24',
+  'top 5 centre backs at progressive passing',
+  'most creative strikers'
+];
+
+function parseLine(d){
+  if(d.intent==='similar'){
+    const s=d.subject||{};
+    return 'Most similar to <b>'+esc(s.player||'')+'</b> ('+esc(s.team||'')+', '+esc(s.pos||'')+')'
+      +' · compared on <b>'+esc(d.compared_on||'overall style')+'</b>';
+  }
+  const f=d.filters||{};
+  let bits=[];
+  if(f.pool) bits.push('<span class="pill">'+esc(f.pool)+'</span>');
+  if(f.side) bits.push('<span class="pill">side '+esc(f.side)+'</span>');
+  if(f.foot) bits.push('<span class="pill">'+esc(f.foot)+' foot</span>');
+  if(f.max_age) bits.push('<span class="pill">under '+esc(f.max_age)+'</span>');
+  bits.push('<span class="pill">min '+esc(f.min_nineties||6)+' 90s</span>');
+  return 'Ranked on <b>'+esc(d.ranked_on_label||d.ranked_on||'')+'</b> · '+bits.join('');
+}
+
+function renderAsk(d){
+  const host=document.getElementById('askOut');
+  if(d.error){
+    host.innerHTML='<div class="ans"><div class="ans-h"><span class="ans-t">No answer</span>'
+      +'<span class="close" onclick="clearAsk()">clear ✕</span></div>'
+      +'<div class="parse">'+esc(d.error)+'</div></div>';
+    return;
+  }
+  const rows=d.results||[];
+  let h='<div class="ans"><div class="ans-h"><span class="ans-t">'
+    +(d.intent==='similar'?'Similarity':'Ranking')+'</span>'
+    +'<span class="close" onclick="clearAsk()">clear ✕</span></div>'
+    +'<div class="parse">'+parseLine(d)+'</div>';
+  if(!rows.length){ h+='<div class="empty">nothing matched that</div></div>'; host.innerHTML=h; return; }
+
+  if(d.intent==='similar'){
+    h+='<table><thead><tr><th class="l">#</th><th class="l">Player</th><th class="l">Team</th>'
+      +'<th>Pos</th><th>Match</th></tr></thead><tbody>'
+      +rows.map(function(r){return '<tr><td class="l rk">'+esc(r.rank)+'</td>'
+        +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+        +'<td class="l tm">'+esc(r.team)+'</td><td>'+esc(r.pos||'')+'</td>'
+        +'<td class="metric">'+esc(r.sim_pct)+'%</td></tr>'}).join('')
+      +'</tbody></table>';
+  } else {
+    h+='<table><thead><tr><th class="l">#</th><th class="l">Player</th><th class="l">Team</th>'
+      +'<th>Pos</th><th>Age</th><th>90s</th><th>Value</th><th>Pct</th></tr></thead><tbody>'
+      +rows.map(function(r){return '<tr><td class="l rk">'+esc(r.rk)+'</td>'
+        +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+        +'<td class="l tm">'+esc(r.team)+'</td><td>'+esc(r.pos||'')+'</td>'
+        +'<td>'+(r.age_seen==null?'—':esc(r.age_seen))+'</td>'
+        +'<td>'+(r.nineties==null?'—':esc(r.nineties))+'</td>'
+        +'<td class="metric">'+esc(r.value)+'</td>'
+        +'<td>'+esc(r.pct)+'</td></tr>'}).join('')
+      +'</tbody></table>';
+  }
+  h+='</div>';
+  host.innerHTML=h;
+  document.getElementById('facetLayout').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearAsk(){
+  document.getElementById('askOut').innerHTML='';
+  document.getElementById('facetLayout').style.display='';
+  document.getElementById('askInput').value='';
+}
+
+async function runAsk(){
+  const q=document.getElementById('askInput').value.trim();
+  if(!q) return;
+  document.getElementById('askOut').innerHTML=
+    '<div class="ans"><div class="parse">thinking…</div></div>';
+  try{
+    const d=await sbRpc('nl_query',{q:q,p_limit:12});
+    renderAsk(d);
+  }catch(e){
+    document.getElementById('askOut').innerHTML=
+      '<div class="ans"><div class="parse">could not run that ('+esc(e.message)+')</div></div>';
+  }
+}
 
 /* traits = the 11 chain roles; filtering is on within-pool percentile */
 const TRAITS=[
@@ -403,8 +521,17 @@ document.getElementById('themeBtn').addEventListener('click',function(){
   paintThemeBtn();
 });
 
+document.addEventListener('DOMContentLoaded',function(){});
 async function init(){
   paintThemeBtn();
+  document.getElementById('askGo').addEventListener('click',runAsk);
+  document.getElementById('askInput').addEventListener('keydown',function(e){
+    if(e.key==='Enter') runAsk();
+  });
+  document.getElementById('askOut').insertAdjacentHTML('beforebegin',
+    '<div class="ex" id="exRow">try: '+EXAMPLES.map(function(x){
+      return '<span onclick="document.getElementById(\'askInput\').value=this.textContent;runAsk()">'
+        +esc(x)+'</span>'}).join(' · ')+'</div>');
   try{
     ROWS=await sbAll('player_search',{select:'*'});
     PCT=buildPct(ROWS);
