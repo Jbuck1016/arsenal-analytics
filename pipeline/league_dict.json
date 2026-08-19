@@ -4,16 +4,28 @@
   "WhoScored": "England - Premier League"
  },
  "ESP-La Liga": {
-  "FBref": "La Liga"
+  "FBref": "La Liga",
+  "WhoScored": "Spain - LaLiga",
+  "season_start": "Aug",
+  "season_end": "May"
  },
  "ITA-Serie A": {
-  "FBref": "Serie A"
+  "FBref": "Serie A",
+  "WhoScored": "Italy - Serie A",
+  "season_start": "Aug",
+  "season_end": "May"
  },
  "GER-Bundesliga": {
-  "FBref": "Bundesliga"
+  "FBref": "Bundesliga",
+  "WhoScored": "Germany - Bundesliga",
+  "season_start": "Aug",
+  "season_end": "May"
  },
  "FRA-Ligue 1": {
-  "FBref": "Ligue 1"
+  "FBref": "Ligue 1",
+  "WhoScored": "France - Ligue 1",
+  "season_start": "Aug",
+  "season_end": "May"
  },
  "ENG-Championship": {
   "FBref": "Championship"
