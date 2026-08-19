@@ -15,9 +15,11 @@ set "REPO=%USERPROFILE%\arsenal-analytics"
 set "LOGDIR=%REPO%\logs"
 if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
-REM one log per run, dated, so a bad run can be diagnosed after the fact
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "DT=%%I"
-set "STAMP=%DT:~0,4%-%DT:~4,2%-%DT:~6,2%_%DT:~8,2%%DT:~10,2%"
+REM one log per run, dated, so a bad run can be diagnosed after the fact.
+REM PowerShell rather than wmic: wmic has been removed from recent Windows 11 builds.
+set "STAMP="
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd_HHmm'"`) do set "STAMP=%%I"
+if not defined STAMP set "STAMP=run"
 set "LOG=%LOGDIR%\scrape_%STAMP%.log"
 
 echo ================================================= >> "%LOG%"

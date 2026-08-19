@@ -87,97 +87,206 @@ def purge_null_cache(ws, game_id: str, league: str, season: str) -> None:
         pass
 
 
-def main() -> int:
-    install_league_dict()
+def fetch_leagues(sb) -> list[dict]:
+    """Active leagues from the registry, so adding a league needs no code change."""
+    try:
+        res = (
+            sb.table("leagues")
+            .select("league, display_name, season, is_active")
+            .eq("is_active", True)
+            .execute()
+        )
+        rows = res.data or []
+    except Exception as e:  # noqa: BLE001
+        print(f"Could not read the leagues registry ({e}); falling back to {DEFAULT_LEAGUE}.",
+              file=sys.stderr, flush=True)
+        rows = []
+    if not rows:
+        rows = [{"league": DEFAULT_LEAGUE, "display_name": "Major League Soccer",
+                 "season": DEFAULT_SEASON}]
+    rows.sort(key=lambda r: r["league"])
+    return rows
 
-    p = argparse.ArgumentParser(description="League-wide WhoScored -> Supabase backfill.")
-    p.add_argument("--league", default=DEFAULT_LEAGUE, help="league id (default: USA-MLS)")
-    p.add_argument("--season", default=DEFAULT_SEASON, help="season code (default: 2627)")
-    p.add_argument("--headless", action="store_true",
-                   help="run browser headless (default: headful, needed to get past the anti-bot)")
-    p.add_argument("--min-gap", type=float, default=60.0, help="min seconds between matches (default: 60)")
-    p.add_argument("--max-gap", type=float, default=120.0, help="max seconds between matches (default: 120)")
-    p.add_argument("--limit", type=int, default=0, help="only scrape the next N missing matches (0 = all)")
-    p.add_argument("--max-consecutive-failures", type=int, default=5,
-                   help="abort if this many matches fail in a row (likely blocked)")
-    p.add_argument("--list", action="store_true", help="print the plan and exit without scraping")
-    args = p.parse_args()
 
-    if args.min_gap > args.max_gap:
-        args.min_gap, args.max_gap = args.max_gap, args.min_gap
+def choose_leagues(sb, args) -> list[tuple[str, str]]:
+    """Resolve which leagues to scrape: flags first, then an interactive menu."""
+    registry = fetch_leagues(sb)
+    by_id = {r["league"]: r for r in registry}
 
-    league, season = args.league, args.season
-    sb = get_supabase()
+    def with_season(lid: str) -> tuple[str, str]:
+        reg = by_id.get(lid, {})
+        return lid, (args.season or reg.get("season") or DEFAULT_SEASON)
+
+    if args.all:
+        return [with_season(r["league"]) for r in registry]
+
+    if args.league:
+        picked: list[str] = []
+        for chunk in args.league:
+            picked.extend([x.strip() for x in chunk.split(",") if x.strip()])
+        unknown = [x for x in picked if x not in by_id]
+        if unknown:
+            print(f"Unknown league(s): {', '.join(unknown)}", file=sys.stderr, flush=True)
+            print(f"Known: {', '.join(by_id)}", file=sys.stderr, flush=True)
+            raise SystemExit(2)
+        return [with_season(x) for x in picked]
+
+    # non-interactive (Task Scheduler, cron): default rather than block on a prompt
+    if not sys.stdin.isatty():
+        return [with_season(DEFAULT_LEAGUE)]
+
+    print("\nWhich league(s) do you want to scrape?\n", flush=True)
+    for i, r in enumerate(registry, start=1):
+        print(f"  {i}. {r['display_name']}  ({r['league']}, season {r.get('season') or DEFAULT_SEASON})",
+              flush=True)
+    print("  a. all of the above\n", flush=True)
+    raw = input("Enter number(s), e.g. 1  or  1,3  or  a  [default 1]: ").strip().lower()
+
+    if raw in ("a", "all"):
+        return [with_season(r["league"]) for r in registry]
+    if not raw:
+        return [with_season(registry[0]["league"])]
+
+    chosen: list[tuple[str, str]] = []
+    for tok in raw.replace(" ", "").split(","):
+        if not tok:
+            continue
+        if tok.isdigit() and 1 <= int(tok) <= len(registry):
+            chosen.append(with_season(registry[int(tok) - 1]["league"]))
+        elif tok in by_id:
+            chosen.append(with_season(tok))
+        else:
+            print(f"Ignoring '{tok}' — not a listed option.", file=sys.stderr, flush=True)
+    if not chosen:
+        print("Nothing selected.", file=sys.stderr, flush=True)
+        raise SystemExit(2)
+    # de-duplicate, keep order
+    seen, out = set(), []
+    for c in chosen:
+        if c[0] not in seen:
+            out.append(c)
+            seen.add(c[0])
+    return out
+
+
+def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int]:
+    """Scrape every missing played match for one league. Returns (ok, failed, remaining)."""
+    print(f"\n{'=' * 62}", flush=True)
+    print(f"  {league}  season {season}", flush=True)
+    print(f"{'=' * 62}", flush=True)
+
     ws = get_scraper(league, season, headless=args.headless)
+    print(f"Reading full schedule for {league} {season}...", flush=True)
+    try:
+        sched = read_full_schedule(ws)
+    except Exception as e:  # noqa: BLE001 - one bad league must not kill the rest
+        print(f"  !! could not read schedule: {e}", file=sys.stderr, flush=True)
+        return 0, 0, 0
 
-    print(f"Reading full schedule for {league} {season} (one time)...", flush=True)
-    sched = read_full_schedule(ws)
     played = played_matches(sched)
     loaded = loaded_game_ids(sb)
-
     todo = played[~played["game_id"].astype(str).isin(loaded)].copy()
     if args.limit and args.limit > 0:
         todo = todo.head(args.limit)
 
-    total_played = len(played)
-    already = total_played - len(played[~played["game_id"].astype(str).isin(loaded)])
     n = len(todo)
     avg_gap = (args.min_gap + args.max_gap) / 2
-    est_min = round((n * avg_gap) / 60) if n else 0
+    print(f"  played in schedule : {len(played)}", flush=True)
+    print(f"  already loaded     : {len(played) - n if not args.limit else 'n/a'}", flush=True)
+    print(f"  to scrape          : {n}", flush=True)
+    if n:
+        print(f"  est. runtime       : ~{round((n * avg_gap) / 60)} min", flush=True)
 
-    print("=== Plan ===", flush=True)
-    print(f"  played matches in schedule : {total_played}", flush=True)
-    print(f"  already loaded (has events): {already}", flush=True)
-    print(f"  to scrape this run         : {n}", flush=True)
-    print(f"  est. runtime               : ~{est_min} min "
-          f"(gap {args.min_gap:.0f}-{args.max_gap:.0f}s/match)", flush=True)
-
-    if args.list or n == 0:
+    if args.list:
         if n:
             cols = [c for c in ("date", "home_team", "away_team", "home_score", "away_score", "game_id")
                     if c in todo.columns]
             print(todo[cols].to_string(index=False), flush=True)
         else:
-            print("  nothing to do — all played matches already loaded.", flush=True)
-        return 0
+            print("  nothing to do.", flush=True)
+        return 0, 0, n
+    if n == 0:
+        print("  nothing to do — all played matches already loaded.", flush=True)
+        return 0, 0, 0
 
-    succeeded = failed = 0
-    consecutive_failures = 0
-
+    succeeded = failed = consecutive = 0
     for i, (_, row) in enumerate(todo.iterrows(), start=1):
         gid = str(row.get("game_id"))
         print(f"[{i}/{n}] {row.get('date')} {row.get('home_team')} vs {row.get('away_team')} "
               f"(game_id={gid})", flush=True)
-
         purge_null_cache(ws, gid, league, season)
         try:
             process_match(sb, ws, row, league, season)
             print("  -> success", flush=True)
             succeeded += 1
-            consecutive_failures = 0
-        except Exception as e:  # noqa: BLE001 - one bad match must not kill the run
+            consecutive = 0
+        except Exception as e:  # noqa: BLE001
             print(f"  !! failed: {e}", file=sys.stderr, flush=True)
             failed += 1
-            consecutive_failures += 1
-            if consecutive_failures >= args.max_consecutive_failures:
-                print(f"\n!! {consecutive_failures} failures in a row — looks blocked. "
-                      f"Stopping. Re-run later to resume from where this left off.",
-                      file=sys.stderr, flush=True)
+            consecutive += 1
+            if consecutive >= args.max_consecutive_failures:
+                print(f"\n!! {consecutive} failures in a row for {league} — looks blocked. "
+                      f"Moving on.", file=sys.stderr, flush=True)
                 break
-
         if i < n:
             time.sleep(random.uniform(args.min_gap, args.max_gap))
 
+    print(f"  {league}: {succeeded} loaded, {failed} failed, "
+          f"{n - succeeded - failed} remaining", flush=True)
+    return succeeded, failed, n - succeeded - failed
+
+
+def main() -> int:
+    install_league_dict()
+
+    p = argparse.ArgumentParser(description="Multi-league WhoScored -> Supabase backfill.")
+    p.add_argument("--league", action="append",
+                   help="league id; repeatable or comma-separated. Omit to be asked.")
+    p.add_argument("--all", action="store_true", help="scrape every active league")
+    p.add_argument("--season", default=None,
+                   help="override the season code (default: whatever the registry says)")
+    p.add_argument("--headless", action="store_true",
+                   help="run browser headless (default: headful, needed to get past the anti-bot)")
+    p.add_argument("--min-gap", type=float, default=60.0, help="min seconds between matches")
+    p.add_argument("--max-gap", type=float, default=120.0, help="max seconds between matches")
+    p.add_argument("--limit", type=int, default=0, help="only scrape the next N per league (0 = all)")
+    p.add_argument("--max-consecutive-failures", type=int, default=5,
+                   help="give up on a league after this many failures in a row")
+    p.add_argument("--list", action="store_true", help="print the plan and exit without scraping")
+    p.add_argument("--no-rebuild", action="store_true", help="skip the analytics rebuild afterwards")
+    args = p.parse_args()
+
+    if args.min_gap > args.max_gap:
+        args.min_gap, args.max_gap = args.max_gap, args.min_gap
+
+    sb = get_supabase()
+    targets = choose_leagues(sb, args)
+
+    print(f"\nScraping {len(targets)} league(s): "
+          f"{', '.join(l for l, _ in targets)}", flush=True)
+
+    total_ok = total_failed = total_remaining = 0
+    for league, season in targets:
+        ok, failed, remaining = scrape_one_league(sb, args, league, season)
+        total_ok += ok
+        total_failed += failed
+        total_remaining += remaining
+
     print("\n=== Summary ===", flush=True)
-    print(f"  succeeded: {succeeded}", flush=True)
-    print(f"  failed:    {failed}", flush=True)
-    print(f"  remaining: {n - succeeded - failed}", flush=True)
-    if n - succeeded - failed > 0:
-        print("  (re-run the same command to resume — it only scrapes what's still missing)", flush=True)
-    # --- auto-rebuild: new games make every analytics layer stale ---
-    if succeeded > 0:
+    print(f"  leagues:   {len(targets)}", flush=True)
+    print(f"  succeeded: {total_ok}", flush=True)
+    print(f"  failed:    {total_failed}", flush=True)
+    print(f"  remaining: {total_remaining}", flush=True)
+    if total_remaining > 0 and not args.list:
+        print("  (re-run to resume — it only scrapes what's still missing)", flush=True)
+
+    if args.list:
+        return 0
+
+    # One rebuild after ALL leagues, not per league: the analytics layers span leagues,
+    # so rebuilding per league would repeat the same expensive work N times.
+    if total_ok > 0 and not args.no_rebuild:
         print("\n=== Rebuild ===", flush=True)
-        # bio (age/height/weight) is in the cached match json the scrape just wrote
         try:
             from backfill_bio import run_backfill
             b = run_backfill(sb, quiet=True)
@@ -186,20 +295,19 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
             print(f"  bio        -> skipped ({e})", flush=True)
         steps = ["preflight", "metrics", "sequences", "players", "seqfz",
-                 "state", "chains", "traj", "profiles", "usage", "teamstyle",
-                 "search", "percentiles", "insights", "verify"]
+                 "lookups", "state", "chains", "traj", "profiles", "usage",
+                 "teamstyle", "search", "percentiles", "insights", "verify"]
         try:
             for step in steps:
                 resp = sb.rpc("rebuild_step", {"p_step": step}).execute()
-                print(f"  {step:<10} -> {resp.data}", flush=True)
+                print(f"  {step:<11} -> {resp.data}", flush=True)
             print("  site is live with the new games.", flush=True)
-        except Exception as e:  # noqa: BLE001 - surface it, keep the loaded data
+        except Exception as e:  # noqa: BLE001
             print(f"\n  !! rebuild failed: {e}", file=sys.stderr, flush=True)
             print("  data loaded fine, but the analytics layers did NOT rebuild.",
                   file=sys.stderr, flush=True)
-            print("  re-run once fixed: python pipeline\\scrape_league.py", file=sys.stderr, flush=True)
             return 1
-    else:
+    elif total_ok == 0:
         print("\n  no new games -- analytics already current, skipping rebuild.", flush=True)
 
     return 0

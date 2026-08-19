@@ -32,25 +32,6 @@ DEFAULT_LEAGUE = "ENG-Premier League"
 DEFAULT_SEASON = "2526"
 SLEEP_BETWEEN_MATCHES = 8
 
-# --- safety guard: only the 30 MLS teams may load into this (MLS) database. ---
-# team_names.match_name holds the schedule-form names of the 30 MLS clubs.
-# This stops a misconfigured/bare run (which defaults to Arsenal) from polluting
-# the MLS tables. If you ever revive the Arsenal project, point it at a
-# separate Supabase — this database is MLS-only.
-_MLS_NAMES: set[str] | None = None
-
-
-def _mls_schedule_names(sb: Client) -> set[str]:
-    global _MLS_NAMES
-    if _MLS_NAMES is None:
-        try:
-            resp = sb.table("team_names").select("match_name").execute()
-            _MLS_NAMES = {r["match_name"] for r in (resp.data or []) if r.get("match_name")}
-        except Exception as e:
-            print(f"  ~~ guard: could not load MLS whitelist ({e}); guard disabled this run")
-            _MLS_NAMES = set()
-    return _MLS_NAMES
-
 
 def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -118,6 +99,7 @@ def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> 
         "game_id": game_id,
         "season": season,
         "competition": league,
+        "league": league,
         "date": date_str,
         "home_team": _str_or_none(sched_row.get("home_team")),
         "away_team": _str_or_none(sched_row.get("away_team")),
@@ -157,6 +139,7 @@ def upsert_players_and_lineups(
     sb: Client,
     game_data: dict,
     game_id: str,
+    league: str = "USA-MLS",
 ) -> None:
     team_names = {
         int(game_data["home"]["teamId"]): game_data["home"]["name"],
@@ -217,6 +200,8 @@ def upsert_players_and_lineups(
             }
         )
 
+    for _r in lineups_payload:
+        _r["league"] = league
     if players_payload:
         sb.table("players").upsert(players_payload, on_conflict="player_id").execute()
     # lineups has no unique constraint; clear + reinsert for idempotency
@@ -261,7 +246,7 @@ def build_event_row(
     }
 
 
-def upsert_events(sb: Client, game_data: dict, game_id: str) -> int:
+def upsert_events(sb: Client, game_data: dict, game_id: str, league: str = "USA-MLS") -> int:
     team_names = {
         int(game_data["home"]["teamId"]): game_data["home"]["name"],
         int(game_data["away"]["teamId"]): game_data["away"]["name"],
@@ -277,6 +262,8 @@ def upsert_events(sb: Client, game_data: dict, game_id: str) -> int:
         row = build_event_row(game_id, ev, team_names, player_names)
         rows_by_wsid[row["ws_id"]] = row  # last-write wins for duplicates
     rows = list(rows_by_wsid.values())
+    for _r in rows:
+        _r["league"] = league
     if not rows:
         return 0
     for i in range(0, len(rows), 500):
@@ -285,23 +272,58 @@ def upsert_events(sb: Client, game_data: dict, game_id: str) -> int:
     return len(rows)
 
 
+_WHITELIST_CACHE: dict[str, set[str]] = {}
+
+
+def league_whitelist(sb: Client, league: str) -> set[str]:
+    """Team names registered for THIS league. Empty set means the league is new."""
+    if league in _WHITELIST_CACHE:
+        return _WHITELIST_CACHE[league]
+    names: set[str] = set()
+    try:
+        res = (
+            sb.table("team_names")
+            .select("match_name, event_name, display_name")
+            .eq("league", league)
+            .execute()
+        )
+        for r in res.data or []:
+            for key in ("match_name", "event_name", "display_name"):
+                if r.get(key):
+                    names.add(str(r[key]).strip())
+    except Exception as e:  # noqa: BLE001 - a lookup failure must not corrupt data
+        print(f"  !! could not read whitelist for {league}: {e}", file=sys.stderr, flush=True)
+        raise
+    _WHITELIST_CACHE[league] = names
+    return names
+
+
 def process_match(
     sb: Client, ws: sd.WhoScored, sched_row: pd.Series, league: str, season: str
 ) -> tuple[str, int]:
-    game_id = str(sched_row.get("game_id"))
-    home = _str_or_none(sched_row.get("home_team"))
-    away = _str_or_none(sched_row.get("away_team"))
-    wl = _mls_schedule_names(sb)
-    if wl and (home not in wl or away not in wl):
-        print(f"  ~~ SKIP non-MLS match ({home} vs {away}) — guard: this DB is MLS-only")
-        return game_id, 0
+    # GUARD: refuse to write a match whose clubs are not registered to this league.
+    # Fails OPEN only when the league has no whitelist yet, so a brand new league can
+    # be bootstrapped from its first scrape. Everything else is refused.
+    allowed = league_whitelist(sb, league)
+    if allowed:
+        home = str(sched_row.get("home_team") or "").strip()
+        away = str(sched_row.get("away_team") or "").strip()
+        unknown = [t for t in (home, away) if t and t not in allowed]
+        if unknown:
+            print(
+                f"  !! SKIPPED: {', '.join(unknown)} not registered to {league}. "
+                f"This match was not written.",
+                flush=True,
+            )
+            return "", 0
+
     game_id = upsert_match(sb, sched_row, league, season)
     print(f"  -> match row upserted (game_id={game_id})")
     game_data = ensure_event_json(ws, game_id, league, season)
     print(f"  -> loaded raw json ({len(game_data.get('events', []))} events)")
-    upsert_players_and_lineups(sb, game_data, game_id)
-    n = upsert_events(sb, game_data, game_id)
-    print(f"  -> upserted {n} events")
+    upsert_players_and_lineups(sb, game_data, game_id, league)
+    n = upsert_events(sb, game_data, game_id, league)
+    print(f"  -> upserted {n} events (league={league})")
     return game_id, n
 
 
