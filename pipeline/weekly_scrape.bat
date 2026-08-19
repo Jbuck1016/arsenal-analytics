@@ -39,9 +39,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM --all   : every league marked active in the leagues registry
-REM --headless: no browser window steals focus on a scheduled run
-python pipeline\scrape_league.py --all --headless >> "%LOG%" 2>&1
+REM --all : every league marked active in the leagues registry.
+REM NOT --headless: WhoScored's Incapsula anti-bot tends to crash the
+REM undetected-chromedriver session in headless mode, so the scheduled run
+REM opens a real browser window. It runs at 11:30pm on a sleeping machine,
+REM so nothing is stealing focus from anyone.
+python pipeline\scrape_league.py --all >> "%LOG%" 2>&1
 set "RC=%ERRORLEVEL%"
 
 echo. >> "%LOG%"
@@ -49,7 +52,7 @@ echo Finished %DATE% %TIME% with exit code %RC% >> "%LOG%"
 
 REM keep the 30 most recent logs, delete the rest
 for /f "skip=30 delims=" %%F in ('dir /b /o-d "%LOGDIR%\scrape_*.log" 2^>nul') do (
-  del "%LOGDIR%\%%F" 2>nul
+  del "%LOGDIR%\%%F" >nul 2>&1
 )
 
 exit /b %RC%

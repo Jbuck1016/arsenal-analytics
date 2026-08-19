@@ -175,12 +175,24 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
     print(f"  {league}  season {season}", flush=True)
     print(f"{'=' * 62}", flush=True)
 
-    ws = get_scraper(league, season, headless=args.headless)
+    # opening the reader can fail too (unmapped league, bad season code), and one bad
+    # league must never take down the other five
+    try:
+        ws = get_scraper(league, season, headless=args.headless)
+    except Exception as e:  # noqa: BLE001
+        msg = str(e).strip().splitlines()[0] if str(e).strip() else repr(e)
+        print(f"  !! could not open {league}: {msg}", file=sys.stderr, flush=True)
+        print("     (is it mapped to a WhoScored name in league_dict.json?)",
+              file=sys.stderr, flush=True)
+        return 0, 0, 0
+
     print(f"Reading full schedule for {league} {season}...", flush=True)
     try:
         sched = read_full_schedule(ws)
     except Exception as e:  # noqa: BLE001 - one bad league must not kill the rest
         print(f"  !! could not read schedule: {e}", file=sys.stderr, flush=True)
+        print("     (usually means no fixtures published for that season yet)",
+              file=sys.stderr, flush=True)
         return 0, 0, 0
 
     played = played_matches(sched)
@@ -294,7 +306,9 @@ def main() -> int:
                   f"(age {b.get('with_age',0)}, ht {b.get('with_height',0)})", flush=True)
         except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
             print(f"  bio        -> skipped ({e})", flush=True)
-        steps = ["preflight", "metrics", "sequences", "players", "seqfz",
+        steps = ["preflight",
+                 "metrics1", "metrics2", "metrics3", "metrics4",
+                 "sequences", "players", "seqfz",
                  "lookups", "state", "chains", "traj", "profiles", "usage",
                  "teamstyle", "search", "percentiles", "insights", "verify"]
         try:

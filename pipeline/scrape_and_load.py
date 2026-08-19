@@ -34,7 +34,19 @@ SLEEP_BETWEEN_MATCHES = 8
 
 
 def get_supabase() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    # The default PostgREST client timeout is 5s, which is far too short for the
+    # rebuild RPCs: refreshing a batch of materialized views takes tens of seconds
+    # and grows with every league added. Raised well past anything we expect.
+    try:
+        from supabase.client import ClientOptions
+
+        return create_client(
+            SUPABASE_URL,
+            SUPABASE_SERVICE_KEY,
+            options=ClientOptions(postgrest_client_timeout=600),
+        )
+    except Exception:  # noqa: BLE001 - older client versions lack ClientOptions
+        return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
 def get_scraper(league: str, season: str, headless: bool = False) -> sd.WhoScored:
