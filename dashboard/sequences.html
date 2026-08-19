@@ -116,7 +116,7 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
 function tname(t){return TEAM_DISPLAY[t]||t||''}
-const TYPES=[['ended_shot','Ends in a shot'],['ended_goal','Ends in a goal'],['ended_in_box','Ends in the box'],
+const TYPES=[['ended_shot','Produces a shot'],['ended_goal','Produces a goal'],['ended_in_box','Ends in the box'],
  ['high_build','High build'],['low_build','Low build'],['structured','Structured'],['has_switch','Switch of play'],
  ['wide_triangles','Wide triangles'],['hold_up','Hold-up'],['very_short','Very short'],['long_ball','Long'],
  ['ends_opp_half','Ends opp half'],['end_around_box','Around the box'],['finds_central','Finds central'],['finds_wide','Finds wide']];
@@ -169,19 +169,58 @@ function star(cx,cy,r,c){
     p+=(cx+rr*Math.cos(ang)).toFixed(2)+','+(cy+rr*Math.sin(ang)).toFixed(2)+' ';}
   return '<polygon points="'+p.trim()+'" fill="'+c+'"/>';
 }
-/* draw one sequence trajectory. path = [{x,y,ex,ey,t}] */
+const SHOT_T={SavedShot:1,MissedShots:1,ShotOnPost:1,Goal:1};
+
+/* A faint dotted link for movement the feed does not record as an event:
+   a carry, a flick, or the receiver moving before he plays it. */
+function link(x1,y1,x2,y2,c,op){
+  return '<line x1="'+PX(x1).toFixed(2)+'" y1="'+PY(y1).toFixed(2)+
+    '" x2="'+PX(x2).toFixed(2)+'" y2="'+PY(y2).toFixed(2)+
+    '" stroke="'+c+'" stroke-width="0.3" stroke-opacity="'+(op*0.45).toFixed(2)+
+    '" stroke-dasharray="0.9 1.2" stroke-linecap="round"/>';
+}
+/* An event with a location but no destination (BallTouch, take-on, shot). */
+function node(x,y,c,op){
+  return '<circle cx="'+PX(x).toFixed(2)+'" cy="'+PY(y).toFixed(2)+
+    '" r="0.7" fill="'+c+'" fill-opacity="'+(op*0.8).toFixed(2)+'"/>';
+}
+
+/* draw one sequence trajectory. path = [{x,y,ex,ey,t}]
+   Roughly 15% of events carry no end coordinate, which previously broke the chain
+   into unrelated clusters. Those are now drawn as nodes and joined with a dotted
+   link, so one possession reads as one possession. */
 function seqTrace(path,c,shot,w,op){
   let inner='';const pts=path||[];
-  pts.forEach(function(p){
-    if(p.ex==null||p.ey==null)return;
-    inner+=arrow(p.x,p.y,p.ex,p.ey,c,w,op);
+  if(!pts.length)return inner;
+
+  let shotIdx=-1;
+  pts.forEach(function(p,i){if(SHOT_T[p.t])shotIdx=i});
+
+  let px=null,py=null;
+  pts.forEach(function(p,i){
+    // anything after the shot is a rebound or second phase, so fade it
+    const o=(shotIdx>=0&&i>shotIdx)?op*0.3:op;
+    if(px!=null){
+      const d=Math.sqrt((p.x-px)*(p.x-px)+(p.y-py)*(p.y-py));
+      if(d>1.5)inner+=link(px,py,p.x,p.y,c,o);
+    }
+    if(p.ex!=null&&p.ey!=null){
+      inner+=arrow(p.x,p.y,p.ex,p.ey,c,w,o);
+      px=p.ex;py=p.ey;
+    }else{
+      inner+=node(p.x,p.y,c,o);
+      px=p.x;py=p.y;
+    }
   });
-  if(pts.length){
-    inner+='<circle cx="'+PX(pts[0].x).toFixed(2)+'" cy="'+PY(pts[0].y).toFixed(2)+
-      '" r="1.35" fill="var(--bg2)" stroke="'+c+'" stroke-width="0.5"/>';
-    const last=pts[pts.length-1];
-    const lx=(last.ex!=null?last.ex:last.x),ly=(last.ey!=null?last.ey:last.y);
-    if(shot)inner+=star(PX(lx),PY(ly),2.1,c);
+
+  inner+='<circle cx="'+PX(pts[0].x).toFixed(2)+'" cy="'+PY(pts[0].y).toFixed(2)+
+    '" r="1.35" fill="var(--bg2)" stroke="'+c+'" stroke-width="0.5"/>';
+
+  if(shot){
+    // put the star on the shot itself, not on whatever happened afterwards
+    const sp=(shotIdx>=0)?pts[shotIdx]:pts[pts.length-1];
+    const sx=(sp.ex!=null?sp.ex:sp.x),sy=(sp.ey!=null?sp.ey:sp.y);
+    inner+=star(PX(sx),PY(sy),2.1,c);
   }
   return inner;
 }
@@ -274,7 +313,7 @@ function renderBrowse(){
     h+=cardHtml(s,{onclick:'choosePick('+i+')'});
   });
   h+='</div></div><div class="foot">Each card is one open-play possession, drawn start (hollow ring) to finish, attacking left to right. '+
-     'A star marks a sequence that ended in a shot. Pick one and the tool finds the most similar sequences elsewhere in the league.</div>';
+     'A star marks the shot. Dotted segments are movement the feed does not record as an event, such as a carry or a flick. Pick one and the tool finds the most similar sequences elsewhere in the league.</div>';
   main.innerHTML=h;
 }
 
