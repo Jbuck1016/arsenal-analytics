@@ -128,6 +128,14 @@ details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--text)}
 details[open] summary{margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 details p:last-child{margin-bottom:0}
 
+.cred{border:1px solid var(--line);background:var(--panel);border-radius:3px;
+  padding:13px 15px;margin-bottom:11px}
+.cred-n{font:700 14.5px/1.3 var(--f-body);margin-bottom:2px}
+.cred-h{font:500 11px/1 var(--f-mono);color:var(--dim2);margin-bottom:9px}
+.cred p{font-size:13.5px;margin-bottom:7px}
+.cred p:last-child{margin-bottom:0}
+.cred b.lab{font:700 9px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--amber);display:block;margin-bottom:3px}
 .foot{grid-column:1/-1;margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   font:500 10.5px/1.8 var(--f-mono);color:var(--dim2)}
 
@@ -190,6 +198,7 @@ details p:last-child{margin-bottom:0}
       <li><a href="#s7">Traps and judgment</a></li>
       <li><a href="#s8">Test yourself</a></li>
       <li><a href="#s9">Quick reference</a></li>
+      <li><a href="#s10">Credits and influences</a></li>
     </ol>
   </aside>
 
@@ -718,6 +727,111 @@ details p:last-child{margin-bottom:0}
     <tr><td>Directness</td><td>Net upfield progress per unit of ball travel</td><td>Compare across game states</td></tr>
     <tr><td>Archetype</td><td>Two highest-ranked chain roles</td><td>Descriptive label, not a grade</td></tr>
   </table>
+
+
+  <!-- ============ 10 ============ -->
+  <h2 id="s10"><span class="n">10</span>Credits and influences</h2>
+  <p class="lead">Almost nothing here is a wholly original idea. The work below shaped what
+  this platform measures and how it presents it. Where the implementation departs from the
+  original, that is noted, because the differences usually exist for a reason worth knowing.</p>
+
+  <div class="cred">
+    <div class="cred-n">Julio Costa</div>
+    <div class="cred-h">possession sequences &middot; player chain roles</div>
+    <p><b class="lab">Contributed</b>The framework this platform is built on. Segmenting a
+    match into unbroken possession sequences, tagging each by how it started, travelled and
+    ended, and then decomposing a player's involvements into a set of repeatable roles.</p>
+    <p><b class="lab">How ours differs</b>Built on WhoScored event data, and validated against
+    his published Benfica reference figures before being trusted (3.55 passes per sequence
+    against his 3.6, 9.9 seconds against 9.6). The player layer is our own extension: chain
+    roles are expressed as percentiles within position pool, and carries had to be derived
+    from consecutive same-player touches because the event feed has no carry event.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">Karun Singh</div>
+    <div class="cred-h">expected threat &middot; <a href="https://karun.in/blog/expected-threat.html">karun.in</a></div>
+    <p><b class="lab">Contributed</b>Expected threat, the idea that a pitch can be valued as a
+    grid of goal probabilities so that moving the ball between zones has a measurable worth.
+    It is the core currency of most of what this site reports.</p>
+    <p><b class="lab">How ours differs</b>A 12x8 grid applied to both passes and derived
+    carries, reported separately as threat from passing and threat from carrying, since they
+    are different skills. Extended to event-level maps where every arrow is one action, and
+    the arrows sum exactly to the published per-90 figure rather than approximating it.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">Footovision</div>
+    <div class="cred-h">pass trajectory &middot; scouting card format &middot; <a href="https://www.footovision.com">footovision.com</a></div>
+    <p><b class="lab">Contributed</b>Two things. Classifying passes by how they beat a block,
+    over, around or through, crossed against where the ball lands. And the scouting card
+    format: banded trait pills, an archetype label, and a stylistic comparison.</p>
+    <p><b class="lab">How ours differs</b>One difference matters a great deal. Theirs is
+    labelled line-breaking; ours is labelled trajectory, because WhoScored provides no
+    defender positions and we cannot verify a defensive line was actually broken. Claiming
+    otherwise would be asserting something the data does not support.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">StatsBomb (Hudl)</div>
+    <div class="cred-h">possession directness by game state</div>
+    <p><b class="lab">Contributed</b>The idea of splitting a team's style by scoreline, so
+    that identity can be separated from reaction. Their winning, drawing and losing chart is
+    the direct inspiration for ours.</p>
+    <p><b class="lab">How ours differs</b>Computed from our own sequence layer on top of a
+    game-state spine built from goal timelines, with own goals credited to the correct side.
+    We added the losing-minus-winning swing as a single reactivity number, which turns the
+    chart into something sortable rather than only readable.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">@Wanalyst007</div>
+    <div class="cred-h">ball progression template &middot; <a href="https://x.com/Wanalyst007">x.com/Wanalyst007</a></div>
+    <p><b class="lab">Contributed</b>The progression quadrant: how often a player attempts to
+    progress against how often it comes off, with the median lines turning it into four
+    readable player types rather than a cloud of dots.</p>
+    <p><b class="lab">How ours differs</b>We separated tendency from volume. Progressive pass
+    tendency is the share of a player's passing that is progressive, which is a different
+    statement from how many he plays, and a low-volume player in a low-possession side can
+    still have a high tendency.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">@academicismo</div>
+    <div class="cred-h">context-adjusted output &middot; <a href="https://x.com/academicismo">x.com/academicismo</a></div>
+    <p><b class="lab">Contributed</b>The argument that raw output should be adjusted for the
+    context it was produced in, demonstrated by inferring match difficulty from closing
+    betting odds.</p>
+    <p><b class="lab">How ours differs</b>We took the argument and rejected the method. Odds
+    introduce an external data dependency with licensing and reliability questions attached.
+    Instead we adjust for whether the game was still live, weighting output by score margin,
+    which is computable from data we already hold and defensible without a third party. The
+    idea is theirs; the implementation is deliberately different.</p>
+  </div>
+
+  <h3>Data and tooling</h3>
+  <div class="cred">
+    <div class="cred-n">WhoScored (Opta)</div>
+    <div class="cred-h">event data source</div>
+    <p>Every figure on this site derives from WhoScored's match event feed. Its limits are
+    this platform's limits, which is why section 01 spends as long on what the data cannot
+    see as on what it can.</p>
+  </div>
+
+  <div class="cred">
+    <div class="cred-n">soccerdata &mdash; Pieter Robberechts</div>
+    <div class="cred-h">scraping library &middot; <a href="https://github.com/probberechts/soccerdata">github.com/probberechts/soccerdata</a></div>
+    <p>The Python package underneath the ingest pipeline. The multi-league scraper, the
+    caching behaviour and the league configuration all sit on top of it.</p>
+  </div>
+
+  <div class="box warn">
+    <h5>This list is incomplete</h5>
+    <p>These are the influences with a direct, traceable line into something on this site.
+    Plenty of other people's writing and charts shaped how the platform thinks without
+    leaving a single identifiable feature behind. If you recognise your work here and it is
+    credited wrongly, or not credited at all, that is an oversight rather than a decision.</p>
+  </div>
 
   </main>
 
