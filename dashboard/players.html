@@ -253,7 +253,7 @@ var PLG={}, PLEAGUES=[],
     PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 function lgOfTeam(t){return PLG[t]||'USA-MLS'}
 function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
-const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Reference','glossary.html']];
+const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};

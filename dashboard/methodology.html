@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Methodology · MLS 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
+</script>
+<script src="gate.js"></script>
+<style>
+:root{
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-body:'Inter',system-ui,sans-serif;
+  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
+  --line:#dcd6c8;--line2:#c9c2b0;
+  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
+  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+}
+html.dark{
+  --bg:#080a0e;--panel:#0e1116;--panel2:#141821;
+  --line:#1c222c;--line2:#2b333f;
+  --text:#e8eef6;--dim:#9aa7b8;--dim2:#5b6675;
+  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
+  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);line-height:1.6}
+a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1160px;margin:0 auto;padding:20px 18px 70px;display:grid;
+  grid-template-columns:220px 1fr;gap:24px;align-items:start}
+@media(max-width:920px){.wrap{grid-template-columns:1fr}}
+
+.sys{grid-column:1/-1;border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:13px 16px;margin-bottom:6px}
+.sys-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.sys-title{font:700 13px/1 var(--f-mono)}.sys-title b{color:var(--amber)}
+.spacer{flex:1}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{font:600 9.5px/1 var(--f-mono);color:var(--dim);border:1px solid var(--line2);border-radius:3px;
+  padding:6px 9px;text-transform:uppercase;letter-spacing:.06em}
+.nav a:hover{color:var(--amber);border-color:var(--amber-line);text-decoration:none}
+.tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
+  width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px}
+.sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:8px}
+
+.toc{position:sticky;top:14px;border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px 13px}
+@media(max-width:920px){.toc{position:static}}
+.toc h4{font:700 9px/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:0 0 9px}
+.toc a{display:block;font:500 11.5px/1.5 var(--f-body);color:var(--dim);padding:2px 0}
+.toc a:hover{color:var(--amber);text-decoration:none}
+.toc .grp{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);margin:11px 0 4px}
+
+.doc{min-width:0}
+h2{font:700 20px/1.25 var(--f-body);letter-spacing:-.02em;margin:30px 0 4px;padding-top:15px;border-top:1px solid var(--line)}
+h2:first-child{margin-top:0;border-top:none;padding-top:0}
+h3{font:700 15px/1.3 var(--f-body);margin:22px 0 6px}
+h4{font:700 11px/1.3 var(--f-mono);letter-spacing:.05em;margin:16px 0 5px;color:var(--amber)}
+p{margin:0 0 11px;font-size:14px}
+ul,ol{margin:0 0 12px;padding-left:20px}li{margin-bottom:5px;font-size:14px}
+code{font:600 12px var(--f-mono);background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--amber)}
+pre{background:var(--panel2);border:1px solid var(--line);border-left:2px solid var(--amber-line);
+  border-radius:3px;padding:12px 14px;overflow-x:auto;margin:10px 0}
+pre code{background:none;border:none;padding:0;color:var(--text);font-size:12px;line-height:1.65}
+strong{font-weight:700}em{font-style:italic;color:var(--dim)}
+
+table{width:100%;border-collapse:collapse;margin:11px 0;font-size:13px}
+th{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);
+  text-align:left;padding:8px;border-bottom:1px solid var(--line2);background:var(--panel2)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-size:12px}
+tbody tr:last-child td{border-bottom:none}
+
+.tier{border:1px solid var(--line);border-radius:4px;padding:13px 15px;margin-bottom:12px;background:var(--panel)}
+.tier.t1{border-left:3px solid var(--green)}
+.tier.t2{border-left:3px solid var(--blue)}
+.tier.t3{border-left:3px solid var(--amber)}
+.tier.t4{border-left:3px solid var(--red)}
+.tier h4{margin-top:0}
+.tier .badge{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+  border-radius:3px;padding:4px 7px;margin-left:8px}
+.t1 .badge{color:var(--green);border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+.t2 .badge{color:var(--blue);border:1px solid color-mix(in srgb,var(--blue) 40%,transparent)}
+.t3 .badge{color:var(--amber);border:1px solid var(--amber-line)}
+.t4 .badge{color:var(--red);border:1px solid color-mix(in srgb,var(--red) 40%,transparent)}
+
+.box{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px 15px;margin:13px 0}
+.box.warn{border-color:var(--amber-line);background:var(--amber-dim)}
+.box h5{font:700 9px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.foot{grid-column:1/-1;margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+  font:500 10.5px/1.8 var(--f-mono);color:var(--dim2)}
+@media print{.toc,.nav,.tbtn{display:none}.wrap{display:block}body{background:#fff;color:#000}
+  pre,table,.tier,.box{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sys">
+    <div class="sys-top">
+      <span class="dot"></span>
+      <span class="sys-title">MLS 2026 &mdash; <b>Methodology</b></span>
+      <span class="spacer"></span>
+      <nav class="nav">
+        <a href="index.html">Home</a><a href="guide.html">Guide</a>
+        <a href="validation.html">Validation</a><a href="glossary.html">Reference</a>
+      </nav>
+      <div class="tbtn" id="themeBtn">&#9790;</div>
+    </div>
+    <div class="sys-line">
+      Every formula, threshold and modelling choice on the platform, with the evidence for each.
+      Written so a sceptic can check the working.
+    </div>
+  </div>
+
+  <aside class="toc">
+    <h4>Contents</h4>
+    <div class="grp">Trust</div>
+    <a href="#tiers">How much to trust what</a>
+    <a href="#checks">Automated checks</a>
+    <div class="grp">Foundations</div>
+    <a href="#pitch">Pitch coordinates</a>
+    <a href="#ingest">Ingestion</a>
+    <div class="grp">Models</div>
+    <a href="#xg">Expected goals</a>
+    <a href="#xt">Expected threat</a>
+    <div class="grp">Layers</div>
+    <a href="#seq">Possession sequences</a>
+    <a href="#roles">Chain roles</a>
+    <a href="#pct">Percentiles</a>
+    <a href="#team">Team metrics</a>
+    <a href="#usage">Usage and leverage</a>
+    <a href="#sim">Similarity</a>
+    <div class="grp">Care</div>
+    <a href="#defs">Definitions vs measurements</a>
+    <a href="#limits">Known limits</a>
+  </aside>
+
+  <main class="doc">
+
+  <!-- ================= TIERS ================= -->
+  <h2 id="tiers">How much to trust what</h2>
+  <p>Not everything here is validated the same way, and pretending otherwise is how you get
+  caught out. Four tiers, strongest first.</p>
+
+  <div class="tier t1">
+    <h4>Tier 1 &mdash; reconciled against ground truth<span class="badge">strongest</span></h4>
+    <p>Checked against numbers this platform did not produce. If these fail, something is
+    genuinely broken.</p>
+    <table>
+      <tr><th>Check</th><th>Result</th></tr>
+      <tr><td>Goals parsed from events vs published scoreline</td><td><b>291 of 291 matches exact</b>, 925 goals both ways</td></tr>
+      <tr><td>Possession shares summing to 100 per match</td><td>291 of 291</td></tr>
+      <tr><td>Events belonging to a known match</td><td>0 orphans</td></tr>
+    </table>
+    <p>The goal reconciliation is the single most useful check in the system. It validates event
+    parsing, own-goal attribution and team-name reconciliation simultaneously, because an error
+    in any one of them would break the scoreline.</p>
+  </div>
+
+  <div class="tier t2">
+    <h4>Tier 2 &mdash; calibrated against outcomes<span class="badge">strong</span></h4>
+    <p>The shot model is checked against whether goals actually happened.</p>
+    <table>
+      <tr><th>Band</th><th class="num">Shots</th><th class="num">Predicted</th><th class="num">Actual</th><th class="num">Error</th></tr>
+      <tr><td>All non-penalty</td><td class="num">7,420</td><td class="num">806.9</td><td class="num">821</td><td class="num">&minus;1.7%</td></tr>
+      <tr><td>0.00&ndash;0.05</td><td class="num">2,825</td><td class="num">126.1</td><td class="num">115</td><td class="num">+9.6%</td></tr>
+      <tr><td>0.05&ndash;0.10</td><td class="num">3,237</td><td class="num">218.8</td><td class="num">209</td><td class="num">+4.7%</td></tr>
+      <tr><td>0.20&ndash;0.35</td><td class="num">206</td><td class="num">58.1</td><td class="num">65</td><td class="num">&minus;10.7%</td></tr>
+      <tr><td>0.35&ndash;0.60</td><td class="num">903</td><td class="num">358.4</td><td class="num">382</td><td class="num">&minus;6.2%</td></tr>
+    </table>
+    <p><strong>Read the pattern, not just the headline.</strong> Overall calibration is excellent,
+    but the model over-predicts the worst chances and under-predicts the better ones. It is mildly
+    compressed toward the middle, which is typical of a binned model with limited data in the
+    high-probability bands. Say this before someone finds it.</p>
+  </div>
+
+  <div class="tier t3">
+    <h4>Tier 3 &mdash; benchmarked against a published reference<span class="badge">moderate</span></h4>
+    <p>The possession-sequence layer was checked against Julio Costa&rsquo;s published Benfica
+    figures before it was trusted: 3.55 passes per sequence against his 3.6, and 9.9 seconds
+    against 9.6.</p>
+    <p><em>Be honest about the weight of this.</em> It is one team against one external reference.
+    It shows the segmentation is in the right region rather than proving it is correct.</p>
+  </div>
+
+  <div class="tier t4">
+    <h4>Tier 4 &mdash; defined, not validated<span class="badge">state, do not claim</span></h4>
+    <p>Some numbers cannot be validated because there is nothing to validate them against. They
+    are definitions. The honest defence is to state the definition precisely and justify the
+    choice, never to imply it was verified.</p>
+    <ul>
+      <li><strong>Counter-attack rate.</strong> Chosen as: possession starts in the defensive
+      third and produces a shot within 15 seconds. Defensible, and arbitrary.</li>
+      <li><strong>Chain roles.</strong> No external ground truth exists. Supported only by face
+      validity.</li>
+      <li><strong>Carries.</strong> The feed has no carry event, so they are inferred from
+      consecutive same-player forward touches.</li>
+      <li><strong>The xT grid.</strong> Borrowed from published work and applied to this league
+      rather than fitted on it.</li>
+      <li><strong>Sequence boundaries.</strong> Our rules for where a possession begins and ends.</li>
+    </ul>
+  </div>
+
+  <!-- ================= CHECKS ================= -->
+  <h2 id="checks">Automated checks</h2>
+  <p>Everything above runs on <strong>every rebuild</strong>, not as a one-off. Checks live as
+  rows in an <code>invariants</code> table, each holding SQL that returns a count of violations.
+  The rebuild aborts and names the failing check if any error-level check is non-zero.</p>
+  <p>Adding a check is an insert rather than a code change, which is the only way a practice like
+  this survives contact with a busy season. Fifteen error checks and three warnings currently run.</p>
+  <pre><code>-- example: the goal reconciliation, as it actually runs
+select count(*) from matches m
+left join (parsed goals per game) ev on ev.game_id = m.game_id
+where m.home_score &lt;&gt; coalesce(ev.h,0)
+   or m.away_score &lt;&gt; coalesce(ev.a,0)</code></pre>
+  <p>Other error checks: no team appears outside its league whitelist, every sequence carries the
+  league of its own events, percentiles fall between 0 and 100, no sequence has a null threat
+  value, the sequence layer covers exactly the games with events, and season xG stays within 10%
+  of goals scored.</p>
+
+  <!-- ================= PITCH ================= -->
+  <h2 id="pitch">Pitch coordinates</h2>
+  <p>The feed supplies coordinates on a 0&ndash;100 scale in both axes, always from the attacking
+  team&rsquo;s perspective, left to right. Converting to metres uses a 105 &times; 68 pitch:</p>
+  <pre><code>x_metres = x / 100 * 105
+y_metres = y / 100 * 68</code></pre>
+  <p>Thirds are cut at x &lt; 33.3, 33.3&ndash;66.7 and &ge; 66.7. The penalty area is
+  x &ge; 83 with y between 21.1 and 78.9. Wide channels are y &lt; 21.1 or y &gt; 78.9.</p>
+
+  <!-- ================= INGEST ================= -->
+  <h2 id="ingest">Ingestion</h2>
+  <p>Event data is scraped from WhoScored using the <code>soccerdata</code> library, one match at
+  a time, with 60&ndash;120 second gaps. Only fixtures not already stored are fetched, so a repeated
+  run costs nothing.</p>
+  <h4>Write-time guard</h4>
+  <p>Before any match is written, both clubs are checked against a per-league whitelist. A match
+  containing an unrecognised club is refused rather than written. The guard fails <em>open</em>
+  only when a league has no whitelist yet, so a new competition can bootstrap from its first
+  scrape, and closed in every other case.</p>
+  <p>This exists because it did not, once. A scraper defaulting to a different competition wrote
+  another league&rsquo;s data into the database, and cleaning it up had to be done by fixture id
+  rather than club name, because schedule names and event-feed names differ for more than half
+  the clubs.</p>
+
+  <!-- ================= XG ================= -->
+  <h2 id="xg">Expected goals</h2>
+  <p>An empirical binned model fitted on this season&rsquo;s shots. No external xG is used.</p>
+  <h4>Features</h4>
+  <pre><code>distance = sqrt( ((100 - x) * 1.05)^2 + ((50 - y) * 0.68)^2 )
+
+angle    = degrees( atan( 7.32 * ((100 - x) * 1.05)
+                    / ( ((100-x)*1.05)^2 + ((y-50)*0.68)^2 - 3.66^2 ) ) )</code></pre>
+  <p>7.32m is the goal width and 3.66m the half-width, so the angle is the true horizontal aperture
+  the shooter sees.</p>
+  <h4>Bins</h4>
+  <table>
+    <tr><th>Dimension</th><th>Bands</th></tr>
+    <tr><td>Distance</td><td>&lt;6m, &lt;11m, &lt;16m, &lt;22m, &lt;30m, 30m+</td></tr>
+    <tr><td>Angle</td><td>&lt;12&deg;, &lt;25&deg;, 25&deg;+</td></tr>
+    <tr><td>Flags</td><td>header, big chance, open play</td></tr>
+  </table>
+  <p>xG for a shot is the observed conversion rate of its bin. Penalties are excluded from every
+  xG figure reported on the site, because a fixed 0.76 tells you nothing about a player&rsquo;s
+  open-play threat.</p>
+  <div class="box warn">
+    <h5>Why a binned model</h5>
+    <p>It is transparent and checkable: you can point at a bin and count the goals. The cost is
+    granularity, which is exactly what the calibration table shows. A logistic model would smooth
+    the bands but would be harder to defend line by line.</p>
+  </div>
+
+  <!-- ================= XT ================= -->
+  <h2 id="xt">Expected threat</h2>
+  <p>The pitch is divided into a 12 &times; 8 grid. Each cell carries a value: the probability a
+  possession in that cell ends in a goal. Moving the ball adds the difference.</p>
+  <pre><code>xT(action) = grid_value(end_x, end_y) - grid_value(start_x, start_y)
+
+x_bin = floor(x / 100 * 12)   clamped 0..11
+y_bin = floor(y / 100 *  8)   clamped 0..7</code></pre>
+  <p>Applied to completed open-play passes and to derived carries, reported separately as threat
+  from passing and threat from carrying. A backwards pass produces a negative value and is counted
+  as such.</p>
+  <div class="box warn">
+    <h5>The honest caveat</h5>
+    <p>The grid values are taken from published work, not fitted on this league. Whether those
+    zone valuations hold for MLS specifically is untested. The <em>relative</em> ordering of pitch
+    zones is uncontroversial; the absolute values are borrowed.</p>
+  </div>
+
+  <!-- ================= SEQUENCES ================= -->
+  <h2 id="seq">Possession sequences</h2>
+  <p>A sequence is an unbroken spell of control by one team. Segmentation runs over events ordered
+  by period, minute, second and event id.</p>
+  <h4>Which events count as control</h4>
+  <p><code>Pass, TakeOn, BallTouch, MissedShots, SavedShot, ShotOnPost, Goal, KeeperPickup, Claim</code></p>
+  <h4>A new sequence begins when</h4>
+  <ul>
+    <li>the controlling team changes,</li>
+    <li>the period changes,</li>
+    <li>a stoppage event occurs (<code>Foul, Card, OffsideGiven, OffsidePass, CornerAwarded, End</code>, or a goal),</li>
+    <li>or the event carries a set-piece qualifier (<code>ThrowIn, CornerTaken, FreekickTaken, GoalKick, KickOff, Penalty</code>).</li>
+  </ul>
+  <p>Set-piece-initiated sequences are flagged and excluded from every open-play figure.</p>
+  <h4>Tags applied to each sequence</h4>
+  <table>
+    <tr><th>Tag</th><th>Rule</th></tr>
+    <tr><td>Building from deep</td><td>starts at x &lt; 33.3</td></tr>
+    <tr><td>Won high</td><td>starts at x &ge; 50</td></tr>
+    <tr><td>Patient build</td><td>starts x &lt; 50, at least 5 passes, at least 12 seconds</td></tr>
+    <tr><td>Switch of play</td><td>a pass with lateral movement &gt; 40 units crossing the centre line</td></tr>
+    <tr><td>Long ball</td><td>mean pass length &gt; 26 or any pass &ge; 40 units</td></tr>
+    <tr><td>Hold-up</td><td>a completed pass from x &ge; 66.7 travelling backwards by more than 5</td></tr>
+    <tr><td>Wide triangles</td><td>3+ wide attacking passes involving 3+ players</td></tr>
+    <tr><td>Finds central / wide</td><td>lateral position of the first attacking-third entry</td></tr>
+  </table>
+  <div class="box warn">
+    <h5>Known imprecision</h5>
+    <p>An opponent action that is neither a control event nor a stoppage, such as a clearance or
+    an interception followed immediately by the original team regaining, will not always break a
+    sequence. These thresholds have not been tuned against video.</p>
+  </div>
+
+  <!-- ================= ROLES ================= -->
+  <h2 id="roles">Chain roles</h2>
+  <p>Each player&rsquo;s involvements are mapped back onto the sequence they belong to. Eleven
+  behaviours are expressed as a percentage of his total involvements. Goalkeepers are excluded, and
+  a player needs at least 120 involvements to be profiled.</p>
+  <table>
+    <tr><th>Role</th><th>Rule</th></tr>
+    <tr><td>Initiator</td><td>first action of a sequence</td></tr>
+    <tr><td>Third-man bridge</td><td>mid-chain completed pass crossing a third boundary</td></tr>
+    <tr><td>Progressor</td><td>completed pass advancing x by &ge; 10</td></tr>
+    <tr><td>Carrier</td><td>consecutive same-player touches advancing x by &ge; 6</td></tr>
+    <tr><td>Vertical</td><td>completed pass, x gain &ge; 8, lateral drift &le; 8</td></tr>
+    <tr><td>Support angle</td><td>pass made or received at 35&ndash;55 degrees</td></tr>
+    <tr><td>Individual</td><td>take-on events</td></tr>
+    <tr><td>Creator</td><td>completed pass immediately followed by a shot</td></tr>
+    <tr><td>Box threat</td><td>involvement at x &ge; 83, y between 21.1 and 78.9</td></tr>
+    <tr><td>Finisher</td><td>shot events</td></tr>
+    <tr><td>Tempo</td><td>mean seconds between receiving and releasing</td></tr>
+  </table>
+  <p>Tempo is recorded at whole-second resolution in the feed, so it is coarse for any single
+  action and only meaningful as an average over many.</p>
+  <h4>Chain-position value</h4>
+  <pre><code>early involvement = touch in a shot-ending sequence,
+                    at least 3 actions before the end</code></pre>
+  <p>Reported per 90. It credits the pass that starts a move rather than the one that finishes it.
+  <strong>It is contaminated by teammate quality</strong>: a player alongside good forwards appears
+  in more shot-ending sequences regardless of his own contribution.</p>
+
+  <!-- ================= PERCENTILES ================= -->
+  <h2 id="pct">Percentiles</h2>
+  <p>A percentile here is arithmetic, not a model. There is nothing to validate; the question is
+  whether the metric feeding it is right.</p>
+  <pre><code>pct = round( 100 * percent_rank()
+             over (partition by league, pool, metric order by value) )
+
+-- inverted for metrics where lower is better, e.g. dispossessions
+pct = 100 - pct</code></pre>
+  <ul>
+    <li><strong>Within position pool</strong> (CB, FB, CM, AM, W, ST), because distributions differ
+    enormously by position.</li>
+    <li><strong>Within league</strong>, so a 60th-percentile progressor in one competition is not
+    silently equated with another.</li>
+    <li><strong>Minimum 6 full matches</strong> before a player enters any ranking.</li>
+  </ul>
+  <p>So &ldquo;80th percentile finisher&rdquo; means precisely: his finishing rate is higher than
+  80% of players in his position pool in his league, among those with at least six matches. It is
+  a statement about ranking, not about quality in the abstract.</p>
+  <p>Pooling several leagues is offered separately. <strong>Pooling is not translation.</strong>
+  It answers where a player sits among a chosen set, not how he would perform elsewhere.</p>
+
+  <!-- ================= TEAM ================= -->
+  <h2 id="team">Team metrics</h2>
+  <table>
+    <tr><th>Metric</th><th>Definition</th></tr>
+    <tr><td>Possession</td><td>share of open-play touches</td></tr>
+    <tr><td>Field tilt</td><td>share of final-third touches in the match</td></tr>
+    <tr><td>PPDA</td><td>opponent passes allowed per defensive action in their own 60% of the pitch. Lower means more aggressive pressing.</td></tr>
+    <tr><td>Line height</td><td>mean x of defensive actions</td></tr>
+    <tr><td>Directness</td><td><code>(end_x - start_x) / (mean pass length &times; pass count)</code>, clamped to &minus;1..1. Net upfield progress per unit of ball travel.</td></tr>
+    <tr><td>Counter-attack rate</td><td>share of possessions starting at x &lt; 33.3 that produce a shot within 15 seconds</td></tr>
+    <tr><td>Route productivity</td><td>shot-ending rate for a given route, z-scored against the league for that same route</td></tr>
+  </table>
+  <h4>Press profile</h4>
+  <p>Every possession has an opponent, so from the defending side it is a pressing test. Opponent
+  possessions are grouped by build-up type (short build, direct, mid, high start), and containment
+  is measured as the share ending below x = 66.7 without a shot.</p>
+  <p>Raw containment is dominated by mechanics rather than quality, since direct play travels
+  further by definition, so figures are z-scored <strong>within build-up type</strong> against the
+  league. A first version of this reported a 50-point gap for every team, which was measuring the
+  physics of long balls rather than anything about defending.</p>
+  <h4>Game state</h4>
+  <p>A goal timeline is built per match, with own goals credited to the correct side, and every
+  possession is tagged with the score at the moment it began. Output can then be weighted by
+  whether the game was still live:</p>
+  <pre><code>margin within 1 goal -> weight 1.00
+margin of 2 goals    -> weight 0.60
+margin of 3+         -> weight 0.35</code></pre>
+  <p>Both the output and the minutes are weighted, so this measures rate per live minute rather
+  than penalising players at dominant clubs.</p>
+
+  <!-- ================= USAGE ================= -->
+  <h2 id="usage">Usage and leverage</h2>
+  <p>Squad role uses two axes rather than raw minutes.</p>
+  <pre><code>selection share = minutes played
+                / minutes available while at that club
+
+leverage        = share of his on-pitch minutes
+                  with the score within one goal</code></pre>
+  <p>The availability window runs from a player&rsquo;s first appearance for the club to the
+  club&rsquo;s most recent fixture, so a mid-season signing is not punished for games he could not
+  have played.</p>
+  <div class="box warn">
+    <h5>Two things worth stating</h5>
+    <p><strong>Starters are derived, not taken from the team sheet.</strong> The feed&rsquo;s
+    starter flag is unreliable: it defaults to true when the field is absent, which produced 8.4
+    starters per team-game and more than eleven in 96 cases. A starter is now defined as a player
+    who appeared with no substitution-on event, which returns exactly eleven per side.</p>
+    <p><strong>Unused substitutes are invisible.</strong> Only players who touched the ball exist
+    in the data, so the lowest usage tier means &ldquo;plays rarely and late&rdquo;, not &ldquo;end
+    of the bench&rdquo;.</p>
+  </div>
+
+  <!-- ================= SIM ================= -->
+  <h2 id="sim">Similarity</h2>
+  <p>Players are compared on percentile vectors within position pool. Percentiles rather than raw
+  values, because they are robust to the skew in most role distributions.</p>
+  <pre><code>distance = sqrt( sum( (pct_a - pct_b)^2 ) ) / sqrt( n_shared )
+similarity % = 100 - distance</code></pre>
+  <p>The default comparison uses 32 dimensions spanning roles, pass trajectory, carrying, creation,
+  shooting and defending. A narrowed query, such as similarity as a shooter, restricts the vector
+  to that family and requires at least 60% of the target&rsquo;s available dimensions.</p>
+  <p><strong>Similarity is stylistic, not qualitative.</strong> The closest match to a good player
+  is frequently someone who does the same things less well. And a single-metric comparison will
+  return very high percentages simply because there is only one axis on which to differ.</p>
+
+  <!-- ================= DEFINITIONS ================= -->
+  <h2 id="defs">Definitions versus measurements</h2>
+  <p>This is the distinction that matters most when someone challenges a number.</p>
+  <table>
+    <tr><th>Question</th><th>Honest answer</th></tr>
+    <tr><td>&ldquo;Are the goals right?&rdquo;</td><td>Measurement. Reconciled 291 of 291 against the published scoreline.</td></tr>
+    <tr><td>&ldquo;Is the xG right?&rdquo;</td><td>Measurement. Calibrated to within 1.7% of actual goals, with known mild compression by band.</td></tr>
+    <tr><td>&ldquo;Is the 80th percentile right?&rdquo;</td><td>Arithmetic. It is definitionally correct; the real question is the input metric.</td></tr>
+    <tr><td>&ldquo;Is the counter-attack stat right?&rdquo;</td><td><strong>Definition.</strong> Here is exactly how it is defined and why those thresholds were chosen. It is not validated because there is nothing to validate it against.</td></tr>
+  </table>
+  <p>Answering the fourth question as though it were the first is the fastest way to lose a room.
+  Answering it precisely is the fastest way to earn one.</p>
+
+  <!-- ================= LIMITS ================= -->
+  <h2 id="limits">Known limits</h2>
+  <ul>
+    <li><strong>No off-ball information.</strong> The feed records the player on the ball. A run
+    that drags a defender out of position is invisible. This is the largest limitation and it does
+    not go away.</li>
+    <li><strong>No defender positions.</strong> Pass classifications describe trajectory, not
+    verified line-breaking, because we cannot see who was between the two points.</li>
+    <li><strong>Single season.</strong> Team style is firm at this sample; individual finishing and
+    anything rate-based on low volume is not.</li>
+    <li><strong>Age is a snapshot</strong> at match time, not a date of birth, so it can read a
+    year light. The highest age observed is stored.</li>
+    <li><strong>25 shots</strong> carry no coordinates and are absent from the shot model.</li>
+    <li><strong>Sequence tags are untuned</strong> against video.</li>
+  </ul>
+
+  </main>
+
+  <div class="foot">
+    Figures from the most recent rebuild. The automated checks re-run on every scrape, so a claim
+    on this page either still holds or the rebuild has already failed loudly.
+  </div>
+</div>
+<script>
+function paintThemeBtn(){var b=document.getElementById('themeBtn');
+  if(b)b.textContent=document.documentElement.classList.contains('dark')?'\u2600':'\u263e';}
+(function(){var b=document.getElementById('themeBtn');if(!b)return;
+  b.addEventListener('click',function(){
+    var d=document.documentElement.classList.toggle('dark');
+    try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
+    paintThemeBtn();});
+  paintThemeBtn();})();
+</script>
+</body>
+</html>
