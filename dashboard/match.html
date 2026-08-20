@@ -439,6 +439,8 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 
 @media(max-width:900px){.side,.ps-side{width:200px;padding:8px}.viz-grid{grid-template-columns:1fr}.net-side{display:none}.stats-bar{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:640px){.side,.ps-side{width:180px}.hdr-tabs{display:none}.panel{flex-basis:100%}}
+
+.chk-n{color:var(--dim,#8b95b5);font-size:10px;opacity:.75}
 </style>
 </head>
 <body>
@@ -608,6 +610,8 @@ function hexToRgba(c,a){
    ("Toronto" vs "Toronto FC"). team_names reconciles them: EV2MATCH for querying
    fixtures, MATCH2EV for filtering events, EV2DISP for anything a human reads. */
 let EV2MATCH={},MATCH2EV={},EV2DISP={};
+/* Competition drives the team list: pick leagues, and only those clubs appear. */
+let LEAGUE_OF={},LEAGUES=[],SELCOMPS=new Set();
 function matchName(ev){return EV2MATCH[ev]||ev}
 function evName(mn){return MATCH2EV[mn]||mn}
 function dispName(ev){return EV2DISP[ev]||EV2DISP[evName(ev)]||ev}
@@ -619,6 +623,18 @@ async function loadTeams(){
       EV2DISP[m.event_name]=m.display_name;});
   }catch(e){console.warn('team_names unavailable',e)}
   try{
+    const dir=await sbAll('v_team_directory',{select:'team,league,league_name'});
+    LEAGUE_OF={};dir.forEach(d=>{LEAGUE_OF[d.team]=d.league});
+  }catch(e){console.warn('team directory unavailable',e)}
+  try{
+    const ls=await sbAll('v_league_summary',{select:'league,display_name,matches,teams'});
+    LEAGUES=(ls||[]).filter(l=>l.matches>0)
+      .sort((a,b)=>b.matches-a.matches)
+      .map(l=>({v:l.league,l:l.display_name,n:l.matches}));
+  }catch(e){console.warn('league summary unavailable',e)}
+  if(!LEAGUES.length)LEAGUES=[{v:'USA-MLS',l:'MLS',n:0}];
+  if(!SELCOMPS.size)SELCOMPS=new Set([LEAGUES[0].v]);
+  try{
     const rows=await sbAll('mv_team_season',{select:'team',order:'team.asc'});
     names=rows.map(r=>r.team);
   }catch(e){ names=['Los Angeles FC']; }
@@ -626,14 +642,18 @@ async function loadTeams(){
   TEAMS={};
   TEAMS['__ALL__']={name:'__ALL__',display:'\u2014 All teams \u2014',color:'#8b95b5',
     colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
-    bg:'#f5f4f1',bg2:'#ffffff',comps:[{v:'USA-MLS',l:'MLS'}]};
+    bg:'#f5f4f1',bg2:'#ffffff',comps:LEAGUES};
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
-      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',comps:[{v:'USA-MLS',l:'MLS'}]};
+      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',league:LEAGUE_OF[n]||'USA-MLS',comps:LEAGUES};
     TEAMS[n].display=dispName(n);
   });
-  if(!TEAMS[S.team])S.team=TEAMS['Los Angeles FC']?'Los Angeles FC':names[0];
+  if(!TEAMS[S.team]||!inComps(S.team)){
+    const first=names.filter(inComps);
+    S.team=(TEAMS['Los Angeles FC']&&inComps('Los Angeles FC'))?'Los Angeles FC'
+          :(first[0]||names[0]);
+  }
 }
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
@@ -2197,7 +2217,9 @@ function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.s
 function initThemeToggle(){const saved=localStorage.getItem('theme');if(saved!=='light')document.documentElement.classList.add('dark');syncCanvasTheme();const btn=document.getElementById('themeToggle');const update=()=>{const d=document.documentElement.classList.contains('dark');btn.innerHTML=d?'&#9728;&#65039;':'&#127769;';};update();btn.onclick=()=>{document.documentElement.classList.toggle('dark');const d=document.documentElement.classList.contains('dark');localStorage.setItem('theme',d?'dark':'light');applyTheme();update();if(typeof renderAll==='function'&&S.selMatch)renderAll();};}
 function initTeamSwitcher(){
   const el=document.getElementById('teamSw');
-  const names=Object.keys(TEAMS).sort((a,b)=>(TEAMS[a].display||a).localeCompare(TEAMS[b].display||b));
+  const names=Object.keys(TEAMS)
+    .filter(k=>k==='__ALL__'||inComps(k))
+    .sort((a,b)=>(TEAMS[a].display||a).localeCompare(TEAMS[b].display||b));
   el.innerHTML='<select id="teamPick" class="team-pick">'+names.map(k=>
     '<option value="'+k.replace(/"/g,'&quot;')+'"'+(S.team===k?' selected':'')+'>'+TEAMS[k].display+'</option>').join('')+'</select>';
   document.getElementById('teamPick').onchange=(e)=>{
@@ -2215,7 +2237,37 @@ function initTeamSwitcher(){
     resetStats();loadMatches();loadSeasonStats();
   };
 }
-function initCompFilters(){const el=document.getElementById('compGroup');el.innerHTML=T().comps.map(c=>'<label class="chk"><input type="checkbox" class="comp-cb" value="'+c.v+'" checked> '+c.l+'</label>').join('');el.querySelectorAll('.comp-cb').forEach(cb=>{cb.onchange=renderMatchSelectFiltered});}
+function inComps(team){
+  if(!SELCOMPS.size)return true;
+  return SELCOMPS.has(LEAGUE_OF[team]||'USA-MLS');
+}
+function initCompFilters(){
+  const el=document.getElementById('compGroup');
+  el.innerHTML=LEAGUES.map(c=>
+    '<label class="chk"><input type="checkbox" class="comp-cb" value="'+c.v+'"'+
+    (SELCOMPS.has(c.v)?' checked':'')+'> '+c.l+
+    ' <span class="chk-n">'+c.n+'</span></label>').join('');
+  el.querySelectorAll('.comp-cb').forEach(cb=>{
+    cb.onchange=()=>{
+      SELCOMPS.clear();
+      document.querySelectorAll('.comp-cb:checked').forEach(x=>SELCOMPS.add(x.value));
+      // never leave every competition off: fall back to the one just unchecked
+      if(!SELCOMPS.size){cb.checked=true;SELCOMPS.add(cb.value);}
+      initTeamSwitcher();
+      if(!inComps(S.team)){
+        const opts=Object.keys(TEAMS).filter(k=>k!=='__ALL__'&&inComps(k));
+        const pick=document.getElementById('teamPick');
+        if(opts.length&&pick){
+          // reuse the existing team-change handler rather than duplicating its reset
+          pick.value=opts[0];
+          pick.dispatchEvent(new Event('change'));
+          return;
+        }
+      }
+      renderMatchSelectFiltered();
+    };
+  });
+}
 function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition));filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' matches';}
 function initVizButtons(){document.querySelectorAll('.viz-btn').forEach(btn=>{btn.onclick=()=>{const viz=btn.dataset.viz;btn.classList.toggle('on');if(btn.classList.contains('on')){if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);}else{S.activeVizs=S.activeVizs.filter(v=>v!==viz);}if(S.selMatch)renderAll();updateStats();};});}
 function initFilters(){document.querySelectorAll('.period-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.periods.add(cb.value);else S.periods.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.outcome-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.outcomes.add(cb.value);else S.outcomes.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.pos-grp-btn').forEach(btn=>{btn.onclick=()=>{const g=btn.dataset.grp;if(g==='all'){S.posGroups.clear();}else{if(S.posGroups.has(g))S.posGroups.delete(g);else S.posGroups.add(g);}document.querySelectorAll('.pos-grp-btn').forEach(b=>{const bg=b.dataset.grp;if(bg==='all')b.classList.toggle('on',S.posGroups.size===0);else b.classList.toggle('on',S.posGroups.has(bg));});if(S.selMatch){renderAll();renderPlayerList();}};});}
