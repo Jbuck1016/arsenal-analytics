@@ -164,19 +164,44 @@ async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
 
 /* section layout, SD first */
 const SECTIONS=[
-  {id:'standout', lens:'sd', match:function(d){return d==='standout_profile'},
-   title:'Recruitment · Standout profiles',
-   blurb:'Players who top their positional pool for a chain role. Shortlist anchors.'},
-  {id:'keyman', lens:'sd', match:function(d){return d==='key_man'},
-   title:'Recruitment · Key-man risk',
-   blurb:'Roles a side leans on one player for, with no close deputy behind him.'},
-  {id:'identity', lens:'tactical', match:function(d){return ['sterile_control','vertical_identity','territorial'].indexOf(d)>=0},
-   title:'Tactical · Team identity',
-   blurb:'How sides control, threaten, and occupy territory.'},
+  {id:'identity', lens:'tactical',
+   match:function(d){return ['counter_attack','low_block','sterile_control','vertical_identity','territorial','game_state_reactivity','team_profile'].indexOf(d)>=0},
+   title:'Tactical \u00b7 How they play',
+   blurb:'The side\u2019s identity: where they win the ball, how fast they go, and whether it changes with the scoreline.'},
   {id:'style', lens:'tactical', match:function(d){return ['central_funnel','byline_team'].indexOf(d)>=0},
-   title:'Tactical · Progression route',
-   blurb:'Where each side chooses to move the ball forward.'}
+   title:'Tactical \u00b7 Progression route',
+   blurb:'Where they choose to move the ball forward.'},
+  {id:'defend', lens:'tactical', match:function(d){return d==='press_vulnerability'},
+   title:'Tactical \u00b7 How to play against them',
+   blurb:'Which kind of build-up they handle badly. Opposition planning.'},
+  {id:'teambal', lens:'tactical', match:function(d){return ['team_strength','team_weakness'].indexOf(d)>=0},
+   title:'Tactical \u00b7 Best and worst',
+   blurb:'Their strongest and weakest metric relative to the league. Fires for every club.'},
+  {id:'keyman', lens:'sd', match:function(d){return d==='key_man'},
+   title:'Recruitment \u00b7 Key-man risk',
+   blurb:'Roles a side leans on one player for, with no close deputy behind him.'},
+  {id:'gap', lens:'sd', match:function(d){return d==='squad_gap'},
+   title:'Recruitment \u00b7 Squad gaps',
+   blurb:'Positions with no high-end option in the squad. Recruitment lanes.'},
+  {id:'standout', lens:'sd', match:function(d){return d==='standout_profile'},
+   title:'Recruitment \u00b7 Standout profiles',
+   blurb:'Players who top their positional pool for a chain role. Shortlist anchors.'},
+  {id:'elite', lens:'sd', match:function(d){return d==='player_elite'},
+   title:'Players \u00b7 League leaders',
+   blurb:'Squad members who rank in the top five of their position pool for something.'},
+  {id:'weak', lens:'sd', match:function(d){return d==='player_weakness'},
+   title:'Players \u00b7 Clear weaknesses',
+   blurb:'Regulars with a marked gap in an area their role asks for.'},
+  {id:'usage', lens:'sd', match:function(d){return ['minutes_inflated','misfit_profile'].indexOf(d)>=0},
+   title:'Players \u00b7 Read with care',
+   blurb:'Profiles where the headline numbers need a caveat before you trust them.'}
 ];
+// Anything not claimed by a section above still gets shown. Previously a new detector was
+// loaded but silently never rendered, so the count in the header disagreed with the page.
+function sectionOf(det){
+  for(var i=0;i<SECTIONS.length;i++) if(SECTIONS[i].match(det)) return SECTIONS[i];
+  return null;
+}
 
 function evLink(ins){
   var e=ins.evidence||{};
@@ -233,6 +258,18 @@ function render(){
       +'<div class="grid">'+sub.map(card).join('')+'</div>';
     host.appendChild(sec);
   });
+  var claimed=rows.filter(function(d){return sectionOf(d.detector)}).length;
+  if(claimed<rows.length){
+    var rest=rows.filter(function(d){return !sectionOf(d.detector)})
+                 .sort(function(a,b){return (b.score||0)-(a.score||0)});
+    var sec=document.createElement('div');
+    sec.className='sec';
+    sec.innerHTML='<div class="sec-h"><span class="sec-t">Other reads</span>'
+      +'<span class="sec-b">Everything not covered by a category above.</span>'
+      +'<span class="sec-n">'+rest.length+'</span></div>'
+      +'<div class="grid">'+rest.map(card).join('')+'</div>';
+    host.appendChild(sec);
+  }
   if(!host.children.length){
     var why = STATE.team!=='all'
       ? esc(STATE.team)+' isn\'t flagged by any current detector.<br>'
