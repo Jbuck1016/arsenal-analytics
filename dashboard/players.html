@@ -39,6 +39,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#12141a}
 .hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
 .hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
+.lgpick select{background:var(--bg);color:var(--text);border:1px solid var(--line2,var(--border));
+  border-radius:4px;padding:2px 6px;font:700 10px/1.3 inherit;cursor:pointer;max-width:150px}
+.lgpick select:hover{border-color:var(--accent)}
+.lgpick select:focus{outline:none;border-color:var(--accent)}
 .tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;transition:.15s}
 .tab:hover{color:var(--text)}
@@ -196,7 +201,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="hdr-logo">P</div>
   <div>
     <div class="hdr-title">Player Fingerprints</div>
-    <div class="hdr-sub" id="hdrSub">loading&hellip;</div>
+    <div class="hdr-row"><div id="lgPick" class="lgpick"></div>
+      <div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
   </div>
   <div class="tabs" id="tabs"></div>
   <div class="hdr-right">
@@ -235,6 +241,10 @@ const MIN90=6;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
 const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
+var PLG={}, PLEAGUES=[],
+    PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
+function lgOfTeam(t){return PLG[t]||'USA-MLS'}
+function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Reference','glossary.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
@@ -354,6 +364,8 @@ async function init(){
   try{
     const res=await Promise.all([
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties,apps,starts,minutes'}),
+      sbAll('v_team_directory',{select:'team,league,league_name'}),
+      sbAll('v_league_summary',{select:'league,display_name,matches'}),
       sbAll('mv_player_role',{select:'player_id,modal_position,listed_pool,pool,reassigned,confidence'}),
       sbAll('metric_defs',{select:'key,label,grp,unit,higher_is_better,definition,sort_order,grp_order',order:'grp_order.asc,sort_order.asc'}),
       sbAll('role_pillar_weights',{select:'pool,pillar,weight'})
@@ -364,12 +376,12 @@ async function init(){
     PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})}).filter(function(p){return p.pool});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
-    const ts=document.getElementById('teamSel'),teams=[];
-    PLAYERS.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team)});
-    teams.sort(function(a,b){return tname(a).localeCompare(tname(b))}).forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=tname(t);ts.appendChild(o)});
-    ts.value='Los Angeles FC';
-    document.getElementById('hdrSub').textContent=
-      'MLS 2026 \u00B7 '+PLAYERS.length+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
+    (r[r.length-2]||[]).forEach(function(d){PLG[d.team]=d.league});
+    PLEAGUES=(r[r.length-1]||[]).filter(function(l){return l.matches>0});
+    if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
+    renderLeaguePick();
+    fillTeamSel();
+    updateHdrSub();
     renderTabs();renderList();
     const qp=new URLSearchParams(location.search).get('player');
     if(qp&&playerOf(qp)){
@@ -429,6 +441,37 @@ async function exportPDF(){
 }
 
 /* ---------- PLAYER ---------- */
+function fillTeamSel(){
+  const ts=document.getElementById('teamSel'),teams=[];
+  PLAYERS.forEach(function(p){if(teamInLeague(p.team)&&teams.indexOf(p.team)<0)teams.push(p.team)});
+  teams.sort(function(a,b){return tname(a).localeCompare(tname(b))});
+  ts.innerHTML='<option value="">All teams</option>';
+  teams.forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=tname(t);ts.appendChild(o)});
+  ts.value=(teams.indexOf('Los Angeles FC')>=0)?'Los Angeles FC':(teams[0]||'');
+}
+function updateHdrSub(){
+  const n=PLAYERS.filter(function(p){return teamInLeague(p.team)}).length;
+  const lbl=(PLGSCOPE==='ALL')
+    ? (PLEAGUES.length+' league'+(PLEAGUES.length===1?'':'s'))
+    : (function(){for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===PLGSCOPE)return PLEAGUES[i].display_name;return PLGSCOPE})();
+  document.getElementById('hdrSub').textContent=
+    lbl+' \u00B7 '+n+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
+}
+function renderLeaguePick(){
+  const host=document.getElementById('lgPick');
+  if(!host) return;
+  if(PLEAGUES.length<2){host.style.display='none';return}
+  host.innerHTML='<select id="lgSel" onchange="setPlayerLeague(this.value)">'+
+    '<option value="ALL"'+(PLGSCOPE==='ALL'?' selected':'')+'>All leagues</option>'+
+    PLEAGUES.map(function(l){
+      return '<option value="'+esc(l.league)+'"'+(PLGSCOPE===l.league?' selected':'')+'>'+
+        esc(l.display_name)+'</option>'}).join('')+'</select>';
+}
+function setPlayerLeague(v){
+  PLGSCOPE=v;
+  try{localStorage.setItem('leagueScope',v)}catch(e){}
+  fillTeamSel();updateHdrSub();renderList();
+}
 function renderList(){
   const t=document.getElementById('teamSel').value,pl=document.getElementById('poolSel').value;
   const q=document.getElementById('search').value.toLowerCase().trim();

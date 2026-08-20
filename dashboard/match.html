@@ -846,7 +846,65 @@ function renderPassMap(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJd
 function renderHeatmap(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const gw=60,gh=96,sigma=5;const grid=Array.from({length:gh},()=>new Float32Array(gw));evts.forEach(e=>{if(e.x==null||e.y==null)return;const gi=Math.min(gw-1,Math.max(0,Math.floor((1-e.y/100)*gw)));const gj=Math.min(gh-1,Math.max(0,Math.floor((1-e.x/100)*gh)));grid[gj][gi]++;});const blur=Array.from({length:gh},()=>new Float32Array(gw));for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){let s=0,w=0;for(let dj=-sigma*2;dj<=sigma*2;dj++)for(let di=-sigma*2;di<=sigma*2;di++){const nj=j+dj,ni=i+di;if(nj<0||nj>=gh||ni<0||ni>=gw)continue;const g=Math.exp(-(dj*dj+di*di)/(2*sigma*sigma));s+=grid[nj][ni]*g;w+=g;}blur[j][i]=s/w;}let max=0;blur.forEach(r=>r.forEach(v=>{if(v>max)max=v}));if(!max)max=1;const pw=c.width-2*PM,ph=c.height-2*PM;const cw=pw/gw,ch=ph/gh;for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const v=blur[j][i]/max;if(v<0.05)continue;ctx.fillStyle=heatColor(v,0.6*v);ctx.fillRect(PM+i*cw,PM+j*ch,cw+1,ch+1);}titleEl.textContent='Touch Heatmap';legendEl.innerHTML='<span class="leg">'+evts.filter(e=>e.x!=null).length+' touches</span>';}
 function heatColor(v,a){let r,g,b;if(v<0.25){r=0;g=Math.round(v*4*255);b=255;}else if(v<0.5){r=0;g=255;b=Math.round((1-(v-0.25)*4)*255);}else if(v<0.75){r=Math.round((v-0.5)*4*255);g=255;b=0;}else{r=255;g=Math.round((1-(v-0.75)*4)*255);b=0;}return'rgba('+r+','+g+','+b+','+a+')';}
 
-function renderShotMap(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);let goals=0,saved=0,other=0;const stored=[];evts.forEach(e=>{if(e.x==null||e.y==null)return;const p=toXY(e.x,e.y,c);const dist=Math.sqrt((100-e.x)**2+(50-e.y)**2);const rad=Math.max(5,Math.min(16,dist*0.3));let col;if(e.is_goal){col='#f5b800';goals++;}else if(e.outcome_type==='Saved'||e.outcome_type==='ShotSaved'){col='#2563eb';saved++;}else{col='#9ca3af';other++;}ctx.beginPath();ctx.arc(p.cx,p.cy,rad,0,Math.PI*2);if(e.is_goal){ctx.fillStyle=hexAlpha(col,0.8);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();}else{ctx.fillStyle=hexAlpha(col,0.3);ctx.fill();ctx.strokeStyle=hexAlpha(col,0.7);ctx.lineWidth=1.5;ctx.stroke();}stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,outcome:e.is_goal?'Goal':e.outcome_type,type:'Shot',dist:dist.toFixed(0)});});S.canvasEvents.set(c,stored);titleEl.textContent='Shot Map';legendEl.innerHTML=leg('#f5b800','Goals ('+goals+')')+leg('#2563eb','Saved ('+saved+')')+leg('#9ca3af','Other ('+other+')');}
+function renderShotMap(ctx,c,evts,titleEl,legendEl){
+  drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
+  // Marker size stands for chance quality, so it shrinks with distance from goal.
+  // The previous version scaled UP with distance, which drew a 30-yard hit bigger
+  // than a tap-in. Outcome is carried by shape and fill, not size.
+  const C={goal:'#f5b800',saved:'#2563eb',post:'#a855f7',blocked:'#f97316',off:'#9ca3af'};
+  let goals=0,saved=0,blocked=0,post=0,off=0;const stored=[];
+  function kindOf(e){
+    if(e.is_goal)return 'goal';
+    var o=(e.outcome_type||'')+' '+(e.type||'');
+    if(/Post/i.test(o))return 'post';
+    if(/Block/i.test(o))return 'blocked';
+    if(/Saved/i.test(o))return 'saved';
+    return 'off';
+  }
+  function star(cx,cy,r,fill,stroke){
+    ctx.beginPath();
+    for(var i=0;i<10;i++){
+      var ang=Math.PI/5*i-Math.PI/2,rad=(i%2===0)?r:r*0.46;
+      var x=cx+Math.cos(ang)*rad,y=cy+Math.sin(ang)*rad;
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=1.6;ctx.stroke();
+  }
+  evts.forEach(function(e){
+    if(e.x==null||e.y==null)return;
+    var p=toXY(e.x,e.y,c);
+    var dist=Math.sqrt(Math.pow(100-e.x,2)+Math.pow((50-e.y)*0.68,2));
+    var r=Math.max(4.5,Math.min(15,16-dist*0.32));   // closer to goal = bigger
+    var k=kindOf(e),col=C[k];
+    if(k==='goal'){goals++;star(p.cx,p.cy,r+3,hexAlpha(col,0.9),col);}
+    else if(k==='saved'){saved++;
+      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
+      ctx.fillStyle=hexAlpha(col,0.72);ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.stroke();}
+    else if(k==='post'){post++;
+      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
+      ctx.fillStyle=hexAlpha(col,0.5);ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);}
+    else if(k==='blocked'){blocked++;
+      ctx.strokeStyle=col;ctx.lineWidth=1.8;
+      ctx.beginPath();ctx.moveTo(p.cx-r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx+r*0.7,p.cy+r*0.7);
+      ctx.moveTo(p.cx+r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx-r*0.7,p.cy+r*0.7);ctx.stroke();}
+    else{off++;
+      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
+      ctx.strokeStyle=hexAlpha(col,0.85);ctx.lineWidth=1.5;ctx.stroke();}
+    stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,
+      outcome:e.is_goal?'Goal':(e.outcome_type||k),type:'Shot',dist:dist.toFixed(0)});
+  });
+  S.canvasEvents.set(c,stored);
+  titleEl.textContent='Shot Map';
+  legendEl.innerHTML=
+    leg(C.goal,'Goal ('+goals+')')+leg(C.saved,'On target ('+saved+')')+
+    (post?leg(C.post,'Woodwork ('+post+')'):'')+
+    (blocked?leg(C.blocked,'Blocked ('+blocked+')'):'')+
+    leg(C.off,'Off target ('+off+')')+
+    '<span class="leg" style="opacity:.7">bigger marker = closer to goal</span>';
+}
 
 function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
 
