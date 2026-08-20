@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Dashboard</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1d212a; --line:#2a2f3a;
+    --text:#e7e9ee; --muted:#9aa2b1; --faint:#6b7280;
+    --accent:#6ea8fe; --today:#f5c542; --eve:#a78bfa; --green:#34d399;
+    --red:#f87171; --amber:#fbbf24; --chip:#232834;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);padding:26px 22px 48px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+  h1{font-size:23px;font-weight:650;letter-spacing:-0.02em}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:22px}
+  .updated{color:var(--faint);font-size:12px}
+  .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+  @media(max-width:860px){.cols{grid-template-columns:1fr}}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 15px}
+  .card h2{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:13px}
+  .pill{font-size:10.5px;font-weight:700;background:var(--chip);color:var(--muted);border:1px solid var(--line);padding:2px 7px;border-radius:20px;margin-left:auto}
+  .pill.warn{background:rgba(248,113,113,.16);color:#fca5a5;border-color:transparent}
+  .today-card{border-color:var(--today);box-shadow:0 0 0 1px var(--today) inset,0 8px 30px -16px rgba(245,197,66,.55)}
+  .today-card h2{color:var(--today)}
+  .sched{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .row{display:flex;gap:11px;align-items:flex-start}
+  .bar{width:3px;border-radius:3px;background:var(--accent);flex:0 0 auto;align-self:stretch;min-height:32px}
+  .row.eve .bar{background:var(--eve)} .row.span .bar{background:var(--green)}
+  .rb{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .rt{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rn{font-size:14px;line-height:1.3}
+  .rl{font-size:11.5px;color:var(--faint)}
+  .up{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .uprow{display:flex;gap:12px;align-items:baseline}
+  .upday{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;width:54px;flex:0 0 auto;padding-top:1px}
+  .upitems{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .upitem{font-size:13.5px;line-height:1.35}
+  .upitem .t{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-right:6px}
+  .upnone{color:var(--faint);font-style:italic;font-size:13px}
+  .items{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .it{display:flex;gap:10px;align-items:flex-start}
+  .dot{width:7px;height:7px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:var(--accent)}
+  .dot.red{background:var(--red)} .dot.amber{background:var(--amber)} .dot.green{background:var(--green)}
+  .ib{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .il{font-size:14px;line-height:1.35;color:var(--text);text-decoration:none}
+  a.il:hover{color:var(--accent);text-decoration:underline}
+  .im{font-size:11.5px;color:var(--faint);line-height:1.35}
+  .im .from{color:var(--muted)}
+  .tag{font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:1.5px 6px;border-radius:5px;vertical-align:middle;margin-left:6px}
+  .tag.act{background:rgba(248,113,113,.16);color:#fca5a5}
+  .tag.imp{background:rgba(251,191,36,.16);color:#fcd34d}
+  .foot-note{font-size:12.5px;color:var(--faint);margin-top:10px;line-height:1.5}
+  .drivetype{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--faint);text-transform:uppercase}
+  /* tasks */
+  .tasks{list-style:none;display:flex;flex-direction:column;gap:2px}
+  .task{display:flex;gap:10px;align-items:flex-start;padding:7px 6px;border-radius:8px;cursor:pointer;transition:background .12s}
+  .task:hover{background:var(--panel-2)}
+  .cbx{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--faint);flex:0 0 auto;margin-top:2px;position:relative;transition:all .12s}
+  .task.done .cbx{background:var(--green);border-color:var(--green)}
+  .task.done .cbx:after{content:"";position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid #0f1115;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .tk{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .tkn{font-size:14px;line-height:1.3}
+  .task.done .tkn{text-decoration:line-through;color:var(--faint)}
+  .tkm{font-size:11.5px;color:var(--faint)}
+  .prio{font-size:9.5px;font-weight:800;letter-spacing:.03em;padding:1px 5px;border-radius:4px;margin-left:7px;vertical-align:middle}
+  .p1{background:rgba(248,113,113,.18);color:#fca5a5}
+  .p2{background:rgba(251,191,36,.16);color:#fcd34d}
+  .p3{background:rgba(110,168,254,.15);color:#9cc3ff}
+  .odue{color:#fca5a5}
+  .divlabel{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:9px 4px 3px}
+  .task a.tklink{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Daily Dashboard</h1>
+    <span class="updated" id="updated"></span>
+  </header>
+  <div class="sub">Wednesday, July 22, 2026</div>
+
+  <div class="cols">
+    <!-- LEFT -->
+    <div class="stack">
+      <div class="card today-card">
+        <h2>Today<span class="pill">8 items</span></h2>
+        <ul class="sched">
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">10:00 – 11:00 AM</div><div class="rn">Meet HR</div></div></li>
+          <li class="row span"><div class="bar"></div><div class="rb"><div class="rt">10:00 AM – 2:00 PM</div><div class="rn">WORK</div><div class="rl">818 W 7th St</div></div></li>
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">11:00 – 11:45 AM</div><div class="rn">Team Meeting + Vivian arrives</div></div></li>
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">11:45 AM – 12:30 PM</div><div class="rn">Get lunch</div></div></li>
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">12:30 – 2:00 PM</div><div class="rn">Partnership sales outreach onboarding</div></div></li>
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">2:00 – 3:30 PM</div><div class="rn">Email marketing onboarding</div></div></li>
+          <li class="row"><div class="bar"></div><div class="rb"><div class="rt">3:30 – 5:15 PM</div><div class="rn">Wrap up and Q's</div></div></li>
+          <li class="row eve"><div class="bar"></div><div class="rb"><div class="rt">6:15 – 7:15 PM</div><div class="rn">Pre-match tour</div><div class="rl">BMO Stadium</div></div></li>
+        </ul>
+        <div class="foot-note">Onboarding day — solid block from 10 to 5, then the BMO pre-match tour in the evening.</div>
+      </div>
+
+      <div class="card">
+        <h2>The rest of the week</h2>
+        <ul class="up">
+          <li class="uprow"><div class="upday">Thu 23</div><div class="upitems"><div class="upitem"><span class="t">6:00 PM</span>Sonny's for CG</div></div></li>
+          <li class="uprow"><div class="upday">Fri 24</div><div class="upitems"><div class="upnone">Open — nothing scheduled</div></div></li>
+          <li class="uprow"><div class="upday">Sat 25</div><div class="upitems"><div class="upitem"><span class="t">All day</span>Henry / Conall day</div><div class="upitem"><span class="t">8:00 PM</span>Conall dinner</div></div></li>
+          <li class="uprow"><div class="upday">Sun 26</div><div class="upitems"><div class="upnone">Open — nothing scheduled</div></div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="stack">
+      <div class="card">
+        <h2>Tasks · Todoist<span class="pill warn">5 overdue</span></h2>
+        <div class="divlabel odue">Overdue · since Jul 8</div>
+        <ul class="tasks">
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6h4FRgCH9R75pr5H" target="_blank">La Galaxy deck</a><span class="prio p1">P1</span></div><div class="tkm odue">14 days overdue</div></div></li>
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6h4FRgH2q6HPfPrq" target="_blank">GhostBet changes</a><span class="prio p1">P1</span></div><div class="tkm">QF bet amounts · extra-league framework · EIN/LLC</div></div></li>
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6h4FRgJmxFpRVp9q" target="_blank">FanSlate changes</a><span class="prio p2">P2</span></div><div class="tkm odue">14 days overdue</div></div></li>
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6h4FRgP8Gm4wjvgq" target="_blank">Sort city national account</a><span class="prio p3">P3</span></div><div class="tkm odue">14 days overdue</div></div></li>
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6h4FRgGrRfcfvPxH" target="_blank">Nose doc call</a></div><div class="tkm odue">14 days overdue</div></div></li>
+        </ul>
+        <div class="divlabel">Today · recurring</div>
+        <ul class="tasks">
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6fPrF5rMMcCF9Fpq" target="_blank">Take meds</a></div><div class="tkm">Every day · 9:00 AM</div></div></li>
+          <li class="task"><div class="cbx"></div><div class="tk"><div class="tkn"><a class="tklink" href="https://app.todoist.com/app/task/6fPrHvm9qrMM44cH" target="_blank">Check WhatsApp</a></div><div class="tkm">Every day · 10:00 AM</div></div></li>
+        </ul>
+        <div class="foot-note">Checking here hides a row for this view only — it doesn't sync. Complete in Todoist (or tell me "done with X") and it drops off the next rebuild.</div>
+      </div>
+
+      <div class="card">
+        <h2>Follow-ups</h2>
+        <ul class="items">
+          <li class="it"><div class="dot red"></div><div class="ib"><a class="il" href="https://app.todoist.com/app/task/6h4FRgCH9R75pr5H" target="_blank">Clear the two P1s that have sat 2 weeks</a><div class="im">La Galaxy deck &amp; GhostBet changes — both due Jul 8.</div></div></li>
+          <li class="it"><div class="dot amber"></div><div class="ib"><a class="il" href="https://mail.google.com/mail/u/0/#inbox/19f87547fad6630f" target="_blank">Email Payroll@WMEAgency.com for your 2025 W-2</a><div class="im">WME's Cara Carroll pointed you to Payroll for the request.</div></div></li>
+          <li class="it"><div class="dot amber"></div><div class="ib"><a class="il" href="https://mail.google.com/mail/u/0/#inbox/19f6884103c65a24" target="_blank">Decide on the LA Sports &amp; Entertainment Career Fair</a><div class="im">Mon Jul 27 — invite from TeamWork Online.</div></div></li>
+          <li class="it"><div class="dot green"></div><div class="ib"><span class="il">Conall in town this weekend</span><div class="im">Henry / Conall day Sat + dinner at 8 PM.</div></div></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Inbox — needs attention<span class="pill">33 unread</span></h2>
+        <ul class="items">
+          <li class="it"><div class="dot red"></div><div class="ib"><a class="il" href="https://mail.google.com/mail/u/0/#inbox/19f87547fad6630f" target="_blank">Re: W-2 Request For 2025<span class="tag act">REPLY</span></a><div class="im"><span class="from">Cara Carroll, WME</span> · Reach out to Payroll@WMEAgency.com to assist.</div></div></li>
+          <li class="it"><div class="dot amber"></div><div class="ib"><a class="il" href="https://mail.google.com/mail/u/0/#inbox/19f6884103c65a24" target="_blank">You're invited: LA Sports &amp; Entertainment Career Fair<span class="tag imp">EVENT</span></a><div class="im"><span class="from">TeamWork Online</span> · July 27 — meet hiring managers in LA sports.</div></div></li>
+          <li class="it"><div class="dot"></div><div class="ib"><a class="il" href="https://mail.google.com/mail/u/0/#inbox/19f8533260719e08" target="_blank">10 new jobs — Soccer &amp; Betting digest</a><div class="im"><span class="from">Your daily digest</span> · 10 new · 20 still open.</div></div></li>
+        </ul>
+        <div class="foot-note">The other ~30 unread are newsletters and promos. Nothing else needs a reply.</div>
+      </div>
+
+      <div class="card">
+        <h2>Recent in Drive</h2>
+        <ul class="items">
+          <li class="it"><div class="dot"></div><div class="ib"><a class="il" href="https://docs.google.com/presentation/d/1V9ExWjpDpQt7I6aZTYjOXe32RorhXuLmM1CY3FhMG-w/edit" target="_blank">LA_Galaxy_Audit_Jack_Buckingham</a><div class="im"><span class="drivetype">Slides</span> · edited Jul 21</div></div></li>
+          <li class="it"><div class="dot"></div><div class="ib"><a class="il" href="https://drive.google.com/file/d/1Y9z_mCmhndUaShrU2y8lP6ZTR27jgSk-/view" target="_blank">LAFC-Field-Guide.pdf</a><div class="im"><span class="drivetype">PDF</span> · added Jul 22</div></div></li>
+          <li class="it"><div class="dot"></div><div class="ib"><a class="il" href="https://docs.google.com/document/d/1XJLSnMJ5TzLgvLM06Jsp_Zf39VkqZylcujMzlbDHc1g/edit" target="_blank">UD7016 – High Performance Environments (Group Presentation)</a><div class="im"><span class="drivetype">Doc · shared</span> · edited Jul 21</div></div></li>
+          <li class="it"><div class="dot"></div><div class="ib"><a class="il" href="https://docs.google.com/document/d/1CEaB_F1xqczI4qi8yIrOFul6MGCpeyKQyC_pS0OvHqg/edit" target="_blank">Talking_Points_Jack_Buckingham.md</a><div class="im"><span class="drivetype">Doc</span> · edited Jul 20</div></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-note" style="margin-top:20px">
+    Sources: Google Calendar, Gmail, Google Drive, Todoist. Times in America/Los_Angeles. Rebuilds automatically each weekday morning — ask any time for an on-demand refresh.
+  </div>
+</div>
+
+<script>
+  const now = new Date();
+  document.getElementById("updated").textContent =
+    "Updated " + now.toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+  document.querySelectorAll(".task").forEach(t=>{
+    t.addEventListener("click", e=>{
+      if(e.target.closest("a")) return; // let task links open
+      t.classList.toggle("done");
+    });
+  });
+</script>
+</body>
+</html>
