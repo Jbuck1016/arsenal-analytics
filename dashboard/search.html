@@ -47,12 +47,15 @@ a{color:inherit;text-decoration:none}
 .sys-line{font:500 11px/1.7 var(--f-mono);color:var(--dim);margin-top:7px}
 .sys-line b{color:var(--text)}
 
-.ask{display:flex;gap:8px;margin:0 0 14px}
-#askInput{flex:1;background:var(--panel);color:var(--text);border:1px solid var(--line2);
-  border-radius:3px;padding:12px 14px;font:500 13.5px/1.3 var(--f-body)}
-#askInput:focus{outline:none;border-color:var(--amber-line)}
-#askInput::placeholder{color:var(--dim2)}
-.askbtn{white-space:nowrap;padding:0 18px}
+.ask{display:flex;gap:8px;margin:0 0 14px;align-items:stretch}
+#askInput{flex:1 1 auto;min-width:0;background:var(--panel);color:var(--text);
+  border:1px solid var(--line2);border-radius:3px;padding:14px 16px;
+  font:500 15px/1.3 var(--f-body);text-overflow:ellipsis}
+#askInput:focus{outline:none;border-color:var(--amber-line);background:var(--panel2)}
+#askInput::placeholder{color:var(--dim2);font-size:14px}
+/* .btn is width:100% for the sidebar; the ask button must not inherit that or it
+   squeezes the input it sits next to */
+.askbtn{width:auto;flex:0 0 auto;white-space:nowrap;padding:0 26px;margin-top:0;font-size:11px}
 .ans{border:1px solid var(--amber-line);background:var(--panel);border-radius:3px;
   padding:13px 15px;margin:0 0 14px}
 .ans-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
