@@ -97,6 +97,21 @@ select option{background:var(--bg2);color:var(--text)}
    opaque background and colour the options explicitly. */
 select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+
+.explain{margin:14px 18px 0;border:1px solid var(--line);background:var(--panel);border-radius:4px}
+.explain summary{cursor:pointer;padding:11px 15px;font:700 11.5px/1 var(--f-mono,monospace);
+  letter-spacing:.04em;color:var(--accent,#e2b877);list-style:none}
+.explain summary::-webkit-details-marker{display:none}
+.explain summary:before{content:'\25B8 ';display:inline-block;transition:transform .15s}
+.explain[open] summary:before{transform:rotate(90deg)}
+.explain-body{padding:2px 16px 14px;border-top:1px solid var(--line);max-width:820px}
+.explain-body p{font:400 13px/1.65 var(--f-body,inherit);color:var(--text2,#b9c3db);margin:11px 0}
+.explain-body h4{font:700 10px/1 var(--f-mono,monospace);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent,#e2b877);margin:16px 0 4px}
+.explain-body ul{margin:8px 0;padding-left:19px}
+.explain-body li{font:400 12.5px/1.6 var(--f-body,inherit);color:var(--text2,#b9c3db);margin-bottom:5px}
+.explain-body b{color:var(--text,#e8eef6);font-weight:700}
+.explain-body .caveat{border-left:2px solid var(--line2);padding-left:11px;color:var(--text3,#8b97b4);font-size:12.5px}
 </style>
 <script>
 (function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
@@ -109,6 +124,55 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="tabs" id="tabs"></div>
   <div class="tbtn" id="themeBtn">☾</div>
 </div>
+<details class="explain" id="explain">
+  <summary>What a sequence is, and how to read these</summary>
+  <div class="explain-body">
+    <p><b>A sequence is one unbroken spell of possession by one team.</b> It begins when a
+    side takes control of the ball and ends when they lose it, the game stops, or a set piece
+    intervenes. Every match breaks into roughly 250 of them, and the whole league into about
+    74,000. They are the unit this platform reasons in, because a possession is the smallest
+    thing that has a shape: a start, a route, and an outcome.</p>
+
+    <p><b>Why possessions rather than passes.</b> Counting passes tells you volume. A
+    possession tells you intent. Ten passes that go sideways in front of a low block and three
+    that split it are the same on a pass chart and completely different here, because the
+    sequence records where the ball started, where it travelled, and whether it produced
+    anything.</p>
+
+    <h4>Reading a card</h4>
+    <ul>
+      <li>Each card is one possession, drawn <b>start to finish</b>, attacking left to right.</li>
+      <li>The <b>hollow ring</b> is where the team won the ball.</li>
+      <li>Arrows are passes; small dots are events with no destination, such as a touch, a
+      take-on or a shot.</li>
+      <li><b>Dotted segments</b> are movement the feed does not record as an event, usually a
+      carry or a flick. The ball moved, we just cannot see how.</li>
+      <li>A <b>star</b> marks the shot. Anything drawn faintly after it is a rebound or second
+      phase, not part of the original move.</li>
+      <li><b>xT</b> is the threat the possession added by moving the ball into more dangerous
+      areas. The league averages about 0.016 per possession, so anything above 0.4 is an
+      exceptional move.</li>
+    </ul>
+
+    <h4>What the type filter means</h4>
+    <p>Possessions are tagged by how they started and how they travelled: from deep, won high,
+    patient build, over the top, switches of play, wide combinations, hold-up play. Picking a
+    type shows the highest-threat examples of that pattern across the league, which is the
+    quickest way to see what a route actually looks like when it works.</p>
+
+    <h4>Finding similar possessions</h4>
+    <p>Click any card and the tool finds the closest matches anywhere in the league, comparing
+    fourteen standardised features: where it started and ended, how far it travelled
+    vertically and laterally, how many passes, how long they were, the threat generated and
+    how much of it happened in the attacking third. Distance is the measure, so lower is a
+    closer match. It is comparing <b>shape</b>, not teams, which is why a Miami move can match
+    a Vancouver one.</p>
+
+    <p class="caveat">One honest limit: sequences describe the team in possession. The
+    opponent&rsquo;s shape, and any pressure that forced a decision, is invisible in event
+    data. A possession that looks laboured may have been the only option available.</p>
+  </div>
+</details>
 <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 <script>
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
