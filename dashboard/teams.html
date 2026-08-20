@@ -118,6 +118,20 @@ tr:hover td{background:var(--surface)}
    opaque background and colour the options explicitly. */
 select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+
+/* Sequence output: grouped tiles on a uniform grid. The old version put 22 tiles in one
+   flex row, which truncated labels and gave no sense of which numbers belong together. */
+.sgrp{padding:12px 14px 4px;border-top:1px solid var(--border)}
+.sgrp:first-of-type{border-top:none}
+.sgrp-h{font:700 10px/1 var(--mono,monospace);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sgrp-d{font:400 11px/1.4 Inter,sans-serif;letter-spacing:0;text-transform:none;color:var(--text3)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;padding-bottom:10px}
+.stile{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:9px 10px}
+.stile-l{font:500 9.5px/1.35 Inter,sans-serif;color:var(--text3);min-height:26px}
+.stile-v{font:700 20px/1.1 Inter,sans-serif;letter-spacing:-.02em;margin-top:3px}
+.stile-z{font:600 9px/1 var(--mono,monospace);color:var(--text3);margin-top:3px;opacity:.75}
+.seqwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -787,16 +801,34 @@ const SEQ_AXES=[
   ['wide_tri_pct','Wide triangles %',0],['switches_pct','Switches %',0],['central_prog_share','Central prog %',0],
   ['hold_up_pct','Hold up %',0],['ends_opp_half_pct','Ends opp half %',0]
 ];
-const SEQ_CARDS=[
-  ['seqs_per_match','Seqs / match',0,''],['passes_seq','Passes / seq',1,''],['seconds_seq','Seconds / seq',1,''],
-  ['players_seq','Players / seq',1,''],['xt_seq','xT / seq',3,''],['ends_in_shot_pct','Ends in shot',0,'%'],
-  ['high_build_pct','High build',0,'%'],['low_build_pct','Low build',0,'%'],['structured_pct','Structured',0,'%'],
-  ['ends_opp_half_pct','Ends opp half',0,'%'],['end_att_third_pct','End att third',0,'%'],['end_in_box_pct','End in box',0,'%'],
-  ['very_short_pct','Very short',0,'%'],['long_pct','Long',0,'%'],['switches_pct','Switches',0,'%'],
-  ['wide_tri_pct','Wide triangles',0,'%'],['hold_up_pct','Hold up',0,'%'],['central_prog_share','Central prog',0,'%'],
-  ['finds_central_pct','Finds central',0,'%'],['finds_wide_pct','Finds wide',0,'%'],['wide_pass_pct','Wide passes',0,'%'],
-  ['end_around_box_pct','Around box',0,'%']
+// Grouped so the 22 numbers read as four questions rather than one undifferentiated wall:
+// how much possession, where it starts, how it travels, and what it produces.
+const SEQ_GROUPS=[
+  {g:'Volume and shape', d:'How much they have the ball and what a typical possession looks like.',
+   m:[['seqs_per_match','Possessions / match',0,''],['passes_seq','Passes / poss',1,''],
+      ['seconds_seq','Seconds / poss',1,''],['players_seq','Players / poss',1,''],
+      ['very_short_pct','Very short',0,'%'],['structured_pct','Patient build',0,'%']]},
+  {g:'Where it starts', d:'Whether they build from deep or win the ball high up the pitch.',
+   m:[['low_build_pct','From deep',0,'%'],['high_build_pct','Won high',0,'%'],
+      ['long_pct','Goes long',0,'%'],['hold_up_pct','Hold-up',0,'%']]},
+  {g:'How it travels', d:'The route forward: through the middle, around the outside, or switched.',
+   m:[['finds_central_pct','Finds central',0,'%'],['finds_wide_pct','Finds wide',0,'%'],
+      ['central_prog_share','Central progression',0,'%'],['wide_pass_pct','Wide passes',0,'%'],
+      ['switches_pct','Switches',0,'%'],['wide_tri_pct','Wide combinations',0,'%']]},
+  {g:'What it produces', d:'Territory gained and whether it converts into anything.',
+   m:[['ends_opp_half_pct','Reaches opp half',0,'%'],['end_att_third_pct','Reaches final third',0,'%'],
+      ['end_around_box_pct','Edge of box',0,'%'],['end_in_box_pct','Into the box',0,'%'],
+      ['ends_in_shot_pct','Ends in a shot',0,'%'],['xt_seq','Threat / poss',3,'']]}
 ];
+// z-score -> the same colour language used elsewhere on the site
+function zBand(z){
+  if(z==null)return {c:'var(--text3)',t:''};
+  if(z>=1.5) return {c:'var(--elite)', t:'well above league'};
+  if(z>=0.6) return {c:'var(--above)', t:'above league'};
+  if(z<=-1.5)return {c:'var(--poor)',  t:'well below league'};
+  if(z<=-0.6)return {c:'var(--below)', t:'below league'};
+  return {c:'var(--avg)', t:'around league average'};
+}
 async function renderSequences(t){
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
@@ -811,14 +843,24 @@ async function renderSequences(t){
     const Z={},RAW={};(r[1]||[]).forEach(function(x){Z[x.metric]=x.z==null?0:+x.z;RAW[x.metric]=+x.raw});
     let cards='<div class="sect"><div class="sect-h"><span>Sequence output</span>'+
       '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">'+
-      a.matches+' matches \u00B7 open play</span></div><div class="kpis" style="margin-bottom:0">';
-    SEQ_CARDS.forEach(function(c){
-      const v=a[c[0]];if(v==null)return;
-      const val=(+v).toFixed(c[2])+(c[3]==='%'?'%':'');
-      cards+='<div class="kpi" style="min-width:104px"><div class="kpi-l">'+esc(c[1])+
-        '</div><div class="kpi-v" style="font-size:19px">'+val+'</div></div>';
+      a.matches+' matches \u00B7 open play \u00B7 colour shows distance from the league average</span></div>';
+    SEQ_GROUPS.forEach(function(grp){
+      let tiles='';
+      grp.m.forEach(function(c){
+        const v=a[c[0]];if(v==null)return;
+        const z=Z[c[0]];const b=zBand(z);
+        const val=(+v).toFixed(c[2])+(c[3]==='%'?'%':'');
+        tiles+='<div class="stile" title="'+esc(b.t)+(z==null?'':' ('+(z>0?'+':'')+z.toFixed(1)+'\u03c3)')+'">'+
+          '<div class="stile-l">'+esc(c[1])+'</div>'+
+          '<div class="stile-v" style="color:'+b.c+'">'+val+'</div>'+
+          '<div class="stile-z">'+(z==null?'':(z>0?'+':'')+z.toFixed(1)+'\u03c3')+'</div></div>';
+      });
+      if(!tiles)return;
+      cards+='<div class="sgrp"><div class="sgrp-h">'+esc(grp.g)+
+        '<span class="sgrp-d">'+esc(grp.d)+'</span></div>'+
+        '<div class="sgrid">'+tiles+'</div></div>';
     });
-    cards+='</div></div>';
+    cards+='</div>';
     const radar=seqRadar(t,Z,RAW);
     main.innerHTML=teamHead(t)+cards+radar+
       '<div class="foot">Sequence style is z-scored against the 30 MLS teams this season, so the dashed ring is the league mean and every ring out is one standard deviation. '+
@@ -832,7 +874,7 @@ function seqRadar(t,Z,RAW){
   const N=SEQ_AXES.length, cx=360, cy=330, R=205, zmin=-2.5, zmax=2.5;
   function rad(z){const zc=Math.max(zmin,Math.min(zmax,z));return (zc-zmin)/(zmax-zmin)*R}
   function pt(i,rr){const ang=(-90+i*360/N)*Math.PI/180;return[cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)]}
-  let s='<svg viewBox="0 0 720 660" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 300px);display:block">';
+  let s='<svg viewBox="0 0 720 660" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-width:660px;max-height:min(620px,calc(100vh - 220px));margin:0 auto;display:block">';
   [-2,-1,0,1,2].forEach(function(z){
     const rr=rad(z),dash=(z===0);
     s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr.toFixed(1)+'" fill="none" stroke="'+(dash?'var(--accent)':'var(--border)')+
@@ -860,8 +902,10 @@ function seqRadar(t,Z,RAW){
   s+='</svg>';
   return '<div class="sect" style="margin-top:12px"><div class="viz-eyebrow">Season style</div>'+
     '<div class="viz-title">'+esc(tname(t.team))+' \u2014 sequence style</div>'+
-    '<div class="viz-sub">Every spoke is a z-score versus the '+esc(lgName(lgOf(SEL)))+' pool (dashed ring = league mean, rings every 1\u03c3). '+
-    'The figure at each spoke is '+esc(tname(t.team))+'\u2019s raw value.</div>'+
+    '<div class="viz-sub">The same numbers as above, read as one shape. Each spoke is how far '+
+    esc(tname(t.team))+' sits from the '+esc(lgName(lgOf(SEL)))+' average: the dashed ring is the mean '+
+    'and every ring beyond it is one standard deviation. Spokes pushing outward are what makes them '+
+    'distinctive; a shape hugging the dashed ring is a side without a strong stylistic fingerprint.</div>'+
     s+'</div>';
 }
 
