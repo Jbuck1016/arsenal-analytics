@@ -94,10 +94,16 @@ input[type=range]{flex:1;accent-color:var(--amber);height:3px;cursor:pointer}
 select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line2);
   border-radius:3px;padding:7px 8px;font:500 11px/1.2 var(--f-mono);cursor:pointer}
 select:focus{outline:none;border-color:var(--amber-line)}
-.trait-row{display:grid;grid-template-columns:1fr 74px;gap:6px;margin-bottom:6px;align-items:center}
-.trait-row .mini{display:flex;align-items:center;gap:5px}
-.trait-row input[type=range]{height:3px}
-.tval{font:600 9.5px/1 var(--f-mono);color:var(--amber);min-width:28px;text-align:right}
+/* The slider column was fixed at 74px, so the value printed on top of the track.
+   Label and value now share a line and the slider gets the full width beneath. */
+.trait-row{display:block;margin-bottom:11px}
+.trait-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
+.trait-name{font:500 11px/1.3 var(--f-body);color:var(--dim)}
+.trait-row.on .trait-name{color:var(--text);font-weight:600}
+.trait-row .mini{display:block}
+.trait-row input[type=range]{width:100%;height:3px;display:block;margin:0}
+.tval{font:600 10px/1 var(--f-mono);color:var(--dim2);white-space:nowrap}
+.trait-row.on .tval{color:var(--amber)}
 .btn{width:100%;background:var(--panel2);color:var(--dim);border:1px solid var(--line2);
   border-radius:3px;padding:8px;font:600 10px/1 var(--f-mono);letter-spacing:.06em;
   text-transform:uppercase;cursor:pointer;margin-top:9px}
@@ -364,12 +370,16 @@ const SORTS=[
 const POOLS=['CB','FB','CM','AM','W','ST'];
 const SIDES=[['L','Left'],['C','Central'],['R','Right']];
 
+// Each shortcut is a real sentence, so clicking one fills the ask bar and shows you the
+// query it ran. You can then edit it rather than reverse-engineering the filters.
 const PRESETS=[
-  {n:'Young progressive centre-backs',f:{pools:['CB'],sides:[],age:23,minN:6,traits:{progressor:70},sort:'prog_cmp_90'}},
-  {n:'Efficient wide carriers',f:{pools:['W'],sides:[],age:40,minN:6,traits:{carrier:70},sort:'xt_carry_90'}},
-  {n:'Creative eights',f:{pools:['CM'],sides:[],age:40,minN:6,traits:{creator:70},sort:'xa_90'}},
-  {n:'Poachers (box threat)',f:{pools:['ST'],sides:[],age:40,minN:6,traits:{box_threat:75},sort:'xg_90'}},
-  {n:'Under-21 breakouts',f:{pools:[],sides:[],age:21,minN:5,traits:{},sort:'xt_90'}}
+  {n:'Young progressive centre-backs', q:'best centre backs at progressive passing under 23'},
+  {n:'Efficient wide carriers',        q:'best wingers at ball carrying'},
+  {n:'Creative eights',                q:'best midfielders at chance creation'},
+  {n:'Penalty-box strikers',           q:'best strikers at box threat'},
+  {n:'Under-21 breakouts',             q:'best players at expected threat under 21'},
+  {n:'Ball-winning midfielders',       q:'best midfielders at tackling'},
+  {n:'One-v-one wingers',              q:'best wingers at dribbling'}
 ];
 
 let ROWS=[],PCT={},STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};
@@ -467,10 +477,11 @@ function paintChips(){
 function paintTraits(){
   document.getElementById('traits').innerHTML=TRAITS.map(function(t){
     const v=STATE.traits[t[0]]||0;
-    return '<div class="trait-row"><span style="font:500 10.5px/1.2 var(--f-body);color:'
-      +(v?'var(--text)':'var(--dim)')+'">'+esc(t[1])+'</span>'
-      +'<div class="mini"><input type="range" min="0" max="95" step="5" value="'+v+'" data-t="'+t[0]+'">'
-      +'<span class="tval">'+(v?v:'–')+'</span></div></div>';
+    return '<div class="trait-row'+(v?' on':'')+'">'
+      +'<div class="trait-head"><span class="trait-name">'+esc(t[1])+'</span>'
+      +'<span class="tval">'+(v?('top '+(100-v)+'%'):'any')+'</span></div>'
+      +'<div class="mini"><input type="range" min="0" max="95" step="5" value="'+v+'" data-t="'+t[0]+'"></div>'
+      +'</div>';
   }).join('');
 }
 function paintSorts(){
@@ -503,8 +514,9 @@ document.getElementById('traits').addEventListener('input',function(e){
   const r=e.target; if(r.type!=='range')return;
   const t=r.dataset.t,v=+r.value;
   if(v>0)STATE.traits[t]=v;else delete STATE.traits[t];
-  r.parentElement.querySelector('.tval').textContent=v?v:'–';
-  r.closest('.trait-row').firstElementChild.style.color=v?'var(--text)':'var(--dim)';
+  const row=r.closest('.trait-row');
+  row.classList.toggle('on',v>0);
+  row.querySelector('.tval').textContent=v?('top '+(100-v)+'%'):'any';
   apply();
 });
 document.getElementById('ageMax').addEventListener('input',function(e){
@@ -533,10 +545,11 @@ document.getElementById('presets').innerHTML=PRESETS.map(function(p,i){
   return '<button class="preset" data-i="'+i+'">'+esc(p.n)+'</button>'}).join('');
 document.getElementById('presets').addEventListener('click',function(e){
   const b=e.target.closest('.preset'); if(!b)return;
-  const f=PRESETS[+b.dataset.i].f;
-  STATE={pools:f.pools.slice(),sides:f.sides.slice(),age:f.age,minN:f.minN,
-         traits:Object.assign({},f.traits),sort:f.sort};
-  paintAll();
+  const q=PRESETS[+b.dataset.i].q;
+  const inp=document.getElementById('askInput');
+  inp.value=q;
+  inp.focus();
+  runAsk();
 });
 function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
 document.getElementById('themeBtn').addEventListener('click',function(){
