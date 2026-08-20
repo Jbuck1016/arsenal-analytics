@@ -394,11 +394,12 @@ async function init(){
   try{
     const res=await Promise.all([
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties,apps,starts,minutes'}),
-      sbAll('v_team_directory',{select:'team,league,league_name'}),
-      sbAll('v_league_summary',{select:'league,display_name,matches'}),
       sbAll('mv_player_role',{select:'player_id,modal_position,listed_pool,pool,reassigned,confidence'}),
       sbAll('metric_defs',{select:'key,label,grp,unit,higher_is_better,definition,sort_order,grp_order',order:'grp_order.asc,sort_order.asc'}),
-      sbAll('role_pillar_weights',{select:'pool,pillar,weight'})
+      sbAll('role_pillar_weights',{select:'pool,pillar,weight'}),
+      // appended, not inserted: the four above are read positionally as res[0..3]
+      sbAll('v_team_directory',{select:'team,league,league_name'}),
+      sbAll('v_league_summary',{select:'league,display_name,matches'})
     ]);
     const season=res[0],role=res[1];DEFS=res[2];
     WEIGHTS={};res[3].forEach(function(r){if(!WEIGHTS[r.pool])WEIGHTS[r.pool]={};WEIGHTS[r.pool][r.pillar]=+r.weight});
@@ -406,8 +407,8 @@ async function init(){
     PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})}).filter(function(p){return p.pool});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
-    (r[r.length-2]||[]).forEach(function(d){PLG[d.team]=d.league});
-    PLEAGUES=(r[r.length-1]||[]).filter(function(l){return l.matches>0});
+    (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
+    PLEAGUES=(res[5]||[]).filter(function(l){return l.matches>0});
     if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
     renderLeaguePick();
     fillTeamSel();
