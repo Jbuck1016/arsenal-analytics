@@ -95,6 +95,12 @@ a{color:inherit;text-decoration:none}
   font:500 10px/1.8 var(--f-mono);color:var(--dim2);display:flex;gap:8px;flex-wrap:wrap}
 .foot .sep{color:var(--line2)}
 .load{font:500 12px/1 var(--f-mono);color:var(--dim2);padding:40px 0;text-align:center}
+
+/* Selects: the open option list is drawn by the browser on a white base, so a
+   translucent surface colour plus light text renders as white on white. Force an
+   opaque background and colour the options explicitly. */
+select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 </style>
 </head>
 <body>

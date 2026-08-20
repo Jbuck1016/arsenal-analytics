@@ -91,6 +91,12 @@ select option{background:var(--bg2);color:var(--text)}
   width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px;
   margin-left:auto;flex-shrink:0}
 .tbtn:hover{color:var(--amber);border-color:var(--amber-line)}
+
+/* Selects: the open option list is drawn by the browser on a white base, so a
+   translucent surface colour plus light text renders as white on white. Force an
+   opaque background and colour the options explicitly. */
+select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 </style>
 <script>
 (function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
@@ -110,7 +116,7 @@ const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Guide','guide.html'],['Reference','glossary.html']];
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',

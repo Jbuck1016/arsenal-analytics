@@ -129,6 +129,12 @@ tbody tr:hover{background:var(--panel2)}
 .pbar i{display:block;height:100%;background:var(--amber)}
 .empty{padding:34px 16px;text-align:center;font:500 11px/1.6 var(--f-mono);color:var(--dim2)}
 .foot{margin-top:14px;font:500 10px/1.7 var(--f-mono);color:var(--dim2)}
+
+/* Selects: the open option list is drawn by the browser on a white base, so a
+   translucent surface colour plus light text renders as white on white. Force an
+   opaque background and colour the options explicitly. */
+select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 </style>
 </head>
 <body>

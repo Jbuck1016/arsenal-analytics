@@ -39,6 +39,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .team-sw{display:flex;align-items:center}
 .team-pick{background:var(--surface2);border:1px solid var(--border);color:var(--text);font:700 12.5px/1 var(--f-display);letter-spacing:-.01em;padding:7px 10px;border-radius:7px;cursor:pointer;outline:none;max-width:210px}
 .team-pick:focus{border-color:var(--accent)}
+/* Selects need an OPAQUE background: the open option list is drawn by the browser on a
+   white base, so a translucent surface colour plus light text renders as white on white.
+   Options must be coloured explicitly too, they do not inherit from the control. */
+.team-pick,select.s-sel,select.trend-sel,#matchSel{background-color:var(--bg2);color:var(--text)}
+.team-pick option,select.s-sel option,select.trend-sel option,#matchSel option,
+.team-pick optgroup,#matchSel optgroup{background-color:var(--bg2);color:var(--text)}
 .team-btn{background:none;border:none;color:var(--text3);font:600 11px/1 'Inter',sans-serif;padding:4px 14px;border-radius:6px;cursor:pointer;transition:.15s}
 .team-btn.on{background:var(--accent);color:#fff}
 .team-btn:hover:not(.on){color:var(--text)}

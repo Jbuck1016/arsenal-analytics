@@ -103,6 +103,12 @@ a{color:inherit;text-decoration:none}
   width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px;
   margin-left:auto;flex-shrink:0}
 .tbtn:hover{color:var(--amber);border-color:var(--amber-line)}
+
+/* Selects: the open option list is drawn by the browser on a white base, so a
+   translucent surface colour plus light text renders as white on white. Force an
+   opaque background and colour the options explicitly. */
+select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 </style>
 <script>
 (function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
