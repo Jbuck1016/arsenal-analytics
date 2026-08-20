@@ -102,12 +102,17 @@ tr:hover td{background:var(--surface)}
 .mrow{cursor:pointer}
 .mrow:hover td{background:var(--accent-dim)}
 .wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
+
+.lgpick{margin-top:6px}
+.lgpick select{background:var(--bg2);color:var(--text);border:1px solid var(--line2);border-radius:4px;
+  padding:4px 8px;font:600 10.5px/1.2 var(--mono,inherit);cursor:pointer}
+.lgpick select:focus{outline:none;border-color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-logo">T</div>
-  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
+  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div><div id="lgPick" class="lgpick"></div></div>
   <div class="tabs" id="tabs"></div>
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
@@ -127,10 +132,11 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Sequences','Maps','Rankings','League Map','Matches','Squad'];
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Reference','glossary.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
+let DIR={},LEAGUES=[],LG='ALL';
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
@@ -154,6 +160,37 @@ function tier(p){if(p==null)return{c:'var(--text3)'};if(p>=80)return{c:'var(--el
 function fmt(v,u){if(v==null)return'\u2014';return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+(u==='%'?'%':(u==='m'?' m':''))}
 function tdefOf(k){for(var i=0;i<TDEFS.length;i++)if(TDEFS[i].key===k)return TDEFS[i];return null}
 function teamOf(n){for(var i=0;i<TEAMS.length;i++)if(TEAMS[i].team===n)return TEAMS[i];return null}
+function lgOf(t){return (DIR[t]&&DIR[t].league)||'USA-MLS'}
+function lgName(code){
+  for(var i=0;i<LEAGUES.length;i++)if(LEAGUES[i].league===code)return LEAGUES[i].display_name;
+  return code;
+}
+/* Every list, ranking and map is scoped to the chosen league. Percentiles and ranks
+   are already computed within league in the database, so mixing them on screen would
+   misrepresent numbers that were never comparable. */
+function inScope(t){return LG==='ALL'||lgOf(t)===LG}
+function scopedTeams(){return TEAMS.filter(function(t){return inScope(t.team)})}
+function updateHdr(){
+  var n=scopedTeams().length;
+  var label=(LG==='ALL')?(LEAGUES.length+' leagues'):lgName(LG);
+  document.getElementById('hdrSub').textContent=
+    label+' \u00B7 '+n+' teams \u00B7 ranked within league';
+}
+function renderLeaguePicker(){
+  var host=document.getElementById('lgPick');
+  if(!host||LEAGUES.length<2){if(host)host.style.display='none';return}
+  host.innerHTML='<select id="lgSel" onchange="setLeague(this.value)">'+
+    '<option value="ALL"'+(LG==='ALL'?' selected':'')+'>All leagues</option>'+
+    LEAGUES.map(function(l){
+      return '<option value="'+esc(l.league)+'"'+(LG===l.league?' selected':'')+'>'+
+        esc(l.display_name)+' ('+l.teams+')</option>'}).join('')+'</select>';
+}
+function setLeague(v){
+  LG=v;
+  renderList();updateHdr();
+  if(SEL&&!inScope(SEL)){var f=scopedTeams()[0];SEL=f?f.team:null}
+  draw();
+}
 
 async function init(){
   try{
@@ -162,14 +199,19 @@ async function init(){
       sbAll('team_metric_defs',{select:'*',order:'grp_order.asc,sort_order.asc'}),
       sbAll('mv_team_percentiles',{select:'team,metric,value,pct'}),
       sbAll('mv_team_buildup',{select:'*'}),
-      sbAll('mv_team_lanes',{select:'*'})
+      sbAll('mv_team_lanes',{select:'*'}),
+      sbAll('v_team_directory',{select:'team,league,league_name,teams_in_league'}),
+      sbAll('v_league_summary',{select:'league,display_name,matches,teams'})
     ]);
     TEAMS=r[0];TDEFS=r[1];
     PCT={};r[2].forEach(function(x){if(!PCT[x.team])PCT[x.team]={};PCT[x.team][x.metric]=x});
     BUILD={};(r[3]||[]).forEach(function(b){BUILD[b.team]=b});
     LANES={};(r[4]||[]).forEach(function(l){if(!LANES[l.team])LANES[l.team]={};LANES[l.team][l.lane]=l});
-    document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 '+TEAMS.length+' teams \u00B7 ranked across the league';
-    renderTabs();renderList();wireTips();
+    DIR={};(r[5]||[]).forEach(function(d){DIR[d.team]=d});
+    LEAGUES=(r[6]||[]).filter(function(l){return l.teams>0});
+    if(LEAGUES.length===1)LG=LEAGUES[0].league;
+    renderLeaguePicker();
+    renderTabs();renderList();wireTips();updateHdr();
     const qt=new URLSearchParams(location.search).get('team');
     SEL=(qt&&teamOf(qt))?qt:(teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team);
     pick(SEL);
@@ -184,7 +226,7 @@ function setTab(t){TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t==='League Map'||t==='Rankings');
   draw();}
 function renderList(){
-  document.getElementById('tlist').innerHTML=TEAMS.slice().sort(function(a,b){
+  document.getElementById('tlist').innerHTML=scopedTeams().sort(function(a,b){
     return b.field_tilt-a.field_tilt}).map(function(t){
     return '<div class="pitem'+(SEL===t.team?' on':'')+'" onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
       '<span class="pitem-nm">'+esc(tname(t.team))+'</span>'+
@@ -210,7 +252,7 @@ function teamHead(t){
   const gd=(t.goals_pg-t.goals_against_pg);
   return '<div class="tcard"><div style="flex:1;min-width:230px">'+
     '<div class="tname">'+esc(tname(t.team))+'</div>'+
-    '<div class="tmeta">MLS 2026 \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
+    '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' 2026 \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
     (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
     '<div class="kpis">'+
     kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct)+
@@ -255,7 +297,7 @@ function metricOpts(sel){let o='',g='';
   return o+'</optgroup>'}
 function renderLeagueMap(){
   const dx=tdefOf(LM.x)||{},dy=tdefOf(LM.y)||{};
-  const pts=TEAMS.map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
+  const pts=scopedTeams().map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
   const W=1080,H=520,MT=22,MR=34,MB=54,ML=82;
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
   const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
@@ -674,7 +716,7 @@ function laneViz(t){
 /* ---------- RANKINGS ---------- */
 function renderRankings(){
   const d=tdefOf(RKT.metric)||{};
-  const rows=TEAMS.map(function(t){
+  const rows=scopedTeams().map(function(t){
     const p=(PCT[t.team]||{})[RKT.metric];
     return{team:t.team,value:+t[RKT.metric],pct:p?+p.pct:null};
   }).filter(function(r){return !isNaN(r.value)});
@@ -765,7 +807,7 @@ async function renderSequences(t){
     const radar=seqRadar(t,Z,RAW);
     main.innerHTML=teamHead(t)+cards+radar+
       '<div class="foot">Sequence style is z-scored against the 30 MLS teams this season, so the dashed ring is the league mean and every ring out is one standard deviation. '+
-      'A 30-team pool is small, so read the extreme spokes as signal and the near-mean ones lightly. '+
+      'The pool is only '+scopedTeams().length+' teams, so read the extreme spokes as signal and the near-mean ones lightly. '+
       'Hold-up and central-prog use deliberately strict definitions \u2014 see the glossary. '+
       'Open play only; a possession is a run of controlled touches by one team, ended by a turnover, stoppage or set piece.</div>';
     wireTips();
@@ -803,7 +845,7 @@ function seqRadar(t,Z,RAW){
   s+='</svg>';
   return '<div class="sect" style="margin-top:12px"><div class="viz-eyebrow">Season style</div>'+
     '<div class="viz-title">'+esc(tname(t.team))+' \u2014 sequence style</div>'+
-    '<div class="viz-sub">Every spoke is a z-score versus the 30-team pool (dashed ring = league mean, rings every 1\u03c3). '+
+    '<div class="viz-sub">Every spoke is a z-score versus the '+esc(lgName(lgOf(SEL)))+' pool (dashed ring = league mean, rings every 1\u03c3). '+
     'The figure at each spoke is '+esc(tname(t.team))+'\u2019s raw value.</div>'+
     s+'</div>';
 }

@@ -59,6 +59,10 @@ a{color:inherit;text-decoration:none}
 .ans-t{font:700 10px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .parse{font:500 10.5px/1.5 var(--f-mono);color:var(--dim)}
 .parse b{color:var(--text)}
+.how{font:400 11.5px/1.6 var(--f-body);color:var(--dim2);border-left:2px solid var(--line2);
+  padding-left:9px;margin:8px 0 2px}
+.pn.link{cursor:pointer;border-bottom:1px dotted var(--line2)}
+.pn.link:hover{color:var(--amber);border-bottom-color:var(--amber-line)}
 .pill{display:inline-block;font:600 9px/1 var(--f-mono);border:1px solid var(--line2);
   border-radius:3px;padding:4px 7px;margin-right:4px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
 .ans .close{margin-left:auto;cursor:pointer;color:var(--dim);font:600 10px var(--f-mono)}
@@ -241,6 +245,10 @@ const EXAMPLES=[
   'most creative strikers'
 ];
 
+function pname(id,nm){
+  if(!id) return '<span class="pn">'+esc(nm)+'</span>';
+  return '<a class="pn link" href="players.html?player='+encodeURIComponent(id)+'">'+esc(nm)+'</a>';
+}
 function parseLine(d){
   if(d.intent==='similar'){
     const s=d.subject||{};
@@ -269,14 +277,15 @@ function renderAsk(d){
   let h='<div class="ans"><div class="ans-h"><span class="ans-t">'
     +(d.intent==='similar'?'Similarity':'Ranking')+'</span>'
     +'<span class="close" onclick="clearAsk()">clear ✕</span></div>'
-    +'<div class="parse">'+parseLine(d)+'</div>';
+    +'<div class="parse">'+parseLine(d)+'</div>'
+    +(d.explain?'<div class="how">'+esc(d.explain)+'</div>':'');
   if(!rows.length){ h+='<div class="empty">nothing matched that</div></div>'; host.innerHTML=h; return; }
 
   if(d.intent==='similar'){
     h+='<table><thead><tr><th class="l">#</th><th class="l">Player</th><th class="l">Team</th>'
       +'<th>Pos</th><th>Match</th></tr></thead><tbody>'
       +rows.map(function(r){return '<tr><td class="l rk">'+esc(r.rank)+'</td>'
-        +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+        +'<td class="l">'+pname(r.player_id,r.player)+'</td>'
         +'<td class="l tm">'+esc(r.team)+'</td><td>'+esc(r.pos||'')+'</td>'
         +'<td class="metric">'+esc(r.sim_pct)+'%</td></tr>'}).join('')
       +'</tbody></table>';
@@ -284,7 +293,7 @@ function renderAsk(d){
     h+='<table><thead><tr><th class="l">#</th><th class="l">Player</th><th class="l">Team</th>'
       +'<th>Pos</th><th>Age</th><th>90s</th><th>Value</th><th>Pct</th></tr></thead><tbody>'
       +rows.map(function(r){return '<tr><td class="l rk">'+esc(r.rk)+'</td>'
-        +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+        +'<td class="l">'+pname(r.player_id,r.player)+'</td>'
         +'<td class="l tm">'+esc(r.team)+'</td><td>'+esc(r.pos||'')+'</td>'
         +'<td>'+(r.age_seen==null?'—':esc(r.age_seen))+'</td>'
         +'<td>'+(r.nineties==null?'—':esc(r.nineties))+'</td>'

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metric reference ┬╖ MLS 2026</title>
+<title>Metric reference · MLS 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -111,8 +111,8 @@ a{color:inherit;text-decoration:none}
 <body>
 
 <div class="hdr">
-  <span class="hdr-mark">ΓûÉ</span>
-  <div><div class="hdr-t">Metric reference</div><div class="hdr-s" id="hs">loadingΓÇª</div></div>
+  <span class="hdr-mark">▐</span>
+  <div><div class="hdr-t">Metric reference</div><div class="hdr-s" id="hs">loading…</div></div>
   <div class="nav">
     <a href="index.html">Home</a><a href="insights.html">Insights</a>
     <a href="search.html">Search</a><a href="match.html">Match</a>
@@ -125,7 +125,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="wrap">
   <div class="side">
-    <div class="side-top"><input class="q" id="q" placeholder="filter metricsΓÇª" autocomplete="off" spellcheck="false"></div>
+    <div class="side-top"><input class="q" id="q" placeholder="filter metrics…" autocomplete="off" spellcheck="false"></div>
     <div class="list" id="list"></div>
   </div>
   <div class="main" id="main"><div class="empty">Choose a metric</div></div>
@@ -136,7 +136,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
- 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montr├⌐al',
+ 'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
  'Portland':'Portland Timbers','Salt Lake':'Real Salt Lake','San Jose':'San Jose Earthquakes',
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
@@ -166,8 +166,8 @@ async function init(){
     DEFS=r[0];
     r[1].forEach(function(e){EX[e.metric]=e});
     document.getElementById('hs').textContent=
-      DEFS.length+' metrics ┬╖ '+[...new Set(DEFS.map(function(d){return d.grp}))].length+
-      ' groups ┬╖ examples drawn from players with 8+ nineties';
+      DEFS.length+' metrics · '+[...new Set(DEFS.map(function(d){return d.grp}))].length+
+      ' groups · examples drawn from players with 8+ nineties';
     renderList();
     const q=new URLSearchParams(location.search).get('m');
     open(q&&DEFS.some(function(d){return d.key===q})?q:DEFS[0].key);
@@ -197,10 +197,10 @@ async function open(k){
   const d=DEFS.filter(function(x){return x.key===k})[0];if(!d)return;
   const e=EX[k];
   const unit=d.unit==='%'?'%':(d.unit==='m'?' m':(d.unit==='s'?' s':''));
-  const fmt=function(v){return v==null?'ΓÇö':(+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
+  const fmt=function(v){return v==null?'—':(+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
 
   let h='<div class="entry">'+
-    '<div class="e-eye">'+esc(d.grp)+(d.higher_is_better===false?' ┬╖ lower is better':'')+'</div>'+
+    '<div class="e-eye">'+esc(d.grp)+(d.higher_is_better===false?' · lower is better':'')+'</div>'+
     '<div class="e-t">'+esc(d.label)+'</div>'+
     '<div class="e-k">'+esc(d.key)+'</div>'+
     '<div class="e-d">'+esc(d.definition||'')+'</div>';
@@ -263,9 +263,9 @@ function exCard(label,p,unit){
   return '<div class="ex-c" onclick="location.href=\'players.html?player='+encodeURIComponent(p.id)+'\'">'+
     '<div class="ex-l">'+label+'</div>'+
     '<div class="ex-n">'+esc(p.n)+'</div>'+
-    '<div class="ex-m">'+esc(tname(p.t))+' ┬╖ '+esc(POOL_NAME[p.p]||p.p)+'</div>'+
+    '<div class="ex-m">'+esc(tname(p.t))+' · '+esc(POOL_NAME[p.p]||p.p)+'</div>'+
     '<div class="ex-v">'+(+p.v).toLocaleString(undefined,{maximumFractionDigits:3})+unit+'</div>'+
-    '<div class="ex-go">open profile ΓåÆ</div></div>';
+    '<div class="ex-go">open profile →</div></div>';
 }
 
 function readLine(d,best,worst,med,unit){
@@ -273,8 +273,8 @@ function readLine(d,best,worst,med,unit){
   if(!best||!best.n)return '';
   const dir=(d.higher_is_better===false)?'lowest':'highest';
   return '<b>'+esc(best.n)+'</b> posts the '+dir+' figure in the league at <b>'+u(best.v)+
-    '</b>, against a median of <b>'+u(med)+'</b> ΓÇö roughly '+
-    (med&&+med!==0?(Math.abs(+best.v/+med)).toFixed(1)+'├ù':'well clear of')+
+    '</b>, against a median of <b>'+u(med)+'</b> — roughly '+
+    (med&&+med!==0?(Math.abs(+best.v/+med)).toFixed(1)+'×':'well clear of')+
     ' the typical player. At the other end, <b>'+esc(worst.n)+'</b> records '+u(worst.v)+
     '. Click either card to see the full profile and the actions behind the number.';
 }
