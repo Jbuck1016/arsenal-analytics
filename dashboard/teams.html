@@ -103,11 +103,15 @@ tr:hover td{background:var(--surface)}
 .mrow:hover td{background:var(--accent-dim)}
 .wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
 
-.lgpick{padding:9px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
-.lgpick select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);
-  border-radius:4px;padding:6px 8px;font:600 11px/1.2 inherit;cursor:pointer}
+.hdr-id{min-width:0}
+.hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
+.lgpick{flex-shrink:0}
+.lgpick select{background:var(--bg);color:var(--text);border:1px solid var(--line2,var(--border));
+  border-radius:4px;padding:2px 6px;font:700 10px/1.3 inherit;cursor:pointer;max-width:150px}
 .lgpick select:hover{border-color:var(--accent)}
 .lgpick select:focus{outline:none;border-color:var(--accent)}
+/* the header is a fixed 52px; let it grow rather than clip the title */
+.hdr{height:auto;min-height:52px;padding-top:6px;padding-bottom:6px}
 
 /* Selects: the open option list is drawn by the browser on a white base, so a
    translucent surface colour plus light text renders as white on white. Force an
@@ -119,7 +123,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 <body>
 <div class="hdr">
   <div class="hdr-logo">T</div>
-  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
+  <div class="hdr-id"><div class="hdr-title">Team Profiles</div><div class="hdr-row"><div id="lgPick" class="lgpick"></div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div></div>
   <div class="tabs" id="tabs"></div>
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
@@ -128,7 +132,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   </div>
 </div>
 <div class="wrap">
-  <div class="side" id="side"><div id="lgPick" class="lgpick"></div><div class="plist" id="tlist"></div></div>
+  <div class="side" id="side"><div class="plist" id="tlist"></div></div>
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
@@ -139,7 +143,7 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Sequences','Maps','Rankings','League Map','Matches','Squad'];
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Reference','glossary.html']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
-let DIR={},LEAGUES=[],LG='ALL';
+let DIR={},LEAGUES=[],LG=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
@@ -194,6 +198,7 @@ function renderLeaguePicker(){
 }
 function setLeague(v){
   LG=v;
+  try{localStorage.setItem('leagueScope',v)}catch(e){}
   renderList();updateHdr();
   if(SEL&&!inScope(SEL)){var f=scopedTeams()[0];SEL=f?f.team:null}
   draw();
@@ -217,6 +222,7 @@ async function init(){
     DIR={};(r[5]||[]).forEach(function(d){DIR[d.team]=d});
     LEAGUES=(r[6]||[]).filter(function(l){return l.teams>0});
     if(LEAGUES.length===1)LG=LEAGUES[0].league;
+    else if(LG!=='ALL'&&!LEAGUES.some(function(l){return l.league===LG}))LG='ALL';
     renderLeaguePicker();
     renderTabs();renderList();wireTips();updateHdr();
     const qt=new URLSearchParams(location.search).get('team');

@@ -57,7 +57,7 @@ a{color:inherit;text-decoration:none}
 .filter button.on{background:var(--amber-dim);color:var(--amber)}
 .controls{display:flex;gap:10px;align-items:center;margin:0 0 18px;flex-wrap:wrap}
 .controls .filter{margin:0}
-#teamSel{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:3px;
+#lgSel,#teamSel{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:3px;
   padding:8px 10px;font:600 10px/1 var(--f-mono);letter-spacing:.04em;cursor:pointer;min-width:190px}
 #teamSel:focus{outline:none;border-color:var(--amber-line)}
 #teamSel option[data-zero="1"]{color:var(--dim2)}
@@ -130,6 +130,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <button data-f="sd">Recruitment</button>
       <button data-f="tactical">Tactical</button>
     </div>
+    <select id="lgSel"></select>
     <select id="teamSel"><option value="all">All teams</option></select>
   </div>
 
@@ -199,11 +200,16 @@ function card(ins){
     +'</div>';
 }
 
-var ALL=[], STATE={lens:'all', team:'all'};
+var ALL=[], DIR={}, LEAGUES=[];
+var STATE={lens:'all', team:'all',
+  league:(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})()};
+function lgOf(t){return (DIR[t]&&DIR[t].league)||'USA-MLS'}
+function inLeague(t){return STATE.league==='ALL'||lgOf(t)===STATE.league}
 
 function visible(){
   return ALL.filter(function(d){
     if(STATE.lens!=='all' && d.lens!==STATE.lens) return false;
+    if(!inLeague(d.team)) return false;
     if(STATE.team!=='all' && d.team!==STATE.team) return false;
     return true;
   });
@@ -240,10 +246,11 @@ function render(){
 
 function buildTeamSelect(){
   var counts={};
-  ALL.forEach(function(d){ if(d.team) counts[d.team]=(counts[d.team]||0)+1; });
+  ALL.forEach(function(d){ if(d.team&&inLeague(d.team)) counts[d.team]=(counts[d.team]||0)+1; });
   var teams=Object.keys(counts).sort();
   var sel=document.getElementById('teamSel');
-  sel.innerHTML='<option value="all">All teams ('+ALL.length+')</option>'
+  var scoped=ALL.filter(function(d){return inLeague(d.team)}).length;
+  sel.innerHTML='<option value="all">All teams ('+scoped+')</option>'
     + teams.map(function(t){
         return '<option value="'+esc(t)+'">'+esc(t)+' ('+counts[t]+')</option>';
       }).join('');
@@ -259,6 +266,22 @@ document.getElementById('filter').addEventListener('click',function(e){
 document.getElementById('teamSel').addEventListener('change',function(e){
   STATE.team=e.target.value; render();
 });
+function buildLeagueSelect(){
+  var sel=document.getElementById('lgSel');
+  if(!sel) return;
+  if(LEAGUES.length<2){sel.style.display='none';return}
+  sel.innerHTML='<option value="ALL">All leagues</option>'+
+    LEAGUES.map(function(l){
+      return '<option value="'+esc(l.league)+'"'+(STATE.league===l.league?' selected':'')+'>'+
+        esc(l.display_name)+'</option>'}).join('');
+  sel.value=STATE.league;
+  sel.addEventListener('change',function(e){
+    STATE.league=e.target.value;
+    try{localStorage.setItem('leagueScope',STATE.league)}catch(err){}
+    STATE.team='all';
+    buildTeamSelect(); render();
+  });
+}
 
 /* theme */
 function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
@@ -275,6 +298,15 @@ async function init(){
   paintThemeBtn();
   try{
     ALL=await sbAll('insights',{select:'*',order:'score.desc'});
+    try{
+      var dir=await sbAll('v_team_directory',{select:'team,league'});
+      DIR={};dir.forEach(function(d){DIR[d.team]=d});
+      var ls=await sbAll('v_league_summary',{select:'league,display_name,matches'});
+      LEAGUES=(ls||[]).filter(function(l){return l.matches>0});
+      if(STATE.league!=='ALL'&&!LEAGUES.some(function(l){return l.league===STATE.league}))
+        STATE.league='ALL';
+    }catch(e){LEAGUES=[]}
+    buildLeagueSelect();
     buildTeamSelect();
     render();
     var gen = ALL.length && ALL[0].generated_at ? new Date(ALL[0].generated_at) : null;
