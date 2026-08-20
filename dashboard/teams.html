@@ -103,16 +103,17 @@ tr:hover td{background:var(--surface)}
 .mrow:hover td{background:var(--accent-dim)}
 .wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
 
-.lgpick{margin-top:6px}
-.lgpick select{background:var(--bg2);color:var(--text);border:1px solid var(--line2);border-radius:4px;
-  padding:4px 8px;font:600 10.5px/1.2 var(--mono,inherit);cursor:pointer}
+.lgpick{padding:9px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.lgpick select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);
+  border-radius:4px;padding:6px 8px;font:600 11px/1.2 inherit;cursor:pointer}
+.lgpick select:hover{border-color:var(--accent)}
 .lgpick select:focus{outline:none;border-color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-logo">T</div>
-  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div><div id="lgPick" class="lgpick"></div></div>
+  <div><div class="hdr-title">Team Profiles</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
   <div class="tabs" id="tabs"></div>
   <div class="hdr-right">
     <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
@@ -121,7 +122,7 @@ tr:hover td{background:var(--surface)}
   </div>
 </div>
 <div class="wrap">
-  <div class="side" id="side"><div class="plist" id="tlist"></div></div>
+  <div class="side" id="side"><div id="lgPick" class="lgpick"></div><div class="plist" id="tlist"></div></div>
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
