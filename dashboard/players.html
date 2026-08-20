@@ -167,7 +167,12 @@ tr:hover td{background:var(--surface)}
 .viz-leg{display:flex;gap:13px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font:500 10px/1 'Inter';color:var(--text3)}
 .viz-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .viz-leg b{font-weight:700;color:var(--text2)}
-.legend{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
+.legend{display:flex;gap:12px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--border);
+  border-radius:4px;background:var(--bg2);flex-wrap:wrap;align-items:center}
+/* keep the pitch inside the viewport so the panel beside it does not leave a tall gap */
+.split{align-items:start}
+.split-r .pbox,.split-r canvas{max-height:calc(100vh - 300px)}
+.split-r canvas{width:auto;max-width:100%;margin:0 auto;display:block}
 .lg{display:flex;align-items:center;gap:5px;font:500 10px/1 'Inter';color:var(--text3)}
 .dot{width:8px;height:8px;border-radius:50%}
 .foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
@@ -191,6 +196,9 @@ tr:hover td{background:var(--surface)}
    opaque background and colour the options explicitly. */
 select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
+
+.simhelp{font:400 12px/1.6 var(--f-body,inherit);color:var(--text2);padding:2px 0 12px;max-width:860px}
+.simhelp b{color:var(--text);font-weight:700}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -325,12 +333,26 @@ async function renderChainRoles(pid){
     h+='</div>';
     h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Most similar players</span>'+
        '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">cosine on z-scored role profile, same position</span></div>'+
+       '<div class="simhelp">Each row is another player in the same position, ranked by how '+
+       'closely his <b>role profile</b> matches. The role columns are the share of his '+
+       'involvements that look like that behaviour, so they describe <b>what he does</b>, '+
+       'not how well he does it. Hover any heading for a definition.</div>'+
        '<div style="overflow:auto"><table><thead><tr>'+
-       '<th style="cursor:default">Player</th><th style="cursor:default">Pos</th><th style="cursor:default">Team</th>'+
-       '<th class="num" style="cursor:default">Sim</th><th class="num" style="cursor:default">Inv</th><th class="num" style="cursor:default">xT</th>'+
-       '<th style="cursor:default">Tempo</th><th class="num" style="cursor:default">Init</th><th class="num" style="cursor:default">Ctrl</th>'+
-       '<th class="num" style="cursor:default">Bridge</th><th class="num" style="cursor:default">Prog</th><th class="num" style="cursor:default">Carry</th>'+
-       '<th class="num" style="cursor:default">Vert</th><th class="num" style="cursor:default">Supp</th></tr></thead><tbody>';
+       '<th style="cursor:default">Player</th>'+
+       '<th style="cursor:default" title="Position group he is compared within">Pos</th>'+
+       '<th style="cursor:default">Team</th>'+
+       '<th class="num" style="cursor:default" title="Similarity: how close his role profile is to the selected player. 100% would be identical.">Similarity</th>'+
+       '<th class="num" style="cursor:default" title="Involvements: how many possession-chain touches this profile is built from. More means a more reliable read.">Touches</th>'+
+       '<th class="num" style="cursor:default" title="Total expected threat added across the season by his passes and carries.">Total xT</th>'+
+       '<th style="cursor:default" title="Whether he tends to release the ball quickly or hold it.">Tempo</th>'+
+       '<th class="num" style="cursor:default" title="Initiator: share of his involvements that begin a possession. High means the side builds from him.">Initiate %</th>'+
+       '<th class="num" style="cursor:default" title="Average seconds between receiving the ball and releasing it. Neither high nor low is better.">Hold secs</th>'+
+       '<th class="num" style="cursor:default" title="Third-man bridge: mid-chain passes that advance the ball a full third. The connector between build-up and attack.">Bridge %</th>'+
+       '<th class="num" style="cursor:default" title="Progressor: share of involvements moving the ball at least 10 units upfield.">Progress %</th>'+
+       '<th class="num" style="cursor:default" title="Carrier: ball progression under his own power rather than by pass.">Carry %</th>'+
+       '<th class="num" style="cursor:default" title="Vertical: forward passes played straight rather than diagonally. Playing through a block rather than around it.">Vertical %</th>'+
+       '<th class="num" style="cursor:default" title="Support angle: passes made or received at roughly 45 degrees, the angle of a player offering himself as an option.">Support %</th>'+
+       '</tr></thead><tbody>';
     sims.forEach(function(s){
       h+='<tr><td style="font-weight:700">'+esc(s.player)+'</td><td style="color:var(--text2)">'+esc(s.pos)+'</td>'+
         '<td style="color:var(--text2)">'+esc(tname(s.team))+'</td>'+
@@ -342,8 +364,16 @@ async function renderChainRoles(pid){
         '<td class="num">'+(+s.carrier).toFixed(0)+'</td><td class="num">'+(+s.vertical).toFixed(0)+'</td>'+
         '<td class="num">'+(+s.support_angle).toFixed(0)+'</td></tr>';
     });
-    h+='</tbody></table></div><div class="foot">Cosine similarity on the z-scored eleven-role profile, within position. '+
-       'Ctrl is average hold seconds; the other role columns are share of involvements. Pool is 30 MLS teams, so extreme roles are the signal.</div></div>';
+    h+='</tbody></table></div><div class="foot">'+
+       '<b>How this is calculated.</b> Every player is described by eleven role percentages, '+
+       'each standardised against others in his position so the comparison is like for like. '+
+       'Similarity is the angle between those two profiles, which means it measures the '+
+       '<i>shape</i> of a player rather than his volume: a low-minutes player can match a '+
+       'regular closely if he does the same things in the same proportions.<br><br>'+
+       '<b>Two cautions.</b> Similarity is stylistic, not qualitative, so the closest match to '+
+       'a good player is often someone who does the same things less well. And a profile built '+
+       'on few touches is less stable, so read the Touches column before trusting a high '+
+       'similarity score.</div></div>';
     main.innerHTML=h;
   }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
@@ -559,8 +589,10 @@ function renderPlayer(p,pcts,pillars,dna){
     else h+='<div class="split"><div class="split-l">'+metricCard(GRP,pm)+'</div>'+
        '<div class="split-r">'+vizPanel(GRP,p)+'</div></div>';
   }
-  h+=legendHtml()+
-     '<div class="foot">Percentiles are within role pool, MLS 2026, open play only. Role is assigned from where a player actually operates, not from the team sheet.</div>';
+  h+='<div class="foot">Percentiles are within role pool, open play only. Role is assigned from where a player actually operates, not from the team sheet.</div>';
+  // legend sits ABOVE the content: it explains the colours you are about to read, and at
+  // the bottom of a tall page it was below the fold on landing
+  h = legendHtml() + h;
   document.getElementById('main').innerHTML=h;
   wireTips();
 }
