@@ -285,6 +285,8 @@ def upsert_events(sb: Client, game_data: dict, game_id: str, league: str = "USA-
 
 
 _WHITELIST_CACHE: dict[str, set[str]] = {}
+_EXPECTED_CACHE: dict[str, int] = {}
+_CLUBCOUNT_CACHE: dict[str, int] = {}
 
 
 def league_whitelist(sb: Client, league: str) -> set[str]:
@@ -307,7 +309,43 @@ def league_whitelist(sb: Client, league: str) -> set[str]:
         print(f"  !! could not read whitelist for {league}: {e}", file=sys.stderr, flush=True)
         raise
     _WHITELIST_CACHE[league] = names
+    # rows, not names: each club contributes several name variants
+    _CLUBCOUNT_CACHE[league] = len(res.data or [])
     return names
+
+
+def league_club_count(sb: Client, league: str) -> int:
+    """Number of clubs registered, not name variants.
+
+    league_whitelist() returns event_name, match_name and display_name for every club, so
+    its length is roughly three times the club count and cannot be compared to a squad
+    total. MLS would read as 60+ clubs against an expected 30.
+    """
+    if league not in _CLUBCOUNT_CACHE:
+        league_whitelist(sb, league)
+    return _CLUBCOUNT_CACHE.get(league, 0)
+
+
+def league_expected_clubs(sb: Client, league: str) -> int:
+    """How many clubs the league should have once the whitelist is complete.
+
+    A partially built whitelist must not be enforced. After one Premier League fixture the
+    list held two clubs; after six La Liga matches it held twelve of twenty. Enforcing
+    either would silently refuse every match involving a club not yet seen, and the scrape
+    would report success while writing nothing.
+    """
+    if league in _EXPECTED_CACHE:
+        return _EXPECTED_CACHE[league]
+    n = 0
+    try:
+        res = sb.table("leagues").select("expected_teams").eq("league", league).execute()
+        rows = res.data or []
+        if rows and rows[0].get("expected_teams"):
+            n = int(rows[0]["expected_teams"])
+    except Exception:  # noqa: BLE001 - unknown size means do not enforce
+        n = 0
+    _EXPECTED_CACHE[league] = n
+    return n
 
 
 def process_match(
@@ -317,14 +355,18 @@ def process_match(
     # Fails OPEN only when the league has no whitelist yet, so a brand new league can
     # be bootstrapped from its first scrape. Everything else is refused.
     allowed = league_whitelist(sb, league)
-    if allowed:
+    expected = league_expected_clubs(sb, league)
+    known = league_club_count(sb, league)
+    # Enforce only when the whitelist is COMPLETE for that league. A fixed threshold does
+    # not work: twelve clubs is complete for nobody and looks complete against a floor.
+    if expected and known >= expected:
         home = str(sched_row.get("home_team") or "").strip()
         away = str(sched_row.get("away_team") or "").strip()
         unknown = [t for t in (home, away) if t and t not in allowed]
         if unknown:
             print(
-                f"  !! SKIPPED: {', '.join(unknown)} not registered to {league}. "
-                f"This match was not written.",
+                f"  !! SKIPPED: {', '.join(unknown)} not registered to {league} "
+                f"({known}/{expected} clubs known). This match was not written.",
                 flush=True,
             )
             return "", 0
