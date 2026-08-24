@@ -235,10 +235,11 @@ details p:last-child{margin-bottom:0}
   <h5>Three player counts, three different populations</h5>
   <p>These are often confused. They are not in conflict; they count different things.</p>
   <ul>
-    <li><b><span class="lv" data-k="players_event_participants">&mdash;</span> event participants</b>
-      &mdash; anyone who touched the ball in a scraped match.</li>
-    <li><b><span class="lv" data-k="players_season_record">&mdash;</span> season-record players</b>
-      &mdash; those with an aggregated season row.</li>
+    <li><b><span class="lv" data-k="players_touched_ball">&mdash;</span> touched the ball</b>
+      &mdash; recorded at least one event in a scraped match.</li>
+    <li><b><span class="lv" data-k="players_in_matchday_squads">&mdash;</span> named in a matchday squad</b>
+      &mdash; including <b><span class="lv" data-k="players_named_never_involved">&mdash;</span> unused
+      substitutes</b> who never touched the ball. The first two figures differ by exactly this number.</li>
     <li><b><span class="lv" data-k="players_profiled_outfield">&mdash;</span> profiled outfield players</b>
       &mdash; those clearing the involvement and minutes thresholds, so eligible for percentiles,
       search and insights. This is the number that governs almost everything on the site.</li>
@@ -260,7 +261,11 @@ details p:last-child{margin-bottom:0}
       <li><strong>No defender positions.</strong> We can see where a pass started and ended,
       not who was between those points. This is why passes are labelled by
       <em>trajectory</em>, not as "line-breaking" — we cannot verify a line was broken.</li>
-      <li><strong>Unused substitutes are invisible.</strong> Squad data only contains players
+      <li><strong>Unused substitutes are present but their minutes are wrong.</strong> They appear
+      in matchday squads and are credited 90 minutes per lineup row whether or not they played, so
+      any minutes figure for such a player is fabricated. They never reach the involvement
+      threshold, so they are excluded from percentiles, search and insights. Earlier text on this
+      site said they were invisible; that was incorrect. Squad data otherwise contains players
       who touched the ball. "Fringe" means plays rarely and late, not "end of the bench".</li>
       <li><strong>Age is a snapshot.</strong> WhoScored reports age at match time, not date of
       birth, so a player can read a year light. We store the highest age observed.</li>

@@ -92,8 +92,14 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 
 <p>Expected goals is the platform's one fitted model. It is an empirical binned model built on
 this season's shots, using distance, angle, whether the shot was a header, whether it was a big
-chance, and whether it came in open play. Nothing external is used, so the honest test is whether
-it predicts what actually happened.</p>
+chance, and whether it came in open play. Nothing external is used.</p>
+
+<p><b>What follows is an in-sample calibration diagnostic, not evidence of predictive
+performance.</b> The bin conversion rates are fitted on this season's shots and then evaluated
+against those same outcomes, so the model is being scored on the data that produced it. It shows
+the model is internally consistent and unbiased in aggregate. It does not show it would perform
+on shots it has not seen. <b>No temporal holdout, cross-validation or out-of-sample test has been
+run.</b></p>
 
 <p id="xgCal" class="dim">loading calibration&hellip;</p>
 
@@ -133,22 +139,29 @@ carry several times the expected threat of those that do not, so the measure ris
 does. That is a sanity check on the implementation, not evidence the borrowed values are correct
 for these leagues.</p>
 
-<p class="dim">The <em>relative</em> ordering of pitch zones is uncontroversial and would hold in
-any competition. The absolute values are borrowed. Treat xT as a well-founded heuristic for
+<p class="dim">The <em>relative</em> ordering of pitch zones is directionally plausible and consistent with
+how the game is generally understood, but it has not been validated for these competitions
+either. Both the ordering and the absolute values are borrowed. Treat xT as a well-founded heuristic for
 comparing actions within this platform, not as a calibrated probability.</p>
 
 <h2><span class="n">03</span> Reference benchmark — the sequence engine</h2>
-<p>The possession-sequence engine was built from raw event data, so its segmentation rules could have been cut anywhere. To check they were cut in the right places, its output was compared to Julio Costa's published sequence numbers for Benfica. Passes-per-sequence and duration are league-independent structural quantities, so a match there means the chains themselves are being formed correctly.</p>
+<p>The possession-sequence engine was built from raw event data, so its segmentation rules could have been cut anywhere. To check they were cut in the right places, its output was compared to Julio Costa's published sequence numbers for Benfica. Passes-per-sequence and duration are structural quantities that depend partly on how a league plays, so a close match is suggestive rather than conclusive.</p>
 <table>
 <thead><tr><th>Sequence metric</th><th class="num">Ours (MLS)</th><th class="num">Reference (Benfica)</th><th>Read</th></tr></thead>
 <tbody>
-<tr><td>Passes per sequence</td><td class="num">3.55</td><td class="num">3.6</td><td class="tick">on reference</td></tr>
-<tr><td>Seconds per sequence</td><td class="num">9.9</td><td class="num">9.6</td><td class="tick">on reference</td></tr>
+<tr><td>Passes per sequence</td><td class="num">3.55</td><td class="num">3.6</td><td class="tick">in the same region</td></tr>
+<tr><td>Seconds per sequence</td><td class="num">9.9</td><td class="num">9.6</td><td class="tick">in the same region</td></tr>
 <tr><td>Players per sequence</td><td class="num">2.95</td><td class="num">3.2</td><td class="tick">close</td></tr>
-<tr><td>Sequences ending in a shot</td><td class="num">9.1%</td><td class="num">12%</td><td class="dim">MLS lower, expected</td></tr>
+<tr><td>Sequences ending in a shot</td><td class="num">9.1%</td><td class="num">12%</td><td class="dim">MLS lower</td></tr>
 </tbody>
 </table>
-<p class="dim">57,762 open-play sequences across 223 matches. The two structural metrics land on the reference almost exactly, which is the tell that segmentation is sound; the shot rate is lower because MLS is more transitional than Benfica in a weaker league.</p>
+<p class="dim"><b>Snapshot comparison, run once.</b> The figures in this table are from a
+historical comparison against a published Benfica reference and are <b>not recomputed on
+rebuild</b>. They are retained as a record of that check, not as a current measurement.
+They show the segmentation produces chains in a plausible region. They do not establish that
+the chains are cut in the right places, and no explanation is offered here for the difference
+in shot rate: several league and stylistic factors could account for it and none has been
+tested.</p>
 
 <h2><span class="n">04</span> Face validity — team metrics</h2>
 <p>For every team metric, the extremes should be the teams you'd name yourself. They are.</p>
@@ -211,7 +224,7 @@ comparing actions within this platform, not as a calibrated probability.</p>
 <p>Validation only means something if it can fail. It did, repeatedly, and each catch is documented here because a process that never finds anything isn't testing anything.</p>
 <ul>
 <li><b>xT grid mis-indexed.</b> The lookup assumed a 16×6 grid; the real grid is 12×8. Every advanced-third action was silently reading an empty cell. Caught when box-edge lookups returned null, fixed, re-validated against a sane season total.</li>
-<li><b>Sequences over-segmented (v1).</b> First pass gave 1.77 passes per sequence, half the reference. Cause: aerial duels and defensive touches were being allowed to define possession, chopping real chains into fragments. Restricting possession to controlled touches brought it to 3.55, on reference.</li>
+<li><b>Sequences over-segmented (v1).</b> First pass gave 1.77 passes per sequence, half the reference. Cause: aerial duels and defensive touches were being allowed to define possession, chopping real chains into fragments. Restricting possession to controlled touches brought it to 3.55, in the same region.</li>
 <li><b>Central-progression band too wide.</b> Defining "central" as the full box width credited 60% of progression as central. Narrowed to a true middle-third corridor, it dropped to a meaningful 30%.</li>
 <li><b>Bridge role too loose.</b> "Any mid-chain forward pass" put a goalkeeper on top at 60%. Redefined as a pass that actually advances the ball a third, it now surfaces ball-playing centre-backs at ~20%, matching the reference scale.</li>
 <li><b>Goalkeepers polluting outfield roles.</b> Keepers topped Progressor (any pass is forward from the goal line) and tempo (they're allowed to hold the ball). Excluded from chain-roles entirely, consistent with the platform's rule that keepers are scored on goalkeeping, not outfield play.</li>
@@ -222,7 +235,12 @@ comparing actions within this platform, not as a calibrated probability.</p>
 <li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15–30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
 <li><b>Tempo resolution.</b> Event timestamps are whole-second, so a single player's hold time is coarse. Averaged over 1,000+ involvements it separates holders from quick-releasers reliably, but it is not sub-second precise.</li>
 <li><b>Proxy definitions.</b> A few metrics — hold-up, support angle, wide triangles — are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
-<li><b>Face validity is not ground truth.</b> Outside xG and xT, these checks confirm metrics behave as designed and agree with each other and with football sense. They do not claim to be externally verified truth, and this page does not pretend otherwise.</li>
+<li><b>Face validity is not ground truth.</b> Only xG is checked against outcomes, and only
+in-sample. <b>xT is not validated at all</b>: it uses a borrowed grid that was never fitted or
+externally checked on these competitions, so it sits alongside everything else that rests on face
+validity rather than being exempt from that limitation. These checks confirm metrics behave as
+designed and agree with each other and with football sense. They do not claim to be externally
+verified truth.</li>
 </ul>
 
 <div class="foot">

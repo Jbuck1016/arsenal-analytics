@@ -208,11 +208,16 @@ tbody tr:last-child td{border-bottom:none}
 
   <!-- ================= CHECKS ================= -->
   <h2 id="checks">Automated checks</h2>
-  <p>Everything above runs on <strong>every rebuild</strong>, not as a one-off. Checks live as
+  <p><strong>Distinguish two different things on this page.</strong> The Tier 1 reconciliations and
+  the Tier 2 calibration are <em>automated invariants</em>: they re-run on every rebuild and abort
+  it if they fail. The Tier 3 reference benchmark is <em>a one-time external comparison</em>, run
+  once by hand against published figures and retained as a record. It is not recomputed and would
+  not catch a regression.</p>
+  <p>The automated checks live as
   rows in an <code>invariants</code> table, each holding SQL that returns a count of violations.
   The rebuild aborts and names the failing check if any error-level check is non-zero.</p>
   <p>Adding a check is an insert rather than a code change, which is the only way a practice like
-  this survives contact with a busy season. Fifteen error checks and three warnings currently run.</p>
+  this survives contact with a busy season. <span id="mChecks">The current count is read live.</span></p>
   <pre><code>-- example: the goal reconciliation, as it actually runs
 select count(*) from matches m
 left join (parsed goals per game) ev on ev.game_id = m.game_id
@@ -422,9 +427,14 @@ leverage        = share of his on-pitch minutes
     starter flag is unreliable: it defaults to true when the field is absent, which produced 8.4
     starters per team-game and more than eleven in 96 cases. A starter is now defined as a player
     who appeared with no substitution-on event, which returns exactly eleven per side.</p>
-    <p><strong>Unused substitutes are invisible.</strong> Only players who touched the ball exist
-    in the data, so the lowest usage tier means &ldquo;plays rarely and late&rdquo;, not &ldquo;end
-    of the bench&rdquo;.</p>
+    <p><strong>Unused substitutes are present, and carry fabricated minutes.</strong> An earlier
+    version of this page claimed they were invisible. That was wrong. They appear in matchday
+    squads with position <code>Sub</code>, and the season aggregate credits 90 minutes for every
+    lineup row regardless of whether the player was used, so an unused backup keeper can read as
+    630 minutes across seven appearances. <span id="mSubs">The affected count is read live.</span>
+    Any figure derived from those minutes for such players is wrong. This is tracked as a known
+    defect, and the player-facing layers exclude them because they require a minimum number of
+    ball involvements, which an unused substitute cannot reach.</p>
   </div>
 
   <!-- ================= SIM ================= -->
@@ -495,7 +505,7 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
   function set(id,txt,bad){var el=document.getElementById(id); if(!el)return;
     el.textContent=txt; if(bad)el.className=(el.className+' unavail').trim();}
   function unavailable(){
-    ['mGoals','mPoss','mShots','mPred','mAct','mErr'].forEach(function(i){set(i,'unavailable',true)});
+    ['mGoals','mPoss','mShots','mPred','mAct','mErr','mChecks','mSubs'].forEach(function(i){set(i,'unavailable',true)});
     set('mAsOf','as of unavailable',true);
   }
   fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
@@ -510,6 +520,8 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
       set('mAct',  n(d.goals_actual));
       var err=(d.xg_predicted-d.goals_actual)/d.goals_actual*100;
       set('mErr', (err>0?'+':'\u2212')+Math.abs(err).toFixed(1)+'%');
+      set('mChecks', d.checks_error+' error checks and '+d.checks_warn+' warnings currently run.');
+      set('mSubs', n(d.players_named_never_involved)+' players are affected.');
       set('mAsOf','as of '+d.as_of_match_date);
     })
     .catch(unavailable);
