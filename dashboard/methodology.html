@@ -569,9 +569,10 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
       };
       verdict('mGoals','goals_reconcile','all matches exact','match','matches');
       var g=by['goals_reconcile'];
-      if(g){ set('mGoals2', (+g.violations===0)
-        ? 'currently reconciling on every match'
-        : 'currently '+g.violations+' matches failing', +g.violations>0); }
+      if(g){ var gv=+g.violations;
+        set('mGoals2', gv===0
+          ? 'currently reconciling on every match'
+          : 'currently '+gv+' '+(gv===1?'match':'matches')+' failing', gv>0); }
       verdict('mPoss','possession_sums','all matches sum to 100','match','matches');
       verdict('mOrphan','events_have_matches','0 orphans','event','events');
     })
