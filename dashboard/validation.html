@@ -184,8 +184,10 @@ tested.</p>
 
 <h2><span class="n">04</span> Face validity — team metrics</h2>
 <div class="snap">
-<b>Fixed validation snapshot, not a current leaderboard.</b> Sections 04 to 07 record a human
-face-validity review of a single frozen dataset: <b>MLS only</b>, no European leagues included.
+<b>Fixed validation snapshot, not a current leaderboard.</b> Unlike the sequence benchmark in 03,
+which is pinned to a known dataset and date, this review is <b>undated</b>. Sections 04 to 07
+record a human face-validity review of a single frozen dataset: <b>MLS only</b>, no European
+leagues included.
 The examples below are the outputs as they stood when a person assessed them, retained as a record
 of that review. They are <b>not recomputed on rebuild</b> and current leaders will differ.
 <b>Review date not recorded</b>, which is itself a gap: regeneration should only come with a
@@ -286,8 +288,9 @@ generated from the live database · figures reproducible from the platform
   function fail(msg){
     var sub=document.getElementById('liveSub');
     if(sub){sub.innerHTML='<span class="unavail">Live figures unavailable</span> \u00b7 '+
-      'no live count is shown rather than a stale one. Explicitly dated validation snapshots '+
-      'below remain visible by design.';}
+      'no live count is shown rather than a stale one. Fixed validation snapshots below remain '+
+      'visible by design: the sequence benchmark in 03 is dated, the face-validity review in '+
+      '04 to 07 is not.';}
     var cal=document.getElementById('xgCal');
     if(cal){cal.innerHTML='<span class="unavail">Calibration figures unavailable.</span> '+
       'They are read live rather than written into the page, so nothing here is out of date by default.';}
