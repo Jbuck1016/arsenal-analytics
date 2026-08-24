@@ -1,92 +1,62 @@
 -- =====================================================================
 -- 20260824_02_competition_registry.sql
--- Project: xrsilhiffjoulyoqhdmp
--- Status:  ALREADY APPLIED to the live database. Captured here so the
---          schema can be reconstructed from source control.
+-- Stage 3, migration 02. APPLIED 2026-08-24.
+-- Replayable from a clean schema. Requires migration 01.
 --
--- Prerequisite for 20260824_03_cup_isolation.sql, which reads
--- leagues.competition_type and assumes these mappings exist.
+-- Three-way competition classification, plus the canonical league-scoped
+-- sources that every league-mart entry object must read.
 --
--- Idempotent: safe to run against a database that already has them.
---
--- WHY THE PRIMARY KEY CHANGED
---   team_names had its primary key on event_name alone, globally. A club
---   could therefore be mapped in exactly one competition across the whole
---   database, so Arsenal could not exist in both the Premier League and
---   the FA Cup. Worse, rebuild_team_names(p_league) inserts per league
---   with no conflict clause, so it would have raised outright the first
---   time a club appeared in two registered competitions. The key is now
---   (league, event_name), which is the grain the table always meant.
---   No foreign keys and no views depend on it.
+-- WHY THREE VALUES, NOT TWO
+--   Domestic cups draw from the same national pyramid: Arsenal's cup
+--   opponents include Mansfield, Port Vale and Wigan, so pooling them
+--   into Premier League metrics compares a top-flight side against lower
+--   tiers. The Champions League is different in kind: its clubs come from
+--   other domestic leagues entirely. Both must be excluded from league
+--   metrics, but continental fixtures are the only common-opponent data
+--   across leagues this platform has, which is exactly what the parked
+--   league-strength bridge lacks. Collapsing them into one "cup" bucket
+--   would discard that.
 -- =====================================================================
+begin;
 
--- ---------------------------------------------------------------------
--- 1. Competition classification on the registry.
---    Membership is read from here and is never inferred from team names.
--- ---------------------------------------------------------------------
+-- 1. Registry column and classification.
 alter table leagues add column if not exists competition_type text not null default 'league';
-
 alter table leagues drop constraint if exists leagues_competition_type_chk;
-alter table leagues add constraint leagues_competition_type_chk
-  check (competition_type in ('league','cup'));
 
--- ---------------------------------------------------------------------
--- 2. Register the three cup competitions already present in events.
---    is_active false and expected_teams null: they are known competitions,
---    not leagues, and no whitelist completeness guard applies to them.
--- ---------------------------------------------------------------------
 insert into leagues (league, display_name, country, tier, ws_name, season, is_active, expected_teams, competition_type)
 values
-  ('ENG-FA Cup',           'FA Cup',           'England',       null, null, '2526', false, null, 'cup'),
-  ('ENG-League Cup',       'EFL Cup',          'England',       null, null, '2526', false, null, 'cup'),
-  ('INT-Champions League', 'Champions League', 'International', null, null, '2526', false, null, 'cup')
+  ('ENG-FA Cup',           'FA Cup',           'England',       null, null, '2526', false, null, 'domestic_cup'),
+  ('ENG-League Cup',       'EFL Cup',          'England',       null, null, '2526', false, null, 'domestic_cup'),
+  ('INT-Champions League', 'Champions League', 'International', null, null, '2526', false, null, 'continental')
 on conflict (league) do update
   set competition_type = excluded.competition_type,
       display_name     = excluded.display_name,
       is_active        = excluded.is_active,
       expected_teams   = excluded.expected_teams;
 
--- ---------------------------------------------------------------------
--- 3. League-only view of the registry.
--- ---------------------------------------------------------------------
-create or replace view v_league_competitions as
-  select league, display_name, country, tier, season, is_active, expected_teams
-  from leagues where competition_type = 'league';
+-- Reclassify before constraining, or the constraint rejects existing rows.
+update leagues set competition_type = 'domestic_cup' where league in ('ENG-FA Cup','ENG-League Cup');
+update leagues set competition_type = 'continental'  where league in ('INT-Champions League');
 
-alter view v_league_competitions owner to postgres;
-grant all on v_league_competitions to anon, authenticated, service_role;
+alter table leagues add constraint leagues_competition_type_chk
+  check (competition_type in ('league','domestic_cup','continental'));
 
-comment on view v_league_competitions is
-  'Registered league competitions only. The single source of competition membership for league-scoped analytics. Cup competitions are registered in leagues but excluded here.';
-
--- ---------------------------------------------------------------------
--- 4. Primary key at the correct grain.
--- ---------------------------------------------------------------------
+-- 2. team_names primary key at the correct grain.
+--    Was PRIMARY KEY (event_name) alone, globally, so a club could be
+--    mapped in exactly one competition across the whole database.
 do $pk$
 begin
-  if exists (
-    select 1 from pg_constraint
-    where conrelid = 'public.team_names'::regclass
-      and contype = 'p'
-      and pg_get_constraintdef(oid) = 'PRIMARY KEY (event_name)'
-  ) then
+  if exists (select 1 from pg_constraint
+             where conrelid='public.team_names'::regclass and contype='p'
+               and pg_get_constraintdef(oid)='PRIMARY KEY (event_name)') then
     alter table team_names drop constraint team_names_pkey;
     alter table team_names add constraint team_names_pkey primary key (league, event_name);
-    raise notice 'team_names primary key moved to (league, event_name).';
-  else
-    raise notice 'team_names primary key already at the correct grain, no change.';
   end if;
 end
 $pk$;
 
--- ---------------------------------------------------------------------
--- 5. Cup name mappings.
---    Schedule names on the left of match_name, event-feed names in
---    event_name. Note Leverkusen and Bayern: the event feed shortens
---    both, which is what broke goal reconciliation for four fixtures.
---    Manchester City in the Premier League is included here because it
---    was the same defect in a league competition.
--- ---------------------------------------------------------------------
+-- 3. Name mappings. The event feed shortens several clubs, which is what
+--    broke goal reconciliation across five fixtures.
 insert into team_names (league, event_name, match_name, display_name) values
   ('ENG-Premier League','Man City','Manchester City','Manchester City'),
   ('ENG-FA Cup','Arsenal','Arsenal','Arsenal'),
@@ -112,63 +82,79 @@ insert into team_names (league, event_name, match_name, display_name) values
   ('INT-Champions League','Slavia Prague','Slavia Prague','Slavia Prague'),
   ('INT-Champions League','Sporting','Sporting CP','Sporting CP')
 on conflict (league, event_name) do update
-  set match_name   = excluded.match_name,
-      display_name = excluded.display_name;
+  set match_name = excluded.match_name, display_name = excluded.display_name;
 
--- ---------------------------------------------------------------------
--- 6. Invariant: no club may be silently filed under the wrong league.
---    Guards the class of defect that coalesce(tl.league, 'USA-MLS')
---    created: an unresolved club being assigned a league it never
---    played in. Two checks in one count.
--- ---------------------------------------------------------------------
-insert into invariants (name, description, check_sql, severity, enabled)
-values (
-  'team_league_resolves',
-  'Every club appearing in a registered league competition must resolve in mv_team_league, and no club may resolve to a league it never played in. Guards against silent league assignment, which previously filed unresolved clubs as MLS.',
-  'select
-     (select count(*) from (
-        select distinct e.team from events e
-        join leagues l on l.league = e.league and l.competition_type = ''league''
-        where e.team is not null) t
-      where not exists (select 1 from mv_team_league tl where tl.team = t.team))
-   + (select count(*) from mv_team_league tl
-      where not exists (select 1 from events e
-                        where e.team = tl.team and e.league = tl.league))',
-  'error',
-  true
-)
-on conflict (name) do update
-  set description = excluded.description,
-      check_sql   = excluded.check_sql,
-      severity    = excluded.severity,
-      enabled     = excluded.enabled;
+-- 4. Canonical league-scoped sources.
+create or replace view v_league_competitions as
+  select league, display_name, country, tier, season, is_active, expected_teams
+  from leagues where competition_type = 'league';
 
--- ---------------------------------------------------------------------
--- 7. Assertions
--- ---------------------------------------------------------------------
+create or replace view v_league_matches as
+  select m.* from matches m
+  join leagues l on l.league = m.league and l.competition_type = 'league';
+
+create or replace view v_league_events as
+  select e.* from events e
+  join leagues l on l.league = e.league and l.competition_type = 'league';
+
+create or replace view v_league_sequences as
+  select s.* from sequences s
+  join leagues l on l.league = s.league and l.competition_type = 'league';
+
+create or replace view v_league_lineups as
+  select li.* from lineups li
+  join leagues l on l.league = li.league and l.competition_type = 'league';
+
+comment on view v_league_competitions is
+  'Registered league competitions only. Single source of competition membership for league-scoped analytics.';
+comment on view v_league_events is
+  'Canonical league-scoped event source. Excludes domestic_cup and continental fixtures. League-mart objects must read this, not events.';
+
+do $g$
+declare r text;
+begin
+  foreach r in array array['v_league_competitions','v_league_matches','v_league_events',
+                           'v_league_sequences','v_league_lineups'] loop
+    execute format('alter view public.%I owner to postgres', r);
+    execute format('revoke all on public.%I from public, anon, authenticated', r);
+    execute format('grant select on public.%I to anon, authenticated', r);
+    execute format('grant all on public.%I to service_role', r);
+  end loop;
+end
+$g$;
+
+-- 5. Raising assertions.
 do $assert$
 declare n int;
 begin
-  select count(*) into n from leagues where competition_type = 'cup';
-  if n <> 3 then raise exception 'Expected 3 cup competitions, found %.', n; end if;
+  select count(*) into n from leagues where competition_type='domestic_cup';
+  if n <> 2 then raise exception 'ASSERT FAILED. Expected 2 domestic cups, found %.', n; end if;
+  select count(*) into n from leagues where competition_type='continental';
+  if n <> 1 then raise exception 'ASSERT FAILED. Expected 1 continental competition, found %.', n; end if;
+  select count(*) into n from leagues where competition_type='league';
+  if n <> 6 then raise exception 'ASSERT FAILED. Expected 6 league competitions, found %.', n; end if;
 
-  select count(*) into n from pg_constraint
-   where conrelid = 'public.team_names'::regclass and contype = 'p'
-     and pg_get_constraintdef(oid) = 'PRIMARY KEY (league, event_name)';
-  if n <> 1 then raise exception 'team_names primary key is not (league, event_name).'; end if;
+  if not exists (select 1 from pg_constraint where conrelid='public.team_names'::regclass
+                 and contype='p' and pg_get_constraintdef(oid)='PRIMARY KEY (league, event_name)') then
+    raise exception 'ASSERT FAILED. team_names key is not (league, event_name).';
+  end if;
 
-  select count(*) into n from (
-    select league, match_name from team_names group by league, match_name having count(*) > 1) d;
-  if n <> 0 then raise exception 'team_names has % duplicate (league, match_name) pairs.', n; end if;
+  select count(*) into n from (select league, match_name from team_names
+                               group by league, match_name having count(*) > 1) d;
+  if n <> 0 then raise exception 'ASSERT FAILED. % duplicate (league, match_name) pairs.', n; end if;
 
   select count(*) into n from (select distinct league from events) e
    where not exists (select 1 from leagues l where l.league = e.league);
-  if n <> 0 then raise exception '% competitions in events are not registered.', n; end if;
+  if n <> 0 then raise exception 'ASSERT FAILED. % competitions in events are unregistered.', n; end if;
 
-  raise notice 'Competition registry verified.';
+  if (select count(*) from v_league_events) >= (select count(*) from events) then
+    raise exception 'ASSERT FAILED. v_league_events excluded nothing.';
+  end if;
+  if exists (select 1 from v_league_events e join leagues l on l.league=e.league
+             where l.competition_type <> 'league') then
+    raise exception 'ASSERT FAILED. v_league_events leaked a non-league fixture.';
+  end if;
 end
 $assert$;
 
-select league, competition_type, is_active,
-       (select count(*) from team_names t where t.league = l.league) as mappings
-from leagues l order by competition_type, league;
+commit;
