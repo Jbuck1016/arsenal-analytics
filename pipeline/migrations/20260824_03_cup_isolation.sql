@@ -1,36 +1,71 @@
 -- =====================================================================
--- Stage 3, part 1: cup isolation and shootout correction
+-- 20260824_03_cup_isolation.sql
 -- Project: xrsilhiffjoulyoqhdmp
--- Captured: 2026-08-24
+-- Captured: 2026-08-24   Revised after review 2
 -- Status:   FOR REVIEW. Do not execute until approved.
 --
--- WHAT THIS CHANGES
---   Two root materialized views change definition:
---     mv_game_goals  excludes period 5 (penalty shootout) from match goals
---     mv_team_league resolves a club to its LEAGUE competition, by event
---                    volume, instead of min(league) alphabetically
---   One dependent view changes definition:
---     v_team_sample  same alphabetical bug, resolved from the registry
+-- REQUIRES, in order:
+--   20260824_01_stage2_db_objects.sql
+--   20260824_02_competition_registry.sql
 --
---   Every other object below is recreated BYTE-IDENTICAL to what exists
---   today. They are only dropped because PostgreSQL has no
---   CREATE OR REPLACE MATERIALIZED VIEW.
+-- WHAT CHANGES SEMANTICALLY (8 of 21 objects)
+--   mv_game_goals             excludes period 5, the penalty shootout
+--   mv_team_league            resolves a club to its LEAGUE competition by
+--                             event volume, not min(league) alphabetically
+--   v_team_sample             resolves through mv_team_league; all counts
+--                             scoped to the club league competition
+--   v_seq_directness          gains s.league so directness can be scoped
+--   mv_team_breakdown         MLS fallback removed, cup sequences excluded
+--   mv_team_percentiles       MLS fallback removed
+--   mv_team_stat_ranks        MLS fallback removed
+--   v_team_directory          MLS fallback removed
+--   mv_team_directness_state  MLS fallback removed, cup sequences excluded
+--   v_cup_shootouts           new
+--   All others are byte-identical recreations, dropped only because
+--   PostgreSQL has no CREATE OR REPLACE MATERIALIZED VIEW.
+--
+-- THE SILENT MLS FALLBACK
+--   Five objects carried coalesce(tl.league, 'USA-MLS'). Any club that
+--   failed to resolve was silently filed as MLS. This is the same class
+--   of defect as the old DEFAULT 'USA-MLS' on the league columns, which
+--   tagged 1,573 La Liga sequences as MLS without any error. All five now
+--   inner join mv_team_league, so an unresolved club is excluded rather
+--   than misfiled, and invariant team_league_resolves fails loudly if any
+--   club playing in a registered league competition fails to resolve.
 --
 -- WHAT THIS DOES NOT CHANGE
 --   No row in events, matches, lineups or sequences is read, written or
---   deleted. All raw cup fixtures and events are preserved exactly.
---   Shootout data is preserved and exposed via v_cup_shootouts, which is
---   a VIEW derived from raw events. No physical table, so no refresh and
---   no consistency guarantee is required: it cannot drift from source.
+--   deleted. Raw cup fixtures and events are preserved exactly, and the
+--   transaction asserts their counts are unchanged before committing.
 --
 -- COMPETITION FILTER (the only rule used anywhere below)
 --   leagues.competition_type = 'league'
 --   Membership is read from the registry. Never inferred from team names.
 --
 -- PERIOD RULE
---   events.period = 5 is the penalty shootout. Excluded from match goal
---   totals. Verified: period 5 occurs in exactly one game in the entire
---   database (1951511), and all 16 of its shots already carry is_pen.
+--   events.period = 5 is the penalty shootout, and is excluded from match
+--   goal totals. events.period is NULLABLE, so the test is
+--   IS DISTINCT FROM 5, which excludes period 5 only. A plain <> would
+--   silently drop any future null-period goal as well.
+--
+-- KNOWN GAP, DELIBERATELY NOT FIXED HERE
+--   mv_team_all aggregates per team across ALL competitions, so Arsenal's
+--   season metric values still include cup fixtures. This migration fixes
+--   which POOL a club is ranked in, not which matches feed its values.
+--   mv_team_all sits outside this dependency set and changing it is a
+--   separate cascade. Tracked, not silently accepted.
+--
+-- TRANSACTION MODEL: single atomic transaction, deliberately.
+--   CREATE MATERIALIZED VIEW populates on creation because WITH NO DATA
+--   is not used, so a post-commit refresh would repeat every scan for no
+--   benefit and, worse, could not roll back alongside the schema change.
+--   Everything therefore happens inside one transaction: drops, creates,
+--   insight regeneration, summary refresh, assertions and verify_rebuild.
+--   If any assertion fails, the entire migration is rolled back and the
+--   database is left exactly as it was. The cost is one long-running
+--   transaction and a brief period where these objects are locked, which
+--   is acceptable for a one-off maintenance operation on a site with no
+--   concurrent writers.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -46,9 +81,7 @@ declare
     'v_league_summary','v_seq_directness','v_squad_role','v_team_directory',
     'v_team_sample','v_team_signature'
   ];
-  actual text[];
-  missing text[];
-  extra   text[];
+  actual text[]; missing text[]; extra text[];
 begin
   with recursive deps as (
     select c.oid, c.relname::text as name, 1 as depth
@@ -69,40 +102,53 @@ begin
   )
   select array_agg(distinct name order by name) into actual from deps;
 
-  select array_agg(x) into missing
-  from unnest(captured) x where not (x = any(coalesce(actual, '{}')));
-
-  select array_agg(x) into extra
-  from unnest(coalesce(actual, '{}')) x where not (x = any(captured));
+  select array_agg(x) into missing from unnest(captured) x
+   where not (x = any(coalesce(actual, '{}')));
+  select array_agg(x) into extra from unnest(coalesce(actual, '{}')) x
+   where not (x = any(captured));
 
   if missing is not null or extra is not null then
     raise exception
-      'PREFLIGHT FAILED. Dependency set has drifted since capture. Missing from live: %. Present but not captured: %. Re-capture before running.',
+      'PREFLIGHT FAILED. Dependency set drifted since capture. Missing from live: %. Present but not captured: %. Re-capture before running.',
       coalesce(missing, '{}'), coalesce(extra, '{}');
   end if;
 
   if not exists (select 1 from information_schema.columns
-                 where table_schema = 'public' and table_name = 'leagues'
-                   and column_name = 'competition_type') then
-    raise exception 'PREFLIGHT FAILED. leagues.competition_type is missing. Run the cup registration migration first.';
+                 where table_schema='public' and table_name='leagues'
+                   and column_name='competition_type') then
+    raise exception 'PREFLIGHT FAILED. Run 20260824_02_competition_registry.sql first.';
   end if;
 
-  if (select count(*) from leagues where competition_type = 'cup') <> 3 then
-    raise exception 'PREFLIGHT FAILED. Expected 3 cup competitions registered, found %.',
-      (select count(*) from leagues where competition_type = 'cup');
+  if (select count(*) from leagues where competition_type='cup') <> 3 then
+    raise exception 'PREFLIGHT FAILED. Expected 3 cup competitions, found %.',
+      (select count(*) from leagues where competition_type='cup');
   end if;
 
-  raise notice 'Preflight OK. 18 dependents matched, registry present.';
+  if not exists (select 1 from pg_constraint
+                 where conrelid='public.team_names'::regclass and contype='p'
+                   and pg_get_constraintdef(oid)='PRIMARY KEY (league, event_name)') then
+    raise exception 'PREFLIGHT FAILED. team_names primary key is not (league, event_name).';
+  end if;
+
+  raise notice 'Preflight OK.';
 end
 $preflight$;
 
 -- ---------------------------------------------------------------------
--- 1. TRANSACTIONAL DROP AND RECREATE
---    Supabase applies each migration in a single transaction, so any
---    failure below rolls the whole thing back. BEGIN/COMMIT are stated
---    explicitly for anyone running this by hand via psql.
+-- 1. SINGLE ATOMIC TRANSACTION
 -- ---------------------------------------------------------------------
 begin;
+
+set local statement_timeout = '900s';
+
+-- Baseline for the raw-data assertion. Temp table so it dies with the
+-- session and cannot be mistaken for a real object.
+create temp table _pre_counts on commit drop as
+select (select count(*) from events)    as events,
+       (select count(*) from matches)   as matches,
+       (select count(*) from sequences) as sequences,
+       (select count(*) from lineups)   as lineups,
+       (select count(*) from events where period = 5) as period5_events;
 
 -- 1a. Drop dependents first, deepest last-created first.
 drop view if exists v_squad_role;
@@ -134,7 +180,7 @@ drop materialized view if exists mv_game_goals;
 -- 2. ROOTS, RECREATED WITH CHANGED DEFINITIONS
 -- =====================================================================
 
--- CHANGED: adds "and e.period <> 5" to exclude shootout conversions.
+-- CHANGED: adds "and e.period is distinct from 5" to exclude shootout
 -- Everything else is identical to the captured definition.
 create materialized view mv_game_goals as
  with gteams as (
@@ -156,7 +202,7 @@ create materialized view mv_game_goals as
                 end as is_og
            from events e
           where e.is_goal
-            and e.period <> 5          -- CHANGED: exclude penalty shootout
+            and e.period is distinct from 5   -- CHANGED: shootout only; period is nullable
         )
  select g.game_id,
     g.expanded_minute,
@@ -176,7 +222,8 @@ create materialized view mv_game_goals as
           where (t.t <> g.team)) = 1));
 
 create index mv_game_goals_idx on public.mv_game_goals using btree (game_id, expanded_minute);
-grant select on mv_game_goals to anon, authenticated, service_role;
+alter materialized view mv_game_goals owner to postgres;
+grant all on mv_game_goals to anon, authenticated, service_role;
 comment on materialized view mv_game_goals is
   'Match goals from event data. Excludes period 5, which is the penalty shootout. Shootout results are exposed separately by v_cup_shootouts.';
 
@@ -199,7 +246,8 @@ create materialized view mv_team_league as
   where rk = 1;
 
 create unique index mv_team_league_pk on public.mv_team_league using btree (team);
-grant select on mv_team_league to anon, authenticated, service_role;
+alter materialized view mv_team_league owner to postgres;
+grant all on mv_team_league to anon, authenticated, service_role;
 comment on materialized view mv_team_league is
   'Resolves a club to its league competition by event volume. Cup competitions are excluded via leagues.competition_type. Clubs seen only in cup fixtures are absent by design.';
 
@@ -226,7 +274,8 @@ create or replace view v_cup_shootouts as
    left join team_names ta on ta.match_name = m.away_team and ta.league = m.league
   group by k.game_id, m.league, m.date, m.home_team, m.away_team;
 
-grant select on v_cup_shootouts to anon, authenticated, service_role;
+alter view v_cup_shootouts owner to postgres;
+grant all on v_cup_shootouts to anon, authenticated, service_role;
 comment on view v_cup_shootouts is
   'Penalty shootout results, derived deterministically from raw period-5 events. A view rather than a table, so it is always consistent with events and needs no refresh.';
 
@@ -253,7 +302,8 @@ create materialized view mv_seq_state as
 
 create unique index mv_seq_state_pk on public.mv_seq_state using btree (seq_uid);
 create index mv_seq_state_team on public.mv_seq_state using btree (team, state);
-grant select on mv_seq_state to anon, authenticated, service_role;
+alter materialized view mv_seq_state owner to postgres;
+grant all on mv_seq_state to anon, authenticated, service_role;
 
 create materialized view mv_state_segments as
  with mlen as (
@@ -289,14 +339,15 @@ union all
    from before_first;
 
 create index mv_state_segments_gt on public.mv_state_segments using btree (game_id, team);
-grant select on mv_state_segments to anon, authenticated, service_role;
+alter materialized view mv_state_segments owner to postgres;
+grant all on mv_state_segments to anon, authenticated, service_role;
 
 create materialized view mv_team_breakdown as
  with routes as (
-         select s.team, coalesce(tl.league, 'USA-MLS'::text) as league,
+         select s.team, tl.league,
             r.route, r.used, s.ended_shot, s.ended_in_box, s.xt_sum
            from ((sequences s
-             left join mv_team_league tl on ((tl.team = s.team)))
+             join mv_team_league tl on ((tl.team = s.team) and (s.league = tl.league)))
              cross join lateral ( values ('Through the middle'::text,s.finds_central), ('Around the outside'::text,s.finds_wide), ('Switch of play'::text,s.has_switch), ('Over the top'::text,s.long_ball), ('Wide combinations'::text,s.wide_triangles), ('Hold-up and lay'::text,s.hold_up), ('Patient build'::text,s.structured), ('From deep'::text,s.low_build), ('High regain'::text,s.high_build)) r(route, used))
           where s.is_open_play
         ), agg as (
@@ -321,13 +372,14 @@ create materialized view mv_team_breakdown as
    from (agg a join lg on (((lg.league = a.league) and (lg.route = a.route))));
 
 create index mv_team_breakdown_team on public.mv_team_breakdown using btree (team);
-grant select on mv_team_breakdown to anon, authenticated, service_role;
+alter materialized view mv_team_breakdown owner to postgres;
+grant all on mv_team_breakdown to anon, authenticated, service_role;
 
 create materialized view mv_team_percentiles as
  with long as (
-         select t.team, coalesce(tl.league, 'USA-MLS'::text) as league, v.metric, v.value
+         select t.team, tl.league, v.metric, v.value
            from ((mv_team_all t
-             left join mv_team_league tl on ((tl.team = t.team)))
+             join mv_team_league tl on ((tl.team = t.team)))
              cross join lateral ( values ('possession_pct'::text,t.possession_pct), ('field_tilt'::text,t.field_tilt), ('avg_touch_x'::text,t.avg_touch_x), ('directness'::text,t.directness), ('long_ball_pct'::text,t.long_ball_pct), ('build_from_back_pct'::text,t.build_from_back_pct), ('ppda'::text,t.ppda), ('def_height'::text,t.def_height), ('prog_passes_pg'::text,t.prog_passes_pg), ('box_entries_pg'::text,t.box_entries_pg), ('crosses_pg'::text,t.crosses_pg), ('shots_pg'::text,t.shots_pg), ('goals_pg'::text,t.goals_pg), ('open_play_shot_pct'::text,t.open_play_shot_pct), ('shots_against_pg'::text,t.shots_against_pg), ('goals_against_pg'::text,t.goals_against_pg), ('passes_per_seq'::text,t.passes_per_seq), ('secs_per_seq'::text,t.secs_per_seq), ('long_sequence_pct'::text,t.long_sequence_pct), ('pct_ending_in_shot'::text,t.pct_ending_in_shot), ('ground_gained'::text,t.ground_gained), ('sequences_pg'::text,t.sequences_pg), ('gk_long_pct'::text,t.gk_long_pct), ('d3_pass_share'::text,t.d3_pass_share), ('d3_accuracy'::text,t.d3_accuracy), ('d3_long_pct'::text,t.d3_long_pct), ('deep_circulation_pg'::text,t.deep_circulation_pg), ('cb_prog_pg'::text,t.cb_prog_pg), ('escape_pct'::text,t.escape_pct), ('deep_to_final_pct'::text,t.deep_to_final_pct), ('d3_touch_share'::text,t.d3_touch_share), ('att_directness'::text,t.att_directness), ('mid_release'::text,t.mid_release), ('ft_release'::text,t.ft_release), ('passes_per_shot'::text,t.passes_per_shot), ('ft_entries_pg'::text,t.ft_entries_pg), ('box_per_entry'::text,t.box_per_entry), ('final_to_shot_pct'::text,t.final_to_shot_pct), ('pct_left'::text,t.pct_left), ('pct_centre'::text,t.pct_centre), ('pct_right'::text,t.pct_right)) v(metric, value))
         ), r as (
          select l.team, l.league, l.metric, l.value, d.higher_is_better,
@@ -342,7 +394,8 @@ create materialized view mv_team_percentiles as
    from r;
 
 create index mv_team_percentiles_tm on public.mv_team_percentiles using btree (team, metric);
-grant select on mv_team_percentiles to anon, authenticated, service_role;
+alter materialized view mv_team_percentiles owner to postgres;
+grant all on mv_team_percentiles to anon, authenticated, service_role;
 
 create materialized view mv_team_stat_ranks as
  with per as (
@@ -360,8 +413,8 @@ create materialized view mv_team_stat_ranks as
             avg(s.bwd_passes) as bwd_passes
            from v_season_stats s group by s.team
         ), long as (
-         select per.team, coalesce(tl.league, 'USA-MLS'::text) as league, v.metric, v.value
-           from ((per left join mv_team_league tl on ((tl.team = per.team)))
+         select per.team, tl.league, v.metric, v.value
+           from ((per join mv_team_league tl on ((tl.team = per.team)))
              cross join lateral ( values ('final_third_passes'::text,per.final_third_passes), ('zone14_passes'::text,per.zone14_passes), ('progressive_passes'::text,per.progressive_passes), ('passes_into_box'::text,per.passes_into_box), ('defensive_actions'::text,per.defensive_actions), ('defensive_actions_won'::text,per.defensive_actions_won), ('shots'::text,per.shots), ('shots_on_target'::text,per.shots_on_target), ('fwd_passes'::text,per.fwd_passes), ('lat_passes'::text,per.lat_passes), ('bwd_passes'::text,per.bwd_passes)) v(metric, value))
         )
  select team, metric, round(value, 2) as per_game,
@@ -371,7 +424,8 @@ create materialized view mv_team_stat_ranks as
    from long;
 
 create index mv_team_stat_ranks_tm on public.mv_team_stat_ranks using btree (team, metric);
-grant select on mv_team_stat_ranks to anon, authenticated, service_role;
+alter materialized view mv_team_stat_ranks owner to postgres;
+grant all on mv_team_stat_ranks to anon, authenticated, service_role;
 
 create materialized view mv_league_summary as
  with ev as (
@@ -403,22 +457,24 @@ create materialized view mv_league_summary as
   where l.is_active;
 
 create unique index mv_league_summary_pk on public.mv_league_summary using btree (league);
-grant select on mv_league_summary to anon, authenticated, service_role;
+alter materialized view mv_league_summary owner to postgres;
+grant all on mv_league_summary to anon, authenticated, service_role;
 
 create view v_team_directory as
  select t.team,
-    coalesce(tl.league, 'USA-MLS'::text) as league,
-    coalesce(l.display_name, 'Major League Soccer'::text) as league_name,
+    tl.league,
+    l.display_name as league_name,
     l.country,
-    count(*) over (partition by coalesce(tl.league, 'USA-MLS'::text)) as teams_in_league,
+    count(*) over (partition by tl.league) as teams_in_league,
     ( select count(*) as count
            from matches m
-          where ((m.league = coalesce(tl.league, 'USA-MLS'::text)) and (m.home_score is not null) and ((m.home_team = t.team) or (m.away_team = t.team)))) as matches_played
+          where ((m.league = tl.league) and (m.home_score is not null) and ((m.home_team = t.team) or (m.away_team = t.team)))) as matches_played
    from ((mv_team_all t
-     left join mv_team_league tl on ((tl.team = t.team)))
-     left join leagues l on ((l.league = tl.league)));
+     join mv_team_league tl on ((tl.team = t.team)))
+     join leagues l on ((l.league = tl.league)));
 
-grant select on v_team_directory to anon, authenticated, service_role;
+alter view v_team_directory owner to postgres;
+grant all on v_team_directory to anon, authenticated, service_role;
 
 -- ---- order 2 --------------------------------------------------------
 create materialized view mv_player_leverage as
@@ -429,7 +485,8 @@ create materialized view mv_player_leverage as
   group by pm.player_id, pm.team;
 
 create index mv_player_leverage_p on public.mv_player_leverage using btree (player_id);
-grant select on mv_player_leverage to anon, authenticated, service_role;
+alter materialized view mv_player_leverage owner to postgres;
+grant all on mv_player_leverage to anon, authenticated, service_role;
 
 create materialized view mv_player_state_output as
  with ev_state as (
@@ -479,20 +536,23 @@ create materialized view mv_player_state_output as
   where (w.raw_min >= 540);
 
 create unique index mv_player_state_output_pk on public.mv_player_state_output using btree (player_id);
-grant select on mv_player_state_output to anon, authenticated, service_role;
+alter materialized view mv_player_state_output owner to postgres;
+grant all on mv_player_state_output to anon, authenticated, service_role;
 
 create view v_league_summary as
  select league, display_name, country, season, matches, teams, players_profiled, sequences, insights
    from mv_league_summary;
-grant select on v_league_summary to anon, authenticated, service_role;
+alter view v_league_summary owner to postgres;
+grant all on v_league_summary to anon, authenticated, service_role;
 
 create view v_seq_directness as
- select s.seq_uid, s.game_id, s.team, s.n_pass, s.dur_s,
+ select s.seq_uid, s.game_id, s.team, s.league, s.n_pass, s.dur_s,
     greatest('-1.0'::numeric, least(1.0, (((s.end_x - s.start_x))::numeric / nullif((s.mean_pass_len * (s.n_pass)::numeric), (0)::numeric)))) as directness,
     st.state, st.margin, st.is_close
    from (sequences s join mv_seq_state st using (seq_uid))
   where (s.is_open_play and (s.n_pass >= 2) and (coalesce(s.mean_pass_len, (0)::numeric) > (0)::numeric));
-grant select on v_seq_directness to anon, authenticated, service_role;
+alter view v_seq_directness owner to postgres;
+grant all on v_seq_directness to anon, authenticated, service_role;
 
 -- CHANGED: league was min(s.league) across all competitions, which made
 -- Arsenal an ENG-FA Cup club. Now resolved from mv_team_league, which is
@@ -512,7 +572,8 @@ create view v_team_sample as
      left join mv_seq_state st on ((st.seq_uid = s.seq_uid)))
   group by s.team, tl.league;
 
-grant select on v_team_sample to anon, authenticated, service_role;
+alter view v_team_sample owner to postgres;
+grant all on v_team_sample to anon, authenticated, service_role;
 comment on view v_team_sample is
   'Team evidence base, scoped to the club league competition only. Cup fixtures are excluded from every count. Source of truth for the six-match minimum.';
 
@@ -526,7 +587,8 @@ create view v_team_signature as
     league
    from mv_team_breakdown
   order by team, z_share desc;
-grant select on v_team_signature to anon, authenticated, service_role;
+alter view v_team_signature owner to postgres;
+grant all on v_team_signature to anon, authenticated, service_role;
 
 -- ---- order 3 --------------------------------------------------------
 create materialized view mv_league_availability as
@@ -562,7 +624,8 @@ create materialized view mv_league_availability as
   where l.is_active;
 
 create unique index mv_league_availability_pk on public.mv_league_availability using btree (league);
-grant select on mv_league_availability to anon, authenticated, service_role;
+alter materialized view mv_league_availability owner to postgres;
+grant all on mv_league_availability to anon, authenticated, service_role;
 
 create materialized view mv_squad_role as
  with mlen as (
@@ -632,14 +695,16 @@ create materialized view mv_squad_role as
   where (r.games_available >= 6);
 
 create index mv_squad_role_player on public.mv_squad_role using btree (player_id);
-grant select on mv_squad_role to anon, authenticated, service_role;
+alter materialized view mv_squad_role owner to postgres;
+grant all on mv_squad_role to anon, authenticated, service_role;
 
 create materialized view mv_team_directness_state as
  with base as (
-         select d.team, coalesce(tl.league, 'USA-MLS'::text) as league, d.state,
+         select d.team, tl.league, d.state,
             round(avg(d.directness), 4) as directness, count(*) as n
-           from (v_seq_directness d left join mv_team_league tl on ((tl.team = d.team)))
-          group by d.team, coalesce(tl.league, 'USA-MLS'::text), d.state
+           from (v_seq_directness d
+             join mv_team_league tl on ((tl.team = d.team) and (d.league = tl.league)))
+          group by d.team, tl.league, d.state
         ), piv as (
          select base.team, base.league,
             max(base.directness) filter (where (base.state = 'winning'::text)) as dir_winning,
@@ -658,14 +723,16 @@ create materialized view mv_team_directness_state as
    from piv;
 
 create unique index mv_team_directness_state_pk on public.mv_team_directness_state using btree (team);
-grant select on mv_team_directness_state to anon, authenticated, service_role;
+alter materialized view mv_team_directness_state owner to postgres;
+grant all on mv_team_directness_state to anon, authenticated, service_role;
 
 -- ---- order 4 --------------------------------------------------------
 create view v_league_availability as
  select league, display_name, matches, clubs_at_threshold, clubs, insights,
     min_matches_required, insight_status
    from mv_league_availability;
-grant select on v_league_availability to anon, authenticated, service_role;
+alter view v_league_availability owner to postgres;
+grant all on v_league_availability to anon, authenticated, service_role;
 
 create view v_squad_role as
  with lg as (
@@ -683,12 +750,27 @@ create view v_squad_role as
     ((r.selection_pct >= (40)::numeric) and ((r.leverage_pct)::double precision < lg.p25)) as minutes_inflated,
     r.league
    from (mv_squad_role r join lg on ((lg.league = r.league)));
-grant select on v_squad_role to anon, authenticated, service_role;
+alter view v_squad_role owner to postgres;
+grant all on v_squad_role to anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------
--- 5. POST-MIGRATION OBJECT EXISTENCE CHECK (still inside the transaction)
--- ---------------------------------------------------------------------
-do $exists$
+
+-- =====================================================================
+-- 5. REGENERATE DERIVED CONTENT, STILL INSIDE THE TRANSACTION
+--    Insights are built from v_team_sample, so they must be rebuilt
+--    before the summaries that count them.
+-- =====================================================================
+select build_insights();
+select polish_insights();
+select refresh_site_summaries();
+
+-- =====================================================================
+-- 6. ASSERTIONS. Every one raises on failure, rolling back everything.
+--    Relational wherever a snapshot total could legitimately drift.
+-- =====================================================================
+
+-- 6a. All 21 objects exist.
+do $a_exists$
 declare expected text[] := array[
   'mv_game_goals','mv_team_league','mv_seq_state','mv_state_segments',
   'mv_team_breakdown','mv_team_percentiles','mv_team_stat_ranks','mv_league_summary',
@@ -699,56 +781,181 @@ declare expected text[] := array[
   missing text[];
 begin
   select array_agg(x) into missing from unnest(expected) x
-  where not exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
-                    where n.nspname = 'public' and c.relname = x);
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname = x);
   if missing is not null then
-    raise exception 'POST-CHECK FAILED. Objects not recreated: %', missing;
+    raise exception 'ASSERT FAILED. Objects not recreated: %', missing;
   end if;
-  raise notice 'All 21 objects present.';
 end
-$exists$;
+$a_exists$;
+
+-- 6b. Metadata preserved: owner, ACL and index count on every object.
+do $a_meta$
+declare bad text;
+begin
+  select string_agg(c.relname, ', ') into bad
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace and n.nspname='public'
+  where c.relname in ('mv_game_goals','mv_team_league','mv_seq_state','mv_state_segments',
+        'mv_team_breakdown','mv_team_percentiles','mv_team_stat_ranks','mv_league_summary',
+        'v_team_directory','mv_player_leverage','mv_player_state_output','v_league_summary',
+        'v_seq_directness','v_team_sample','v_team_signature','mv_league_availability',
+        'mv_squad_role','mv_team_directness_state','v_league_availability','v_squad_role')
+    and (pg_get_userbyid(c.relowner) <> 'postgres'
+         or not has_table_privilege('anon', c.oid, 'SELECT')
+         or not has_table_privilege('authenticated', c.oid, 'SELECT')
+         or not has_table_privilege('service_role', c.oid, 'SELECT'));
+  if bad is not null then
+    raise exception 'ASSERT FAILED. Owner or grants not restored on: %', bad;
+  end if;
+
+  if (select count(*) from pg_indexes where schemaname='public'
+        and tablename in ('mv_game_goals','mv_team_league','mv_seq_state','mv_state_segments',
+            'mv_team_breakdown','mv_team_percentiles','mv_team_stat_ranks','mv_league_summary',
+            'mv_player_leverage','mv_player_state_output','mv_league_availability',
+            'mv_squad_role','mv_team_directness_state')) <> 14 then
+    raise exception 'ASSERT FAILED. Expected 14 indexes across the recreated matviews, found %.',
+      (select count(*) from pg_indexes where schemaname='public'
+        and tablename in ('mv_game_goals','mv_team_league','mv_seq_state','mv_state_segments',
+            'mv_team_breakdown','mv_team_percentiles','mv_team_stat_ranks','mv_league_summary',
+            'mv_player_leverage','mv_player_state_output','mv_league_availability',
+            'mv_squad_role','mv_team_directness_state'));
+  end if;
+end
+$a_meta$;
+
+-- 6c. Raw data untouched. Compared against the baseline captured at the
+--     top of this transaction, so it cannot be defeated by a scrape.
+do $a_raw$
+declare p record;
+begin
+  select * into p from _pre_counts;
+  if (select count(*) from events)    <> p.events
+  or (select count(*) from matches)   <> p.matches
+  or (select count(*) from sequences) <> p.sequences
+  or (select count(*) from lineups)   <> p.lineups
+  or (select count(*) from events where period = 5) <> p.period5_events then
+    raise exception 'ASSERT FAILED. Raw data changed during migration. This migration must not write to raw tables.';
+  end if;
+end
+$a_raw$;
+
+-- 6d. Coverage, relational rather than a snapshot total.
+do $a_cover$
+declare n bigint;
+begin
+  select count(*) into n from sequences s
+   where not exists (select 1 from mv_seq_state st where st.seq_uid = s.seq_uid);
+  if n <> 0 then raise exception 'ASSERT FAILED. mv_seq_state misses % sequences.', n; end if;
+
+  select count(*) into n from (select distinct game_id, team from events where team is not null) g
+   where not exists (select 1 from mv_state_segments sg
+                     where sg.game_id = g.game_id and sg.team = g.team);
+  if n <> 0 then raise exception 'ASSERT FAILED. mv_state_segments misses % game-team pairs.', n; end if;
+
+  select count(*) into n from mv_seq_state where state is null;
+  if n <> 0 then raise exception 'ASSERT FAILED. % sequences have a null game state.', n; end if;
+end
+$a_cover$;
+
+-- 6e. Match 1951511 reconciles at 1-1, and the shootout survives at 8-7.
+do $a_shootout$
+declare h int; a int; sh record;
+begin
+  with ev as (
+    select g.game_id,
+      count(*) filter (where g.scoring_team = x.home_ev) h,
+      count(*) filter (where g.scoring_team = x.away_ev) a
+    from mv_game_goals g
+    join (select m.game_id,
+            coalesce(th.event_name, m.home_team) home_ev,
+            coalesce(ta.event_name, m.away_team) away_ev
+          from matches m
+          left join team_names th on th.match_name = m.home_team and th.league = m.league
+          left join team_names ta on ta.match_name = m.away_team and ta.league = m.league) x
+      on x.game_id = g.game_id
+    group by g.game_id)
+  select coalesce(ev.h,0), coalesce(ev.a,0) into h, a
+  from matches m left join ev on ev.game_id = m.game_id where m.game_id = '1951511';
+
+  if h <> 1 or a <> 1 then
+    raise exception 'ASSERT FAILED. 1951511 goals from events are %-%, expected 1-1.', h, a;
+  end if;
+
+  select * into sh from v_cup_shootouts where game_id = '1951511';
+  if sh is null then raise exception 'ASSERT FAILED. Shootout for 1951511 not preserved.'; end if;
+  if sh.home_shootout_goals <> 8 or sh.away_shootout_goals <> 7 or sh.kicks_taken <> 16 then
+    raise exception 'ASSERT FAILED. Shootout reads %-% over % kicks, expected 8-7 over 16.',
+      sh.home_shootout_goals, sh.away_shootout_goals, sh.kicks_taken;
+  end if;
+end
+$a_shootout$;
+
+-- 6f. Arsenal resolves to the Premier League, and no cup competition
+--     reaches any league-scoped object.
+do $a_league$
+declare v text; n bigint;
+begin
+  select league into v from mv_team_league where team = 'Arsenal';
+  if v is distinct from 'ENG-Premier League' then
+    raise exception 'ASSERT FAILED. mv_team_league resolves Arsenal to %, expected ENG-Premier League.', v;
+  end if;
+
+  select league into v from v_team_sample where team = 'Arsenal';
+  if v is distinct from 'ENG-Premier League' then
+    raise exception 'ASSERT FAILED. v_team_sample resolves Arsenal to %, expected ENG-Premier League.', v;
+  end if;
+
+  select
+    (select count(*) from v_team_sample where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from mv_team_league where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from mv_team_percentiles where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from mv_team_stat_ranks where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from mv_team_breakdown where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from mv_team_directness_state where league in (select league from leagues where competition_type='cup'))
+  + (select count(*) from v_team_directory where league in (select league from leagues where competition_type='cup'))
+  into n;
+  if n <> 0 then
+    raise exception 'ASSERT FAILED. % rows in league-scoped objects carry a cup competition.', n;
+  end if;
+
+  -- No club may be silently filed as MLS. Every club must resolve to a
+  -- league it actually played in.
+  select count(*) into n from mv_team_league tl
+   where not exists (select 1 from events e
+                     where e.team = tl.team and e.league = tl.league);
+  if n <> 0 then
+    raise exception 'ASSERT FAILED. % clubs resolve to a league they never played in.', n;
+  end if;
+end
+$a_league$;
+
+-- 6g. Arsenal insights must no longer rest on the cross-competition pool.
+--     Not asserted as zero: Arsenal has 6 Premier League fixtures and may
+--     legitimately qualify. What must not survive is the 54-match pool.
+do $a_insights$
+declare m bigint; lg text;
+begin
+  select matches, league into m, lg from v_team_sample where team = 'Arsenal';
+  if lg is distinct from 'ENG-Premier League' then
+    raise exception 'ASSERT FAILED. Arsenal evidence base is scoped to %.', lg;
+  end if;
+  if m > (select count(*) from matches
+          where league = 'ENG-Premier League'
+            and (home_team = 'Arsenal' or away_team = 'Arsenal')
+            and home_score is not null) then
+    raise exception 'ASSERT FAILED. Arsenal evidence base covers % matches, more than its played Premier League fixtures.', m;
+  end if;
+end
+$a_insights$;
+
+-- 6h. The full invariant battery. Raises on any error-level failure.
+select verify_rebuild();
 
 commit;
 
 -- =====================================================================
--- 6. REFRESH IN DEPENDENCY ORDER (outside the transaction: each refresh
---    is heavy and should be individually restartable)
+-- 7. POST-MIGRATION REPORT (read-only, nothing depends on it)
 -- =====================================================================
-refresh materialized view mv_game_goals;
-refresh materialized view mv_team_league;
-refresh materialized view mv_seq_state;
-refresh materialized view mv_state_segments;
-refresh materialized view mv_team_breakdown;
-refresh materialized view mv_team_percentiles;
-refresh materialized view mv_team_stat_ranks;
-refresh materialized view mv_player_leverage;
-refresh materialized view mv_player_state_output;
-refresh materialized view mv_squad_role;
-refresh materialized view mv_team_directness_state;
-
--- Insights are built from v_team_sample, so they must be regenerated
--- before the summaries that count them.
-select build_insights();
-select polish_insights();
-select refresh_site_summaries();   -- refreshes league summary, availability,
-                                   -- invariant status and site summary
-
--- =====================================================================
--- 7. VERIFICATION
--- =====================================================================
-
--- 7a. Row counts, before vs after. Cup exclusion should reduce the
---     team-scoped views. mv_seq_state and mv_state_segments should be
---     unchanged in row count: they still cover every sequence, only the
---     game state within match 1951511 changes.
---     BEFORE (captured 2026-08-24):
---       mv_game_goals 1262   mv_team_league 116   mv_seq_state 103129
---       mv_state_segments 3336   mv_team_breakdown 1044
---       mv_team_percentiles 4756  mv_team_stat_ranks 1276
---       mv_league_summary 6   mv_player_leverage 2366
---       mv_player_state_output 471  mv_league_availability 6
---       mv_squad_role 522   mv_team_directness_state 116
---       insights 916  (Arsenal 51)
 select 'mv_game_goals' o, count(*) n from mv_game_goals
 union all select 'mv_team_league', count(*) from mv_team_league
 union all select 'mv_seq_state', count(*) from mv_seq_state
@@ -763,79 +970,7 @@ union all select 'mv_league_availability', count(*) from mv_league_availability
 union all select 'mv_squad_role', count(*) from mv_squad_role
 union all select 'mv_team_directness_state', count(*) from mv_team_directness_state
 union all select 'insights_total', count(*) from insights
+union all select 'insights_arsenal', count(*) from insights where team = 'Arsenal'
 order by 1;
 
--- 7b. Match 1951511 must reconcile as 1-1 in match goals.
---     EXPECT: published 1-1, from_events 1-1.
-with ev as (
-  select g.game_id,
-    count(*) filter (where g.scoring_team = x.home_ev) h,
-    count(*) filter (where g.scoring_team = x.away_ev) a
-  from mv_game_goals g
-  join (select m.game_id,
-          coalesce(th.event_name, m.home_team) home_ev,
-          coalesce(ta.event_name, m.away_team) away_ev
-        from matches m
-        left join team_names th on th.match_name = m.home_team and th.league = m.league
-        left join team_names ta on ta.match_name = m.away_team and ta.league = m.league) x
-    on x.game_id = g.game_id
-  group by g.game_id)
-select m.game_id, m.home_team, m.away_team,
-       m.home_score || '-' || m.away_score as published,
-       coalesce(ev.h,0) || '-' || coalesce(ev.a,0) as from_events
-from matches m left join ev on ev.game_id = m.game_id
-where m.game_id = '1951511';
-
--- 7c. The shootout itself must still be recoverable, at 8-7 to Arsenal.
---     EXPECT: home_shootout_goals 8, away_shootout_goals 7, kicks_taken 16.
-select game_id, home_team, away_team, home_shootout_goals, away_shootout_goals, kicks_taken
-from v_cup_shootouts where game_id = '1951511';
-
--- 7d. Arsenal must resolve to the Premier League everywhere.
---     EXPECT: both rows ENG-Premier League.
-select 'mv_team_league' src, league from mv_team_league where team = 'Arsenal'
-union all
-select 'v_team_sample', league from v_team_sample where team = 'Arsenal';
-
--- 7e. No cup competition may enter league-scoped analytics.
---     EXPECT: zero rows from every branch.
-select 'v_team_sample' src, league from v_team_sample
-  where league in (select league from leagues where competition_type = 'cup')
-union all
-select 'mv_team_league', league from mv_team_league
-  where league in (select league from leagues where competition_type = 'cup')
-union all
-select 'mv_team_percentiles', league from mv_team_percentiles
-  where league in (select league from leagues where competition_type = 'cup')
-union all
-select 'mv_team_stat_ranks', league from mv_team_stat_ranks
-  where league in (select league from leagues where competition_type = 'cup')
-union all
-select 'mv_team_breakdown', league from mv_team_breakdown
-  where league in (select league from leagues where competition_type = 'cup')
-union all
-select 'mv_team_directness_state', league from mv_team_directness_state
-  where league in (select league from leagues where competition_type = 'cup');
-
--- 7f. The 51 bogus Arsenal insights must be gone. Arsenal has 6 league
---     matches in PL 2627, so it may legitimately qualify on the six-match
---     minimum. What must NOT survive is any insight whose evidence base
---     was the 54-match cross-competition pool.
---     EXPECT: matches <= 6, league ENG-Premier League.
-select team, league, matches, open_play_seqs, meets_min_matches
-from v_team_sample where team = 'Arsenal';
-
-select count(*) as arsenal_insights_after from insights where team = 'Arsenal';
-
--- 7g. Raw data must be untouched.
---     EXPECT: events 620306, cup fixtures 21, period-5 events 37.
-select 'events_total' k, count(*)::text v from events
-union all select 'cup_fixtures', count(*)::text from matches
-  where league in (select league from leagues where competition_type = 'cup')
-union all select 'period_5_events', count(*)::text from events where period = 5
-order by 1;
-
--- 7h. Every error-level invariant must be zero.
---     EXPECT: zero rows.
-select name, severity, violations from run_invariants()
-where severity = 'error' and violations <> 0 order by name;
+select name, severity, violations from run_invariants() order by severity, name;
