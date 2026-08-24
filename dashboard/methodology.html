@@ -166,17 +166,29 @@ tbody tr:last-child td{border-bottom:none}
     <h4>Tier 2 &mdash; calibrated against outcomes<span class="badge">strong</span></h4>
     <p>The shot model is checked against whether goals actually happened.</p>
     <table>
-      <tr><th>Band</th><th class="num">Shots</th><th class="num">Predicted</th><th class="num">Actual</th><th class="num">Error</th></tr>
+      <tr><th>Aggregate</th><th class="num">Shots</th><th class="num">Predicted</th><th class="num">Actual</th><th class="num">Error</th></tr>
       <tr><td>All non-penalty</td><td class="num" id="mShots">&mdash;</td><td class="num" id="mPred">&mdash;</td><td class="num" id="mAct">&mdash;</td><td class="num" id="mErr">&mdash;</td></tr>
-      <tr><td>0.00&ndash;0.05</td><td class="num">2,825</td><td class="num">126.1</td><td class="num">115</td><td class="num">+9.6%</td></tr>
-      <tr><td>0.05&ndash;0.10</td><td class="num">3,237</td><td class="num">218.8</td><td class="num">209</td><td class="num">+4.7%</td></tr>
-      <tr><td>0.20&ndash;0.35</td><td class="num">206</td><td class="num">58.1</td><td class="num">65</td><td class="num">&minus;10.7%</td></tr>
-      <tr><td>0.35&ndash;0.60</td><td class="num">903</td><td class="num">358.4</td><td class="num">382</td><td class="num">&minus;6.2%</td></tr>
     </table>
-    <p><strong>Read the pattern, not just the headline.</strong> Overall calibration is excellent,
-    but the model over-predicts the worst chances and under-predicts the better ones. It is mildly
-    compressed toward the middle, which is typical of a binned model with limited data in the
-    high-probability bands. Say this before someone finds it.</p>
+    <p>A predicted-versus-actual band table used to appear here and has been removed. Each shot's
+    predicted value <em>is</em> its bin's conversion rate, fitted on these same shots, so a band
+    comparison largely measures whether the lookup reproduces the data used to construct it.
+    Readers mistake that for validation. The support behind the model is reported instead.</p>
+    <table>
+      <tr><th>Model support</th><th class="num">Value</th></tr>
+      <tr><td>Training shots</td><td class="num" id="msShots">loading&hellip;</td></tr>
+      <tr><td>Lookup bins</td><td class="num" id="msBins">loading&hellip;</td></tr>
+      <tr><td>Distinct assigned values</td><td class="num" id="msDistinct">loading&hellip;</td></tr>
+      <tr><td>Assigned xG range</td><td class="num" id="msRange">loading&hellip;</td></tr>
+      <tr><td>Sparse bins</td><td class="num" id="msSparse">loading&hellip;</td></tr>
+      <tr><td>Validation status</td><td class="num" id="msStatus">loading&hellip;</td></tr>
+    </table>
+    <p><strong>Say this before someone finds it.</strong> The model is fitted on the same shots it
+    is currently assessed against, so its aggregate agreement with observed goals is largely
+    guaranteed by construction and is not predictive validation. It also compresses chance quality
+    into a narrow range, capped at 0.53, and a share of its lookup bins hold fewer than twenty
+    shots. It is transparent and directionally useful, but its per-shot estimates, especially at
+    the extremes, are not yet validated. The useful next test is a temporal holdout or walk-forward
+    evaluation, which has not been run.</p>
   </div>
 
   <div class="tier t3">
@@ -275,8 +287,9 @@ angle    = degrees( atan( 7.32 * ((100 - x) * 1.05)
   <div class="box warn">
     <h5>Why a binned model</h5>
     <p>It is transparent and checkable: you can point at a bin and count the goals. The cost is
-    granularity, which is exactly what the calibration table shows. A logistic model would smooth
-    the bands but would be harder to defend line by line.</p>
+    granularity. A logistic model would smooth the bands and would not carry the 0.53 ceiling, but
+    it would be harder to defend line by line. That trade has not been re-examined since the
+    compression was measured.</p>
   </div>
 
   <!-- ================= XT ================= -->
@@ -294,7 +307,9 @@ y_bin = floor(y / 100 *  8)   clamped 0..7</code></pre>
     <h5>The honest caveat</h5>
     <p>The grid values are taken from published work, not fitted on this league. Whether those
     zone valuations hold for MLS specifically is untested. The <em>relative</em> ordering of pitch
-    zones is uncontroversial; the absolute values are borrowed.</p>
+    zones is directionally plausible and consistent with how the game is generally understood, but
+    it has not been validated for these competitions. Both the ordering and the absolute values are
+    borrowed.</p>
   </div>
 
   <!-- ================= SEQUENCES ================= -->
@@ -456,7 +471,7 @@ similarity % = 100 - distance</code></pre>
   <table>
     <tr><th>Question</th><th>Honest answer</th></tr>
     <tr><td>&ldquo;Are the goals right?&rdquo;</td><td>Measurement. Reconciled 291 of 291 against the published scoreline.</td></tr>
-    <tr><td>&ldquo;Is the xG right?&rdquo;</td><td>Measurement. Calibrated to within 1.7% of actual goals, with known mild compression by band.</td></tr>
+    <tr><td>&ldquo;Is the xG right?&rdquo;</td><td>Measurement. Calibrated in-sample against actual goals, with known compression: no value above 0.53 is ever assigned. Live figures on the Validation page.</td></tr>
     <tr><td>&ldquo;Is the 80th percentile right?&rdquo;</td><td>Arithmetic. It is definitionally correct; the real question is the input metric.</td></tr>
     <tr><td>&ldquo;Is the counter-attack stat right?&rdquo;</td><td><strong>Definition.</strong> Here is exactly how it is defined and why those thresholds were chosen. It is not validated because there is nothing to validate it against.</td></tr>
   </table>

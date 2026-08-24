@@ -64,6 +64,8 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 .callout.warn{border-left-color:var(--amber);background:var(--amber-dim)}
 .callout b{color:var(--text)}
 .unavail{color:var(--red,#ff5f56);font-weight:600}
+.snap{border:1px solid var(--line2);border-left:3px solid var(--amber);background:var(--amber-dim);border-radius:4px;padding:9px 13px;margin:10px 0 12px;font:500 12px/1.65 var(--f-mono);color:var(--dim)}
+.snap b{color:var(--text);font-weight:700}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -103,16 +105,32 @@ run.</b></p>
 
 <p id="xgCal" class="dim">loading calibration&hellip;</p>
 
-<p>The band breakdown matters more than the headline, and it is not flattering: the model
-<b>over-predicts the poorest chances by roughly 10%</b> and <b>under-predicts good chances by
-6 to 11%</b>. It is mildly compressed toward the middle, which is characteristic of a binned model
-with thin data in the high-probability bands. Anyone using these numbers should know that before
-they are told.</p>
+<p>A predicted-versus-actual band table used to sit here and has been removed. Each shot's
+predicted value <em>is</em> its bin's conversion rate, fitted on these same shots, so grouping
+shots by predicted value and comparing to observed conversion largely measures whether the lookup
+reproduces the data used to build it. That is implementation consistency, and readers reasonably
+mistake it for validation. What follows describes the support behind the model instead.</p>
 
-<div class="callout">
-  <b>What this does not prove.</b> Calibration shows the model is unbiased in aggregate. It does
-  not show it separates good chances from bad ones better than a simpler model would, and there is
-  no external xG series in the database to benchmark against.
+<table id="xgSupport">
+<thead><tr><th>Model support</th><th class="num">Value</th></tr></thead>
+<tbody>
+<tr><td>Training shots</td><td class="num" id="msShots">loading&hellip;</td></tr>
+<tr><td>Lookup bins</td><td class="num" id="msBins">loading&hellip;</td></tr>
+<tr><td>Distinct assigned values</td><td class="num" id="msDistinct">loading&hellip;</td></tr>
+<tr><td>Assigned xG range</td><td class="num" id="msRange">loading&hellip;</td></tr>
+<tr><td>Sparse bins</td><td class="num" id="msSparse">loading&hellip;</td></tr>
+<tr><td>Validation status</td><td class="num" id="msStatus">loading&hellip;</td></tr>
+</tbody>
+</table>
+
+<div class="callout warn">
+  <b>What this does not prove.</b> The model is fitted on the same shots it is currently assessed
+  against. Its aggregate agreement with observed goals is therefore largely guaranteed by
+  construction and should not be interpreted as predictive validation. The model also compresses
+  chance quality into a narrow range, capped at 0.53, and a share of its lookup bins contain fewer
+  than twenty shots. It is transparent and directionally useful, but its per-shot estimates,
+  especially at the extremes, are not yet validated. The useful next test is a temporal holdout or
+  walk-forward evaluation, which has not been run.
 </div>
 
 <h2><span class="n">02</span> xT &mdash; a borrowed grid <span class="tierbadge t4">Tier 4</span></h2>
@@ -155,7 +173,8 @@ comparing actions within this platform, not as a calibrated probability.</p>
 <tr><td>Sequences ending in a shot</td><td class="num">9.1%</td><td class="num">12%</td><td class="dim">MLS lower</td></tr>
 </tbody>
 </table>
-<p class="dim"><b>Snapshot comparison, run once.</b> The figures in this table are from a
+<p class="dim"><b>Snapshot comparison, run once.</b> Our side of this table was computed on
+<b>MLS only, 223 matches, latest match 18 July 2026, 57,762 sequences</b>. The figures are from a
 historical comparison against a published Benfica reference and are <b>not recomputed on
 rebuild</b>. They are retained as a record of that check, not as a current measurement.
 They show the segmentation produces chains in a plausible region. They do not establish that
@@ -164,6 +183,14 @@ in shot rate: several league and stylistic factors could account for it and none
 tested.</p>
 
 <h2><span class="n">04</span> Face validity — team metrics</h2>
+<div class="snap">
+<b>Fixed validation snapshot, not a current leaderboard.</b> Sections 04 to 07 record a human
+face-validity review of a single frozen dataset: <b>MLS only</b>, no European leagues included.
+The examples below are the outputs as they stood when a person assessed them, retained as a record
+of that review. They are <b>not recomputed on rebuild</b> and current leaders will differ.
+<b>Review date not recorded</b>, which is itself a gap: regeneration should only come with a
+workflow that logs who checked refreshed outputs and when.
+</div>
 <p>For every team metric, the extremes should be the teams you'd name yourself. They are.</p>
 <table>
 <thead><tr><th>Metric</th><th>Top</th><th class="num">Value</th><th>Bottom</th><th class="num">Value</th></tr></thead>
@@ -179,6 +206,7 @@ tested.</p>
 <p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots — one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
 
 <h2><span class="n">05</span> Face validity — player chain-roles</h2>
+<p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>Player roles are assigned purely from what a player does inside possessions, with no knowledge of their position. So if the roles are real, position should fall out on its own. It does, cleanly, for all eleven.</p>
 <table>
 <thead><tr><th>Role</th><th>Who tops it</th><th>Verdict</th></tr></thead>
@@ -198,6 +226,7 @@ tested.</p>
 <p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements — a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
 
 <h2><span class="n">06</span> Face validity &mdash; the impact composite</h2>
+<p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>The DNA layer condenses every pillar into two numbers per player: <b>impact</b>, weighted towards the pillars that matter for his position, and <b>completeness</b>, a penalised average that punishes a glaring weakness. The test is whether the top of that list reads like a list of the league's best players.</p>
 <table>
 <thead><tr><th>Player</th><th>Club</th><th>Pool</th><th class="num">Impact</th><th class="num">Completeness</th><th>Top pillar</th></tr></thead>
@@ -214,6 +243,7 @@ tested.</p>
 <p>Second, <b>impact and completeness genuinely diverge</b>. Milan Iloski also scores 100 for impact but only 71 for completeness &mdash; elite at what his position demands, with a clear hole elsewhere. Berhalter is the inverse, 98 impact but a perfect 100 completeness. A single rating would collapse those two very different players into the same number, which is exactly why there are two.</p>
 
 <h2><span class="n">07</span> Similarity — does "similar" mean similar</h2>
+<p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>The similarity engines find nearest neighbours by cosine on z-scored profiles. The test is whether the matches are ones a scout would nod at.</p>
 <div class="card">
 <p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players — Fernández, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
@@ -255,11 +285,15 @@ generated from the live database · figures reproducible from the platform
   var HD={apikey:AK,Authorization:'Bearer '+AK};
   function fail(msg){
     var sub=document.getElementById('liveSub');
-    if(sub){sub.innerHTML='<span class="unavail">Current figures unavailable</span> \u00b7 '+
-      'this page shows no counts rather than stale ones';}
+    if(sub){sub.innerHTML='<span class="unavail">Live figures unavailable</span> \u00b7 '+
+      'no live count is shown rather than a stale one. Explicitly dated validation snapshots '+
+      'below remain visible by design.';}
     var cal=document.getElementById('xgCal');
     if(cal){cal.innerHTML='<span class="unavail">Calibration figures unavailable.</span> '+
       'They are read live rather than written into the page, so nothing here is out of date by default.';}
+    ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
+      var el=document.getElementById(id); if(el)el.textContent='unavailable';
+    });
     var f=document.getElementById('footAsOf'); if(f)f.textContent='as of unavailable';
   }
   fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
@@ -279,6 +313,28 @@ generated from the live database · figures reproducible from the platform
       document.getElementById('footAsOf').textContent='as of '+d.as_of_match_date;
     })
     .catch(fail);
+
+  fetch(SB+'/rest/v1/v_xg_model_support?select=*',{headers:HD})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(rows){
+      var d=rows&&rows[0]; if(!d) throw new Error('empty');
+      var n=function(x){return (+x).toLocaleString()};
+      var set=function(id,v){var el=document.getElementById(id); if(el)el.textContent=v;};
+      set('msShots', n(d.training_shots));
+      set('msBins', n(d.lookup_bins));
+      set('msDistinct', n(d.distinct_values));
+      set('msRange', (+d.xg_min).toFixed(4)+' to '+(+d.xg_max).toFixed(4));
+      set('msSparse', d.sparse_bins+' of '+d.lookup_bins+' hold fewer than '+
+          d.sparse_threshold+' shots ('+(+d.sparse_shot_share_pct).toFixed(2)+'% of shots)');
+      set('msStatus', (d.holdout_run||d.out_of_sample_tested)
+          ? 'holdout run'
+          : 'no temporal holdout or out-of-sample test');
+    })
+    .catch(function(){
+      ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
+        var el=document.getElementById(id); if(el)el.textContent='unavailable';
+      });
+    });
 })();
 </script>
 </body>
