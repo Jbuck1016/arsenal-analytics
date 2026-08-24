@@ -221,13 +221,21 @@ tbody tr:last-child td{border-bottom:none}
   <!-- ================= CHECKS ================= -->
   <h2 id="checks">Automated checks</h2>
   <p><strong>Distinguish two different things on this page.</strong> The Tier 1 reconciliations and
-  the Tier 2 calibration are <em>automated invariants</em>: they re-run on every rebuild and abort
-  it if they fail. The Tier 3 reference benchmark is <em>a one-time external comparison</em>, run
+  the Tier 2 calibration are <em>automated invariants</em>: they re-run on every rebuild, in a
+  verification step that runs last and fails loudly by name. The Tier 3 reference benchmark is <em>a one-time external comparison</em>, run
   once by hand against published figures and retained as a record. It is not recomputed and would
   not catch a regression.</p>
   <p>The automated checks live as
   rows in an <code>invariants</code> table, each holding SQL that returns a count of violations.
-  The rebuild aborts and names the failing check if any error-level check is non-zero.</p>
+  The verification step raises and names every failing check if any error-level check is non-zero.</p>
+  <div class="callout warn">
+    <b>Verification does not gate publication, and this page will not pretend otherwise.</b> The
+    checks run as the final rebuild step, after the analytical views have already been refreshed
+    and committed. A failure therefore makes the rebuild end in error and names the problem, but it
+    does not roll anything back or prevent the refreshed figures from reaching this site. Failing
+    checks stay visible above rather than being suppressed. Gating publication on verification is
+    open work, not a property the platform currently has.
+  </div>
   <p>Adding a check is an insert rather than a code change, which is the only way a practice like
   this survives contact with a busy season. <span id="mChecks">The current count is read live.</span></p>
   <pre><code>-- example: the goal reconciliation, as it actually runs
@@ -497,8 +505,9 @@ similarity % = 100 - distance</code></pre>
   </main>
 
   <div class="foot">
-    Figures from the most recent rebuild. The automated checks re-run on every scrape, so a claim
-    on this page either still holds or the rebuild has already failed loudly.
+    Figures from the most recent rebuild. The automated checks re-run on every scrape and any
+    failure is named above rather than hidden, but they run after the data is published and do not
+    hold it back. Read the check results, not this footer, for the current state.
   </div>
 </div>
 <script>
@@ -518,11 +527,15 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
   var AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
   var HD={apikey:AK,Authorization:'Bearer '+AK};
   function set(id,txt,bad){var el=document.getElementById(id); if(!el)return;
-    el.textContent=txt; if(bad)el.className=(el.className+' unavail').trim();}
-  function unavailable(){
-    ['mGoals','mGoals2','mPoss','mOrphan','mShots','mPred','mAct','mErr','mChecks','mSubs',
-     'msShots','msBins','msDistinct','msRange','msSparse','msStatus']
-      .forEach(function(i){set(i,'unavailable',true)});
+    el.textContent=txt;
+    el.className=el.className.split(/\s+/).filter(function(c){return c&&c!=='unavail'}).join(' ');
+    if(bad)el.className=(el.className+' unavail').trim();}
+  var SUMMARY_IDS  = ['mShots','mPred','mAct','mErr','mChecks','mSubs'];
+  var INVARIANT_IDS= ['mGoals','mGoals2','mPoss','mOrphan'];
+  var SUPPORT_IDS  = ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'];
+  function markUnavailable(ids){ids.forEach(function(i){set(i,'unavailable',true)});}
+  function summaryUnavailable(){
+    markUnavailable(SUMMARY_IDS);
     set('mAsOf','as of unavailable',true);
   }
   fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
@@ -540,31 +553,29 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
       set('mSubs', n(d.players_named_never_involved)+' players are affected.');
       set('mAsOf','as of '+d.as_of_match_date);
     })
-    .catch(unavailable);
+    .catch(summaryUnavailable);
 
   fetch(SB+'/rest/v1/mv_invariant_status?select=name,severity,violations',{headers:HD})
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(rows){
       if(!rows||!rows.length) throw new Error('empty');
       var by={}; rows.forEach(function(r){ by[r.name]=r; });
-      var verdict=function(id,key,okTxt){
+      var verdict=function(id,key,okTxt,one,many){
         var r=by[key];
         if(!r){ set(id,'not checked',true); return; }
         var v=+r.violations;
         if(v===0){ set(id, okTxt); }
-        else { set(id, v+' failing', true); }
+        else { set(id, v+' '+(v===1?one:many)+' failing', true); }
       };
-      verdict('mGoals','goals_reconcile','all matches exact');
+      verdict('mGoals','goals_reconcile','all matches exact','match','matches');
       var g=by['goals_reconcile'];
       if(g){ set('mGoals2', (+g.violations===0)
         ? 'currently reconciling on every match'
         : 'currently '+g.violations+' matches failing', +g.violations>0); }
-      verdict('mPoss','possession_sums','all matches sum to 100');
-      verdict('mOrphan','events_have_matches','0 orphans');
+      verdict('mPoss','possession_sums','all matches sum to 100','match','matches');
+      verdict('mOrphan','events_have_matches','0 orphans','event','events');
     })
-    .catch(function(){
-      ['mGoals','mGoals2','mPoss','mOrphan'].forEach(function(i){set(i,'unavailable',true)});
-    });
+    .catch(function(){ markUnavailable(INVARIANT_IDS); });
 
   fetch(SB+'/rest/v1/v_xg_model_support?select=*',{headers:HD})
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
@@ -581,10 +592,7 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
           ? 'holdout run'
           : 'no temporal holdout or out-of-sample test');
     })
-    .catch(function(){
-      ['msShots','msBins','msDistinct','msRange','msSparse','msStatus']
-        .forEach(function(i){set(i,'unavailable',true)});
-    });
+    .catch(function(){ markUnavailable(SUPPORT_IDS); });
 })();
 </script>
 </body>

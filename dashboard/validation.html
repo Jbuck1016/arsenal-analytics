@@ -294,9 +294,6 @@ generated from the live database · figures reproducible from the platform
     var cal=document.getElementById('xgCal');
     if(cal){cal.innerHTML='<span class="unavail">Calibration figures unavailable.</span> '+
       'They are read live rather than written into the page, so nothing here is out of date by default.';}
-    ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
-      var el=document.getElementById(id); if(el)el.textContent='unavailable';
-    });
     var f=document.getElementById('footAsOf'); if(f)f.textContent='as of unavailable';
   }
   fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
@@ -322,7 +319,10 @@ generated from the live database · figures reproducible from the platform
     .then(function(rows){
       var d=rows&&rows[0]; if(!d) throw new Error('empty');
       var n=function(x){return (+x).toLocaleString()};
-      var set=function(id,v){var el=document.getElementById(id); if(el)el.textContent=v;};
+      var set=function(id,v,bad){var el=document.getElementById(id); if(!el)return;
+        el.textContent=v;
+        el.className=el.className.split(/\s+/).filter(function(c){return c&&c!=='unavail'}).join(' ');
+        if(bad)el.className=(el.className+' unavail').trim();};
       set('msShots', n(d.training_shots));
       set('msBins', n(d.lookup_bins));
       set('msDistinct', n(d.distinct_values));
@@ -335,7 +335,9 @@ generated from the live database · figures reproducible from the platform
     })
     .catch(function(){
       ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
-        var el=document.getElementById(id); if(el)el.textContent='unavailable';
+        var el=document.getElementById(id); if(!el)return;
+        el.textContent='unavailable';
+        el.className=(el.className+' unavail').trim();
       });
     });
 })();
