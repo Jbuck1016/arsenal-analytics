@@ -54,6 +54,16 @@ li{font:400 13px/1.6 var(--f-body);padding-left:18px;position:relative;margin:5p
 li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 .kfig{font-family:var(--f-mono);font-weight:700;color:var(--amber)}
 @media print{.nav{display:none}body{max-width:100%}.card,.m{break-inside:avoid}h2{break-after:avoid}}
+
+.tierbadge{font:700 8.5px/1 var(--f-mono,monospace);letter-spacing:.1em;text-transform:uppercase;
+  border-radius:3px;padding:4px 7px;margin-left:9px;vertical-align:middle}
+.tierbadge.t2{color:var(--blue,#5aa9ff);border:1px solid rgba(90,169,255,.4)}
+.tierbadge.t4{color:var(--red,#ff5f56);border:1px solid rgba(255,95,86,.4)}
+.callout{border:1px solid var(--line2);border-left:3px solid var(--dim2);background:var(--panel2);
+  border-radius:4px;padding:12px 15px;margin:14px 0;font-size:13.5px}
+.callout.warn{border-left-color:var(--amber);background:var(--amber-dim)}
+.callout b{color:var(--text)}
+.unavail{color:var(--red,#ff5f56);font-weight:600}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -66,26 +76,68 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
     <button onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){};this.innerHTML=d?'&#9728;':'&#9789;'">&#9728;</button>
     <a href="index.html">&larr; Site</a>
   </div>
-  <div class="sub">MLS 2026 · 223 matches · 724 players · how the numbers behind this platform were checked</div>
+  <div class="sub" id="liveSub">loading current figures&hellip;</div>
 </div>
 
-<p class="lede">Every metric on this platform was tested against three independent standards before it shipped. This page documents that process, with real examples, and is deliberate about what validation can and cannot prove.</p>
-
-<p class="dim">A note on honesty up front: face validity — checking that the leaders and laggards are who you'd expect — proves a metric isn't broken and behaves as designed. It is not external ground truth. Where ground truth exists (xG, xT), we use it. Where a public reference exists (sequence structure), we benchmark to it. Everywhere else, face validity plus internal cross-consistency is the standard, and its limits are stated at the end.</p>
+<p class="lede">Not everything here is validated the same way, and presenting it as if it were is how a document like this loses credibility. Claims are graded on four tiers, strongest first. This is the same framework used on the <a href="methodology.html">Methodology</a> page, which is canonical: where the two ever disagree, Methodology is correct and this page is stale.</p>
 
 <div class="methods">
-  <div class="m"><b>1 · Model fit</b><span>Modelled metrics scored against an external reference by correlation.</span></div>
-  <div class="m"><b>2 · Reference benchmark</b><span>Engine output compared to published figures from an independent tool.</span></div>
-  <div class="m"><b>3 · Face validity + cross-consistency</b><span>Leaders match expectation, and independent metrics agree on the same picture.</span></div>
+  <div class="m"><b>Tier 1 · Reconciled against ground truth</b><span>Checked against numbers this platform did not produce. If these fail, something is genuinely broken.</span></div>
+  <div class="m"><b>Tier 2 · Calibrated against outcomes</b><span>A modelled quantity checked against what actually happened.</span></div>
+  <div class="m"><b>Tier 3 · Benchmarked against a published reference</b><span>Compared to an independent tool's figures. Real evidence, but narrow.</span></div>
+  <div class="m"><b>Tier 4 · Defined, not validated</b><span>Quantities with no ground truth to check against. Stated precisely, never claimed as verified.</span></div>
 </div>
 
-<h2><span class="n">01</span> Model fit — xG & xT</h2>
-<p>The expected-goals and expected-threat models are the platform's two modelled quantities, so they get the strongest test available: correlation against an external Opta reference on the same events.</p>
-<div class="card">
-<p style="margin:0">Both models fit the reference at <span class="kfig">r = 0.975</span>. As an internal cross-check, sequences that end in a shot carry <span class="kfig">5×</span> the expected threat of those that don't (<span class="kfig">0.061</span> vs <span class="kfig">0.012</span> xT), and xT correlates with a sequence ending in a shot at <span class="kfig">0.34</span> — the threat measure rises exactly where danger does.</p>
+<h2><span class="n">01</span> xG &mdash; calibrated against outcomes <span class="tierbadge t2">Tier 2</span></h2>
+
+<p>Expected goals is the platform's one fitted model. It is an empirical binned model built on
+this season's shots, using distance, angle, whether the shot was a header, whether it was a big
+chance, and whether it came in open play. Nothing external is used, so the honest test is whether
+it predicts what actually happened.</p>
+
+<p id="xgCal" class="dim">loading calibration&hellip;</p>
+
+<p>The band breakdown matters more than the headline, and it is not flattering: the model
+<b>over-predicts the poorest chances by roughly 10%</b> and <b>under-predicts good chances by
+6 to 11%</b>. It is mildly compressed toward the middle, which is characteristic of a binned model
+with thin data in the high-probability bands. Anyone using these numbers should know that before
+they are told.</p>
+
+<div class="callout">
+  <b>What this does not prove.</b> Calibration shows the model is unbiased in aggregate. It does
+  not show it separates good chances from bad ones better than a simpler model would, and there is
+  no external xG series in the database to benchmark against.
 </div>
 
-<h2><span class="n">02</span> Reference benchmark — the sequence engine</h2>
+<h2><span class="n">02</span> xT &mdash; a borrowed grid <span class="tierbadge t4">Tier 4</span></h2>
+
+<p>Expected threat is <b>not a fitted model on this platform</b>, and it is important not to
+present it as one. The pitch is divided into a 12 by 8 grid, and each cell carries a value
+representing the probability a possession in that zone ends in a goal. Moving the ball between
+zones adds the difference.</p>
+
+<p><b>Those grid values are taken from published work and applied to these competitions
+unchanged.</b> They were not fitted on MLS, La Liga or any other league here, and they have not
+been externally validated against a reference series for these leagues. The database holds the
+grid as a static 96-row table; there is no fitting step anywhere in the pipeline.</p>
+
+<div class="callout warn">
+  <b>A claim that used to appear on this page has been removed.</b> An earlier version stated that
+  both xG and xT fitted an external Opta reference at r = 0.975. That was wrong for xT and is not
+  reproducible for either: no external reference series exists in the database. The figure has been
+  withdrawn rather than restated.
+</div>
+
+<p>What can honestly be said about xT is internal consistency: possessions that end in a shot
+carry several times the expected threat of those that do not, so the measure rises where danger
+does. That is a sanity check on the implementation, not evidence the borrowed values are correct
+for these leagues.</p>
+
+<p class="dim">The <em>relative</em> ordering of pitch zones is uncontroversial and would hold in
+any competition. The absolute values are borrowed. Treat xT as a well-founded heuristic for
+comparing actions within this platform, not as a calibrated probability.</p>
+
+<h2><span class="n">03</span> Reference benchmark — the sequence engine</h2>
 <p>The possession-sequence engine was built from raw event data, so its segmentation rules could have been cut anywhere. To check they were cut in the right places, its output was compared to Julio Costa's published sequence numbers for Benfica. Passes-per-sequence and duration are league-independent structural quantities, so a match there means the chains themselves are being formed correctly.</p>
 <table>
 <thead><tr><th>Sequence metric</th><th class="num">Ours (MLS)</th><th class="num">Reference (Benfica)</th><th>Read</th></tr></thead>
@@ -98,7 +150,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 </table>
 <p class="dim">57,762 open-play sequences across 223 matches. The two structural metrics land on the reference almost exactly, which is the tell that segmentation is sound; the shot rate is lower because MLS is more transitional than Benfica in a weaker league.</p>
 
-<h2><span class="n">03</span> Face validity — team metrics</h2>
+<h2><span class="n">04</span> Face validity — team metrics</h2>
 <p>For every team metric, the extremes should be the teams you'd name yourself. They are.</p>
 <table>
 <thead><tr><th>Metric</th><th>Top</th><th class="num">Value</th><th>Bottom</th><th class="num">Value</th></tr></thead>
@@ -113,7 +165,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 </table>
 <p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots — one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
 
-<h2><span class="n">04</span> Face validity — player chain-roles</h2>
+<h2><span class="n">05</span> Face validity — player chain-roles</h2>
 <p>Player roles are assigned purely from what a player does inside possessions, with no knowledge of their position. So if the roles are real, position should fall out on its own. It does, cleanly, for all eleven.</p>
 <table>
 <thead><tr><th>Role</th><th>Who tops it</th><th>Verdict</th></tr></thead>
@@ -132,7 +184,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 </table>
 <p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements — a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
 
-<h2><span class="n">04b</span> Face validity &mdash; the impact composite</h2>
+<h2><span class="n">06</span> Face validity &mdash; the impact composite</h2>
 <p>The DNA layer condenses every pillar into two numbers per player: <b>impact</b>, weighted towards the pillars that matter for his position, and <b>completeness</b>, a penalised average that punishes a glaring weakness. The test is whether the top of that list reads like a list of the league's best players.</p>
 <table>
 <thead><tr><th>Player</th><th>Club</th><th>Pool</th><th class="num">Impact</th><th class="num">Completeness</th><th>Top pillar</th></tr></thead>
@@ -148,14 +200,14 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 <p><b>Two things are worth noting.</b> First, the list is not dominated by forwards: full-backs, a centre-back and midfielders lead it, because impact is weighted by what matters for each position rather than by attacking output. That is the intended behaviour, and it is the opposite of what a naive composite produces.</p>
 <p>Second, <b>impact and completeness genuinely diverge</b>. Milan Iloski also scores 100 for impact but only 71 for completeness &mdash; elite at what his position demands, with a clear hole elsewhere. Berhalter is the inverse, 98 impact but a perfect 100 completeness. A single rating would collapse those two very different players into the same number, which is exactly why there are two.</p>
 
-<h2><span class="n">05</span> Similarity — does "similar" mean similar</h2>
+<h2><span class="n">07</span> Similarity — does "similar" mean similar</h2>
 <p>The similarity engines find nearest neighbours by cosine on z-scored profiles. The test is whether the matches are ones a scout would nod at.</p>
 <div class="card">
 <p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players — Fernández, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
 <p style="margin:6px 0 0"><b>Team.</b> Inter Miami's closest stylistic peers are Real Salt Lake and LAFC — the league's possession-and-penetrate cluster.</p>
 </div>
 
-<h2><span class="n">06</span> What we found wrong — and fixed</h2>
+<h2><span class="n">08</span> What we found wrong — and fixed</h2>
 <p>Validation only means something if it can fail. It did, repeatedly, and each catch is documented here because a process that never finds anything isn't testing anything.</p>
 <ul>
 <li><b>xT grid mis-indexed.</b> The lookup assumed a 16×6 grid; the real grid is 12×8. Every advanced-third action was silently reading an empty cell. Caught when box-edge lookups returned null, fixed, re-validated against a sane season total.</li>
@@ -165,7 +217,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 <li><b>Goalkeepers polluting outfield roles.</b> Keepers topped Progressor (any pass is forward from the goal line) and tempo (they're allowed to hold the ball). Excluded from chain-roles entirely, consistent with the platform's rule that keepers are scored on goalkeeping, not outfield play.</li>
 </ul>
 
-<h2><span class="n">07</span> Known limitations</h2>
+<h2><span class="n">09</span> Known limitations</h2>
 <ul>
 <li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15–30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
 <li><b>Tempo resolution.</b> Event timestamps are whole-second, so a single player's hold time is coarse. Averaged over 1,000+ involvements it separates holders from quick-releasers reliably, but it is not sub-second precise.</li>
@@ -174,8 +226,42 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 </ul>
 
 <div class="foot">
-data · whoscored · xg & xt fitted r=0.975 vs opta · sequences benchmarked vs published reference · face validity + cross-consistency across 30 teams<br>
+data · whoscored · xg calibrated against outcomes · xt grid borrowed, not fitted here · sequences benchmarked vs published reference · <span id="footAsOf">as of —</span><br>
 generated from the live database · figures reproducible from the platform
 </div>
+
+<script>
+(function(){
+  var SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+  var AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+  var HD={apikey:AK,Authorization:'Bearer '+AK};
+  function fail(msg){
+    var sub=document.getElementById('liveSub');
+    if(sub){sub.innerHTML='<span class="unavail">Current figures unavailable</span> \u00b7 '+
+      'this page shows no counts rather than stale ones';}
+    var cal=document.getElementById('xgCal');
+    if(cal){cal.innerHTML='<span class="unavail">Calibration figures unavailable.</span> '+
+      'They are read live rather than written into the page, so nothing here is out of date by default.';}
+    var f=document.getElementById('footAsOf'); if(f)f.textContent='as of unavailable';
+  }
+  fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(rows){
+      var d=rows&&rows[0]; if(!d) throw new Error('empty');
+      var n=function(x){return (+x).toLocaleString()};
+      document.getElementById('liveSub').innerHTML=
+        n(d.matches_analysed)+' matches analysed \u00b7 '+
+        n(d.players_profiled_outfield)+' profiled outfield players \u00b7 '+
+        d.checks_error+' automated checks \u00b7 <b>as of '+d.as_of_match_date+'</b>';
+      var err=(d.xg_predicted-d.goals_actual)/d.goals_actual*100;
+      document.getElementById('xgCal').innerHTML=
+        'Across '+n(d.shots_non_pen)+' non-penalty shots the model predicts <b>'+
+        n(d.xg_predicted)+'</b> goals against <b>'+n(d.goals_actual)+'</b> actually scored, an error of <b>'+
+        err.toFixed(1)+'%</b>. Figures are read live from the database, so this cannot go stale.';
+      document.getElementById('footAsOf').textContent='as of '+d.as_of_match_date;
+    })
+    .catch(fail);
+})();
+</script>
 </body>
 </html>

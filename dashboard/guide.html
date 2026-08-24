@@ -149,6 +149,7 @@ details p:last-child{margin-bottom:0}
   details:not([open]) > *:not(summary){display:block!important}
   a{color:#000;text-decoration:none}
 }
+.unavail{color:var(--red,#ff5f56);font-weight:600}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -215,7 +216,7 @@ details p:last-child{margin-bottom:0}
   <em>what kind of team is this</em>.</p>
 
   <p>Every number you will see comes from one source: event data scraped from WhoScored,
-  covering <strong>254 played matches and 393,129 individual events</strong> across the
+  covering <strong><span class="lv" data-k="matches_analysed">&mdash;</span> played matches and <span class="lv" data-k="events">&mdash;</span> individual events</strong> across the
   2026 MLS season to date. Nothing is bought, nothing is estimated from box scores.</p>
 
   <p><b>Every formula behind every number on this site is written out in the <a href="methodology.html">full methodology reference</a></b>, including what is validated, what is merely defined, and the evidence for each.</p>
@@ -230,7 +231,26 @@ details p:last-child{margin-bottom:0}
     "left-footed right-sided carriers under 23" in a way a stats site cannot.</li>
   </ul>
 
-  <h3>What it cannot do</h3>
+  <div class="box" id="popBox">
+  <h5>Three player counts, three different populations</h5>
+  <p>These are often confused. They are not in conflict; they count different things.</p>
+  <ul>
+    <li><b><span class="lv" data-k="players_event_participants">&mdash;</span> event participants</b>
+      &mdash; anyone who touched the ball in a scraped match.</li>
+    <li><b><span class="lv" data-k="players_season_record">&mdash;</span> season-record players</b>
+      &mdash; those with an aggregated season row.</li>
+    <li><b><span class="lv" data-k="players_profiled_outfield">&mdash;</span> profiled outfield players</b>
+      &mdash; those clearing the involvement and minutes thresholds, so eligible for percentiles,
+      search and insights. This is the number that governs almost everything on the site.</li>
+  </ul>
+</div>
+
+<div class="box warn" id="availBox">
+  <h5>Why some leagues show nothing</h5>
+  <p id="availText">loading league availability&hellip;</p>
+</div>
+
+<h3>What it cannot do</h3>
   <div class="box warn">
     <h5>Honest limitations</h5>
     <ul>
@@ -259,9 +279,9 @@ details p:last-child{margin-bottom:0}
 
   <ol class="steps">
     <li><strong>Events.</strong> Every pass, carry, tackle, shot, with coordinates, outcome,
-    and qualifiers. 393,129 of them. This is the raw material.</li>
+    and qualifiers. <span class="lv" data-k="events">&mdash;</span> of them. This is the raw material.</li>
     <li><strong>Possession sequences.</strong> Events grouped into unbroken spells of control
-    by one team. 65,186 sequences. A sequence ends when the ball is lost, the game stops, or
+    by one team. <span class="lv" data-k="sequences">&mdash;</span> sequences. A sequence ends when the ball is lost, the game stops, or
     a set piece intervenes.</li>
     <li><strong>Team style.</strong> Sequences aggregated per club, then standardised against
     the league so every trait reads as "how unusual is this".</li>
@@ -840,7 +860,7 @@ details p:last-child{margin-bottom:0}
   </main>
 
   <div class="foot">
-    Built from 254 matches and 393,129 events · MLS 2026 · every figure in this guide is drawn
+    Built from <span class="lv" data-k="matches_analysed">&mdash;</span> matches and <span class="lv" data-k="events">&mdash;</span> events · <span id="gAsOf">as of —</span> · every live figure in this guide is drawn
     from the live database and will drift as the season progresses.
   </div>
 </div>
@@ -960,6 +980,50 @@ document.getElementById('themeBtn').addEventListener('click',function(){
   paintThemeBtn();
 });
 paintThemeBtn();
+</script>
+
+<script>
+(function(){
+  var SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+  var AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+  var HD={apikey:AK,Authorization:'Bearer '+AK};
+  function unavailable(){
+    document.querySelectorAll('.lv').forEach(function(el){
+      el.textContent='unavailable'; el.className='lv unavail'; });
+    var a=document.getElementById('availText');
+    if(a)a.innerHTML='<span class="unavail">League availability unavailable.</span> '+
+      'These figures are read live rather than written into the page, so nothing here is stale by default.';
+    var g=document.getElementById('gAsOf'); if(g)g.textContent='as of unavailable';
+  }
+  Promise.all([
+    fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD}).then(function(r){
+      if(!r.ok) throw new Error(r.status); return r.json(); }),
+    fetch(SB+'/rest/v1/v_league_availability?select=*&order=matches.desc',{headers:HD}).then(function(r){
+      if(!r.ok) throw new Error(r.status); return r.json(); })
+  ]).then(function(res){
+    var d=res[0]&&res[0][0]; var lg=res[1]||[];
+    if(!d) throw new Error('empty');
+    document.querySelectorAll('.lv').forEach(function(el){
+      var v=d[el.dataset.k];
+      el.textContent=(v==null)?'unavailable':(+v).toLocaleString(); });
+    var g=document.getElementById('gAsOf');
+    if(g)g.textContent='as of '+d.as_of_match_date;
+    var min=(lg[0]&&lg[0].min_matches_required)||6;
+    var ready=lg.filter(function(l){return l.insight_status==='available'});
+    var waiting=lg.filter(function(l){return l.insight_status==='below sample threshold'});
+    var none=lg.filter(function(l){return l.insight_status==='no data yet'});
+    var h='<p>Insights are withheld for any club with fewer than <b>'+min+' matches</b>. '+
+      'This is deliberate. A tactical read drawn from one or two games is not a weak finding, '+
+      'it is an invented one, and no badge or caveat makes it safe to publish.</p><ul>';
+    if(ready.length) h+='<li><b>Available:</b> '+ready.map(function(l){
+      return l.display_name+' ('+l.clubs_at_threshold+' of '+l.clubs+' clubs at threshold)'}).join(', ')+'</li>';
+    if(waiting.length) h+='<li><b>Withheld until the threshold is met:</b> '+waiting.map(function(l){
+      return l.display_name+' ('+l.matches+' matches so far)'}).join(', ')+'</li>';
+    if(none.length) h+='<li><b>Not yet scraped:</b> '+none.map(function(l){return l.display_name}).join(', ')+'</li>';
+    h+='</ul><p>These leagues will appear on their own as the season runs. Nothing needs switching on.</p>';
+    document.getElementById('availText').innerHTML=h;
+  }).catch(unavailable);
+})();
 </script>
 </body>
 </html>

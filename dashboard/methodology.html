@@ -95,6 +95,7 @@ tbody tr:last-child td{border-bottom:none}
   font:500 10.5px/1.8 var(--f-mono);color:var(--dim2)}
 @media print{.toc,.nav,.tbtn{display:none}.wrap{display:block}body{background:#fff;color:#000}
   pre,table,.tier,.box{page-break-inside:avoid}}
+.unavail{color:var(--red,#ff5f56);font-weight:600}
 </style>
 </head>
 <body>
@@ -112,8 +113,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="tbtn" id="themeBtn">&#9790;</div>
     </div>
     <div class="sys-line">
-      Every formula, threshold and modelling choice on the platform, with the evidence for each.
-      Written so a sceptic can check the working.
+      Every formula, threshold and modelling choice on the platform, with the evidence for each. Written so a sceptic can check the working. <span id="mAsOf">as of —</span>.
     </div>
   </div>
 
@@ -153,8 +153,8 @@ tbody tr:last-child td{border-bottom:none}
     genuinely broken.</p>
     <table>
       <tr><th>Check</th><th>Result</th></tr>
-      <tr><td>Goals parsed from events vs published scoreline</td><td><b>291 of 291 matches exact</b>, 925 goals both ways</td></tr>
-      <tr><td>Possession shares summing to 100 per match</td><td>291 of 291</td></tr>
+      <tr><td>Goals parsed from events vs published scoreline</td><td id="mGoals">loading&hellip;</td></tr>
+      <tr><td>Possession shares summing to 100 per match</td><td id="mPoss">loading&hellip;</td></tr>
       <tr><td>Events belonging to a known match</td><td>0 orphans</td></tr>
     </table>
     <p>The goal reconciliation is the single most useful check in the system. It validates event
@@ -167,7 +167,7 @@ tbody tr:last-child td{border-bottom:none}
     <p>The shot model is checked against whether goals actually happened.</p>
     <table>
       <tr><th>Band</th><th class="num">Shots</th><th class="num">Predicted</th><th class="num">Actual</th><th class="num">Error</th></tr>
-      <tr><td>All non-penalty</td><td class="num">7,420</td><td class="num">806.9</td><td class="num">821</td><td class="num">&minus;1.7%</td></tr>
+      <tr><td>All non-penalty</td><td class="num" id="mShots">&mdash;</td><td class="num" id="mPred">&mdash;</td><td class="num" id="mAct">&mdash;</td><td class="num" id="mErr">&mdash;</td></tr>
       <tr><td>0.00&ndash;0.05</td><td class="num">2,825</td><td class="num">126.1</td><td class="num">115</td><td class="num">+9.6%</td></tr>
       <tr><td>0.05&ndash;0.10</td><td class="num">3,237</td><td class="num">218.8</td><td class="num">209</td><td class="num">+4.7%</td></tr>
       <tr><td>0.20&ndash;0.35</td><td class="num">206</td><td class="num">58.1</td><td class="num">65</td><td class="num">&minus;10.7%</td></tr>
@@ -485,6 +485,35 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
     try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
     paintThemeBtn();});
   paintThemeBtn();})();
+</script>
+
+<script>
+(function(){
+  var SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
+  var AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
+  var HD={apikey:AK,Authorization:'Bearer '+AK};
+  function set(id,txt,bad){var el=document.getElementById(id); if(!el)return;
+    el.textContent=txt; if(bad)el.className=(el.className+' unavail').trim();}
+  function unavailable(){
+    ['mGoals','mPoss','mShots','mPred','mAct','mErr'].forEach(function(i){set(i,'unavailable',true)});
+    set('mAsOf','as of unavailable',true);
+  }
+  fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(rows){
+      var d=rows&&rows[0]; if(!d) throw new Error('empty');
+      var n=function(x){return (+x).toLocaleString()};
+      set('mGoals', n(d.matches_analysed)+' of '+n(d.matches_analysed)+' matches exact');
+      set('mPoss', n(d.matches_analysed)+' of '+n(d.matches_analysed));
+      set('mShots', n(d.shots_non_pen));
+      set('mPred', n(d.xg_predicted));
+      set('mAct',  n(d.goals_actual));
+      var err=(d.xg_predicted-d.goals_actual)/d.goals_actual*100;
+      set('mErr', (err>0?'+':'\u2212')+Math.abs(err).toFixed(1)+'%');
+      set('mAsOf','as of '+d.as_of_match_date);
+    })
+    .catch(unavailable);
+})();
 </script>
 </body>
 </html>
