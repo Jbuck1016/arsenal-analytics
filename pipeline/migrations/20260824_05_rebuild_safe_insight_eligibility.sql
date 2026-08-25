@@ -11,6 +11,15 @@
 --
 --   A one-off DELETE would have been undone by the next scheduled scrape.
 --   The eligibility rule therefore lives in the production polishing path.
+--
+-- REVISION 2026-08-24, NOT YET APPLIED LIVE.
+--   The eligibility delete originally tested ts.meets_min_matches, which
+--   hardcodes the six-match rule and bypasses detector_requirements. It
+--   now joins the insight's own detector requirement and compares
+--   ts.matches >= r.min_matches, so detector_requirements governs
+--   eligibility for every detector, as it does everywhere else.
+--   The live database still carries the previous body. Apply this file
+--   to bring live into line with source control.
 -- =====================================================================
 begin;
 
@@ -32,13 +41,18 @@ begin
     and not exists (select 1 from public.detector_requirements r where r.detector = i.detector);
   get diagnostics n_undeclared = row_count;
 
-  -- Club must exist in the scoped evidence base and clear the minimum.
+  -- Club must exist in the scoped evidence base AND clear the minimum
+  -- declared for that specific detector. detector_requirements governs;
+  -- no sample threshold is hardcoded here.
   delete from public.insights i
   where i.team is not null
     and not exists (
-      select 1 from public.v_team_sample ts
+      select 1
+      from public.v_team_sample ts
       join public.leagues l on l.league = ts.league and l.competition_type = 'league'
-      where ts.team = i.team and ts.meets_min_matches);
+      join public.detector_requirements r on r.detector = i.detector
+      where ts.team = i.team
+        and ts.matches >= r.min_matches);
   get diagnostics n_ineligible = row_count;
 
   return format('%s suppressed below declared minimum, %s removed for having no declared requirement, %s removed as ineligible clubs',

@@ -7,15 +7,20 @@
 do $checks$
 declare n int; bad text;
 begin
-  -- 1. No browser-role writes anywhere in the public schema.
+  -- 1. No browser-role write privilege of any kind, anywhere in public.
+  --    Covers INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES and TRIGGER
+  --    for both anon and authenticated. Narrower checks let privilege
+  --    drift on the rarer grants pass unnoticed.
   select count(*) into n
-  from pg_class c join pg_namespace nn on nn.oid = c.relnamespace and nn.nspname = 'public'
+  from pg_class c
+  join pg_namespace nn on nn.oid = c.relnamespace and nn.nspname = 'public'
+  cross join unnest(array['anon','authenticated']) as role_name
+  cross join unnest(array['INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) as priv
   where c.relkind in ('r','m','v','p')
-    and (has_table_privilege('anon', c.oid,'INSERT') or has_table_privilege('anon', c.oid,'UPDATE')
-      or has_table_privilege('anon', c.oid,'DELETE') or has_table_privilege('anon', c.oid,'TRUNCATE')
-      or has_table_privilege('authenticated', c.oid,'INSERT') or has_table_privilege('authenticated', c.oid,'UPDATE')
-      or has_table_privilege('authenticated', c.oid,'DELETE'));
-  if n <> 0 then raise exception 'CHECK 1 FAILED. % objects writable by browser roles.', n; end if;
+    and has_table_privilege(role_name, c.oid, priv);
+  if n <> 0 then
+    raise exception 'CHECK 1 FAILED. % role/privilege/object combinations writable by browser roles.', n;
+  end if;
 
   -- 2. Administrative RPCs are unreachable from browser roles.
   select string_agg(f, ', ') into bad from unnest(array[
@@ -66,9 +71,21 @@ begin
 end
 $checks$;
 
--- 7. Migration ordering: the Stage 2 prerequisite must sort before the
---    privilege lockdown, or a clean replay re-exposes SECURITY DEFINER
---    functions. Filename ordering is the guarantee; verified in CI by:
---      ls pipeline/migrations/*.sql | sort | head -2
---    must yield 20260824_00_stage2_db_objects.sql then
---    20260824_01_privilege_lockdown.sql.
+-- =====================================================================
+-- CHECK 7 is a REPOSITORY PREREQUISITE, not a SQL check.
+--
+-- SQL cannot see filenames, so migration ordering cannot be asserted from
+-- inside the database. It matters because CREATE OR REPLACE FUNCTION
+-- grants EXECUTE to PUBLIC: if the Stage 2 prerequisite ever sorted after
+-- the privilege lockdown, a clean replay would re-expose
+-- refresh_site_summaries() to PUBLIC.
+--
+-- Run this before applying the chain. Exits non-zero on failure:
+--
+--   python3 pipeline/migrations/check_migration_order.py
+--
+-- Or as a one-liner:
+--
+--   ls pipeline/migrations/20260824_*.sql | sort | head -1 \
+--     | grep -q '00_stage2_db_objects' || echo 'MIGRATION ORDER BROKEN'
+-- =====================================================================

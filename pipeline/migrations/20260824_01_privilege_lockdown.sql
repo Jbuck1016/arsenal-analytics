@@ -51,16 +51,20 @@ grant execute on function public.verify_rebuild() to service_role;
 do $assert$
 declare n int;
 begin
+  -- Full write-privilege surface for both browser roles. The revocation
+  -- above is REVOKE ALL, so this is already satisfied; the point is that
+  -- the assertion must not be narrower than the revocation, or future
+  -- privilege drift on TRUNCATE, REFERENCES or TRIGGER passes unnoticed.
   select count(*) into n
-  from pg_class c join pg_namespace nn on nn.oid = c.relnamespace and nn.nspname = 'public'
+  from pg_class c
+  join pg_namespace nn on nn.oid = c.relnamespace and nn.nspname = 'public'
+  cross join unnest(array['anon','authenticated']) as role_name
+  cross join unnest(array['INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) as priv
   where c.relkind in ('r','m','v','p')
-    and (has_table_privilege('anon', c.oid, 'INSERT')
-      or has_table_privilege('anon', c.oid, 'UPDATE')
-      or has_table_privilege('anon', c.oid, 'DELETE')
-      or has_table_privilege('authenticated', c.oid, 'INSERT')
-      or has_table_privilege('authenticated', c.oid, 'UPDATE')
-      or has_table_privilege('authenticated', c.oid, 'DELETE'));
-  if n <> 0 then raise exception 'ASSERT FAILED. % objects still writable by browser roles.', n; end if;
+    and has_table_privilege(role_name, c.oid, priv);
+  if n <> 0 then
+    raise exception 'ASSERT FAILED. % role/privilege/object combinations still writable by browser roles.', n;
+  end if;
 
   select count(*) into n
   from pg_class c join pg_namespace nn on nn.oid = c.relnamespace and nn.nspname = 'public'
