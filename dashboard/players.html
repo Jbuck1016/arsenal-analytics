@@ -144,6 +144,13 @@ tr:hover td{background:var(--surface)}
 .split{display:grid;grid-template-columns:minmax(360px,0.85fr) minmax(420px,1.15fr);gap:12px;align-items:start}
 @media(max-width:1180px){.split{grid-template-columns:1fr}}
 .pitch-box{height:calc(100vh - 452px);min-height:230px;max-height:640px}
+@media(max-width:820px){
+  body{overflow:auto}.hdr{height:auto;min-height:52px;flex-wrap:wrap;padding:8px 10px}.tabs{order:3;width:100%;overflow-x:auto;margin-left:0}
+  .wrap{display:block;overflow:visible}.side{width:100%;height:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--border)}
+  .side-top{display:grid;grid-template-columns:1fr 1fr}.side-top .inp{grid-column:1/-1}.plist{max-height:25vh}
+  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/74}
+  .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
+}
 .viz-eyebrow{font:700 8px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
 .viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:3px}
 .viz-sub{font:500 10px/1.45 var(--f-body);color:var(--text3);margin:0 0 7px;max-width:82ch}
@@ -389,6 +396,7 @@ function fmt(v,unit){
 }
 function defOf(k){for(var i=0;i<DEFS.length;i++)if(DEFS[i].key===k)return DEFS[i];return null}
 function playerOf(id){for(var i=0;i<PLAYERS.length;i++)if(PLAYERS[i].player_id===id)return PLAYERS[i];return null}
+function poolLabel(pool){return POOL_NAME[pool]||pool||'Role not yet classified'}
 
 async function init(){
   try{
@@ -404,7 +412,10 @@ async function init(){
     const season=res[0],role=res[1];DEFS=res[2];
     WEIGHTS={};res[3].forEach(function(r){if(!WEIGHTS[r.pool])WEIGHTS[r.pool]={};WEIGHTS[r.pool][r.pillar]=+r.weight});
     const rmap={};role.forEach(function(r){rmap[r.player_id]=r});
-    PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})}).filter(function(p){return p.pool});
+    // The directory is an appearance list, not a percentile list. Substitute-only
+    // players may not yet have a role row, but must still remain selectable.
+    PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})})
+      .filter(function(p){return +(p.apps||0)>0||+(p.minutes||0)>0});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
@@ -515,8 +526,9 @@ function renderList(){
   el.innerHTML=rows.slice(0,300).map(function(p){
     return '<div class="pitem'+(SEL===p.player_id?' on':'')+'" onclick="pick(\''+p.player_id+'\')">'+
       '<div style="flex:1;min-width:0"><div class="pitem-nm">'+esc(p.player_name)+'</div>'+
-      '<div class="pitem-meta">'+esc(tname(p.team))+' \u00B7 '+(+p.nineties).toFixed(1)+' \u00D7 90</div></div>'+
-      '<div class="badge">'+p.pool+'</div></div>'}).join('');
+      '<div class="pitem-meta">'+esc(tname(p.team))+' \u00B7 '+(+p.nineties).toFixed(1)+' \u00D7 90 \u00B7 '+
+        (+(p.starts||0))+' start'+(+(p.starts||0)===1?'':'s')+'</div></div>'+
+      '<div class="badge">'+esc(p.pool||'SUB')+'</div></div>'}).join('');
 }
 let PACT=null,PCAR=null,PREC=null;
 async function pick(pid){
@@ -541,19 +553,20 @@ async function pick(pid){
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
-  const n=POOLC[p.pool]||0,low=p.nineties<MIN90;
+  const n=POOLC[p.pool]||0,low=p.nineties<MIN90||!p.pool;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
     '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
     '<div class="chips"><span class="chip">Listed: '+esc(p.modal_position||'\u2014')+'</span>'+
-    '<span class="chip acc">Plays: '+esc(POOL_NAME[p.pool]||p.pool)+'</span>'+
+    '<span class="chip acc">Plays: '+esc(poolLabel(p.pool))+'</span>'+
     (p.reassigned?'<span class="chip warn">Reassigned from '+esc(p.listed_pool)+'</span>':'')+
     '<span class="chip">Fit confidence: '+esc(p.confidence||'\u2014')+'</span></div></div>'+
     '<div class="pcard-r"><div class="pool-lbl">Ranked against</div>'+
-    '<div class="pool-val">'+esc(POOL_NAME[p.pool]||p.pool)+'</div>'+
+    '<div class="pool-val">'+esc(poolLabel(p.pool))+'</div>'+
     '<div class="pool-sub">MLS 2026 \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div></div>';
-  if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">Below the '+MIN90+'-nineties threshold, so no percentiles are computed.</div></div>';
+  if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">'+
+    (!p.pool?'This player appeared from the bench but does not yet have enough evidence for a stable role classification or percentiles. Event plots remain available.':'Below the '+MIN90+'-nineties threshold, so no percentiles are computed.')+'</div></div>';
 
   if(pillars&&pillars.length){
     h+='<div class="dna">';
@@ -1005,7 +1018,9 @@ async function renderRank(){
    so x scales by 1.05 and y by 0.68 to keep the aspect ratio honest.
    Attack is always left-to-right. */
 function PX(x){return x*1.05}
-function PY(y){return y*0.68}
+function PY(y){return (100-y)*0.68}
+function PY0(a,b){return Math.min(PY(a),PY(b))}
+function PYH(a,b){return Math.abs(PY(a)-PY(b))}
 function pitchMarks(){
   const st='fill="none" stroke="var(--border2)" stroke-width="0.32"';
   return '<rect x="0" y="0" width="105" height="68" '+st+'/>'+
@@ -1030,7 +1045,10 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     (ctrl||'')+
     (sub?'<div class="viz-sub">'+sub+'</div>':'')+
     '<div class="pitch-box"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
-    pitchMarks()+inner+'</svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
+    pitchMarks()+inner+
+    '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
+    '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
+    '<path d="M68.8 70.2L67.2 69.35L67.2 71.05Z" fill="var(--text3)"/></svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 function lg(c,t,n){return '<span><i style="background:'+c+'"></i>'+t+(n!=null?' <b>'+n+'</b>':'')+'</span>'}
 /* Origin ring: hollow circle where the ball starts, hairline through the middle,
@@ -1133,6 +1151,7 @@ function vizLayers(grp,p){
     return {title:'Shot map',
       sub:'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+
           ' shots. Blocked attempts are separated \u2014 the provider files them as saves but they never reached the keeper.',
+      sizeKey:true,
       layers:[
         L('goal','Goal',AC,by('goal'),mk(AC,'goal')),
         L('saved','Saved',G,by('saved'),mk(G,'saved')),
@@ -1142,7 +1161,7 @@ function vizLayers(grp,p){
       ]};
   }
   if(grp==='Carrying'){
-    return {title:'Carry map',sub:'Every carry of 3m or more, from where the ball arrived to where he released it.',
+    return {title:'Carry map',sub:'Carries inferred from consecutive touches, 3m or longer. Progressive and box-entry carries are shown by default.',
       layers:[
         L('box','Into box',AC,C.filter(function(c2){return c2.into_box}),cl(AC,0.42,0.92)),
         L('prog','Progressive',Y,C.filter(function(c2){return c2.is_progressive&&!c2.into_box}),cl(Y,0.3,0.75)),
@@ -1186,7 +1205,7 @@ function vizLayers(grp,p){
     const LB={Tackle:'Tackles',Interception:'Interceptions',BallRecovery:'Recoveries',
               Clearance:'Clearances',BlockedPass:'Blocked passes',Challenge:'Challenges lost',Save:'Shot blocks'};
     return {title:'Defensive actions',
-      sub:'Where he wins the ball back. Attack direction left to right, so his own goal is on the left.',
+      sub:'Defensive actions by type. Recoveries, tackles and interceptions indicate ball-winning; clearances, blocks and failed challenges are interventions, not all wins.',
       layers:Object.keys(C2).map(function(t){
         return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),dt(C2[t],0.85,0.74))})};
   }
@@ -1209,8 +1228,8 @@ function vizLayers(grp,p){
     const hs=A.filter(inHS);
     return {title:'Half-space activity',
       sub:'The two shaded strips between the box edge and the six-yard line, extended into the attacking half.',
-      base:'<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+'" fill="var(--accent)" fill-opacity="0.07"/>'+
-           '<rect x="'+PX(50)+'" y="'+PY(63.2)+'" width="'+PX(50)+'" height="'+(PY(78.9)-PY(63.2))+'" fill="var(--accent)" fill-opacity="0.07"/>',
+      base:'<rect x="'+PX(50)+'" y="'+PY0(21.1,36.8)+'" width="'+PX(50)+'" height="'+PYH(21.1,36.8)+'" fill="var(--accent)" fill-opacity="0.07"/>'+
+           '<rect x="'+PX(50)+'" y="'+PY0(63.2,78.9)+'" width="'+PX(50)+'" height="'+PYH(63.2,78.9)+'" fill="var(--accent)" fill-opacity="0.07"/>',
       layers:[
         L('pass','Completed passes',G,hs.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null}),pl(G,0.26,0.5)),
         L('fail','Incomplete passes',R,hs.filter(function(a){return a.type==='Pass'&&!a.ok&&a.end_x!=null}),pl(R,0.2,0.3)),
@@ -1249,7 +1268,7 @@ function vizPanel(grp,p){
   if(!PACT)return noData('Loading actions\u2026');
   const cfg=vizLayers(grp,p);
   if(!cfg)return noData('No pitch view for this group yet');
-  if(!VZ.off[grp])VZ.off[grp]={};
+  if(!VZ.off[grp])VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:{}));
   const off=VZ.off[grp];
   const live=cfg.layers.filter(function(l){return l.items.length});
   if(!live.length)return noData();
@@ -1269,7 +1288,8 @@ function vizPanel(grp,p){
     '</div>';
 
   const legend=live.filter(function(l){return !off[l.k]})
-    .map(function(l){return lg(l.color,l.label,l.items.length)}).join('');
+    .map(function(l){return lg(l.color,l.label,l.items.length)}).join('')+
+    (cfg.sizeKey?'<span>Marker area = xG <b>0.05 / 0.20 / 0.50</b></span>':'');
 
   return pitchWrap(cfg.title,cfg.sub,inner,legend,(cfg.tog||'')+chips);
 }
@@ -1278,7 +1298,7 @@ function tglLayer(grp,k){
   VZ.off[grp][k]=!VZ.off[grp][k];
   refreshViz();
 }
-function allLayers(grp){VZ.off[grp]={};refreshViz()}
+function allLayers(grp){VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:{}));refreshViz()}
 function refreshViz(){
   const p=playerOf(SEL);if(!p)return;
   const el=document.querySelector('.split-r');
@@ -1470,8 +1490,8 @@ function drill(key){
     leg=lg(G,'Successful')+lg(R,'Unsuccessful');
   }
   else if(kind==='hspass'||kind==='hsprog'){
-    inner+='<rect x="'+PX(50)+'" y="'+PY(21.1)+'" width="'+PX(50)+'" height="'+(PY(36.8)-PY(21.1))+'" fill="var(--accent)" fill-opacity="0.07"/>'+
-           '<rect x="'+PX(50)+'" y="'+PY(63.2)+'" width="'+PX(50)+'" height="'+(PY(78.9)-PY(63.2))+'" fill="var(--accent)" fill-opacity="0.07"/>';
+    inner+='<rect x="'+PX(50)+'" y="'+PY0(21.1,36.8)+'" width="'+PX(50)+'" height="'+PYH(21.1,36.8)+'" fill="var(--accent)" fill-opacity="0.07"/>'+
+           '<rect x="'+PX(50)+'" y="'+PY0(63.2,78.9)+'" width="'+PX(50)+'" height="'+PYH(63.2,78.9)+'" fill="var(--accent)" fill-opacity="0.07"/>';
     pass(function(a){return a.type==='Pass'&&a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))&&
       (kind==='hsprog'?(a.prog&&a.ok):a.ok)},kind==='hsprog'?B:G,0.26,0.6);
   }

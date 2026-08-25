@@ -807,6 +807,8 @@ function drawPitch(ctx,c){
   ctx.beginPath();ctx.moveTo((W-gW)/2,m);ctx.lineTo((W+gW)/2,m);ctx.stroke();
   ctx.beginPath();ctx.moveTo((W-gW)/2,m+ph);ctx.lineTo((W+gW)/2,m+ph);ctx.stroke();
   ctx.lineWidth=1.5;ctx.strokeStyle=TH.line;
+  ctx.fillStyle=TH.textSoft;ctx.font='700 10px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText('ATTACKING \u2191',W/2,Math.max(11,m-8));
 }
 
 function drawJdP(ctx,c){
@@ -848,9 +850,8 @@ function heatColor(v,a){let r,g,b;if(v<0.25){r=0;g=Math.round(v*4*255);b=255;}el
 
 function renderShotMap(ctx,c,evts,titleEl,legendEl){
   drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
-  // Marker size stands for chance quality, so it shrinks with distance from goal.
-  // The previous version scaled UP with distance, which drew a 30-yard hit bigger
-  // than a tap-in. Outcome is carried by shape and fill, not size.
+  // Match events do not expose the fitted xG value here. Size is therefore an
+  // explicit distance proxy, not chance quality or xG. Outcome uses shape/fill.
   const C={goal:'#f5b800',saved:'#2563eb',post:'#a855f7',blocked:'#f97316',off:'#9ca3af'};
   let goals=0,saved=0,blocked=0,post=0,off=0;const stored=[];
   function kindOf(e){
@@ -903,7 +904,7 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     (post?leg(C.post,'Woodwork ('+post+')'):'')+
     (blocked?leg(C.blocked,'Blocked ('+blocked+')'):'')+
     leg(C.off,'Off target ('+off+')')+
-    '<span class="leg" style="opacity:.7">bigger marker = closer to goal</span>';
+    '<span class="leg" style="opacity:.7">size = distance proxy (xG unavailable)</span>';
 }
 
 function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}

@@ -16,6 +16,9 @@
   --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
   --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
   --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+  --accent:#9c6b1e;--accent-dim:rgba(156,107,30,.10);--accent-glow:rgba(156,107,30,.28);
+  --bg2:#efece2;--bg3:#e7e3d6;--surface:rgba(38,39,43,.035);--surface2:rgba(38,39,43,.07);
+  --border:#dcd6c8;--border2:#a9a18e;--text2:#4b4b47;--text3:#6c6a61;--shadow:0 1px 3px rgba(42,37,28,.12);--nb:#2f6aa8;
 }
 html.dark{
   --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
@@ -212,7 +215,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
 
 /* ----- pitch ----- */
 function PX(x){return x*1.05}
-function PY(y){return y*0.68}
+function PY(y){return (100-y)*0.68}
 function pitchMarks(){
   const st='fill="none" stroke="var(--border2)" stroke-width="0.32"';
   return '<rect x="0" y="0" width="105" height="68" '+st+'/>'+
@@ -299,8 +302,9 @@ function seqTrace(path,c,shot,w,op){
 function pitchSVG(inner,h){
   return '<div class="pbox"'+(h?' style="aspect-ratio:auto;height:'+h+'"':'')+'>'+
     '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
-    pitchMarks()+inner+'<line x1="44" y1="70" x2="62" y2="70" stroke="var(--text3)" stroke-width="0.3" stroke-opacity="0.7"/>'+
-    '<path d="M62.6 70L60.8 69.3L60.8 70.7Z" fill="var(--text3)" fill-opacity="0.7"/></svg></div>';
+    pitchMarks()+inner+'<text x="42" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
+    '<line x1="59" y1="70.2" x2="67" y2="70.2" stroke="var(--text3)" stroke-width="0.35"/>'+
+    '<path d="M67.8 70.2L66.2 69.35L66.2 71.05Z" fill="var(--text3)"/></svg></div>';
 }
 
 /* ----- labels ----- */
