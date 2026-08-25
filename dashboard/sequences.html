@@ -264,7 +264,7 @@ function node(x,y,c,op){
    Roughly 15% of events carry no end coordinate, which previously broke the chain
    into unrelated clusters. Those are now drawn as nodes and joined with a dotted
    link, so one possession reads as one possession. */
-function seqTrace(path,c,shot,w,op){
+function seqTrace(path,c,shot,w,op,numberActions){
   let inner='';const pts=path||[];
   if(!pts.length)return inner;
 
@@ -286,6 +286,11 @@ function seqTrace(path,c,shot,w,op){
       inner+=node(p.x,p.y,c,o);
       px=p.x;py=p.y;
     }
+    if(numberActions){
+      const lx=(p.ex!=null?p.ex:p.x),ly=(p.ey!=null?p.ey:p.y);
+      inner+='<circle cx="'+PX(lx).toFixed(2)+'" cy="'+PY(ly).toFixed(2)+'" r="1.05" fill="var(--bg2)" fill-opacity=".88"/>'+
+        '<text x="'+PX(lx).toFixed(2)+'" y="'+(PY(ly)+.38).toFixed(2)+'" text-anchor="middle" fill="'+c+'" font-size="1.15" font-weight="800">'+(i+1)+'</text>';
+    }
   });
 
   inner+='<circle cx="'+PX(pts[0].x).toFixed(2)+'" cy="'+PY(pts[0].y).toFixed(2)+
@@ -301,7 +306,7 @@ function seqTrace(path,c,shot,w,op){
 }
 function pitchSVG(inner,h){
   return '<div class="pbox"'+(h?' style="aspect-ratio:auto;height:'+h+'"':'')+'>'+
-    '<svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
+    '<svg role="img" aria-label="Sequence trajectory. Attack is left to right." viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
     pitchMarks()+inner+'<text x="42" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
     '<line x1="59" y1="70.2" x2="67" y2="70.2" stroke="var(--text3)" stroke-width="0.35"/>'+
     '<path d="M67.8 70.2L66.2 69.35L66.2 71.05Z" fill="var(--text3)"/></svg></div>';
@@ -329,7 +334,7 @@ async function init(){
     // team list from the style view (guaranteed to have sequence data)
     TEAMS=(await sbAll('team_sequence_agg',{select:'team',order:'team.asc'})).map(function(x){return x.team});
     TEAMSEL=TEAMS[0];
-    document.getElementById('hdrSub').textContent='MLS 2026 \u00B7 pick a sequence, find its nearest matches across the league';
+    document.getElementById('hdrSub').textContent='Available competitions \u00B7 pick a sequence, then find the nearest matches in the current data pool';
     loadCandidates();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
@@ -413,7 +418,7 @@ async function choosePick(i){
 function renderPick(){
   const main=document.getElementById('main');
   const shot=PICK.ended_shot;
-  const big=pitchSVG(seqTrace(PICK.path,'var(--accent)',shot,0.7,0.95));
+  const big=pitchSVG(seqTrace(PICK.path,'var(--accent)',shot,0.7,0.95,true));
   let h=controls()+
     '<div class="split"><div class="sect">'+
       '<div class="sect-h"><span>Picked sequence</span><button class="back" onclick="renderBrowse()">\u2190 back to list</button></div>'+

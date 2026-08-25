@@ -515,7 +515,7 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
         </div></div>
         <div class="viz-group"><div class="viz-group-label">Defending</div><div class="viz-grid">
           <div class="viz-btn" data-viz="defensive">Defensive</div>
-          <div class="viz-btn" data-viz="pressure">Pressure</div>
+          <div class="viz-btn" data-viz="pressure">Def. Density</div>
           <div class="viz-btn" data-viz="shape">Team Shape<span class="team-only">TEAM</span></div>
           <div class="viz-btn" data-viz="formation">Formation<span class="team-only">TEAM</span></div>
           <div class="viz-btn" data-viz="dominance">Dominance<span class="team-only">TEAM</span></div>
@@ -666,7 +666,7 @@ async function loadTeams(){
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const VIZ_LABELS={passes:'Pass Map',heatmap:'Heatmap',shots:'Shot Map',network:'Passing Network',progressive:'Progressive Passes',final_third:'Passes Into Final Third',zone14:'Passes Into Zone 14',box_passes:'Passes Into Box',defensive:'Defensive Actions',pressure:'Pressure Map',shape:'Team Shape',passflow:'Pass Flow',keypasses:'Key Passes',xt:'xT Map',formation:'Formation',dominance:'Zone Dominance',combos:'Pass Combos'};
+const VIZ_LABELS={passes:'Pass Map',heatmap:'Heatmap',shots:'Shot Map',network:'Passing Network',progressive:'Progressive Passes',final_third:'Passes Into Final Third',zone14:'Passes Into Zone 14',box_passes:'Passes Into Box',defensive:'Defensive Actions',pressure:'Defensive Density',shape:'Team Shape',passflow:'Pass Flow',keypasses:'Key Passes',xt:'xT Map',formation:'Formation',dominance:'Zone Dominance',combos:'Pass Combos'};
 const TEAM_VIZ=new Set(['dominance','formation','passflow','shape']);
 function isProgPass(e){if(e.type!=='Pass'||e.x==null||e.end_x==null)return false;const g=e.end_x-e.x;if(e.x<50&&e.end_x<50)return g>=30;if(e.x<50&&e.end_x>=50)return g>=15;if(e.x>=50&&e.end_x>=50)return g>=10;return false;}
 const DEF_TYPES=['Tackle','Interception','Clearance','BallRecovery','BlockedPass','Aerial','Challenge'];
@@ -930,14 +930,14 @@ function renderDefensive(ctx,c,evts,titleEl,legendEl){
     ctx.save();
     const fs=9,lineH=13,padX=8,padY=5;
     ctx.font='bold '+fs+'px Inter,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
-    const rows=[...items.map(([tp])=>tp+' ('+counts[tp]+')'),'Won: '+pct(wonCount,evts.length)];
+    const rows=[...items.map(([tp])=>tp+' ('+counts[tp]+')'),'Successful outcome: '+pct(wonCount,evts.length)];
     const maxW=Math.max(...rows.map(r=>ctx.measureText(r).width));
     const boxW=maxW+padX*2+12,boxH=rows.length*lineH+padY*2;
     const bx=PM+6,by=PM+6;
     ctx.fillStyle='rgba(240,234,214,0.92)';drawPill(ctx,bx,by,boxW,boxH,5);ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=0.8;drawPill(ctx,bx,by,boxW,boxH,5);ctx.stroke();
     items.forEach(([tp,col],i)=>{const y=by+padY+i*lineH+lineH/2;ctx.fillStyle=col;ctx.beginPath();ctx.arc(bx+padX+3,y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#333';ctx.fillText(tp+' ('+counts[tp]+')',bx+padX+10,y);});
-    const yw=by+padY+items.length*lineH+lineH/2;ctx.fillStyle='#444';ctx.fillText('Won: '+pct(wonCount,evts.length),bx+padX+3,yw);
+    const yw=by+padY+items.length*lineH+lineH/2;ctx.fillStyle='#444';ctx.fillText('Successful outcome: '+pct(wonCount,evts.length),bx+padX+3,yw);
     ctx.restore();
   }
   legendEl.innerHTML='';
@@ -945,9 +945,9 @@ function renderDefensive(ctx,c,evts,titleEl,legendEl){
 
 function renderPressure(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const gw=60,gh=96,sigma=5;const grid=Array.from({length:gh},()=>new Float32Array(gw));evts.forEach(e=>{if(e.x==null)return;const gi=Math.min(gw-1,Math.max(0,Math.floor((1-e.y/100)*gw)));const gj=Math.min(gh-1,Math.max(0,Math.floor((1-e.x/100)*gh)));grid[gj][gi]++;});const blur=Array.from({length:gh},()=>new Float32Array(gw));for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){let s=0,w=0;for(let dj=-sigma*2;dj<=sigma*2;dj++)for(let di=-sigma*2;di<=sigma*2;di++){const nj=j+dj,ni=i+di;if(nj<0||nj>=gh||ni<0||ni>=gw)continue;const g=Math.exp(-(dj*dj+di*di)/(2*sigma*sigma));s+=grid[nj][ni]*g;w+=g;}blur[j][i]=s/w;}let max=0,peakJ=0,peakI=0;blur.forEach((r,j)=>r.forEach((v,i)=>{if(v>max){max=v;peakJ=j;peakI=i;}}));if(!max)max=1;const pw=c.width-2*PM,ph=c.height-2*PM;const cw=pw/gw,ch=ph/gh;for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const v=blur[j][i]/max;if(v<0.06)continue;ctx.fillStyle=pressureColor(v,0.6*v);ctx.fillRect(PM+i*cw,PM+j*ch,cw+1,ch+1);}// redraw pitch lines on top
   ctx.strokeStyle='rgba(136,136,136,0.8)';ctx.lineWidth=1.5;const m=PM;ctx.strokeRect(m,m,pw,ph);ctx.beginPath();ctx.moveTo(m,m+ph/2);ctx.lineTo(m+pw,m+ph/2);ctx.stroke();const paW=pw*0.44,paH=ph*0.17,paX=(c.width-paW)/2;ctx.strokeRect(paX,m,paW,paH);ctx.strokeRect(paX,m+ph-paH,paW,paH);
-  // Label "High Press Zone" near densest area
-  if(max>0){const peakX=PM+peakI*cw+cw/2,peakY=PM+peakJ*ch+ch/2;ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';const label='High Press Zone';const tw=ctx.measureText(label).width;ctx.fillStyle='rgba(240,234,214,0.88)';drawPill(ctx,peakX-tw/2-6,peakY-18,tw+12,14,7);ctx.fill();ctx.fillStyle='#c00';ctx.fillText(label,peakX,peakY-8);}
-  titleEl.textContent='Pressure Map';legendEl.innerHTML='';}
+  // Label the observed density peak without claiming these events are pressures.
+  if(max>0){const peakX=PM+peakI*cw+cw/2,peakY=PM+peakJ*ch+ch/2;ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';const label='Peak Action Zone';const tw=ctx.measureText(label).width;ctx.fillStyle='rgba(240,234,214,0.88)';drawPill(ctx,peakX-tw/2-6,peakY-18,tw+12,14,7);ctx.fill();ctx.fillStyle='#c00';ctx.fillText(label,peakX,peakY-8);}
+  titleEl.textContent='Defensive Action Density';legendEl.innerHTML='<span class="leg">Normalised within this match sample</span>';}
 function pressureColor(v,a){let r,g,b;if(v<0.45){const t=v/0.45;r=Math.round(240*t+60);g=Math.round(160*t);b=Math.round(40*t);}else{const t=(v-0.45)/0.55;r=Math.round(220-60*t);g=Math.round(80-60*t);b=Math.round(40-30*t);}return'rgba('+r+','+g+','+b+','+a+')';}
 
 /* Formation tracker */
@@ -1029,7 +1029,7 @@ function callRenderer(viz,ctx,can,evts,title,legend,pairEl){
 /* RENDER ALL PANELS */
 const CONCEPT_LEGENDS={
   xt:'<b>Expected Threat (xT)</b> measures how much each pass increased the probability of scoring. Only passes with positive xT gain above 0.02 are shown. Color intensity = magnitude of threat increase.',
-  pressure:'<b>Pressure Map</b> shows where the team applied defensive pressure. Calculated from all defensive actions (tackles, interceptions, clearances, ball recoveries). Darker zones = higher pressing intensity.',
+  pressure:'<b>Defensive Density</b> shows where recorded defensive actions occurred. It uses tackles, interceptions, clearances, recoveries and related interventions; it is not a direct measure of pressure or pressing intensity.',
   dominance:'<b>Zone Dominance</b> divides the pitch into 30 zones and shows what % of touches in each zone belonged to the team. >60% = team dominant (accent color), <40% = opponent dominant (red), 40-60% = contested (neutral).',
   formation:'<b>Formation</b> shows average positions of each player across all their touches in this match. The formation label (e.g. 4-3-3) is auto-detected by clustering players into lines by their average depth.',
   shape:'<b>Team Shape</b> shows the team\'s positional structure. Each node = player average position, sized by touch volume, colored by position type.',
@@ -1242,7 +1242,7 @@ function showComparison(){if(!S.selPlayer||!S.cmpPlayer)return;document.getEleme
 function updateMatchInfo(){const m=S.matches.find(m=>m.game_id==S.selMatch);if(!m)return;const d=new Date(m.date);document.getElementById('matchInfo').textContent=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function renderTeamViewToggle(){const el=document.getElementById('viewTeamBar');if(!el)return;if(!S.selMatch||!S.oppTeam){el.innerHTML='';return;}const pair=(S.matchTeams&&S.matchTeams.length===2)?S.matchTeams:[T().name,S.oppTeam];const tn=pair[0],opp=pair[1],vt=VT();let html='';if(S.compareMode){html='<span class="compare-indicator">\u25AC COMPARE MODE</span><button class="vt-cmp-btn on" id="vtCmpBtn">Exit Compare</button>';}else{const aOn=vt===tn,bOn=vt===opp;html='<span class="vt-label">View:</span><div class="vt-pill"><button class="vt-pill-btn'+(aOn?' on':'')+'" data-team="'+esc(tn)+'">'+esc(tn)+'</button><button class="vt-pill-btn'+(bOn?' on opp':'')+'" data-team="'+esc(opp)+'">'+esc(opp)+'</button></div><button class="vt-cmp-btn" id="vtCmpBtn">Compare</button>';}el.innerHTML=html;el.querySelectorAll('.vt-pill-btn').forEach(btn=>{btn.onclick=()=>{const newT=btn.dataset.team;const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.viewTeam=newT;S.compareMode=false;S.selPlayer=null;S.cmpPlayer=null;renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};});document.getElementById('vtCmpBtn').onclick=()=>{const area=document.getElementById('pitchArea');area.classList.add('swap-fade');setTimeout(()=>{S.compareMode=!S.compareMode;if(S.compareMode){S.selPlayer=null;S.cmpPlayer=null;}renderTeamViewToggle();renderPlayerList();updateStats();renderAll();area.classList.remove('swap-fade');},200);};}
 function fmtMatchOpt(m){const d=new Date(m.date);const day=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});return day+' \u00B7 '+dispName(evName(m.home_team))+' '+m.home_score+'\u2013'+m.away_score+' '+dispName(evName(m.away_team));}
-function renderMatchSelect(){const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select match \u2014</option>';S.matches.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=S.matches.length+' matches';}
+function renderMatchSelect(){renderMatchSelectFiltered();}
 
 /* SEASON STATS */
 const SEASON_COLS=[{key:'opponent',label:'Opponent',type:'text'},{key:'ha',label:'H/A',type:'badge'},{key:'result',label:'Result',type:'result'},{key:'final_third_passes',label:'Final 3rd',type:'num'},{key:'zone14_passes',label:'Zone 14',type:'num'},{key:'progressive_passes',label:'Prog. Passes',type:'num'},{key:'passes_into_box',label:'Into Box',type:'num'},{key:'defensive_actions',label:'Def. Actions',type:'num'},{key:'defensive_actions_won',label:'Def. Won',type:'num'},{key:'shots',label:'Shots',type:'num'},{key:'shots_on_target',label:'On Target',type:'num'},{key:'fwd_passes',label:'Fwd Passes',type:'num'},{key:'lat_passes',label:'Lat Passes',type:'num'},{key:'bwd_passes',label:'Bwd Passes',type:'num'}];
@@ -1685,13 +1685,13 @@ function computeVizStats(viz){
     return[['Key Passes',kpList.length],['Completed',kpSucc],['Incomplete',kpFail],['Shot Assists',assists]];
   }
   if(viz==='shots')return[['Shots',shots.length],['On Target',shotsOnT],['Goals',goals],['Accuracy',shotAcc+'%']];
-  if(viz==='defensive')return[['Actions',defs.length],['Won',defsWon],['Lost',defsLost],['Win %',defPct+'%']];
+  if(viz==='defensive')return[['Actions',defs.length],['Successful outcome',defsWon],['Other outcome',defsLost],['Successful %',defPct+'%']];
   if(viz==='pressure'){
     const pressEvts=evts.filter(e=>DEF_TYPES.includes(e.type)&&e.x!=null);
     const oppHalf=pressEvts.filter(e=>e.x>=50).length;
     const ownHalf=pressEvts.filter(e=>e.x<50).length;
     const pct=pressEvts.length?Math.round(oppHalf/pressEvts.length*100):0;
-    return[['Actions',pressEvts.length],['In Opp Half',oppHalf],['In Own Half',ownHalf],['High Press %',pct+'%']];
+    return[['Actions',pressEvts.length],['In Opp Half',oppHalf],['In Own Half',ownHalf],['Opp-half share',pct+'%']];
   }
   if(viz==='heatmap'){
     const zoneCounts={};const zoneLabels=['Def L','Def C','Def R','Mid L','Mid C','Mid R','Att L','Att C','Att R'];
@@ -1733,7 +1733,7 @@ const LABEL_TO_VIZ={
   'Final Third':'final_third','Final 3rd':'final_third','Zone 14':'zone14',
   'Into Box':'box_passes','Shots':'shots','Shot Map':'shots',
   'Defensive Actions':'defensive','Defensive':'defensive','Heatmap':'heatmap',
-  'Key Passes':'keypasses','Pressure Map':'pressure'
+  'Key Passes':'keypasses','Defensive Density':'pressure'
 };
 function _vizFromLabel(viewLabel,pitchCanvas){
   if(pitchCanvas&&pitchCanvas.dataset&&pitchCanvas.dataset.viz)return pitchCanvas.dataset.viz;
@@ -2335,8 +2335,8 @@ function initCompFilters(){
     };
   });
 }
-function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition));filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' matches';}
-function initVizButtons(){document.querySelectorAll('.viz-btn').forEach(btn=>{btn.onclick=()=>{const viz=btn.dataset.viz;btn.classList.toggle('on');if(btn.classList.contains('on')){if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);}else{S.activeVizs=S.activeVizs.filter(v=>v!==viz);}if(S.selMatch)renderAll();updateStats();};});}
+function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select played match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
+function initVizButtons(){document.querySelectorAll('.viz-btn').forEach(btn=>{btn.onclick=()=>{const viz=btn.dataset.viz;const adding=!btn.classList.contains('on');if(adding){if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);while(S.activeVizs.length>2){const removed=S.activeVizs.shift();const old=document.querySelector('.viz-btn[data-viz="'+removed+'"]');if(old)old.classList.remove('on');}btn.classList.add('on');}else{btn.classList.remove('on');S.activeVizs=S.activeVizs.filter(v=>v!==viz);}if(S.selMatch)renderAll();updateStats();};});}
 function initFilters(){document.querySelectorAll('.period-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.periods.add(cb.value);else S.periods.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.outcome-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.outcomes.add(cb.value);else S.outcomes.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.pos-grp-btn').forEach(btn=>{btn.onclick=()=>{const g=btn.dataset.grp;if(g==='all'){S.posGroups.clear();}else{if(S.posGroups.has(g))S.posGroups.delete(g);else S.posGroups.add(g);}document.querySelectorAll('.pos-grp-btn').forEach(b=>{const bg=b.dataset.grp;if(bg==='all')b.classList.toggle('on',S.posGroups.size===0);else b.classList.toggle('on',S.posGroups.has(bg));});if(S.selMatch){renderAll();renderPlayerList();}};});}
 function initTabs(){document.querySelectorAll('.htab').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('.htab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');const tab=btn.dataset.tab;document.getElementById('tabMatch').style.display=tab==='match'?'flex':'none';document.getElementById('tabSeason').style.display=tab==='season'?'block':'none';document.getElementById('tabPlayers').style.display=tab==='players'?'flex':'none';document.getElementById('tabPlayers').classList.toggle('show',tab==='players');document.getElementById('tabMomentum').style.display=tab==='momentum'?'flex':'none';document.getElementById('tabMomentum').classList.toggle('show',tab==='momentum');if(tab==='season'&&!S.seasonData.length)loadSeasonStats();if(tab==='players'&&!S.psPlayersLoaded)loadAllPlayerEvents();if(tab==='momentum')renderMomentumTab();};});}
 function resetStats(){/* noop */}

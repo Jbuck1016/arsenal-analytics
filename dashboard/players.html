@@ -44,7 +44,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
   border-radius:4px;padding:2px 6px;font:700 10px/1.3 inherit;cursor:pointer;max-width:150px}
 .lgpick select:hover{border-color:var(--accent)}
 .lgpick select:focus{outline:none;border-color:var(--accent)}
-.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
+.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px;min-width:0;overflow-x:auto}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;transition:.15s}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
@@ -264,7 +265,7 @@ const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
-let VZ={passMode:'prog',outcome:'',off:{}};
+let VZ={passMode:'prog',outcome:'',off:{},mode:{Passing:'pattern',Carrying:'pattern',Combined:'pattern'}};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
@@ -1044,7 +1045,7 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     '<button onclick="exportViz(\'pdf\')">PDF</button></div></div>'+
     (ctrl||'')+
     (sub?'<div class="viz-sub">'+sub+'</div>':'')+
-    '<div class="pitch-box"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
+    '<div class="pitch-box"><svg role="img" aria-label="'+esc(title)+' pitch visualization. Attack is left to right." viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
     pitchMarks()+inner+
     '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
     '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
@@ -1087,6 +1088,36 @@ function shotMark(x,y,r,c,op,oc){
   return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
+
+/* Pattern mode uses a deliberately coarse 6 x 4 grid: enough to reveal lanes
+   and repeated routes without implying false coordinate precision. */
+function flowPattern(items,color,limit){
+  const NX=6,NY=4,orig={},flows={};
+  function zone(x,y){const ix=Math.max(0,Math.min(NX-1,Math.floor((+x||0)/100*NX)));
+    const iy=Math.max(0,Math.min(NY-1,Math.floor((+y||0)/100*NY)));return ix+','+iy}
+  function centre(k){const p=k.split(',').map(Number);return{x:(p[0]+.5)*100/NX,y:(p[1]+.5)*100/NY}}
+  items.forEach(function(a){
+    const sx=a.start_x!=null?a.start_x:a.x,sy=a.start_y!=null?a.start_y:a.y;
+    if(sx==null||sy==null||a.end_x==null||a.end_y==null)return;
+    const f=zone(sx,sy),t=zone(a.end_x,a.end_y);orig[f]=(orig[f]||0)+1;
+    if(f!==t){const k=f+'>'+t;flows[k]=(flows[k]||0)+1}
+  });
+  const os=Object.keys(orig),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]}).slice(0,limit||8);
+  const om=Math.max.apply(null,os.map(function(k){return orig[k]}).concat([1]));
+  const fm=Math.max.apply(null,fs.map(function(k){return flows[k]}).concat([1]));
+  let s='<g class="pattern-layer">';
+  os.forEach(function(k){const p=centre(k),q=Math.sqrt(orig[k]/om);s+='<circle cx="'+PX(p.x)+'" cy="'+PY(p.y)+
+    '" r="'+(1.1+3.2*q).toFixed(2)+'" fill="'+color+'" fill-opacity="'+(0.07+0.16*q).toFixed(2)+'"/>'});
+  fs.forEach(function(k){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
+    const w=.45+1.7*Math.sqrt(flows[k]/fm),ah=1.5+w*.65,bx=x2-ux*ah,by=y2-uy*ah;
+    s+='<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
+      '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"/>'+
+      '<path d="M'+x2.toFixed(2)+' '+y2.toFixed(2)+'L'+(bx+nx*ah*.55).toFixed(2)+' '+(by+ny*ah*.55).toFixed(2)+
+      'L'+(bx-nx*ah*.55).toFixed(2)+' '+(by-ny*ah*.55).toFixed(2)+'Z" fill="'+color+'" fill-opacity=".86"/>';
+  });
+  return s+'</g>';
+}
 
 function okF(a){
   if(VZ.outcome==='ok')return a.ok===true;
@@ -1268,15 +1299,19 @@ function vizPanel(grp,p){
   if(!PACT)return noData('Loading actions\u2026');
   const cfg=vizLayers(grp,p);
   if(!cfg)return noData('No pitch view for this group yet');
-  if(!VZ.off[grp])VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:{}));
+  if(!VZ.off[grp])VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:(grp==='Defending'?{Clearance:true,BlockedPass:true,Challenge:true,Save:true}:{})));
   const off=VZ.off[grp];
   const live=cfg.layers.filter(function(l){return l.items.length});
   if(!live.length)return noData();
 
+  const supportsPattern=(grp==='Passing'||grp==='Carrying'||grp==='Combined');
+  if(supportsPattern&&!VZ.mode[grp])VZ.mode[grp]='pattern';
+  const isPattern=supportsPattern&&VZ.mode[grp]!=='events';
   let inner=cfg.base||'';
   live.forEach(function(l){
     if(off[l.k])return;
-    l.items.forEach(function(it){inner+=l.draw(it)});
+    if(isPattern)inner+=flowPattern(l.items,l.color,grp==='Passing'?7:(grp==='Combined'?5:6));
+    else l.items.forEach(function(it){inner+=l.draw(it)});
   });
 
   const chips='<div class="vz-filters"><span class="vz-flabel">Show</span>'+
@@ -1289,9 +1324,13 @@ function vizPanel(grp,p){
 
   const legend=live.filter(function(l){return !off[l.k]})
     .map(function(l){return lg(l.color,l.label,l.items.length)}).join('')+
-    (cfg.sizeKey?'<span>Marker area = xG <b>0.05 / 0.20 / 0.50</b></span>':'');
+    (cfg.sizeKey?'<span>Marker area = xG <b>0.05 / 0.20 / 0.50</b></span>':'')+
+    (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'');
 
-  return pitchWrap(cfg.title,cfg.sub,inner,legend,(cfg.tog||'')+chips);
+  const mode=supportsPattern?'<div class="vz-tog">'+
+    '<button class="vzb'+(isPattern?' on':'')+'" onclick="VZ.mode[\''+grp+'\']=\'pattern\';refreshViz()">Pattern</button>'+
+    '<button class="vzb'+(!isPattern?' on':'')+'" onclick="VZ.mode[\''+grp+'\']=\'events\';refreshViz()">Events</button></div>':'';
+  return pitchWrap(cfg.title,cfg.sub+(isPattern?' Aggregated into a 6 by 4 zone grid.':''),inner,legend,mode+(cfg.tog||'')+chips);
 }
 function tglLayer(grp,k){
   if(!VZ.off[grp])VZ.off[grp]={};

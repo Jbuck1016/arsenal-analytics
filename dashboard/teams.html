@@ -25,7 +25,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font:800 13px/1 'Inter';color:#12141a}
 .hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
 .hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
-.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
+.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px;min-width:0;overflow-x:auto}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
@@ -168,7 +169,7 @@ const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
 let DIR={},LEAGUES=[],LG=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 let LM={x:'ppda',y:'field_tilt'};
-let MP={kind:'passes',third:'',lane:'',outcome:'ok'};
+let MP={kind:'passes',third:'',lane:'',outcome:'ok',mode:'pattern',defMode:'wins'};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
@@ -476,7 +477,7 @@ function pitchWrap(title,sub,inner,legend,ctrl){
   return '<div class="sect"><div class="viz-eyebrow">Season map</div>'+
     '<div class="viz-title">'+esc(title)+'</div>'+(ctrl||'')+
     (sub?'<div class="viz-sub">'+sub+'</div>':'')+
-    '<div class="pitch-box"><svg viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
+    '<div class="pitch-box"><svg role="img" aria-label="'+esc(title)+' pitch visualization. Attack is left to right." viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+
     '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
     '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
@@ -484,13 +485,13 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     (legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 const MAPS=[
-  {k:'passes',l:'Completed passes',d:'Every completed open-play pass. Density does the work \u2014 the brighter the weave, the more they play through that area.'},
+  {k:'passes',l:'Completed passes',d:'The most repeated open-play passing routes. Switch to Events for every individual pass.'},
   {k:'prog',l:'Progressive passes',d:'Passes that meaningfully advance the ball toward goal.'},
   {k:'box',l:'Passes into the box',d:'Completed passes ending inside the penalty area. Shows how they actually get in.'},
-  {k:'carries',l:'Carries',d:'Every carry of 3m or more, drawn start to finish. Progressive carries highlighted.'},
-  {k:'heat',l:'Touch heatmap',d:'Smoothed density of every on-ball action. Bright areas are where the team lives.'},
-  {k:'touches',l:'Touch density',d:'Every on-ball action as a single mark. The raw version of the heatmap.'},
-  {k:'def',l:'Defensive actions',d:'Where they win the ball back. Mass high up the pitch means an aggressive press.'},
+  {k:'carries',l:'Carries',d:'Repeated progressive carry routes. Switch to Events to inspect every carry of 3m or more.'},
+  {k:'heat',l:'Touch heatmap',d:'Smoothed on-ball action density, normalised within this selected team sample.'},
+  {k:'touches',l:'Raw touches',d:'Every on-ball action as a single mark. A drill-down view of the heatmap.'},
+  {k:'def',l:'Defensive actions',d:'Locations of tackles, interceptions, recoveries, clearances, blocks and challenges. These are interventions, not all possession wins.'},
   {k:'combined',l:'Everything on the ball',d:'Passes, progressive passes and progressive carries on one pitch, coloured by action type rather than outcome.'},
   {k:'shots',l:'Shot map (for)',d:'Every shot taken. Marker area is expected goals (xG).'},
   {k:'shotsag',l:'Shots conceded',d:'Every shot faced. Marker area is expected goals (xG), on the same scale.'}
@@ -498,13 +499,21 @@ const MAPS=[
 function mapCtrl(){
   const thirds=[['','All thirds'],['def','Defensive third'],['mid','Middle third'],['att','Final third']];
   const lanes=[['','Full width'],['L','Left'],['C','Centre'],['R','Right']];
+  const canPattern=['passes','prog','box','carries','combined'].indexOf(MP.kind)>=0;
+  const hasOutcome=['passes','prog','box'].indexOf(MP.kind)>=0;
   return '<div class="vz-tog">'+MAPS.map(function(m){
       return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
     }).join('')+'</div>'+
-    '<div class="vz-filters"><span class="vz-flabel">Outcome</span>'+
+    (canPattern?'<div class="vz-tog sm">'+
+      '<button class="vzb'+(MP.mode==='pattern'?' on':'')+'" onclick="MP.mode=\'pattern\';renderMaps(teamOf(SEL))">Pattern</button>'+
+      '<button class="vzb'+(MP.mode==='events'?' on':'')+'" onclick="MP.mode=\'events\';renderMaps(teamOf(SEL))">Events</button></div>':'')+
+    (MP.kind==='def'?'<div class="vz-tog sm">'+[['wins','Ball wins'],['interventions','Interventions'],['failures','Failures']].map(function(o){
+      return '<button class="vzb'+(MP.defMode===o[0]?' on':'')+'" onclick="MP.defMode=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
+    }).join('')+'</div>':'')+
+    '<div class="vz-filters">'+(hasOutcome?'<span class="vz-flabel">Outcome</span>'+
     '<div class="vz-tog sm">'+[['ok','Successful'],['fail','Unsuccessful'],['','Both']].map(function(o){
       return '<button class="vzb'+(MP.outcome===o[0]?' on':'')+'" onclick="MP.outcome=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
-    }).join('')+'</div>'+
+    }).join('')+'</div>':'')+
     '<span class="vz-flabel">Zone</span>'+
     '<div class="vz-tog sm">'+thirds.map(function(t){
       return '<button class="vzb'+(MP.third===t[0]?' on':'')+'" onclick="MP.third=\''+t[0]+'\';renderMaps(teamOf(SEL))">'+t[1]+'</button>'
@@ -588,6 +597,35 @@ function tline(a,c,w,op){
     'L'+(x1-nx*t).toFixed(2)+' '+(y1-ny*t).toFixed(2)+
     'Z" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
+/* Aggregate season actions into a coarse 6 x 4 grid so the default view shows
+   recurring routes, not a hairball of hundreds of individual vectors. */
+function flowPattern(items,color,limit){
+  const NX=6,NY=4,orig={},flows={};
+  function zone(x,y){const ix=Math.max(0,Math.min(NX-1,Math.floor((+x||0)/100*NX)));
+    const iy=Math.max(0,Math.min(NY-1,Math.floor((+y||0)/100*NY)));return ix+','+iy}
+  function centre(k){const p=k.split(',').map(Number);return{x:(p[0]+.5)*100/NX,y:(p[1]+.5)*100/NY}}
+  items.forEach(function(a){
+    const sx=a.start_x!=null?a.start_x:a.x,sy=a.start_y!=null?a.start_y:a.y;
+    if(sx==null||sy==null||a.end_x==null||a.end_y==null)return;
+    const f=zone(sx,sy),t=zone(a.end_x,a.end_y);orig[f]=(orig[f]||0)+1;
+    if(f!==t){const k=f+'>'+t;flows[k]=(flows[k]||0)+1}
+  });
+  const os=Object.keys(orig),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]}).slice(0,limit||8);
+  const om=Math.max.apply(null,os.map(function(k){return orig[k]}).concat([1]));
+  const fm=Math.max.apply(null,fs.map(function(k){return flows[k]}).concat([1]));
+  let s='<g class="pattern-layer">';
+  os.forEach(function(k){const p=centre(k),q=Math.sqrt(orig[k]/om);s+='<circle cx="'+PX(p.x)+'" cy="'+PY(p.y)+
+    '" r="'+(1.1+3.2*q).toFixed(2)+'" fill="'+color+'" fill-opacity="'+(0.07+0.16*q).toFixed(2)+'"/>'});
+  fs.forEach(function(k){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
+    const w=.45+1.7*Math.sqrt(flows[k]/fm),ah=1.5+w*.65,bx=x2-ux*ah,by=y2-uy*ah;
+    s+='<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
+      '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"/>'+
+      '<path d="M'+x2.toFixed(2)+' '+y2.toFixed(2)+'L'+(bx+nx*ah*.55).toFixed(2)+' '+(by+ny*ah*.55).toFixed(2)+
+      'L'+(bx-nx*ah*.55).toFixed(2)+' '+(by-ny*ah*.55).toFixed(2)+'Z" fill="'+color+'" fill-opacity=".86"/>';
+  });
+  return s+'</g>';
+}
 async function renderMaps(t){
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
@@ -599,39 +637,54 @@ async function renderMaps(t){
     // progressive blue, carries yellow.
     const G=TPAL.ok,R=TPAL.fail,AC=TPAL.box,B=TPAL.prog,N='var(--text3)',Y=TPAL.carry;
     let inner=zoneShade(),leg='';
+    const pattern=MP.mode!=='events';
+    const hasOutcome=['passes','prog','box'].indexOf(m.k)>=0;
 
     if(m.k==='passes'){
       const ps=ZONES.filter(function(a){return a.type==='Pass'&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
-      ps.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
+      if(pattern){
+        const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
+        if(ok.length)inner+=flowPattern(ok,G,9);if(fail.length)inner+=flowPattern(fail,R,5);
+      }else ps.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
       leg='<span><i style="background:'+G+'"></i>Passes <b>'+ps.length.toLocaleString()+'</b></span>'+
-          '<span>Lines are drawn faintly and stack, so brightness is volume</span>';
+          (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Each vector is one event</span>');
     }
     else if(m.k==='prog'){
       const ps=ZONES.filter(function(a){return a.prog&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
-      ps.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
-      leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span><span>Rings mark where each pass began</span>';
+      if(pattern){const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
+        if(ok.length)inner+=flowPattern(ok,B,8);if(fail.length)inner+=flowPattern(fail,R,5);
+      }else ps.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
+      leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>'+
+        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Rings mark where each pass began</span>');
     }
     else if(m.k==='box'){
       const ps=ZONES.filter(function(a){return a.into_box&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
-      ps.forEach(function(a){const c2=a.ok?AC:R;
+      if(pattern){const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
+        if(ok.length)inner+=flowPattern(ok,AC,8);if(fail.length)inner+=flowPattern(fail,R,5);
+      }else ps.forEach(function(a){const c2=a.ok?AC:R;
         inner+=tline(a,c2,0.3,a.ok?0.62:0.42)+origin(a,c2,0.3,a.ok?0.62:0.42)+
         '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.38" fill="'+c2+'" fill-opacity="0.92"/>'});
-      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span><span>Rings mark where each pass began</span>';
+      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>'+
+        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Rings mark where each pass began</span>');
     }
     else if(m.k==='carries'){
       let pr=0,ot=0;
-      CZONES.filter(function(c){return inZone(c.start_x,c.start_y)}).forEach(function(c){
+      const carries=CZONES.filter(function(c){return inZone(c.start_x,c.start_y)});
+      if(pattern){const progressive=carries.filter(function(c){return c.is_progressive});pr=progressive.length;
+        if(pr)inner+=flowPattern(progressive,Y,7);ot=carries.length-pr;
+      }else carries.forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
         if(c.is_progressive){inner+=tline(a,Y,0.22,0.46)+origin(a,Y,0.22,0.46);pr++}
         else {inner+=tline(a,N,0.13,0.13);ot++}
       });
       leg='<span><i style="background:'+Y+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
-          '<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>';
+          (pattern?'<span>Pattern view omits '+ot.toLocaleString()+' ordinary carries</span>':'<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>');
     }
     else if(m.k==='heat'){
       const rows=ZONES.filter(function(a){return inZone(a.x,a.y)});
       inner+=heatLayer(rows);
-      leg='<span>Smoothed density of <b>'+rows.length.toLocaleString()+'</b> actions \u00B7 brighter is busier</span>';
+      leg='<span><i style="width:44px;background:linear-gradient(90deg,rgba(245,166,35,.12),#f5a623)"></i>Low \u2192 high density</span>'+
+        '<span><b>'+rows.length.toLocaleString()+'</b> actions \u00B7 scale normalised within this team sample</span>';
     }
     else if(m.k==='touches'){
       ZONES.filter(function(a){return inZone(a.x,a.y)}).forEach(function(a){
@@ -642,26 +695,36 @@ async function renderMaps(t){
     else if(m.k==='combined'){
       const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
       let np=0,pp=0,cc=0;
-      ps.forEach(function(a){
+      if(pattern){const progressive=ps.filter(function(a){return a.prog});pp=progressive.length;np=ps.length-pp;
+        if(pp)inner+=flowPattern(progressive,B,7);
+      }else ps.forEach(function(a){
         if(a.prog){inner+=tline(a,B,0.24,0.5)+origin(a,B,0.24,0.5);pp++}
         else {inner+=tline(a,G,0.11,0.09);np++}
       });
-      CZONES.filter(function(c){return c.is_progressive&&inZone(c.start_x,c.start_y)}).forEach(function(c){
+      const progressiveCarries=CZONES.filter(function(c){return c.is_progressive&&inZone(c.start_x,c.start_y)});
+      if(pattern){cc=progressiveCarries.length;if(cc)inner+=flowPattern(progressiveCarries,Y,6)}
+      else progressiveCarries.forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
         inner+=tline(a,Y,0.22,0.5)+origin({x:c.start_x,y:c.start_y},Y,0.22,0.5);cc++;
       });
-      leg='<span><i style="background:'+G+'"></i>Passes <b>'+np.toLocaleString()+'</b></span>'+
+      leg=(pattern?'<span>Pattern view omits '+np.toLocaleString()+' ordinary passes</span>':'<span><i style="background:'+G+'"></i>Passes <b>'+np.toLocaleString()+'</b></span>')+
           '<span><i style="background:'+B+'"></i>Progressive passes <b>'+pp.toLocaleString()+'</b></span>'+
           '<span><i style="background:'+Y+'"></i>Progressive carries <b>'+cc.toLocaleString()+'</b></span>';
     }
     else if(m.k==='def'){
       const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
-      const ds=ZONES.filter(function(a){return col[a.type]&&inZone(a.x,a.y)});
+      const ds=ZONES.filter(function(a){
+        if(!col[a.type]||!inZone(a.x,a.y))return false;
+        if(MP.defMode==='wins')return (a.type==='Tackle'&&a.ok)||a.type==='Interception'||a.type==='BallRecovery';
+        if(MP.defMode==='interventions')return a.type==='Clearance'||a.type==='BlockedPass';
+        return (a.type==='Tackle'&&!a.ok)||a.type==='Challenge';
+      });
       const cnt={};
       ds.forEach(function(a){cnt[a.type]=(cnt[a.type]||0)+1;
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.4" fill="'+col[a.type]+'" fill-opacity="0.55"/>'});
       leg=Object.keys(cnt).map(function(k){
-        return '<span><i style="background:'+col[k]+'"></i>'+k+' <b>'+cnt[k]+'</b></span>'}).join('');
+        return '<span><i style="background:'+col[k]+'"></i>'+k.replace(/([A-Z])/g,' $1').trim()+' <b>'+cnt[k]+'</b></span>'}).join('')+
+        '<span>'+(MP.defMode==='wins'?'Successful tackles plus recorded interceptions and recoveries':MP.defMode==='interventions'?'Clearances and blocked passes':'Unsuccessful tackles and challenges')+'</span>';
     }
     else {
       const forTeam=(m.k==='shots');
@@ -686,7 +749,7 @@ async function renderMaps(t){
           (ocn.post?'<span><i style="background:'+Y+'"></i>Post <b>'+ocn.post+'</b></span>':'')+
           '<span>xG <b>'+sx.toFixed(1)+'</b> \u00B7 marker area refs <b>0.05 / 0.20 / 0.50</b></span>';
     }
-    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote()+outcomeNote(),
+    main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+(pattern&&['passes','prog','box','carries','combined'].indexOf(m.k)>=0?' Aggregated into a 6 by 4 zone grid.':'')+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote()+(hasOutcome?outcomeNote():''),
       inner,leg,mapCtrl());
     wireTips();
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
