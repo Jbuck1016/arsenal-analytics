@@ -1,0 +1,704 @@
+
+==============================================================================
+PHASE: local PostgreSQL initdb
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\initdb.exe -D C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\cluster -U postgres --auth=trust --encoding=UTF8 --no-sync
+STDOUT:
+The files belonging to this database system will be owned by user "jbuck".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "English_United States.1252".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+creating directory C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/cluster ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... windows
+selecting default "max_connections" ... 100
+selecting default "shared_buffers" ... 128MB
+selecting default time zone ... America/Los_Angeles
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+
+Sync to disk skipped.
+The data directory might become corrupt if the operating system crashes.
+
+Success. You can now start the database server using:
+
+    ^"C^:^\Users^\jbuck^\Documents^\Codex^\2026^-08^-23^\files^-pasted^-by^-the^-user^-football^\work^\postgresql^-17^.11^\pgsql^\bin^\pg^_ctl^" -D ^"C^:^\Users^\jbuck^\AppData^\Local^\Temp^\cup^-isolation^-e2e^-op^_t4yzq^\cluster^" -l logfile start
+
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: local PostgreSQL start
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\pg_ctl.exe -D C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\cluster -l C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\postgres.log -o "-p 52973 -h 127.0.0.1" -w start
+STDOUT:
+waiting for server to start.... done
+server started
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: create fresh database regen_fixture
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\createdb.exe -h 127.0.0.1 -p 52973 -U postgres regen_fixture
+STDOUT: <empty>
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: fresh fixture creation (regen_fixture)
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/regen_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\fixture.sql
+STDOUT:
+DO
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+INSERT 0 1
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+SELECT 2
+CREATE INDEX
+COMMENT
+SELECT 2
+CREATE INDEX
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 2
+ALTER MATERIALIZED VIEW
+GRANT
+GRANT
+GRANT
+GRANT
+CREATE TABLE
+INSERT 0 1
+CREATE TABLE
+INSERT 0 5
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+DO
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: create fresh database execution_fixture
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\createdb.exe -h 127.0.0.1 -p 52973 -U postgres execution_fixture
+STDOUT: <empty>
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: fresh fixture creation (execution_fixture)
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\fixture.sql
+STDOUT:
+DO
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+INSERT 0 1
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+SELECT 2
+CREATE INDEX
+COMMENT
+SELECT 2
+CREATE INDEX
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 2
+ALTER MATERIALIZED VIEW
+GRANT
+GRANT
+GRANT
+GRANT
+CREATE TABLE
+INSERT 0 1
+CREATE TABLE
+INSERT 0 5
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+DO
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: create fresh database cte_guard_fixture
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\createdb.exe -h 127.0.0.1 -p 52973 -U postgres cte_guard_fixture
+STDOUT: <empty>
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: fresh fixture creation (cte_guard_fixture)
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/cte_guard_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\fixture.sql
+STDOUT:
+DO
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 3
+INSERT 0 3
+INSERT 0 3
+INSERT 0 1
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+SELECT 2
+CREATE INDEX
+COMMENT
+SELECT 2
+CREATE INDEX
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 3
+SELECT 3
+CREATE VIEW
+SELECT 3
+SELECT 2
+ALTER MATERIALIZED VIEW
+GRANT
+GRANT
+GRANT
+GRANT
+CREATE TABLE
+INSERT 0 1
+CREATE TABLE
+INSERT 0 5
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+DO
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: generator: reverse
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:52973/execution_fixture -v direction=reverse -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\reverse.sql (29485 bytes, sha256=4f90401bf17b5a3b8f1448730ea168878cf25c8fcf447c16a10d3df3a3a5a654)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: generator: forward
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:52973/execution_fixture -v direction=forward -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\forward.sql (28964 bytes, sha256=73ecbd319eb685d48d15d7f7c5dd18e86bb47fb8fdf82cfa087e0698d13c88f5)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: seed-to-seed topology assertion
+==============================================================================
+v_team_sample depth=0
+mv_team_breakdown depth=1
+RESULT: PASS
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: CTE guard setup
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/cte_guard_fixture -c "drop materialized view mv_team_lanes; create materialized view mv_team_lanes as with events as (select 1 x) select m.game_id,m.home_team team from matches m cross join events;"
+STDOUT:
+DROP MATERIALIZED VIEW
+SELECT 3
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: CTE collision negative test
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:52973/cte_guard_fixture -v direction=forward -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
+STDOUT: <empty>
+STDERR:
+psql:C:/Users/jbuck/arsenal-analytics/pipeline/tools/generate_cup_isolation.sql:151: ERROR:  GENERATOR ABORT. Raw-table CTE collision requires manual handling: mv_team_lanes
+CONTEXT:  PL/pgSQL function inline_code_block line 24 at RAISE
+EXIT STATUS: 3
+
+==============================================================================
+PHASE: static validator
+==============================================================================
+COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\arsenal-analytics\pipeline\tools\validate_generated_migration.py C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\forward.sql C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\reverse.sql --objects 12 --matviews 9 --views 3
+STDOUT:
+=== C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\forward.sql (forward) ===
+PASS  unique creates
+PASS  drop/create sets identical
+PASS  object count 12
+PASS  matview count 9
+PASS  view count 3
+PASS  depth manifest complete
+PASS  create depth nondecreasing
+PASS  drop depth nonincreasing
+PASS  no executable CASCADE
+PASS  one transaction
+PASS  no psql status leakage
+PASS  no raw writes
+PASS  bidirectional preflight
+PASS  preflight covers kind/depth/hash
+PASS  exact metadata runtime assertion
+PASS  no raw reads outside match-fact exception
+PASS  null-safe shootout rule
+PASS  no MLS fallback
+PASS  raw conservation assertion
+PASS  forward calls verify_rebuild
+PASS  forward promotes only after zero check
+
+=== C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\reverse.sql (reverse) ===
+PASS  unique creates
+PASS  drop/create sets identical
+PASS  object count 12
+PASS  matview count 9
+PASS  view count 3
+PASS  depth manifest complete
+PASS  create depth nondecreasing
+PASS  drop depth nonincreasing
+PASS  no executable CASCADE
+PASS  one transaction
+PASS  no psql status leakage
+PASS  no raw writes
+PASS  bidirectional preflight
+PASS  preflight covers kind/depth/hash
+PASS  exact metadata runtime assertion
+PASS  original definitions restored
+PASS  reverse never calls verify_rebuild
+PASS  reverse compares captured invariant baseline
+PASS  reverse restores exact registry JSON
+PASS  reverse restores captured severities
+PASS  reverse does not hardcode warn
+
+ALL STATIC CHECKS PASSED
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: all negative tests
+==============================================================================
+COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\arsenal-analytics\pipeline\tools\negative_tests.py C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\forward.sql C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\reverse.sql --objects 12 --matviews 9 --views 3
+STDOUT:
+PASS  duplicate create (validator exit 1)
+PASS  missing drop (validator exit 1)
+PASS  definition drift guard removed (validator exit 1)
+PASS  MLS fallback (validator exit 1)
+PASS  raw read (validator exit 1)
+PASS  quoted raw read (validator exit 1)
+PASS  bad drop depth (validator exit 1)
+PASS  metadata assertion removed (validator exit 1)
+PASS  unsafe period predicate (validator exit 1)
+PASS  cascade (validator exit 1)
+PASS  psql status leakage (validator exit 1)
+PASS  forward verify removed (validator exit 1)
+PASS  reverse registry restore removed (validator exit 1)
+PASS  reverse hardcoded warn (validator exit 1)
+PASS  reverse verify introduced (validator exit 1)
+PASS  reverse baseline compare removed (validator exit 1)
+negative tests: 16/16 rejected
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: capture exact baseline
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\state_snapshot.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\baseline.json (15714 bytes, sha256=75e8bf95c36dcdd4562969e5eb7c61bc12a1e6f188339ae728eac95fa1eaa673)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: execute generated forward migration
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\forward.sql
+STDOUT:
+BEGIN
+SET
+DO
+SELECT 1
+DROP VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP VIEW
+DROP VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+SELECT 1
+CREATE INDEX
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+COMMENT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+CREATE INDEX
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+GRANT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+ALTER VIEW
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+DELETE 1
+ build_insights
+----------------
+
+(1 row)
+
+ polish_insights
+-----------------
+
+(1 row)
+
+ refresh_site_summaries
+------------------------
+
+(1 row)
+
+DO
+DO
+DO
+ verify_rebuild
+----------------
+
+(1 row)
+
+COMMIT
+STDERR:
+psql:C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/forward.sql:50: NOTICE:  Preflight OK: 12 objects.
+psql:C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/forward.sql:243: NOTICE:  Metadata exact: 12 objects.
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: forward assertions
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\assert_forward.sql
+STDOUT:
+DO
+       ?column?
+-----------------------
+ FORWARD_ASSERTIONS_OK
+(1 row)
+
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: execute generated reverse migration
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -v ON_ERROR_STOP=1 -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\reverse.sql
+STDOUT:
+BEGIN
+SET
+DO
+SELECT 1
+DROP VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP VIEW
+DROP VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+DROP MATERIALIZED VIEW
+SELECT 2
+CREATE INDEX
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+COMMENT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 2
+CREATE INDEX
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+GRANT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+ALTER VIEW
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+SELECT 3
+ALTER MATERIALIZED VIEW
+REVOKE
+GRANT
+GRANT
+CREATE VIEW
+ALTER VIEW
+REVOKE
+GRANT
+GRANT
+DELETE 0
+INSERT 0 1
+DO
+ build_insights
+----------------
+
+(1 row)
+
+ polish_insights
+-----------------
+
+(1 row)
+
+ refresh_site_summaries
+------------------------
+
+(1 row)
+
+DO
+DO
+COMMIT
+STDERR:
+psql:C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/reverse.sql:50: NOTICE:  Preflight OK: 12 objects.
+psql:C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/reverse.sql:260: NOTICE:  Metadata exact: 12 objects.
+psql:C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/reverse.sql:277: NOTICE:  Reverse exact baseline restored; verify_rebuild intentionally not called.
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: capture restored baseline
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:52973/execution_fixture -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\fixture\state_snapshot.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\restored.json (15714 bytes, sha256=75e8bf95c36dcdd4562969e5eb7c61bc12a1e6f188339ae728eac95fa1eaa673)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: exact baseline comparison
+==============================================================================
+baseline sha256=75e8bf95c36dcdd4562969e5eb7c61bc12a1e6f188339ae728eac95fa1eaa673
+restored sha256=75e8bf95c36dcdd4562969e5eb7c61bc12a1e6f188339ae728eac95fa1eaa673
+RESULT: EXACT MATCH
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: example check: initialize disposable git repo
+==============================================================================
+COMMAND: git init
+STDOUT:
+Initialized empty Git repository in C:/Users/jbuck/AppData/Local/Temp/cup-isolation-e2e-op_t4yzq/repro-repo/.git/
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: example check: commit exact inputs and examples
+==============================================================================
+COMMAND: git add pipeline/tools
+STDOUT: <empty>
+STDERR:
+warning: in the working copy of 'pipeline/tools/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/capture_dependency_manifest.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/EXAMPLE_forward_fixture.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/assert_forward.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/fixture.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/state_snapshot.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/generate_cup_isolation.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/negative_tests.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/regenerate_examples.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/run_fixture_tests.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/validate_generated_migration.py', LF will be replaced by CRLF the next time Git touches it
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: example check: create baseline commit
+==============================================================================
+COMMAND: git -c user.name=fixture-test -c user.email=fixture@test.invalid commit -m "fixture baseline"
+STDOUT:
+[master (root-commit) 4caa6c3] fixture baseline
+ 12 files changed, 1584 insertions(+)
+ create mode 100644 pipeline/tools/README.md
+ create mode 100644 pipeline/tools/capture_dependency_manifest.sql
+ create mode 100644 pipeline/tools/fixture/EXAMPLE_forward_fixture.sql
+ create mode 100644 pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql
+ create mode 100644 pipeline/tools/fixture/assert_forward.sql
+ create mode 100644 pipeline/tools/fixture/fixture.sql
+ create mode 100644 pipeline/tools/fixture/state_snapshot.sql
+ create mode 100644 pipeline/tools/generate_cup_isolation.sql
+ create mode 100644 pipeline/tools/negative_tests.py
+ create mode 100644 pipeline/tools/regenerate_examples.py
+ create mode 100644 pipeline/tools/run_fixture_tests.py
+ create mode 100644 pipeline/tools/validate_generated_migration.py
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: example regeneration (delete + regenerate + git diff)
+==============================================================================
+COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\repro-repo\pipeline\tools\regenerate_examples.py --psql C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe --database postgresql://postgres@127.0.0.1:52973/regen_fixture --repo-root C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-op_t4yzq\repro-repo --check
+STDOUT:
+generated pipeline\tools\fixture\EXAMPLE_reverse_fixture.sql (29485 bytes)
+generated pipeline\tools\fixture\EXAMPLE_forward_fixture.sql (28964 bytes)
+git diff regeneration check exit 0
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: SUMMARY
+==============================================================================
+ALL REQUIRED PHASES PASSED
+EXIT STATUS: 0

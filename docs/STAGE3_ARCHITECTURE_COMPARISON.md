@@ -277,7 +277,7 @@ rather than accepting it via `if not exists`.
 |---|---|---|
 | Audited league-mart entry objects | "twelve" | **20 registered, 18 initially reading raw sources** |
 | Schema objects reading raw tables | not measured | **51** |
-| Destructive closure | 35 | **42** |
+| Destructive closure | 35 | **36** (see 9.1) |
 | Silent MLS fallbacks | five | **six** (`mv_player_percentiles` included) |
 
 ### 7.2 What was executed, non-destructively
@@ -310,11 +310,11 @@ raising them before the destructive rebuild lands would abort every scheduled sc
 Three reasons, in order of weight.
 
 **The rebuild path is unmeasured.** Timing it needs a disposable branch, which is a billable
-action and outside the authorised scope. Running a 42-object destructive transaction on a live
+action and outside the authorised scope. Running a 36-object destructive transaction on a live
 site with no measured duration is the operation that destroyed the metric stack once already.
 
 **The scope premise changed under it.** The work was scoped to twelve entry objects. Recapture
-found 20 audited entries, 51 schema objects reading raw tables, and a 42-object closure.
+found 20 audited entries, 51 schema objects reading raw tables, and a 36-object closure.
 
 **Most of the value was available without it.** The security exposure, the competition registry,
 the scoped sources, the corrected evidence base and rebuild-safe suppression all landed without
@@ -389,3 +389,69 @@ five levels once `mv_team_all`, `v_season_stats`, `mv_team_match` and `mv_team_l
 It remains unwritten and unexecuted. Writing 36 literal definitions by hand carries more
 transcription risk than the fix removes, and the rebuild path is still untimed. Use
 `capture_dependency_manifest.sql` to produce a verified capture first.
+
+
+---
+
+## 9. Blast radius reconciled, 2026-08-25
+
+### 9.1 The 42 versus 36 discrepancy
+
+**36 is correct.** 42 was arithmetic error, not a changed tree: 19 seeds plus 23 downstream
+objects, summed without deduplication. Six objects are both seeds and dependents
+(`mv_player_percentiles`, `mv_squad_role`, `mv_league_availability`, `v_seq_directness`,
+`v_team_sample`, `v_team_directory`), so the distinct union is 36. Verified by set operation
+against the catalog, not by counting again.
+
+Composition: 28 materialized views, 8 views, across five dependency levels.
+
+### 9.2 Dependency classes in the capture
+
+Present and captured: index auto-dependencies (39), composite row types (36), each object's own
+rewrite rule (36), and normal view rewrite dependencies (244, which is the graph itself).
+
+Absent from this subtree, therefore nothing to capture: triggers, constraints, RLS policies,
+column defaults, sequence ownerships.
+
+**Not recorded by PostgreSQL at all: function bodies.** Ten functions reference these objects
+without any catalog dependency, so they will neither block a drop nor be restored automatically:
+`refresh_analytics_batch` (17 objects), `rebuild_step` (9), `build_insights`,
+`build_insights_extra`, `build_reactivity_insights`, `build_press_insights`,
+`build_team_profile_insights`, `suppress_low_sample_insights`, `refresh_site_summaries`,
+`player_card`. Recreating with identical names and columns keeps them working, which is why the
+generator reuses live definitions verbatim rather than rewriting shapes.
+
+### 9.3 mv_game_goals is a documented exception
+
+It keeps reading raw `events`. It is a match fact, not a league metric: `goals_reconcile` checks
+cup fixtures too, and scoping it would make every cup match read 0-0. It receives the null-safe
+shootout rule and nothing else, and the forward migration removes it from
+`league_mart_entry_objects` so the structural invariant does not flag a deliberate choice.
+
+
+---
+
+## 10. Generator verification, 2026-08-25
+
+### 10.1 The 42 versus 36 cause, and how it is now prevented
+
+The earlier capture excluded dependencies when both endpoints were seeds, so its topology could
+put a dependent seed before its source. The generator now walks every path across the complete
+closure, including seed-to-seed edges, and deduplicates only after recursion. It refuses to emit
+unless the production capture is exactly 36 objects, 28 materialized views and 8 views.
+
+### 10.2 Verified against a local fixture, not against production
+
+A local PostgreSQL 17.11 harness creates fresh databases reproducing seed-to-seed dependencies,
+three MLS fallbacks under different aliases (`tl`, `pl`, `zz`), reloptions, comments, indexes,
+mixed invariant severities and ACLs with grant options. Generated forward and reverse SQL both
+execute and commit. Sixteen mutated migrations are rejected, metadata is asserted exactly after
+both directions, and the canonical restored snapshot matches the baseline byte-for-byte.
+
+### 10.3 A real generator bug the CTE fixture caught
+
+`FROM events` inside a CTE bound to the name `events` can be rewritten incorrectly by text rules.
+Regex cannot resolve CTE scope, so the generator **refuses to emit** when an object binds a CTE
+named after a raw table. The harness creates that collision in a dedicated fresh database and
+asserts generation exits non-zero with the object name. The normal fixture remains valid so its
+generated forward and reverse migrations can be executed.

@@ -38,7 +38,11 @@ GRANT_ALL = re.compile(r"grant\s+all\s+on\s+.*\bto\b.*\b(anon|authenticated|publ
 
 
 def main():
-    names = sorted(f for f in os.listdir(MIG_DIR) if f.endswith(".sql"))
+    # Item 12: only NUMBERED migrations form the runnable chain. Regression
+    # suites and tooling live elsewhere and are reported separately.
+    all_sql = sorted(f for f in os.listdir(MIG_DIR) if f.endswith(".sql"))
+    names = [f for f in all_sql if re.match(r"^\d{8}_\d{2}_", f)]
+    suites = [f for f in all_sql if f not in names]
     failures = []
 
     for f in FORBIDDEN:
@@ -73,9 +77,14 @@ def main():
             print("  - %s" % x)
         return 1
 
-    print("Migration order check passed. %d migrations, chain:" % len(names))
+    print("Migration order check passed. %d numbered migrations in the chain:" % len(names))
     for n in names:
         print("  %s" % n)
+    if suites:
+        print("Regression suites in this directory (not part of the chain):")
+        for n in suites:
+            print("  %s" % n)
+    print("Tooling lives in pipeline/tools and is not a migration.")
     return 0
 
 

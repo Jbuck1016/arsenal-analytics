@@ -76,3 +76,30 @@ ordering problem.
    be written before execution, not after.
 6. Raise the four scoping invariants from warn to error only after the rebuilt objects satisfy
    them, inside the same migration.
+
+
+## Branch test procedure, 2026-08-25
+
+The migration is now generated rather than hand written, so the branch test is about timing and
+lock behaviour, not correctness of transcription.
+
+1. Create a disposable branch from production.
+2. On the branch, run `generate_cup_isolation.sql` twice, once forward and once reverse, and
+   commit both outputs.
+3. Run `validate_generated_migration.py` against both. It must exit 0.
+4. Run the forward migration with `\timing on`. Record wall clock for the whole transaction and
+   for the two heaviest steps, `mv_seq_state` and `build_insights()`.
+5. Confirm all four scoping invariants promote to error and `verify_rebuild()` returns clean.
+6. Run the reverse migration and confirm the branch returns to its pre-migration state.
+7. Delete the branch.
+
+If the forward transaction exceeds roughly ten minutes, split the refresh out of the transaction
+and gate publication instead, per the design above, rather than holding locks longer.
+
+## Rollback on production
+
+Rollback during the run is automatic: any assertion raises and the transaction rolls back with
+nothing applied. Rollback after a successful but unwanted run is the generated reverse migration,
+which restores every object to its captured pre-migration definition. Generate and commit the
+reverse file **before** running the forward one, since it is built from the live catalog as it
+stands beforehand.
