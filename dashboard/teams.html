@@ -44,6 +44,8 @@ select.lnk:focus{border-color:var(--accent);outline:none}
 select option,.sel option{background:var(--bg2);color:var(--text)}
 .wrap{flex:1;display:flex;overflow:hidden}
 .side{width:250px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.side-search{margin:10px 10px 4px;width:calc(100% - 20px);background:var(--bg);border:1px solid var(--border);color:var(--text);font:500 11px/1 Inter,sans-serif;padding:8px 9px;border-radius:6px;outline:none}
+.side-search:focus{border-color:var(--accent)}
 .side.hide{display:none}
 .plist{flex:1;overflow-y:auto;padding:6px}
 .pitem{padding:9px 11px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
@@ -156,7 +158,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   </div>
 </div>
 <div class="wrap">
-  <div class="side" id="side"><div class="plist" id="tlist"></div></div>
+  <div class="side" id="side"><input class="side-search" aria-label="Search teams" placeholder="Search team…" oninput="TEAMQ=this.value;renderList()"><div class="plist" id="tlist"></div></div>
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
@@ -166,7 +168,7 @@ const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Sequences','Maps','Rankings','League Map','Matches','Squad'];
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
-let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[];
+let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[],TEAMQ='';
 let DIR={},LEAGUES=[],LG=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok',mode:'pattern',defMode:'wins'};
@@ -263,11 +265,13 @@ function setTab(t){TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t==='League Map'||t==='Rankings');
   draw();}
 function renderList(){
-  document.getElementById('tlist').innerHTML=scopedTeams().sort(function(a,b){
-    return b.field_tilt-a.field_tilt}).map(function(t){
+  var q=TEAMQ.trim().toLowerCase();
+  var rows=scopedTeams().filter(function(t){return !q||tname(t.team).toLowerCase().indexOf(q)>=0}).sort(function(a,b){
+    return tname(a.team).localeCompare(tname(b.team))});
+  document.getElementById('tlist').innerHTML=rows.length?rows.map(function(t){
     return '<div class="pitem'+(SEL===t.team?' on':'')+'" onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
       '<span class="pitem-nm">'+esc(tname(t.team))+'</span>'+
-      '<span class="pitem-meta">'+t.matches+'</span></div>'}).join('');
+      '<span class="pitem-meta">'+t.matches+' matches</span></div>'}).join(''):'<div class="empty" style="height:90px">No teams found</div>';
 }
 function pick(t){SEL=t;renderList();draw()}
 
@@ -289,7 +293,7 @@ function teamHead(t){
   const gd=(t.goals_pg-t.goals_against_pg);
   return '<div class="tcard"><div style="flex:1;min-width:230px">'+
     '<div class="tname">'+esc(tname(t.team))+'</div>'+
-    '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' 2026 \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
+    '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' \u00B7 '+t.matches+' matches \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
     (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
     '<div class="kpis">'+
     kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct)+
@@ -303,7 +307,7 @@ function teamHead(t){
 function kpi(l,v,p,sub){
   const c=p?tier(+p.pct).c:'var(--text)';
   return '<div class="kpi"><div class="kpi-l">'+l+'</div><div class="kpi-v" style="color:'+c+'">'+v+'</div>'+
-    '<div class="kpi-s">'+(p?('league pct '+p.pct):(sub||''))+'</div></div>';
+    '<div class="kpi-s">'+(p?('league percentile '+p.pct):(sub||''))+'</div></div>';
 }
 function renderProfile(t){
   const p=PCT[t.team]||{};
@@ -324,7 +328,8 @@ function renderProfile(t){
   h+='</div>';
   h+='<div class="split2" style="margin-top:12px;grid-template-columns:.8fr 1.2fr">'+
      channelBlock(t)+laneViz(t)+'</div>';
-  h+=legendHtml()+'<div class="foot">Percentiles are across all 30 MLS teams this season. '+
+  var pool=(DIR[t.team]&&DIR[t.team].teams_in_league)||scopedTeams().filter(function(x){return lgOf(x.team)===lgOf(t.team)}).length;
+  h+=legendHtml()+'<div class="foot">Percentiles are within '+esc(lgName(lgOf(t.team)))+(pool?' ('+pool+' teams)':'')+'. '+
      'PPDA and the conceded metrics are inverted so a high percentile always means better. '+'Channel shares are descriptive, not good or bad \u2014 a high percentile just means they use that side more than most. '+'A possession ends when the opposition touch the ball or play stops for more than eight seconds.</div>';
   document.getElementById('main').innerHTML=h;
 }
@@ -334,7 +339,9 @@ function metricOpts(sel){let o='',g='';
   return o+'</optgroup>'}
 function renderLeagueMap(){
   const dx=tdefOf(LM.x)||{},dy=tdefOf(LM.y)||{};
-  const pts=scopedTeams().map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
+  const scope=scopedTeams(),eligible=scope.filter(function(t){return +t.matches>=6});
+  const pts=eligible.map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
+  if(!pts.length){document.getElementById('main').innerHTML='<div class="sect"><div class="empty" style="height:260px">League Map unavailable until teams reach six matches</div></div>';return}
   const W=1080,H=520,MT=22,MR=34,MB=54,ML=82;
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
   const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
@@ -344,7 +351,7 @@ function renderLeagueMap(){
   function SY(v){return H-MB-((v-ymin)/(ymax-ymin))*(H-MT-MB)}
   function med(a){const s=a.slice().sort(function(m,n){return m-n});return s[Math.floor(s.length/2)]}
   const mx=med(xs),my=med(ys);
-  let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 230px);display:block">';
+  let s='<svg role="img" aria-label="Team style scatter plot for the current scope" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:calc(100vh - 230px);display:block">';
   // gridlines + tick values
   [0,0.25,0.5,0.75,1].forEach(function(f){
     const vx=xmin+f*(xmax-xmin), vy=ymin+f*(ymax-ymin);
@@ -357,7 +364,7 @@ function renderLeagueMap(){
   s+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(H-MB)+'" stroke="var(--border2)"/>';
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
-  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">league median</text>';
+  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">display median</text>';
   pts.forEach(function(p){
     const on=p.team===SEL,cx=SX(p.x),cy=SY(p.y),right=cx<W-170;
     s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(on?8:5.5)+'" fill="'+(on?'var(--accent)':'var(--above)')+
@@ -377,9 +384,9 @@ function renderLeagueMap(){
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="LM.y=this.value;renderLeagueMap()">'+metricOpts(LM.y)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">Highlight</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderLeagueMap()">'+
-      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
+      eligible.sort(function(a,b){return tname(a.team).localeCompare(tname(b.team))}).map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div></div>'+
-    '<div class="sect">'+s+'<div class="foot">All 30 MLS teams. Dashed lines are league medians, so each quadrant is a style archetype. '+
+    '<div class="sect">'+s+'<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. Dashed lines are medians for the teams displayed, so each quadrant is a style archetype. '+
     'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
 }
 async function renderMatches(t){
@@ -940,8 +947,8 @@ async function renderSequences(t){
     cards+='</div>';
     const radar=seqRadar(t,Z,RAW);
     main.innerHTML=teamHead(t)+cards+radar+
-      '<div class="foot">Sequence style is z-scored against the 30 MLS teams this season, so the dashed ring is the league mean and every ring out is one standard deviation. '+
-      'The pool is only '+scopedTeams().length+' teams, so read the extreme spokes as signal and the near-mean ones lightly. '+
+      '<div class="foot">Sequence style is shown as z-scores from the comparison pool stored by the sequence view. The dashed ring is that pool mean and every ring out is one standard deviation. '+
+      'Read extreme spokes as stronger signals and near-mean spokes lightly. '+
       'Hold-up and central-prog use deliberately strict definitions \u2014 see the glossary. '+
       'Open play only; a possession is a run of controlled touches by one team, ended by a turnover, stoppage or set piece.</div>';
     wireTips();

@@ -260,6 +260,7 @@ const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
 var PLG={}, PLEAGUES=[],
     PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 function lgOfTeam(t){return PLG[t]||'USA-MLS'}
+function leagueLabel(t){var c=lgOfTeam(t);for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===c)return PLEAGUES[i].display_name;return c}
 function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
 
@@ -328,7 +329,7 @@ async function renderChainRoles(pid){
       '<div class="pmeta">'+esc(tname(cr.team))+' \u00B7 '+esc(cr.pos)+' \u00B7 '+cr.inv+' involvements \u00B7 xT '+(+cr.player_xt).toFixed(2)+' \u00B7 '+tempoLabel(cr.hold_secs)+'</div>'+
       '<div class="chips"><span class="chip acc">Chain roles</span><span class="chip">Hold '+(+cr.hold_secs).toFixed(2)+'s</span></div></div>'+
       '<div class="pcard-r"><div class="pool-lbl">Ranked against</div><div class="pool-val">'+esc(cr.pos)+'</div>'+
-      '<div class="pool-sub">MLS 2026 \u00B7 by position</div></div></div>';
+      '<div class="pool-sub">'+esc(leagueLabel(cr.team))+' \u00B7 by position</div></div></div>';
     h+='<div class="sect"><div class="sect-h"><span>Chain roles \u2014 percentile vs position</span></div>';
     CHAIN_ROLES.forEach(function(rr){
       const r=pm[rr[0]],pct=r?+r.pct:null,t=tier(pct);
@@ -558,14 +559,14 @@ function renderPlayer(p,pcts,pillars,dna){
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
-    '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
+    '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+' \u00D7 90) \u00B7 '+p.starts+' starts</div>'+
     '<div class="chips"><span class="chip">Listed: '+esc(p.modal_position||'\u2014')+'</span>'+
     '<span class="chip acc">Plays: '+esc(poolLabel(p.pool))+'</span>'+
     (p.reassigned?'<span class="chip warn">Reassigned from '+esc(p.listed_pool)+'</span>':'')+
     '<span class="chip">Fit confidence: '+esc(p.confidence||'\u2014')+'</span></div></div>'+
     '<div class="pcard-r"><div class="pool-lbl">Ranked against</div>'+
     '<div class="pool-val">'+esc(poolLabel(p.pool))+'</div>'+
-    '<div class="pool-sub">MLS 2026 \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div></div>';
+    '<div class="pool-sub">'+esc(leagueLabel(p.team))+' \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div></div>';
   if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">'+
     (!p.pool?'This player appeared from the bench but does not yet have enough evidence for a stable role classification or percentiles. Event plots remain available.':'Below the '+MIN90+'-nineties threshold, so no percentiles are computed.')+'</div></div>';
 
@@ -932,7 +933,7 @@ function renderGlossary(){
   const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
   let h='<div class="sect" style="margin-bottom:12px"><div style="font:800 17px/1.2 Inter">Glossary</div>'+
     '<div class="foot" style="margin-top:6px">Every metric, defined. These drive the tooltips throughout the app. '+
-    'Percentiles are computed within a player\u2019s role pool across MLS 2026, open play only unless stated.</div></div>';
+    'Percentiles are computed within each player\u2019s league and role pool, open play only unless stated.</div></div>';
   groups.forEach(function(g){
     h+='<div class="sect" style="margin-bottom:12px"><div class="sect-h"><span>'+esc(g)+'</span></div><table><thead><tr>'+
        '<th style="width:200px;cursor:default">Metric</th><th style="width:56px;cursor:default">Unit</th><th style="cursor:default">Definition</th></tr></thead><tbody>';
@@ -1368,7 +1369,7 @@ async function exportViz(fmt){
       '<div><div style="font:800 27px/1.08 var(--f-display);letter-spacing:-.025em;color:var(--text)">'+
         esc(p.player_name)+'</div>'+
         '<div style="font:500 11.5px/1.6 var(--f-body);color:var(--text2);margin-top:5px">'+
-        esc(tname(p.team))+' \u00B7 MLS 2026 \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+
+        esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+Math.round(p.minutes)+' mins ('+(+p.nineties).toFixed(1)+
         ' \u00D7 90) \u00B7 listed '+esc(p.modal_position||'\u2014')+', plays '+esc(POOL_NAME[p.pool]||p.pool)+'</div></div>'+
       '<div style="text-align:right"><div style="font:700 9px/1 var(--f-body);letter-spacing:.18em;'+
         'text-transform:uppercase;color:var(--text3)">'+esc(GRP)+'</div>'+
