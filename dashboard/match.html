@@ -1081,7 +1081,7 @@ function buildPanel(area,viz,sz,teamOverride){
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
-  const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;canWrap.appendChild(can);
+  const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;can.setAttribute('role','img');canWrap.appendChild(can);
   const ctx=setupHiDpiCanvas(can,sz.w,sz.h);
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
@@ -1096,6 +1096,7 @@ function buildPanel(area,viz,sz,teamOverride){
   S.viewTeam=origVT;
   // Title with team prefix in compare mode
   title.textContent=buildPanelTitle(viz,teamOverride);
+  can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top.');
   // Export menu
   const vLabel=VIZ_LABELS[viz]||viz;const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
   dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));
@@ -1206,8 +1207,8 @@ function renderMomentumTab(){
   html+='<div class="mom-explain'+(expanded?' open':'')+'" id="momExplain"><div class="mom-explain-hdr"><span class="concept-icon">\u24D8</span><span class="mom-explain-title">How Momentum is Calculated</span><button class="mom-explain-toggle" id="momExplainToggle">'+(expanded?'\u2212':'+')+'</button></div><div class="mom-explain-body">Momentum is calculated as a rolling score across 5-minute intervals. <b>Positive events:</b> Progressive pass (+1), Shot (+2), Goal (+5). <b>Negative events:</b> Defensive action in own half, x&lt;35 (\u22121), Opponent shot (\u22122), Opponent goal (\u22125). The cumulative line shows which team was controlling the game at any given moment. Selected team shown in team color, opponent in grey.</div></div>';
   html+='<div class="mom-chart-wrap">'+svg+'<div class="mom-legend"><span><span class="mom-legend-dot" style="background:'+t.color+'"></span>'+esc(tn)+'</span><span><span class="mom-legend-dot" style="background:#6b7280"></span>'+esc(oppName)+'</span><span style="color:var(--text3)">\u2605 goals</span></div><div class="mom-tooltip" id="momTip"></div></div>';
   html+='<div class="mom-bottom">';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u2014 Touch Heatmap</div><canvas class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u2014 Touch Heatmap</div><canvas class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(oppName)+' touch heatmap" class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
   html+='<div class="mom-moments"><div class="mom-moments-title">Key Moments</div>';
   posMoments.forEach(mm=>{html+='<div class="mom-moment-row pos"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">+'+mm.d+'</span></div>';});
   negMoments.forEach(mm=>{html+='<div class="mom-moment-row neg"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">'+mm.d+'</span></div>';});
@@ -1444,7 +1445,7 @@ function renderPsPitches(){
     const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
     dlWrap.append(dlBtn,dlMenu);
     titleRow.append(title,dlWrap);
-    const can=document.createElement('canvas');can.className='ps-pitch-canvas';can.dataset.viz=viz;
+    const can=document.createElement('canvas');can.className='ps-pitch-canvas';can.dataset.viz=viz;can.setAttribute('role','img');
     const legend=document.createElement('div');legend.className='ps-pitch-legend';
     panel.append(titleRow,can,legend);grid.appendChild(panel);
     const ctx=setupHiDpiCanvas(can,200,Math.round(200/PITCH_RATIO));let vizEvts=evts;
@@ -1462,6 +1463,7 @@ function renderPsPitches(){
     const tn=T().name;const vLabelFull=VIZ_LABELS[viz]||viz;
     const pTitle=S.psPlayer||tn;
     if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=new Date(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=pTitle+' '+vLabelFull+' \u2014 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=pTitle+' '+vLabelFull;}
+    can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top.');
     // Export menu
     const vLabel=VIZ_LABELS[viz]||viz;const suffix=psFilenameSuffix();
     const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
@@ -1570,7 +1572,7 @@ async function openCellMatchModal(gid,oppName,colKey){
     else if(vizType==='box_passes')teamEvts=teamEvts.filter(e=>e.type==='Pass'&&e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79);
     // Build canvas
     body.innerHTML='';
-    const can=document.createElement('canvas');
+    const can=document.createElement('canvas');can.setAttribute('role','img');can.setAttribute('aria-label',(colDef?colDef.label:colKey)+' pitch visualization. Attack is bottom to top.');
     body.appendChild(can);
     const legend=document.createElement('div');legend.className='panel-legend';body.appendChild(legend);
     const ctx=setupHiDpiCanvas(can,560,Math.round(560/PITCH_RATIO));const noopT={textContent:''};
