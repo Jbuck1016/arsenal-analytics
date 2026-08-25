@@ -48,3 +48,31 @@ is defensible, showing this week's unverified ones is not.
 
 This should land **after** the destructive cup-isolation rebuild, not before. Building gating
 wrappers over objects that are about to be dropped and recreated doubles the work.
+
+
+---
+
+## Live state, 2026-08-24
+
+Publication is still ungated. `refresh_site_summaries()` commits before `verify_rebuild()` runs,
+so a failing check names the problem but does not hold anything back. The Methodology page states
+this plainly rather than implying otherwise.
+
+`refresh_site_summaries()` is no longer callable by `anon` or `authenticated`, so an anonymous
+visitor can no longer trigger a refresh. That closes the abuse path but does not change the
+ordering problem.
+
+## Execution and rollback procedure for the destructive migration
+
+1. Run `capture_dependency_manifest.sql` and save the output. The tree has grown at every
+   recapture, so a stale capture is the main risk.
+2. Write the migration from that capture, literal definitions only, no CASCADE.
+3. Time it on a disposable branch. This is the gate that has never been satisfied.
+4. Execute inside one transaction with an explicit `statement_timeout`, with preflight dependency
+   assertions, raw-data conservation assertions against a baseline captured in the same
+   transaction, and `verify_rebuild()` before `commit`.
+5. Rollback is automatic on any assertion failure. Recovery after a successful but wrong run is
+   the harder case: Supabase migration history is the only route, so a reverse migration should
+   be written before execution, not after.
+6. Raise the four scoping invariants from warn to error only after the rebuilt objects satisfy
+   them, inside the same migration.

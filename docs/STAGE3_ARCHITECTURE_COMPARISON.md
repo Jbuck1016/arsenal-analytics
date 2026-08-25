@@ -1,6 +1,7 @@
 # Stage 3 cup isolation: two architectures compared
 
-Prepared 2026-08-24. Nothing in this document has been executed. No live data touched.
+Prepared 2026-08-24. Updated 2026-08-24 after Plan B was approved and the non-destructive
+portion was executed. See section 7 for corrected facts and current state.
 
 ---
 
@@ -264,3 +265,127 @@ and 02 either way:
 Migrations 01 and 02 also need `begin`/`commit`, raising assertions instead of printed results,
 and a definition check that aborts when an existing prerequisite object differs from expectation
 rather than accepting it via `if not exists`.
+
+
+---
+
+## 7. Corrected facts and current state (added after execution)
+
+### 7.1 Numbers corrected
+
+| Fact | Earlier statement | Correct |
+|---|---|---|
+| Audited league-mart entry objects | "twelve" | **20 registered, 18 initially reading raw sources** |
+| Schema objects reading raw tables | not measured | **51** |
+| Destructive closure | 35 | **42** |
+| Silent MLS fallbacks | five | **six** (`mv_player_percentiles` included) |
+
+### 7.2 What was executed, non-destructively
+
+Migrations 00 through 06. No materialized view was dropped. No raw row was written.
+
+- Privilege lockdown: browser-writable objects **122 to 0**, readable held at 126.
+- Three-way classification: `league`, `domestic_cup`, `continental`.
+- Canonical scoped sources: `v_league_events`, `v_league_matches`, `v_league_sequences`,
+  `v_league_lineups`.
+- `v_team_sample` and `v_seq_directness` rescoped in place via `create or replace view`, which
+  needs no drop. Arsenal now resolves to `ENG-Premier League` and cup-only clubs left the
+  evidence base.
+- Insight eligibility made rebuild-safe inside `suppress_low_sample_insights()`.
+
+### 7.3 Contamination still measured (warn level)
+
+| Invariant | Violations |
+|---|---|
+| `league_mart_reads_scoped_sources` | 16 |
+| `no_non_league_fixture_in_metrics` | 42 |
+| `no_non_league_row_in_league_outputs` | 198 |
+| `goals_reconcile` (error) | 1 |
+
+These are warn rather than error on purpose. The contamination is real and reported honestly, but
+raising them before the destructive rebuild lands would abort every scheduled scrape.
+
+### 7.4 Why the destructive rebuild remains deferred
+
+Three reasons, in order of weight.
+
+**The rebuild path is unmeasured.** Timing it needs a disposable branch, which is a billable
+action and outside the authorised scope. Running a 42-object destructive transaction on a live
+site with no measured duration is the operation that destroyed the metric stack once already.
+
+**The scope premise changed under it.** The work was scoped to twelve entry objects. Recapture
+found 20 audited entries, 51 schema objects reading raw tables, and a 42-object closure.
+
+**Most of the value was available without it.** The security exposure, the competition registry,
+the scoped sources, the corrected evidence base and rebuild-safe suppression all landed without
+dropping anything. What remains is the metric *values*, not the metric *scoping*.
+
+### 7.5 Defects discovered during execution
+
+- **Live security exposure.** 17 base tables including `sequences`, `insights`, `invariants` and
+  `team_names` had RLS disabled while granting `anon` INSERT and DELETE. The anon key ships in
+  frontend JavaScript. `anon` could also call `refresh_analytics()`. Both closed.
+- **`suppress_low_sample_insights()` inner-join bug.** It deleted `using v_team_sample`, so a club
+  absent from the evidence base matched nothing and survived. Cup-only clubs kept insights through
+  a full rebuild.
+- **Season pooling.** `season` exists only on `matches`. `events` and `sequences` have no season
+  column, so every object aggregating from them pools 2025/26 with 2026/27. Arsenal's Premier
+  League evidence base is 35 matches from 2526 plus 1 from 2627.
+- **Goalkeepers absent from `player_search`.** `player_chain_roles` is outfield-only, so David
+  Raya (2,098 events, 4,342 minutes) and Kepa are missing from Arsenal's player list.
+
+
+---
+
+## 8. Live state after the 2026-08-24 batch
+
+### 8.1 Migrations applied live
+
+`00` through `08`. No materialized view dropped. No raw row written.
+
+Raw tables unchanged throughout: 620,306 events, 425 matches, 103,129 sequences, 16,366 lineups.
+
+### 8.2 Insight eligibility is now detector governed
+
+`suppress_low_sample_insights()` compares `ts.matches >= r.min_matches` per detector and no
+longer references `meets_min_matches`. Proven from `pg_get_functiondef`. A full production
+rebuild through `build_insights()` then `polish_insights()` returns **916 insights across 31
+clubs**, with assertions confirming no insight belongs to a club absent from the scoped evidence
+base and none comes from an undeclared detector.
+
+### 8.3 Invariants: direct run versus materialized
+
+Every check agrees between `run_invariants()` and `mv_invariant_status`.
+
+| Check | Severity | Violations |
+|---|---|---|
+| `goals_reconcile` | error | 1 |
+| `league_mart_reads_scoped_sources` | warn | 16 |
+| `no_non_league_row_in_league_outputs` | warn | 198 |
+| `unused_subs_carry_minutes` | warn | 564 |
+| `no_non_league_fixture_in_metrics` | warn | 42 |
+| `shots_in_xg_model` | warn | 36 |
+| `xg_bins_sparse` | warn | 18 |
+| `played_without_events` | warn | 3 |
+| `leagues_without_whitelist` | warn | 1 |
+
+### 8.4 Security advisor
+
+**New findings introduced by Stage 3, all fixed.** The five scoped views defaulted to
+SECURITY DEFINER semantics and now carry `security_invoker = true`.
+
+**Pre-existing, not addressed.** Roughly thirty older views carry the same SECURITY DEFINER
+finding. Fifteen base tables have RLS disabled while exposed to PostgREST; browser write
+privileges are revoked so the immediate risk is closed, but RLS with explicit read policies is
+the belt-and-braces fix. Around eighty materialized views are selectable over the Data API.
+`get_starter_names` is anon executable and likely used by the dashboard. The `lafc_*` tracker
+functions are anon executable by design and were deliberately left alone.
+
+### 8.5 Destructive migration: recaptured blast radius
+
+The tree has grown at every recapture: 18 dependents, then 23, now **36 distinct objects** across
+five levels once `mv_team_all`, `v_season_stats`, `mv_team_match` and `mv_team_lanes` are seeded.
+
+It remains unwritten and unexecuted. Writing 36 literal definitions by hand carries more
+transcription risk than the fix removes, and the rebuild path is still untimed. Use
+`capture_dependency_manifest.sql` to produce a verified capture first.

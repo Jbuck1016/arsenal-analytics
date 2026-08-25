@@ -1,27 +1,15 @@
 -- =====================================================================
--- 20260824_05_rebuild_safe_insight_eligibility.sql
--- Stage 3, migration 05. APPLIED 2026-08-24. Requires 01 to 04.
+-- 20260824_07_detector_governed_insight_eligibility.sql
+-- APPLIED LIVE 2026-08-24. Requires 00 to 06.
 --
--- THE DEFECT
---   suppress_low_sample_insights() deleted USING v_team_sample, an inner
---   join. A club absent from the evidence base entirely matched nothing
---   and survived. After cup scoping removed cup-only clubs from
---   v_team_sample, that is exactly how Mansfield, Port Vale, Bayern and
---   nine other cup-only clubs kept insights through a full rebuild.
+-- Supersedes the eligibility body shipped in migration 05 and brings the
+-- live function into line with source control. Migration 05 remains in
+-- the chain for replay from a clean schema; this file is the final state.
 --
---   A one-off DELETE would have been undone by the next scheduled scrape.
---   The eligibility rule therefore lives in the production polishing path.
---
--- REVISION 2026-08-24, APPLIED LIVE.
---   The eligibility delete originally tested ts.meets_min_matches, which
---   hardcodes the six-match rule and bypasses detector_requirements. It
---   now joins the insight's own detector requirement and compares
---   ts.matches >= r.min_matches, so detector_requirements governs
---   eligibility for every detector, as it does everywhere else.
---   Live alignment was proven from pg_get_functiondef on 2026-08-24 and
---   is reasserted by migration 07, which is the final state of this
---   function. Both files are kept so a clean replay reaches the same
---   result.
+-- Eligibility is governed by detector_requirements. No sample threshold
+-- is hardcoded. Proven live: the function definition contains
+-- "ts.matches >= r.min_matches" and no longer references
+-- meets_min_matches.
 -- =====================================================================
 begin;
 
@@ -43,9 +31,6 @@ begin
     and not exists (select 1 from public.detector_requirements r where r.detector = i.detector);
   get diagnostics n_undeclared = row_count;
 
-  -- Club must exist in the scoped evidence base AND clear the minimum
-  -- declared for that specific detector. detector_requirements governs;
-  -- no sample threshold is hardcoded here.
   delete from public.insights i
   where i.team is not null
     and not exists (
@@ -63,5 +48,19 @@ end $function$;
 
 revoke all on function public.suppress_low_sample_insights() from public, anon, authenticated;
 grant execute on function public.suppress_low_sample_insights() to service_role;
+
+do $assert$
+begin
+  if (select pg_get_functiondef(p.oid) from pg_proc p
+      join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname='suppress_low_sample_insights')
+     not like '%ts.matches >= r.min_matches%' then
+    raise exception 'ASSERT FAILED. Eligibility is not detector governed.';
+  end if;
+  if has_function_privilege('anon','public.suppress_low_sample_insights()','EXECUTE') then
+    raise exception 'ASSERT FAILED. anon can execute the suppression function.';
+  end if;
+end
+$assert$;
 
 commit;
