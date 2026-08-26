@@ -281,6 +281,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .season-trend-close:hover{background:var(--surface2);color:var(--text)}
 .season-trend-svg{width:100%;height:240px;display:block}
 .season-trend-tip{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font:500 10px/1.4 'Inter',sans-serif;color:var(--text);box-shadow:var(--shadow2);pointer-events:none;display:none;z-index:5}
+.trend-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:7px;font:500 9.5px/1 Inter,sans-serif;color:var(--text3)}
+.trend-line{display:inline-block;width:20px;height:0;border-top:2px solid var(--accent);margin-right:5px;vertical-align:3px}
+.trend-line.roll{border-top-style:dashed;opacity:.55}.trend-line.avg{border-top-width:1px;border-top-style:dashed;opacity:.8}
 .tbl-wrap::after{content:'';position:sticky;bottom:0;left:0;display:block;width:100%;height:24px;background:linear-gradient(transparent,var(--bg2));pointer-events:none;margin-top:-24px}
 .stbl{width:max-content;min-width:100%;border-collapse:collapse;font:500 12px/1.3 'Inter',system-ui,sans-serif;border-top:2px solid var(--accent)}
 .stbl thead{position:sticky;top:0;z-index:5}
@@ -1142,12 +1145,19 @@ function handleTooltip(e,can){
 }
 
 /* TIMELINE */
+function pressureDelta(e){
+  if(e.is_goal)return 5;
+  if(e.is_shot)return 2;
+  if(e.type==='Pass'&&isProgPass(e))return 1;
+  return 0;
+}
 function buildTimeline(){
   const tl=document.getElementById('timeline');if(!S.selMatch){tl.classList.add('hidden');return;}
   tl.classList.remove('hidden');
   const tn=T().name;const N=18;// 18 buckets of 5 mins (0-90)
   const momentum=new Array(N).fill(0);const goals=[];
-  S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5));const isOurs=e.team===tn;if(isOurs){if(e.is_goal){momentum[b]+=5;goals.push({b,team:'us',min:e.minute});}else if(e.is_shot){momentum[b]+=2;}else if(e.type==='Pass'&&isProgPass(e))momentum[b]+=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))momentum[b]-=1;}else{if(e.is_goal){momentum[b]-=5;goals.push({b,team:'them',min:e.minute});}else if(e.is_shot){momentum[b]-=2;}}});
+  S.events.forEach(e=>{const b=Math.min(N-1,Math.floor((e.minute||0)/5)),d=pressureDelta(e),isOurs=e.team===tn;
+    momentum[b]+=isOurs?d:-d;if(e.is_goal)goals.push({b,team:isOurs?'us':'them',min:e.minute});});
   const maxAbs=Math.max(...momentum.map(v=>Math.abs(v)),1);
   // Render SVG inside timeline
   const W=tl.clientWidth||600,H=32,padX=8;const innerW=W-padX*2;const step=innerW/N;const cy=H/2;
@@ -1158,8 +1168,8 @@ function buildTimeline(){
   const goalMarkers=goals.map(g=>{const x=padX+g.b*step+step/2;const col=g.team==='us'?'var(--accent)':'#2563eb';return'<text x="'+x+'" y="'+(cy-6)+'" text-anchor="middle" font-size="8" fill="'+col+'">\u2605</text>';}).join('');
   // Time labels
   const labels=[];for(let i=0;i<N;i+=3){const x=padX+i*step+step/2;labels.push('<text x="'+x+'" y="'+(H-1)+'" text-anchor="middle" font-size="5" fill="var(--text3)">'+(i*5)+"'</text>");}
-  const svg='<svg width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="display:block;width:100%;height:'+H+'px;max-height:'+H+'px;pointer-events:auto">'
-    +filterBars.join('')
+  const svg='<svg role="img" aria-label="Five-minute attacking-event differential timeline; select a segment to filter the match views" width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="display:block;width:100%;height:'+H+'px;max-height:'+H+'px;pointer-events:auto">'
+    +'<title>Five-minute attacking-event differential. Click a segment to filter every match view to that interval; click it again to clear.</title>'+filterBars.join('')
     +'<line x1="'+padX+'" y1="'+cy+'" x2="'+(W-padX)+'" y2="'+cy+'" stroke="var(--border2)" stroke-width="0.5"></line>'
     +'<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"></path>'
     +'<path d="'+path+'L'+(padX+N*step-step/2)+','+cy+' L'+(padX+step/2)+','+cy+' Z" fill="var(--accent)" opacity="0.1"></path>'
@@ -1178,33 +1188,37 @@ function renderMomentumTab(){
   const maxMin=Math.max(90,...S.events.map(e=>e.minute||0))+1;
   const usArr=new Array(maxMin+1).fill(0),themArr=new Array(maxMin+1).fill(0);
   const usGoals=[],themGoals=[],moments=[];
-  S.events.forEach(e=>{const mi=Math.min(maxMin,e.minute||0);const isOurs=e.team===tn;let d=0;if(isOurs){if(e.is_goal){d=5;usGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;else if(e.type==='Pass'&&isProgPass(e))d=1;else if(e.x!=null&&e.x<35&&DEF_TYPES.includes(e.type))d=-1;if(d!==0)usArr[mi]+=d;if(Math.abs(d)>=2)moments.push({m:mi,d,team:tn,player:e.player,type:e.is_goal?'Goal':e.is_shot?'Shot':'Event'});}else{if(e.is_goal){d=5;themGoals.push({m:mi,player:e.player});}else if(e.is_shot)d=2;if(d!==0)themArr[mi]+=d;if(d>=2)moments.push({m:mi,d:-d,team:e.team,player:e.player,type:e.is_goal?'Goal':'Shot'});}});
+  S.events.forEach(e=>{const mi=Math.min(maxMin,e.minute||0),isOurs=e.team===tn,d=pressureDelta(e);
+    if(isOurs){if(e.is_goal)usGoals.push({m:mi,player:e.player});if(d!==0)usArr[mi]+=d;
+      if(d>=2)moments.push({m:mi,d,team:tn,player:e.player,type:e.is_goal?'Goal':'Shot'});
+    }else{if(e.is_goal)themGoals.push({m:mi,player:e.player});if(d!==0)themArr[mi]+=d;
+      if(d>=2)moments.push({m:mi,d:-d,team:e.team,player:e.player,type:e.is_goal?'Goal':'Shot'});}});
   // Cumulative
   const usCum=[],themCum=[];let us=0,them=0;for(let i=0;i<=maxMin;i++){us+=usArr[i];them+=themArr[i];usCum.push(us);themCum.push(them);}
   const W=Math.max(600,wrap.clientWidth-60),H=360,padL=50,padR=20,padT=20,padB=30;const innerW=W-padL-padR,innerH=H-padT-padB;
-  const maxV=Math.max(...usCum,...themCum,1),minV=Math.min(...usCum,...themCum,-1);const range=Math.max(Math.abs(maxV),Math.abs(minV),5);
+  const maxV=Math.max(...usCum,...themCum,5);
   const xAt=mi=>padL+(mi/maxMin)*innerW;
-  const yAt=v=>padT+innerH/2-(v/range)*(innerH/2);
+  const yAt=v=>padT+innerH-(v/maxV)*innerH;
   const pathFor=(arr,col)=>{let d='';arr.forEach((v,i)=>{d+=(i===0?'M':'L')+xAt(i).toFixed(1)+','+yAt(v).toFixed(1)+' ';});return d;};
   // Axis ticks
-  const xTicks=[0,15,30,45,60,75,90].filter(t=>t<=maxMin);const yTicks=[-range,-range/2,0,range/2,range].map(v=>Math.round(v));
+  const xTicks=[0,15,30,45,60,75,90].filter(t=>t<=maxMin);const yTicks=[0,.25,.5,.75,1].map(v=>Math.round(v*maxV)).filter((v,i,a)=>a.indexOf(v)===i);
   const xAxis=xTicks.map(tk=>'<line x1="'+xAt(tk)+'" y1="'+padT+'" x2="'+xAt(tk)+'" y2="'+(padT+innerH)+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 3"></line><text x="'+xAt(tk)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--text3)">'+tk+"'</text>").join('');
   const yAxis=yTicks.map(v=>'<line x1="'+padL+'" y1="'+yAt(v)+'" x2="'+(padL+innerW)+'" y2="'+yAt(v)+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 3"></line><text x="'+(padL-6)+'" y="'+(yAt(v)+3)+'" text-anchor="end" font-size="10" fill="var(--text3)">'+v+'</text>').join('');
   const centerLine='<line x1="'+padL+'" y1="'+yAt(0)+'" x2="'+(padL+innerW)+'" y2="'+yAt(0)+'" stroke="var(--text3)" stroke-width="0.8"></line>';
   const usPath='<path d="'+pathFor(usCum)+'" fill="none" stroke="'+t.color+'" stroke-width="2" stroke-linejoin="round"></path>';
   const themPath='<path d="'+pathFor(themCum)+'" fill="none" stroke="#6b7280" stroke-width="2" stroke-linejoin="round"></path>';
   // Goal markers
-  const goalMarks=[...usGoals.map(g=>({...g,col:t.color,team:tn})),...themGoals.map(g=>({...g,col:'#6b7280',team:oppName}))].map(g=>{const x=xAt(g.m),y=yAt(usCum[g.m]||0)-14;return'<g><text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="16" fill="'+g.col+'">\u2605</text><text x="'+x+'" y="'+(y-10)+'" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text)">'+esc(lastName(g.player||''))+" "+g.m+"'</text></g>";}).join('');
+  const goalMarks=[...usGoals.map(g=>({...g,col:t.color,team:tn})),...themGoals.map(g=>({...g,col:'#6b7280',team:oppName}))].map(g=>{const x=xAt(g.m),series=g.team===tn?usCum:themCum,y=yAt(series[g.m]||0)-14;return'<g><text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="16" fill="'+g.col+'">\u2605</text><text x="'+x+'" y="'+(y-10)+'" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text)">'+esc(lastName(g.player||''))+" "+g.m+"'</text></g>";}).join('');
   // Invisible hover rects
   const hoverRects=[];for(let i=0;i<=maxMin;i++){const x=xAt(i);hoverRects.push('<rect x="'+(x-innerW/maxMin/2)+'" y="'+padT+'" width="'+(innerW/maxMin)+'" height="'+innerH+'" fill="transparent" data-min="'+i+'" data-us="'+usCum[i]+'" data-them="'+themCum[i]+'" style="cursor:crosshair"></rect>');}
-  const svg='<svg class="mom-chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+yAxis+xAxis+centerLine+themPath+usPath+goalMarks+hoverRects.join('')+'</svg>';
+  const svg='<svg role="img" aria-label="Cumulative attacking-event index for '+esc(tn)+' and '+esc(oppName)+'" class="mom-chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+yAxis+xAxis+centerLine+themPath+usPath+goalMarks+hoverRects.join('')+'</svg>';
   // Key moments (top 5 +/- by raw momentum swing per minute)
   const posMoments=moments.filter(mm=>mm.d>0).sort((a,b)=>b.d-a.d||a.m-b.m).slice(0,5);
   const negMoments=moments.filter(mm=>mm.d<0).sort((a,b)=>a.d-b.d||a.m-b.m).slice(0,5);
   const matchTitle=m?(m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team):'Match';
   const expanded=S._momExplainOpen!==false;
-  let html='<div class="mom-hdr"><div><div class="mom-title">'+esc(matchTitle)+'</div><div class="mom-sub">Cumulative momentum over time</div></div></div>';
-  html+='<div class="mom-explain'+(expanded?' open':'')+'" id="momExplain"><div class="mom-explain-hdr"><span class="concept-icon">\u24D8</span><span class="mom-explain-title">How Momentum is Calculated</span><button class="mom-explain-toggle" id="momExplainToggle">'+(expanded?'\u2212':'+')+'</button></div><div class="mom-explain-body">Momentum is calculated as a rolling score across 5-minute intervals. <b>Positive events:</b> Progressive pass (+1), Shot (+2), Goal (+5). <b>Negative events:</b> Defensive action in own half, x&lt;35 (\u22121), Opponent shot (\u22122), Opponent goal (\u22125). The cumulative line shows which team was controlling the game at any given moment. Selected team shown in team color, opponent in grey.</div></div>';
+  let html='<div class="mom-hdr"><div><div class="mom-title">'+esc(matchTitle)+'</div><div class="mom-sub">Cumulative attacking-event index</div></div></div>';
+  html+='<div class="mom-explain'+(expanded?' open':'')+'" id="momExplain"><div class="mom-explain-hdr"><span class="concept-icon">\u24D8</span><span class="mom-explain-title">How the attacking-event index is calculated</span><button class="mom-explain-toggle" id="momExplainToggle">'+(expanded?'\u2212':'+')+'</button></div><div class="mom-explain-body">The same simple score is applied independently to both teams: progressive pass (+1), shot (+2), and goal (+5). The lines accumulate attacking events over the match. This is a descriptive event count, not possession, win probability, or a validated measure of momentum or control. Team color shows '+esc(tn)+'; grey shows '+esc(oppName)+'.</div></div>';
   html+='<div class="mom-chart-wrap">'+svg+'<div class="mom-legend"><span><span class="mom-legend-dot" style="background:'+t.color+'"></span>'+esc(tn)+'</span><span><span class="mom-legend-dot" style="background:#6b7280"></span>'+esc(oppName)+'</span><span style="color:var(--text3)">\u2605 goals</span></div><div class="mom-tooltip" id="momTip"></div></div>';
   html+='<div class="mom-bottom">';
   html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
@@ -1276,7 +1290,7 @@ function renderSeasonTrend(colKey){
   const colDef=SEASON_COLS.find(c=>c.key===colKey);if(!colDef){wrap.innerHTML='';return;}
   const data=getFilteredSeasonData();
   // Sort by match date via S.matches lookup
-  const rows=data.map(r=>{let date=null,dateStr='',res='D';const m=S.matches.find(mm=>mm.game_id==r.game_id)||S.matches.find(mm=>mm.home_team===r.opponent||mm.away_team===r.opponent);if(m){date=new Date(m.date).getTime();dateStr=new Date(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}const s=r.team_score,o=r.opp_score;res=s>o?'W':s<o?'L':'D';return{date:date||0,dateStr,opp:r.opponent,res,v:r[colKey]||0,scoreStr:s+'-'+o};}).filter(r=>r.date>0).sort((a,b)=>a.date-b.date);
+  const rows=data.map(r=>{let date=null,dateStr='',res='D';const m=S.matches.find(mm=>mm.game_id==r.game_id)||S.matches.find(mm=>mm.home_team===r.opponent||mm.away_team===r.opponent);if(m){date=new Date(m.date).getTime();dateStr=new Date(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}const s=r.team_score,o=r.opp_score;res=s>o?'W':s<o?'L':'D';return{date:date||0,dateStr,opp:r.opponent,res,v:r[colKey]==null?null:+r[colKey],scoreStr:s+'-'+o};}).filter(r=>r.date>0&&r.v!=null).sort((a,b)=>a.date-b.date);
   if(!rows.length){wrap.innerHTML='';return;}
   const t=T();const W=wrap.clientWidth||700,H=260,padL=40,padR=20,padT=20,padB=40;const innerW=W-padL-padR,innerH=H-padT-padB;
   const maxV=Math.max(...rows.map(r=>r.v),1),minV=Math.min(0,...rows.map(r=>r.v));
@@ -1292,7 +1306,7 @@ function renderSeasonTrend(colKey){
   // Y-axis ticks
   const ticks=5,yTicks=[];for(let i=0;i<=ticks;i++){const v=minV+(maxV-minV)*i/ticks;yTicks.push('<line x1="'+padL+'" y1="'+yAt(v)+'" x2="'+(W-padR)+'" y2="'+yAt(v)+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 3"></line><text x="'+(padL-6)+'" y="'+(yAt(v)+3)+'" text-anchor="end" font-size="9" fill="var(--text3)">'+v.toFixed(1)+'</text>');}
   const xTicks=rows.map((r,i)=>{if(rows.length>12&&i%Math.ceil(rows.length/12)!==0)return'';const lbl=(r.dateStr?r.dateStr+' \u00B7 ':'')+(r.opp||'').substring(0,10);return'<text x="'+xAt(i)+'" y="'+(H-padB+14)+'" text-anchor="middle" font-size="8" fill="var(--text3)">'+esc(lbl)+'</text>';}).join('');
-  const svg='<svg class="season-trend-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'
+  const svg='<svg role="img" aria-label="'+esc(T().display+' '+colDef.label+' by match; solid line is match value, dashed line is rolling five-match average')+'" class="season-trend-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'
     +yTicks.join('')
     +'<line x1="'+padL+'" y1="'+avgY+'" x2="'+(W-padR)+'" y2="'+avgY+'" stroke="'+t.color+'" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"></line>'
     +'<text x="'+(W-padR-4)+'" y="'+(avgY-4)+'" text-anchor="end" font-size="9" fill="'+t.color+'" opacity="0.8">avg '+seasonAvg.toFixed(1)+'</text>'
@@ -1301,7 +1315,8 @@ function renderSeasonTrend(colKey){
     +dots
     +xTicks
     +'</svg>';
-  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u2014 '+esc(colDef.label)+' across 2025/26 season</div><button class="season-trend-close" id="stClose">\u2715</button></div>'+svg+'<div class="season-trend-tip" id="stTip"></div></div>';
+  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u2014 '+esc(colDef.label)+' by match</div><button class="season-trend-close" id="stClose" aria-label="Close trend chart">\u2715</button></div>'+svg+
+    '<div class="trend-legend"><span><i class="trend-line"></i>Match value</span><span><i class="trend-line roll"></i>Rolling 5-match average</span><span><i class="trend-line avg"></i>Selected-match average</span><span>Dots: <b style="color:#16a34a">win</b> \u00B7 <b style="color:#ca8a04">draw</b> \u00B7 <b style="color:#dc2626">loss</b></span></div><div class="season-trend-tip" id="stTip"></div></div>';
   document.getElementById('stClose').onclick=()=>{S.seasonTrend=null;wrap.innerHTML='';};
   const tip=document.getElementById('stTip');const trendEl=wrap.querySelector('.season-trend');
   wrap.querySelectorAll('circle[data-i]').forEach(ci=>{ci.addEventListener('mouseenter',e=>{const i=+ci.dataset.i,r=rows[i];tip.style.display='block';const rect=trendEl.getBoundingClientRect();tip.style.left=(e.clientX-rect.left+10)+'px';tip.style.top=(e.clientY-rect.top-10)+'px';tip.innerHTML='<b>'+esc(r.opp)+'</b> '+r.scoreStr+' ('+r.res+')<br>'+colDef.label+': '+r.v;});ci.addEventListener('mouseleave',()=>{tip.style.display='none';});});
