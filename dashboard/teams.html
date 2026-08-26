@@ -219,15 +219,15 @@ function renderLeaguePicker(){
   host.innerHTML='<select id="lgSel" onchange="setLeague(this.value)">'+
     '<option value="ALL"'+(LG==='ALL'?' selected':'')+'>All leagues</option>'+
     LEAGUES.map(function(l){
+      var available=TEAMS.filter(function(t){return lgOf(t.team)===l.league}).length;
       return '<option value="'+esc(l.league)+'"'+(LG===l.league?' selected':'')+'>'+
-        esc(l.display_name)+' ('+l.teams+')</option>'}).join('')+'</select>';
+        esc(l.display_name)+' ('+available+' available)</option>'}).join('')+'</select>';
 }
 function setLeague(v){
   LG=v;
   try{localStorage.setItem('leagueScope',v)}catch(e){}
-  renderList();updateHdr();
   if(SEL&&!inScope(SEL)){var f=scopedTeams()[0];SEL=f?f.team:null}
-  draw();
+  renderList();updateHdr();draw();
 }
 
 async function init(){
@@ -249,11 +249,15 @@ async function init(){
     LEAGUES=(r[6]||[]).filter(function(l){return l.teams>0});
     if(LEAGUES.length===1)LG=LEAGUES[0].league;
     else if(LG!=='ALL'&&!LEAGUES.some(function(l){return l.league===LG}))LG='ALL';
-    renderLeaguePicker();
-    renderTabs();renderList();wireTips();updateHdr();
     const qt=new URLSearchParams(location.search).get('team');
-    SEL=(qt&&teamOf(qt))?qt:(teamOf('Los Angeles FC')?'Los Angeles FC':TEAMS[0].team);
-    pick(SEL);
+    if(qt&&teamOf(qt)){
+      SEL=qt;
+      if(LG!=='ALL'&&!inScope(SEL))LG=lgOf(SEL);
+    }else{
+      const preferred=teamOf('Los Angeles FC');
+      SEL=(preferred&&inScope(preferred.team))?preferred.team:((scopedTeams()[0]||{}).team||null);
+    }
+    renderLeaguePicker();renderTabs();renderList();wireTips();updateHdr();draw();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 function renderTabs(){document.getElementById('tabs').innerHTML=
@@ -623,13 +627,15 @@ function flowPattern(items,color,limit){
   let s='<g class="pattern-layer">';
   os.forEach(function(k){const p=centre(k),q=Math.sqrt(orig[k]/om);s+='<circle cx="'+PX(p.x)+'" cy="'+PY(p.y)+
     '" r="'+(1.1+3.2*q).toFixed(2)+'" fill="'+color+'" fill-opacity="'+(0.07+0.16*q).toFixed(2)+'"/>'});
-  fs.forEach(function(k){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
+  fs.forEach(function(k,idx){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
     const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
     const w=.45+1.7*Math.sqrt(flows[k]/fm),ah=1.5+w*.65,bx=x2-ux*ah,by=y2-uy*ah;
     s+='<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
       '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"/>'+
       '<path d="M'+x2.toFixed(2)+' '+y2.toFixed(2)+'L'+(bx+nx*ah*.55).toFixed(2)+' '+(by+ny*ah*.55).toFixed(2)+
       'L'+(bx-nx*ah*.55).toFixed(2)+' '+(by-ny*ah*.55).toFixed(2)+'Z" fill="'+color+'" fill-opacity=".86"/>';
+    if(idx<3){const mx=(x1+x2)/2+nx*1.8,my=(y1+y2)/2+ny*1.8;
+      s+='<text x="'+mx.toFixed(2)+'" y="'+(my+.5).toFixed(2)+'" text-anchor="middle" fill="'+color+'" font-size="1.5" font-weight="800" stroke="var(--bg2)" stroke-width=".65" paint-order="stroke">'+flows[k]+'</text>'}
   });
   return s+'</g>';
 }
@@ -654,7 +660,7 @@ async function renderMaps(t){
         if(ok.length)inner+=flowPattern(ok,G,9);if(fail.length)inner+=flowPattern(fail,R,5);
       }else ps.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
       leg='<span><i style="background:'+G+'"></i>Passes <b>'+ps.length.toLocaleString()+'</b></span>'+
-          (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Each vector is one event</span>');
+          (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Each vector is one event</span>');
     }
     else if(m.k==='prog'){
       const ps=ZONES.filter(function(a){return a.prog&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
@@ -662,7 +668,7 @@ async function renderMaps(t){
         if(ok.length)inner+=flowPattern(ok,B,8);if(fail.length)inner+=flowPattern(fail,R,5);
       }else ps.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
       leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>'+
-        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Rings mark where each pass began</span>');
+        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>');
     }
     else if(m.k==='box'){
       const ps=ZONES.filter(function(a){return a.into_box&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
@@ -672,7 +678,7 @@ async function renderMaps(t){
         inner+=tline(a,c2,0.3,a.ok?0.62:0.42)+origin(a,c2,0.3,a.ok?0.62:0.42)+
         '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.38" fill="'+c2+'" fill-opacity="0.92"/>'});
       leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>'+
-        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'<span>Rings mark where each pass began</span>');
+        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>');
     }
     else if(m.k==='carries'){
       let pr=0,ot=0;

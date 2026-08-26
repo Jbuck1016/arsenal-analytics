@@ -423,11 +423,15 @@ async function init(){
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
     PLEAGUES=(res[5]||[]).filter(function(l){return l.matches>0});
     if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
+    const qp=new URLSearchParams(location.search).get('player');
+    if(qp&&playerOf(qp)&&PLGSCOPE!=='ALL'&&!teamInLeague(playerOf(qp).team)){
+      const targetLeague=lgOfTeam(playerOf(qp).team);
+      PLGSCOPE=PLEAGUES.some(function(l){return l.league===targetLeague})?targetLeague:'ALL';
+    }
     renderLeaguePick();
     fillTeamSel();
     updateHdrSub();
     renderTabs();renderList();
-    const qp=new URLSearchParams(location.search).get('player');
     if(qp&&playerOf(qp)){
       const tp=playerOf(qp);
       document.getElementById('teamSel').value=tp.team;
@@ -514,7 +518,10 @@ function renderLeaguePick(){
 function setPlayerLeague(v){
   PLGSCOPE=v;
   try{localStorage.setItem('leagueScope',v)}catch(e){}
+  const current=playerOf(SEL);
+  if(current&&!teamInLeague(current.team)){SEL=null;PACT=null;PCAR=null;PREC=null}
   fillTeamSel();updateHdrSub();renderList();
+  if(!SEL)document.getElementById('main').innerHTML='<div class="empty">Select a player</div>';
 }
 function renderList(){
   const t=document.getElementById('teamSel').value,pl=document.getElementById('poolSel').value;
@@ -1109,13 +1116,15 @@ function flowPattern(items,color,limit){
   let s='<g class="pattern-layer">';
   os.forEach(function(k){const p=centre(k),q=Math.sqrt(orig[k]/om);s+='<circle cx="'+PX(p.x)+'" cy="'+PY(p.y)+
     '" r="'+(1.1+3.2*q).toFixed(2)+'" fill="'+color+'" fill-opacity="'+(0.07+0.16*q).toFixed(2)+'"/>'});
-  fs.forEach(function(k){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
+  fs.forEach(function(k,idx){const a=k.split('>'),p=centre(a[0]),q=centre(a[1]),x1=PX(p.x),y1=PY(p.y),x2=PX(q.x),y2=PY(q.y);
     const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
     const w=.45+1.7*Math.sqrt(flows[k]/fm),ah=1.5+w*.65,bx=x2-ux*ah,by=y2-uy*ah;
     s+='<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
       '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"/>'+
       '<path d="M'+x2.toFixed(2)+' '+y2.toFixed(2)+'L'+(bx+nx*ah*.55).toFixed(2)+' '+(by+ny*ah*.55).toFixed(2)+
       'L'+(bx-nx*ah*.55).toFixed(2)+' '+(by-ny*ah*.55).toFixed(2)+'Z" fill="'+color+'" fill-opacity=".86"/>';
+    if(idx<3){const mx=(x1+x2)/2+nx*1.8,my=(y1+y2)/2+ny*1.8;
+      s+='<text x="'+mx.toFixed(2)+'" y="'+(my+.5).toFixed(2)+'" text-anchor="middle" fill="'+color+'" font-size="1.5" font-weight="800" stroke="var(--bg2)" stroke-width=".65" paint-order="stroke">'+flows[k]+'</text>'}
   });
   return s+'</g>';
 }
@@ -1326,7 +1335,7 @@ function vizPanel(grp,p){
   const legend=live.filter(function(l){return !off[l.k]})
     .map(function(l){return lg(l.color,l.label,l.items.length)}).join('')+
     (cfg.sizeKey?'<span>Marker area = xG <b>0.05 / 0.20 / 0.50</b></span>':'')+
-    (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows</span>':'');
+    (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'');
 
   const mode=supportsPattern?'<div class="vz-tog">'+
     '<button class="vzb'+(isPattern?' on':'')+'" onclick="VZ.mode[\''+grp+'\']=\'pattern\';refreshViz()">Pattern</button>'+
