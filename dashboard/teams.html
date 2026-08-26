@@ -13,11 +13,13 @@
 :root{--accent:#C39E6D;--accent-dim:rgba(195,158,109,.10);--accent-glow:rgba(195,158,109,.22);
  --bg:#f5f4f1;--bg2:#fff;--bg3:#fafaf8;--surface:rgba(0,0,0,.025);--surface2:rgba(0,0,0,.05);
  --border:#e8e5e0;--border2:#d5d2cc;--text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
- --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.07)}
+ --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;
+ --style-hi:#2563eb;--style-low:#d97706;--shadow:0 1px 3px rgba(0,0,0,.07)}
 html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
  --bg:#101319;--bg2:#191d25;--bg3:#222732;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
  --border:#2c313d;--border2:#414957;--text:#f4f6fb;--text2:#c3cde2;--text3:#9aa7c2;
- --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35)}
+ --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;
+ --style-hi:#60a5fa;--style-low:#fbbf24;--shadow:0 1px 3px rgba(0,0,0,.35)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
@@ -142,6 +144,20 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 .stile-v{font:700 20px/1.1 Inter,sans-serif;letter-spacing:-.02em;margin-top:3px}
 .stile-z{font:600 9px/1 var(--mono,monospace);color:var(--text3);margin-top:3px;opacity:.75}
 .seqwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.dev-legend{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0 14px;
+  font:600 9.5px/1 Inter,sans-serif;color:var(--text3)}
+.dev-key{display:inline-flex;align-items:center;gap:5px}.dev-key i{display:block;width:12px;height:7px;border-radius:2px}
+.dev-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dev-group{border:1px solid var(--border);border-radius:7px;padding:10px 11px;background:var(--bg3)}
+.dev-group-h{font:700 9px/1 var(--f-body);letter-spacing:.13em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.dev-row{display:grid;grid-template-columns:minmax(105px,1.05fr) minmax(120px,1.25fr) 54px;gap:8px;align-items:center;padding:5px 0}
+.dev-lbl{font:500 10px/1.25 Inter,sans-serif;color:var(--text2)}
+.dev-track{height:10px;background:var(--surface2);border-radius:5px;position:relative;overflow:hidden}
+.dev-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--text2);opacity:.7}
+.dev-fill{position:absolute;top:1px;height:8px;border-radius:4px;min-width:1px}
+.dev-val{text-align:right;font:700 9.5px/1.15 var(--f-data);color:var(--text)}
+.dev-z{display:block;font-size:8px;color:var(--text3);margin-top:2px}
+@media(max-width:900px){.dev-groups{grid-template-columns:1fr}.dev-row{grid-template-columns:minmax(100px,1fr) minmax(110px,1.25fr) 52px}}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -202,6 +218,7 @@ function lgName(code){
   for(var i=0;i<LEAGUES.length;i++)if(LEAGUES[i].league===code)return LEAGUES[i].display_name;
   return code;
 }
+function lgScopeLabel(){return LG==='ALL'?'All leagues':lgName(LG)}
 /* Every list, ranking and map is scoped to the chosen league. Percentiles and ranks
    are already computed within league in the database, so mixing them on screen would
    misrepresent numbers that were never comparable. */
@@ -840,16 +857,20 @@ function renderRankings(){
     return{team:t.team,value:+t[RKT.metric],pct:p?+p.pct:null};
   }).filter(function(r){return !isNaN(r.value)});
   rows.sort(function(a,b){return (b.pct==null?-1:b.pct)-(a.pct==null?-1:a.pct)});
-  const mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
-  const W=1080,BH=26,MT=26,ML=190,H=MT+rows.length*BH+16;
-  let sv='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
+  const vals=rows.map(function(r){return r.value});
+  const vmin=Math.min(0,Math.min.apply(null,vals)),vmax=Math.max(0,Math.max.apply(null,vals));
+  const vrange=(vmax-vmin)||1,W=1080,BH=26,MT=26,ML=190,H=MT+rows.length*BH+16,PW=W-ML-90;
+  function VX(v){return ML+((v-vmin)/vrange)*PW}
+  const xzero=VX(0);
+  let sv='<svg role="img" aria-label="'+esc((d.label||RKT.metric)+' team ranking for '+lgScopeLabel())+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
+  sv+='<line x1="'+xzero+'" y1="'+(MT-5)+'" x2="'+xzero+'" y2="'+(MT+rows.length*BH)+'" stroke="var(--text3)" stroke-opacity=".65" stroke-width="1"/>';
   rows.forEach(function(r,i){
-    const y=MT+i*BH,w=Math.max(2,Math.abs(r.value)/mx*(W-ML-90));
+    const y=MT+i*BH,xv=VX(r.value),x=Math.min(xzero,xv),w=Math.max(2,Math.abs(xv-xzero));
     const c=tier(r.pct).c,on=r.team===SEL;
     sv+='<text x="'+(ML-9)+'" y="'+(y+14)+'" fill="'+(on?'var(--accent)':'var(--text2)')+'" font-size="11" font-weight="'+(on?800:600)+
         '" text-anchor="end" font-family="Inter">'+esc(tname(r.team))+'</text>';
-    sv+='<rect x="'+ML+'" y="'+(y+4)+'" width="'+w+'" height="14" rx="3" fill="'+c+'" fill-opacity="'+(on?0.98:0.7)+'"/>';
-    sv+='<text x="'+(ML+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" font-family="Inter">'+
+    sv+='<rect x="'+x+'" y="'+(y+4)+'" width="'+w+'" height="14" rx="3" fill="'+c+'" fill-opacity="'+(on?0.98:0.7)+'"/>';
+    sv+='<text x="'+(r.value<0?x-8:x+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" text-anchor="'+(r.value<0?'end':'start')+'" font-family="Inter">'+
         fmt(r.value,d.unit)+'</text>';
     sv+='<text x="'+(ML-9-0)+'" y="'+(y+14)+'" opacity="0"></text>';
   });
@@ -873,9 +894,9 @@ function renderRankings(){
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="RKT.metric=this.value;renderRankings()">'+metricOpts(RKT.metric)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:220px"><span class="kpi-l">Highlight</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderRankings()">'+
-      TEAMS.map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
+      scopedTeams().map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div>'+
-    '<div class="foot" style="margin-top:8px">Sorted best to worst, so inverted metrics like PPDA and goals conceded put the strongest team on top. '+
+    '<div class="foot" style="margin-top:8px">'+esc(lgScopeLabel())+' \u00B7 sorted best to worst by league percentile, so inverted metrics like PPDA and goals conceded put the strongest team on top. The hairline marks zero and bars show the raw-value range. '+
     (d.definition?esc(d.definition):'')+'</div></div>'+
     '<div class="split2"><div class="sect">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
 }
@@ -913,12 +934,13 @@ const SEQ_GROUPS=[
 // z-score -> the same colour language used elsewhere on the site
 function zBand(z){
   if(z==null)return {c:'var(--text3)',t:''};
-  if(z>=1.5) return {c:'var(--elite)', t:'well above league'};
-  if(z>=0.6) return {c:'var(--above)', t:'above league'};
-  if(z<=-1.5)return {c:'var(--poor)',  t:'well below league'};
-  if(z<=-0.6)return {c:'var(--below)', t:'below league'};
-  return {c:'var(--avg)', t:'around league average'};
+  if(z>=1.5) return {c:'var(--style-hi)', t:'much higher than league'};
+  if(z>=0.6) return {c:'var(--style-hi)', t:'higher than league'};
+  if(z<=-1.5)return {c:'var(--style-low)', t:'much lower than league'};
+  if(z<=-0.6)return {c:'var(--style-low)', t:'lower than league'};
+  return {c:'var(--text2)', t:'around league average'};
 }
+function zFmt(z){z=Math.abs(+z)<0.05?0:+z;return (z>0?'+':'')+z.toFixed(1)}
 async function renderSequences(t){
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
@@ -940,10 +962,10 @@ async function renderSequences(t){
         const v=a[c[0]];if(v==null)return;
         const z=Z[c[0]];const b=zBand(z);
         const val=(+v).toFixed(c[2])+(c[3]==='%'?'%':'');
-        tiles+='<div class="stile" title="'+esc(b.t)+(z==null?'':' ('+(z>0?'+':'')+z.toFixed(1)+'\u03c3)')+'">'+
+        tiles+='<div class="stile" title="'+esc(b.t)+(z==null?'':' ('+zFmt(z)+'\u03c3)')+'">'+
           '<div class="stile-l">'+esc(c[1])+'</div>'+
           '<div class="stile-v" style="color:'+b.c+'">'+val+'</div>'+
-          '<div class="stile-z">'+(z==null?'':(z>0?'+':'')+z.toFixed(1)+'\u03c3')+'</div></div>';
+          '<div class="stile-z">'+(z==null?'':zFmt(z)+'\u03c3')+'</div></div>';
       });
       if(!tiles)return;
       cards+='<div class="sgrp"><div class="sgrp-h">'+esc(grp.g)+
@@ -953,49 +975,37 @@ async function renderSequences(t){
     cards+='</div>';
     const radar=seqRadar(t,Z,RAW);
     main.innerHTML=teamHead(t)+cards+radar+
-      '<div class="foot">Sequence style is shown as z-scores from the comparison pool stored by the sequence view. The dashed ring is that pool mean and every ring out is one standard deviation. '+
-      'Read extreme spokes as stronger signals and near-mean spokes lightly. '+
+      '<div class="foot">Sequence style is shown as z-scores from the comparison pool stored by the sequence view. The centre line is that pool mean; each full half-rail spans 2.5 standard deviations. '+
+      'Blue means higher than the league and amber means lower, not better and worse. Read longer bars as stronger stylistic signals and near-centre bars lightly. '+
       'Hold-up and central-prog use deliberately strict definitions \u2014 see the glossary. '+
       'Open play only; a possession is a run of controlled touches by one team, ended by a turnover, stoppage or set piece.</div>';
     wireTips();
   }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function seqRadar(t,Z,RAW){
-  const N=SEQ_AXES.length, cx=360, cy=330, R=205, zmin=-2.5, zmax=2.5;
-  function rad(z){const zc=Math.max(zmin,Math.min(zmax,z));return (zc-zmin)/(zmax-zmin)*R}
-  function pt(i,rr){const ang=(-90+i*360/N)*Math.PI/180;return[cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)]}
-  let s='<svg viewBox="0 0 720 660" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-width:660px;max-height:min(620px,calc(100vh - 220px));margin:0 auto;display:block">';
-  [-2,-1,0,1,2].forEach(function(z){
-    const rr=rad(z),dash=(z===0);
-    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr.toFixed(1)+'" fill="none" stroke="'+(dash?'var(--accent)':'var(--border)')+
-       '" stroke-opacity="'+(dash?0.75:0.5)+'"'+(dash?' stroke-dasharray="5 4"':'')+' stroke-width="'+(dash?1:0.8)+'"/>';
-    s+='<text x="'+cx+'" y="'+(cy-rr-2).toFixed(1)+'" fill="var(--text3)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">'+(z>0?'+':'')+z+'\u03c3</text>';
+  let s='<div class="dev-legend"><span class="dev-key"><i style="background:var(--style-low)"></i>Lower than league</span>'+
+    '<span>\u22122.5\u03c3</span><span>League mean</span><span>+2.5\u03c3</span>'+
+    '<span class="dev-key"><i style="background:var(--style-hi)"></i>Higher than league</span></div><div class="dev-groups">';
+  SEQ_GROUPS.forEach(function(grp){
+    s+='<div class="dev-group"><div class="dev-group-h">'+esc(grp.g)+'</div>';
+    grp.m.forEach(function(m){
+      const z=Z[m[0]]==null?0:+Z[m[0]],zc=Math.max(-2.5,Math.min(2.5,z));
+      const end=50+(zc/2.5)*50,left=Math.min(50,end),width=Math.max(z===0?0:1,Math.abs(end-50));
+      const raw=RAW[m[0]],rawtxt=raw==null?'\u2014':(+raw).toFixed(m[2])+(m[3]||'');
+      const col=z<0?'var(--style-low)':'var(--style-hi)';
+      s+='<div class="dev-row" title="'+esc(m[1])+': '+rawtxt+'; '+zFmt(z)+' standard deviations">'+
+        '<div class="dev-lbl">'+esc(m[1])+'</div><div class="dev-track"><i class="dev-zero"></i>'+
+        '<i class="dev-fill" style="left:'+left.toFixed(1)+'%;width:'+width.toFixed(1)+'%;background:'+col+'"></i></div>'+
+        '<div class="dev-val">'+rawtxt+'<span class="dev-z">'+zFmt(z)+'\u03c3</span></div></div>';
+    });
+    s+='</div>';
   });
-  for(let i=0;i<N;i++){const p=pt(i,R);
-    s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="var(--border)" stroke-opacity="0.4" stroke-width="0.6"/>';
-  }
-  let poly='';
-  for(let i=0;i<N;i++){const z=Z[SEQ_AXES[i][0]]==null?0:Z[SEQ_AXES[i][0]];const p=pt(i,rad(z));poly+=p[0].toFixed(1)+','+p[1].toFixed(1)+' '}
-  s+='<polygon points="'+poly.trim()+'" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
-  for(let i=0;i<N;i++){const z=Z[SEQ_AXES[i][0]]==null?0:Z[SEQ_AXES[i][0]];const p=pt(i,rad(z));
-    s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.4" fill="var(--accent)"/>';}
-  for(let i=0;i<N;i++){
-    const ax=SEQ_AXES[i],lp=pt(i,R+15);
-    const ca=Math.cos((-90+i*360/N)*Math.PI/180);
-    const anchor=ca>0.2?'start':(ca<-0.2?'end':'middle');
-    const raw=RAW[ax[0]];
-    const pct=(ax[0].indexOf('_pct')>=0||ax[0]==='central_prog_share');
-    const rawtxt=raw==null?'':((+raw).toFixed(ax[2])+(pct?'%':''));
-    s+='<text x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+'" fill="var(--text2)" font-size="10" font-weight="600" text-anchor="'+anchor+'" font-family="Inter">'+esc(ax[1])+'</text>';
-    s+='<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+11).toFixed(1)+'" fill="var(--accent)" font-size="10.5" font-weight="700" text-anchor="'+anchor+'" font-family="JetBrains Mono,monospace">'+rawtxt+'</text>';
-  }
-  s+='</svg>';
+  s+='</div>';
   return '<div class="sect" style="margin-top:12px"><div class="viz-eyebrow">Season style</div>'+
-    '<div class="viz-title">'+esc(tname(t.team))+' \u2014 sequence style</div>'+
-    '<div class="viz-sub">The same numbers as above, read as one shape. Each spoke is how far '+
-    esc(tname(t.team))+' sits from the '+esc(lgName(lgOf(SEL)))+' average: the dashed ring is the mean '+
-    'and every ring beyond it is one standard deviation. Spokes pushing outward are what makes them '+
-    'distinctive; a shape hugging the dashed ring is a side without a strong stylistic fingerprint.</div>'+
+    '<div class="viz-title">'+esc(tname(t.team))+' \u2014 deviations from league style</div>'+
+    '<div class="viz-sub">The same numbers as above, grouped by football question. Each bar shows how far '+
+    esc(tname(t.team))+' sits from the '+esc(lgName(lgOf(SEL)))+' average. Direction describes style, not quality; '+
+    'the raw value and exact z-score remain beside every bar.</div>'+
     s+'</div>';
 }
 
