@@ -804,11 +804,11 @@ function scoutCtrls(){
     '<button class="btn sec" onclick="SK.metrics=[];renderScout()">Clear</button></div>';
   h+='<div class="mchips">'+SK.metrics.map(function(m,i){const d=defOf(m.k)||{};
     return '<div class="mchip"><span class="mchip-nm">'+esc(d.label||m.k)+'</span>'+
-      '<input type="range" min="0" max="5" step="1" value="'+m.w+'" oninput="setW('+i+',this.value)">'+
+      '<input type="range" min="0" max="5" step="1" value="'+m.w+'" oninput="this.nextElementSibling.textContent=this.value" onchange="setW('+i+',this.value)">'+
       '<span class="mchip-w">'+m.w+'</span><button onclick="delMetric('+i+')">&times;</button></div>'}).join('')+'</div>';
   h+='<div class="foot" style="margin-top:8px"><b>Every number in the table below is a percentile from 0 to 100</b>, measured inside the selected role pool, '+
      'league, and sample threshold, not a raw stat. 90 means better than 90% of qualifying players in that league and role. <b>Fit</b> is the weighted average of those percentiles using the sliders '+
-     '(0 ignores a metric, 5 counts it five times as much as 1). Click any column header to sort; click a player to open their profile.</div></div>';
+     '(0 ignores a metric, 5 counts it five times as much as 1). A player must have a percentile for every metric weighted above zero, so incomplete profiles cannot rise on a partial score. Click any column header to sort; click a player to open their profile.</div></div>';
   return h;
 }
 function addMetric(k){if(!k||SK.metrics.length>=10)return;for(var i=0;i<SK.metrics.length;i++)if(SK.metrics[i].k===k)return;SK.metrics.push({k:k,w:3});renderScout()}
@@ -817,6 +817,14 @@ function setW(i,v){SK.metrics[i].w=+v;renderScout()}
 function sortScout(col){
   if(SK.sort.col===col)SK.sort.dir=-SK.sort.dir; else {SK.sort.col=col;SK.sort.dir=-1}
   drawScout();
+}
+function scoutFit(v){
+  let acc=0,used=0,required=0,found=0;
+  SK.metrics.forEach(function(m){
+    if(m.w<=0)return;required++;
+    if(v[m.k]&&v[m.k].pct!=null){acc+=(+v[m.k].pct)*m.w;used+=m.w;found++}
+  });
+  return required&&found===required&&used?acc/used:null;
 }
 async function renderScout(){
   const main=document.getElementById('main');
@@ -829,11 +837,9 @@ async function renderScout(){
     const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
     SK.rows=[];
     Object.keys(by).forEach(function(pid){
-      const v=by[pid];let acc=0,used=0;
-      SK.metrics.forEach(function(m){if(v[m.k]&&v[m.k].pct!=null){acc+=(+v[m.k].pct)*m.w;used+=m.w}});
-      if(!used)return;
+      const v=by[pid],fit=scoutFit(v);if(fit==null)return;
       const p=playerOf(pid)||{};if(!p.player_name||!teamInLeague(p.team))return;
-      SK.rows.push({id:pid,name:p.player_name,team:p.team,n90:+p.nineties,fit:acc/used,v:v});
+      SK.rows.push({id:pid,name:p.player_name,team:p.team,n90:+p.nineties,fit:fit,v:v});
     });
     drawScout();
   }catch(e){main.innerHTML=scoutCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
