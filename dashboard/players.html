@@ -109,6 +109,9 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .row-val{font:500 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
 .bar-f{height:100%;border-radius:5px;transition:width .35s ease}
+.rankbar{height:9px;background:var(--surface2);border-radius:5px;position:relative;overflow:hidden}
+.rankbar-f{position:absolute;top:0;height:100%;border-radius:5px;transition:left .35s ease,width .35s ease}
+.rankbar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--text3);opacity:.7}
 .row-pct{font:700 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums}
 .na{color:var(--text3);font:500 10px/1 'Inter'}
 
@@ -262,6 +265,12 @@ var PLG={}, PLEAGUES=[],
 function lgOfTeam(t){return PLG[t]||'USA-MLS'}
 function leagueLabel(t){var c=lgOfTeam(t);for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===c)return PLEAGUES[i].display_name;return c}
 function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
+function scopeLabel(){
+  if(PLGSCOPE==='ALL')return 'All leagues';
+  for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===PLGSCOPE)return PLEAGUES[i].display_name;
+  return PLGSCOPE;
+}
+function scopeQuery(q){if(PLGSCOPE!=='ALL')q.league='eq.'+PLGSCOPE;return q}
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
 
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
@@ -520,8 +529,11 @@ function setPlayerLeague(v){
   try{localStorage.setItem('leagueScope',v)}catch(e){}
   const current=playerOf(SEL);
   if(current&&!teamInLeague(current.team)){SEL=null;PACT=null;PCAR=null;PREC=null}
+  SC.hi=SC.hi.filter(function(id){const p=playerOf(id);return p&&teamInLeague(p.team)});
+  if(CMP.a&&!teamInLeague((playerOf(CMP.a)||{}).team))CMP.a=null;
+  if(CMP.b&&!teamInLeague((playerOf(CMP.b)||{}).team))CMP.b=null;
   fillTeamSel();updateHdrSub();renderList();
-  if(!SEL)document.getElementById('main').innerHTML='<div class="empty">Select a player</div>';
+  setTab(TAB);
 }
 function renderList(){
   const t=document.getElementById('teamSel').value,pl=document.getElementById('poolSel').value;
@@ -667,7 +679,7 @@ function metricOptions(sel){
   return out+'</optgroup>';
 }
 function scatterCtrls(){
-  const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90})
+  const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
   let h='<div class="ctrls"><div class="crow">'+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];renderScatter()">'+
@@ -692,13 +704,13 @@ async function renderScatter(){
   const main=document.getElementById('main');
   main.innerHTML=scatterCtrls()+'<div class="spin"></div>';
   try{
-    const rows=await sbAll('mv_player_percentiles',
-      {pool:'eq.'+SC.pool,metric:'in.('+SC.x+','+SC.y+')',select:'player_id,metric,value,pct'});
+    const rows=await sbAll('mv_player_percentiles',scopeQuery(
+      {pool:'eq.'+SC.pool,metric:'in.('+SC.x+','+SC.y+')',select:'player_id,metric,value,pct,league'}));
     const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
     const pts=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid];if(!v[SC.x]||!v[SC.y])return;
-      const p=playerOf(pid)||{};
+      const p=playerOf(pid)||{};if(!p.player_name||!teamInLeague(p.team))return;
       pts.push({id:pid,name:p.player_name||'?',team:p.team||'',x:+v[SC.x].value,y:+v[SC.y].value,
                 px:+v[SC.x].pct,py:+v[SC.y].pct,hi:SC.hi.indexOf(pid)>=0});
     });
@@ -719,7 +731,9 @@ function scatterSvg(pts){
   function med(a){const s=a.slice().sort(function(p,q){return p-q});return s[Math.floor(s.length/2)]}
   const mx=med(xs),my=med(ys);
   const dx=defOf(SC.x)||{},dy=defOf(SC.y)||{};
-  let s='<div class="sect"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" '+
+  const xdir=dx.higher_is_better===false?' (lower is better)':'';
+  const ydir=dy.higher_is_better===false?' (lower is better)':'';
+  let s='<div class="sect"><svg role="img" aria-label="'+esc(POOL_NAME[SC.pool]+' scatter plot for '+scopeLabel()+': '+(dx.label||SC.x)+' versus '+(dy.label||SC.y))+'." viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" '+
         'style="width:100%;height:auto;max-height:calc(100vh - 250px);display:block">';
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
@@ -743,10 +757,10 @@ function scatterSvg(pts){
     s+='<text x="'+(right?cx+13:cx-13)+'" y="'+(cy+4)+'" fill="var(--accent)" font-size="12" font-weight="700" '+
        'text-anchor="'+(right?'start':'end')+'" font-family="Inter">'+esc(p.name)+'</text>';
   });
-  s+='<text x="'+(W/2)+'" y="'+(H-6)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
-  s+='<text transform="translate(13,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
+  s+='<text x="'+(W/2)+'" y="'+(H-6)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc((dx.label||'')+xdir)+'</text>';
+  s+='<text transform="translate(13,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc((dy.label||'')+ydir)+'</text>';
   s+='</svg><div class="foot" style="margin-top:4px">'+pts.length+' players \u00B7 '+POOL_NAME[SC.pool]+
-     ' \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are pool medians \u00B7 dot colour is the average of both percentiles</div></div>';
+     ' \u00B7 '+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are medians of the players shown \u00B7 dot colour averages each player\u2019s two league-and-role percentiles</div></div>';
   return s;
 }
 /* Delegated so it survives re-renders, and small marks get an invisible
@@ -793,7 +807,7 @@ function scoutCtrls(){
       '<input type="range" min="0" max="5" step="1" value="'+m.w+'" oninput="setW('+i+',this.value)">'+
       '<span class="mchip-w">'+m.w+'</span><button onclick="delMetric('+i+')">&times;</button></div>'}).join('')+'</div>';
   h+='<div class="foot" style="margin-top:8px"><b>Every number in the table below is a percentile from 0 to 100</b>, measured inside the selected role pool, '+
-     'not a raw stat. 90 means better than 90% of players in that role. <b>Fit</b> is the weighted average of those percentiles using the sliders '+
+     'league, and sample threshold, not a raw stat. 90 means better than 90% of qualifying players in that league and role. <b>Fit</b> is the weighted average of those percentiles using the sliders '+
      '(0 ignores a metric, 5 counts it five times as much as 1). Click any column header to sort; click a player to open their profile.</div></div>';
   return h;
 }
@@ -810,15 +824,15 @@ async function renderScout(){
   if(!SK.metrics.length){main.innerHTML=scoutCtrls()+'<div class="empty">Add at least one metric</div>';return}
   try{
     const keys=SK.metrics.map(function(m){return m.k}).join(',');
-    const rows=await sbAll('mv_player_percentiles',
-      {pool:'eq.'+SK.pool,metric:'in.('+keys+')',select:'player_id,metric,value,pct'});
+    const rows=await sbAll('mv_player_percentiles',scopeQuery(
+      {pool:'eq.'+SK.pool,metric:'in.('+keys+')',select:'player_id,metric,value,pct,league'}));
     const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
     SK.rows=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid];let acc=0,used=0;
       SK.metrics.forEach(function(m){if(v[m.k]&&v[m.k].pct!=null){acc+=(+v[m.k].pct)*m.w;used+=m.w}});
       if(!used)return;
-      const p=playerOf(pid)||{};
+      const p=playerOf(pid)||{};if(!p.player_name||!teamInLeague(p.team))return;
       SK.rows.push({id:pid,name:p.player_name,team:p.team,n90:+p.nineties,fit:acc/used,v:v});
     });
     drawScout();
@@ -832,8 +846,12 @@ function drawScout(){
     else if(SK.sort.col==='team'){av=(a.team||'').toLowerCase();bv=(b.team||'').toLowerCase()}
     else if(SK.sort.col==='n90'){av=a.n90;bv=b.n90}
     else{av=a.v[SK.sort.col]?+a.v[SK.sort.col].pct:-1;bv=b.v[SK.sort.col]?+b.v[SK.sort.col].pct:-1}
-    if(av<bv)return SK.sort.dir; if(av>bv)return -SK.sort.dir; return 0;
+    if(av<bv)return -SK.sort.dir; if(av>bv)return SK.sort.dir; return 0;
   }).slice(0,50);
+  if(!rows.length){
+    document.getElementById('main').innerHTML=scoutCtrls()+'<div class="empty">No qualifying players in '+esc(scopeLabel())+' for this role and metric set</div>';
+    return;
+  }
   const ar=function(c){return SK.sort.col===c?(SK.sort.dir===-1?' \u2193':' \u2191'):''};
   const cls=function(c){return SK.sort.col===c?' class="sorted"':''};
   let h='<div class="sect"><div style="max-height:calc(100vh - 360px);overflow:auto"><table><thead><tr>'+
@@ -864,7 +882,7 @@ function scoutChart(rows){
   if(!rows.length)return'';
   const W=1100,BH=22,MT=30,ML=170,H=MT+rows.length*BH+22;
   let s='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Fit \u2014 top '+rows.length+'</span></div>'+
-        '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
+        '<svg role="img" aria-label="Top '+rows.length+' '+esc(POOL_NAME[SK.pool])+' scout fits for '+esc(scopeLabel())+'." viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
   [0,25,50,75,100].forEach(function(v){
     const x=ML+(v/100)*(W-ML-30);
     s+='<line x1="'+x+'" y1="'+(MT-8)+'" x2="'+x+'" y2="'+(MT+rows.length*BH)+'" stroke="var(--border)" stroke-dasharray="3 3"/>';
@@ -876,14 +894,14 @@ function scoutChart(rows){
     s+='<rect x="'+ML+'" y="'+(y+4)+'" width="'+w+'" height="12" rx="3" fill="'+tier(r.fit).c+'" fill-opacity="0.85"></rect>';
     s+='<text x="'+(ML+w+7)+'" y="'+(y+14)+'" fill="'+tier(r.fit).c+'" font-size="10" font-weight="700" font-family="Inter">'+Math.round(r.fit)+'</text>';
   });
-  s+='</svg><div class="foot">Fit is the weighted average of the selected metrics\u2019 percentiles inside '+POOL_NAME[SK.pool]+'.</div></div>';
+  s+='</svg><div class="foot">'+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 fit is the weighted average of the selected metrics\u2019 league-and-role percentiles inside '+POOL_NAME[SK.pool]+'.</div></div>';
   return s;
 }
 
 /* ---------- COMPARE ---------- */
 async function renderCompare(){
   const main=document.getElementById('main');
-  const pool=PLAYERS.filter(function(p){return p.pool===CMP.pool&&p.nineties>=MIN90})
+  const pool=PLAYERS.filter(function(p){return p.pool===CMP.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
   if(!CMP.a&&pool[0])CMP.a=pool[0].player_id;
   if(!CMP.b&&pool[1])CMP.b=pool[1].player_id;
@@ -907,10 +925,10 @@ async function renderCompare(){
     const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
     let h=ctrl+'<div class="sect" style="margin-bottom:12px"><div class="cmp-row">'+
       '<div style="text-align:right"><div style="font:800 15px/1 Inter">'+esc(pa.player_name)+'</div>'+
-      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pa.team))+' \u00B7 '+(+pa.nineties).toFixed(1)+' \u00D7 90</div></div>'+
+      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pa.team))+' \u00B7 '+esc(leagueLabel(pa.team))+' \u00B7 '+(+pa.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '<div class="cmp-lbl" style="color:var(--accent);font-weight:800">'+POOL_NAME[CMP.pool]+'</div>'+
       '<div><div style="font:800 15px/1 Inter">'+esc(pb.player_name)+'</div>'+
-      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pb.team))+' \u00B7 '+(+pb.nineties).toFixed(1)+' \u00D7 90</div></div>'+
+      '<div style="font:500 10px/1.4 Inter;color:var(--text3);margin-top:3px">'+esc(tname(pb.team))+' \u00B7 '+esc(leagueLabel(pb.team))+' \u00B7 '+(+pb.nineties).toFixed(1)+' \u00D7 90</div></div>'+
       '</div></div><div class="grid">';
     groups.forEach(function(g){
       const ms=DEFS.filter(function(d){return d.grp===g&&(A[d.key]||B[d.key])});if(!ms.length)return;
@@ -970,39 +988,43 @@ function rankCtrls(){
     '<div class="cfield" style="min-width:130px"><span class="clbl">Order</span><select class="sel" onchange="RK.dir=+this.value;renderRank()">'+
       '<option value="-1"'+(RK.dir===-1?' selected':'')+'>Highest first</option>'+
       '<option value="1"'+(RK.dir===1?' selected':'')+'>Lowest first</option></select></div>'+
-    '</div><div class="foot" style="margin-top:8px">Ranks by <b>percentile within role</b>, so players from different roles are comparable. '+
-    'Filter to one role to rank on the raw value within that pool instead. Click a player to open their profile.</div></div>';
+    '</div><div class="foot" style="margin-top:8px">With all roles selected, rank uses each player\u2019s <b>league-and-role percentile</b>. '+
+    'With one role selected, rank uses the <b>raw metric value</b> because the units are directly comparable. The league picker above controls the population. Click a player to open their profile.</div></div>';
 }
 async function renderRank(){
   const main=document.getElementById('main');
   main.innerHTML=rankCtrls()+'<div class="spin"></div>';
   try{
-    const q={metric:'eq.'+RK.metric,select:'player_id,pool,value,pct'};
+    const q=scopeQuery({metric:'eq.'+RK.metric,select:'player_id,pool,value,pct,league'});
     if(RK.pool)q.pool='eq.'+RK.pool;
     const rows=await sbAll('mv_player_percentiles',q);
     const d=defOf(RK.metric)||{};
     const list=rows.map(function(r){
       const p=playerOf(r.player_id)||{};
       return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
-    }).filter(function(r){return r.name})
+    }).filter(function(r){return r.name&&teamInLeague(r.team)})
       .sort(function(a,b){
-        if(a.pct!==b.pct)return (a.pct-b.pct)*RK.dir;
-        return (a.value-b.value)*RK.dir;
+        const av=RK.pool?a.value:a.pct,bv=RK.pool?b.value:b.pct;
+        if(av!==bv)return (av-bv)*RK.dir;
+        return (a.pct-b.pct)*RK.dir;
       }).slice(0,RK.n);
     if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players</div>';return}
-    const mxv=Math.max.apply(null,list.map(function(r){return Math.abs(r.value)}))||1;
+    const vals=list.map(function(r){return r.value});
+    const vmin=Math.min(0,Math.min.apply(null,vals)),vmax=Math.max(0,Math.max.apply(null,vals));
+    const vrange=(vmax-vmin)||1,zeroPct=((0-vmin)/vrange)*100;
     let h='<div class="sect"><div class="sect-h"><span>'+esc(d.label||RK.metric)+
       (RK.pool?' \u00B7 '+POOL_NAME[RK.pool]:' \u00B7 all roles')+'</span>'+
-      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+list.length+' shown</span></div>'+
+      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+esc(scopeLabel())+' \u00B7 '+list.length+' shown</span></div>'+
       '<div style="max-height:calc(100vh - 408px);min-height:260px;overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
       '<th class="num" style="cursor:default" title="Click any value to see the actions behind it">'+
       esc(d.label||'Value')+(DRILL[RK.metric]?' \u25F0':'')+'</th>'+
-      '<th style="cursor:default;width:200px" title="Bar length is this player\u2019s raw value as a share of the highest value shown">Value vs best shown</th>'+
+      '<th style="cursor:default;width:200px" title="Position on the raw-value range among the players shown; the hairline marks zero">Raw value \u00B7 range shown</th>'+
       '<th class="num" style="cursor:default">Pct</th></tr></thead><tbody>';
     list.forEach(function(r,i){
-      const t=tier(r.pct),w=Math.max(2,Math.abs(r.value)/mxv*100);
+      const t=tier(r.pct),valuePct=((r.value-vmin)/vrange)*100;
+      const left=Math.min(zeroPct,valuePct),w=Math.max(1,Math.abs(valuePct-zeroPct));
       h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
         '<td><span class="pname-link" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</span></td>'+
         '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
@@ -1012,10 +1034,12 @@ async function renderRank(){
            ? '<span class="val-link" onclick="drillFor(\''+r.id+'\',\''+RK.metric+'\')" '+
              'title="Click to plot these actions on the pitch">'+fmt(r.value,d.unit)+'</span>'
            : '<span style="font-weight:700">'+fmt(r.value,d.unit)+'</span>')+'</td>'+
-        '<td><div class="bar"><div class="bar-f" style="width:'+w+'%;background:'+t.c+'"></div></div></td>'+
+        '<td><div class="rankbar" title="'+esc(fmt(r.value,d.unit))+' within the range shown">'+
+          '<div class="rankbar-zero" style="left:'+zeroPct+'%"></div>'+
+          '<div class="rankbar-f" style="left:'+left+'%;width:'+w+'%;background:'+t.c+'"></div></div></td>'+
         '<td class="num" style="color:'+t.c+';font-weight:700">'+r.pct+'</td></tr>';
     });
-    h+='</tbody></table></div><div class="foot">'+esc(d.definition||'')+
+    h+='</tbody></table></div><div class="foot">'+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 '+esc(d.definition||'')+
        (d.higher_is_better===false?' <b>Lower is better</b>, so the percentile is inverted.':'')+'</div>'+
        legendHtml()+'</div>';
     main.innerHTML=rankCtrls()+h;
