@@ -36,6 +36,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - Its axes cannot extend below zero when both displayed metrics are nonnegative.
 - Only the selected team and structural X/Y extremes are labelled. Every dot retains exact values on hover.
 - Player and Team plot modes, filters and layer toggles expose pressed state and visible keyboard focus.
+- Team pass maps report completed and incomplete populations separately; incomplete routes are dashed in both pattern and event modes.
 - Player metric rows and ranking values that open pitch evidence expose button roles, descriptive names and Enter/Space activation.
 - The pitch-evidence overlay exposes dialog semantics, moves focus to Close, responds to Escape and returns focus to its trigger.
 

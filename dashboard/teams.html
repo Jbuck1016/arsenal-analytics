@@ -575,7 +575,7 @@ function okFilter(a){
 function outcomeNote(){
   if(MP.outcome==='ok')return'';
   if(MP.outcome==='fail')return' Showing only actions that failed.';
-  return' Completed in green, failed in red.';
+  return' Completed in green; incomplete routes are red and dashed.';
 }
 function inZone(x,y){
   if(MP.third==='def'&&!(x<33.3))return false;
@@ -634,11 +634,13 @@ function tline(a,c,w,op){
   const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
   const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
   const nx=-dy/len, ny=dx/len, t=w*0.16, h=w*0.78;
-  return '<path d="M'+(x1+nx*t).toFixed(2)+' '+(y1+ny*t).toFixed(2)+
+  const body='<path d="M'+(x1+nx*t).toFixed(2)+' '+(y1+ny*t).toFixed(2)+
     'L'+(x2+nx*h).toFixed(2)+' '+(y2+ny*h).toFixed(2)+
     'L'+(x2-nx*h).toFixed(2)+' '+(y2-ny*h).toFixed(2)+
     'L'+(x1-nx*t).toFixed(2)+' '+(y1-ny*t).toFixed(2)+
     'Z" fill="'+c+'" fill-opacity="'+op+'"/>';
+  return body+(c===TPAL.fail?'<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+
+    '" stroke="'+c+'" stroke-width="'+Math.max(.16,w*.55)+'" stroke-opacity=".9" stroke-dasharray="1.2 .8"/>':'');
 }
 /* Aggregate season actions into a coarse 6 x 4 grid so the default view shows
    recurring routes, not a hairball of hundreds of individual vectors. */
@@ -663,7 +665,8 @@ function flowPattern(items,color,limit){
     const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
     const w=.45+1.7*Math.sqrt(flows[k]/fm),ah=1.5+w*.65,bx=x2-ux*ah,by=y2-uy*ah;
     s+='<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
-      '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"/>'+
+      '" stroke="'+color+'" stroke-width="'+w.toFixed(2)+'" stroke-opacity="'+(.34+.5*flows[k]/fm).toFixed(2)+'" stroke-linecap="round"'+
+      (color===TPAL.fail?' stroke-dasharray="1.2 .8"':'')+'/>'+
       '<path d="M'+x2.toFixed(2)+' '+y2.toFixed(2)+'L'+(bx+nx*ah*.55).toFixed(2)+' '+(by+ny*ah*.55).toFixed(2)+
       'L'+(bx-nx*ah*.55).toFixed(2)+' '+(by-ny*ah*.55).toFixed(2)+'Z" fill="'+color+'" fill-opacity=".86"/>';
     if(idx<3){const mx=(x1+x2)/2+nx*1.8,my=(y1+y2)/2+ny*1.8;
@@ -682,6 +685,11 @@ function mapSample(items,limit){
 }
 function mapSampleNote(all,shown,label){
   return shown.length<all.length?'<span>Displaying '+shown.length.toLocaleString()+' of '+all.length.toLocaleString()+' '+(label||'events')+' · evenly sampled from the returned population · use zone filters to refine</span>':'';
+}
+function passOutcomeLegend(items,successColor,successLabel){
+  const ok=items.filter(function(a){return a.ok}).length,fail=items.length-ok;
+  return (ok?'<span><i style="background:'+successColor+'"></i>'+successLabel+' <b>'+ok.toLocaleString()+'</b></span>':'')+
+    (fail?'<span><i style="background:'+TPAL.fail+'"></i>Incomplete · dashed <b>'+fail.toLocaleString()+'</b></span>':'');
 }
 async function renderMaps(t){
   const main=document.getElementById('main');
@@ -704,7 +712,7 @@ async function renderMaps(t){
         const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
         if(ok.length)inner+=flowPattern(ok,G,9);if(fail.length)inner+=flowPattern(fail,R,5);
       }else shown.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
-      leg='<span><i style="background:'+G+'"></i>Passes <b>'+ps.length.toLocaleString()+'</b></span>'+
+      leg=passOutcomeLegend(ps,G,'Completed')+
           (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Each displayed vector is one event</span>')+mapSampleNote(ps,shown,'pass events');
     }
     else if(m.k==='prog'){
@@ -713,7 +721,7 @@ async function renderMaps(t){
       if(pattern){const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
         if(ok.length)inner+=flowPattern(ok,B,8);if(fail.length)inner+=flowPattern(fail,R,5);
       }else shown.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
-      leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>'+
+      leg=passOutcomeLegend(ps,B,'Completed progressive')+
         (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>')+mapSampleNote(ps,shown,'progressive-pass events');
     }
     else if(m.k==='box'){
@@ -723,7 +731,7 @@ async function renderMaps(t){
       }else ps.forEach(function(a){const c2=a.ok?AC:R;
         inner+=tline(a,c2,0.3,a.ok?0.62:0.42)+origin(a,c2,0.3,a.ok?0.62:0.42)+
         '<circle cx="'+PX(a.end_x)+'" cy="'+PY(a.end_y)+'" r="0.38" fill="'+c2+'" fill-opacity="0.92"/>'});
-      leg='<span><i style="background:'+AC+'"></i>Into the box <b>'+ps.length.toLocaleString()+'</b></span>'+
+      leg=passOutcomeLegend(ps,AC,'Completed into box')+
         (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>');
     }
     else if(m.k==='carries'){

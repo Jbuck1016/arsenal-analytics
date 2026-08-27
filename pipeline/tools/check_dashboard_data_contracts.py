@@ -113,6 +113,10 @@ def main() -> int:
             "mapSample(ps,1200)" in teams and "mapSample(rows,1800)" in teams and
             "evenly sampled from the returned population" in teams,
             "teams.html: season event drill-downs cap SVG density and disclose sampling")
+    require("function passOutcomeLegend(items,successColor,successLabel)" in teams and
+            "Incomplete · dashed" in teams and
+            "color===TPAL.fail?' stroke-dasharray" in teams,
+            "teams.html: pass outcome counts and failure dash do not rely on colour")
     require("aria-pressed=\"'+(MP.kind===m.k)+'\"" in teams and
             "aria-pressed=\"'+(MP.mode==='pattern')+'\"" in teams and
             "aria-pressed=\"'+(!off[l.k])+'\"" in players and
