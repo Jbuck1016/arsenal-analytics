@@ -186,6 +186,8 @@ tr:hover td{background:var(--surface)}
 .viz-leg b{font-weight:700;color:var(--text2)}
 .viz-leg .size-key{display:inline-flex;align-items:center;gap:6px}
 .viz-leg .size-key svg{width:112px;height:27px;overflow:visible}
+.viz-leg .shot-key{display:inline-flex;align-items:center;gap:5px}
+.viz-leg .shot-key svg{width:15px;height:15px;overflow:visible}
 .legend{display:flex;gap:12px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--border);
   border-radius:4px;background:var(--bg2);flex-wrap:wrap;align-items:center}
 /* keep the pitch inside the viewport so the panel beside it does not leave a tall gap */
@@ -1149,6 +1151,18 @@ function shotSizeKey(){
     '<circle cx="52" cy="10" r="6.3" fill="var(--accent)" fill-opacity=".65"/><text x="52" y="26" text-anchor="middle" fill="var(--text2)" font-size="8">0.20</text>'+
     '<circle cx="98" cy="10" r="10" fill="var(--accent)" fill-opacity=".65"/><text x="98" y="26" text-anchor="middle" fill="var(--text2)" font-size="8">0.50</text></svg></span>';
 }
+function shotOutcomeLegend(live,off){
+  const glyph={
+    goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
+    saved:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="'+c+'" fill-opacity=".8"/></svg>'},
+    blocked:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 1.5L14.5 8L8 14.5L1.5 8Z" fill="'+c+'" fill-opacity=".75"/></svg>'},
+    post:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="2"/></svg>'},
+    off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
+  };
+  return live.filter(function(l){return !off[l.k]}).map(function(l){
+    return '<span class="shot-key">'+glyph[l.k](l.color)+'<span>'+esc(l.label)+' <b>'+l.items.length+'</b></span></span>';
+  }).join('');
+}
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
 
 /* Pattern mode uses a deliberately coarse 6 x 4 grid: enough to reveal lanes
@@ -1248,6 +1262,7 @@ function vizLayers(grp,p){
       sub:'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+
           ' shots. Blocked attempts are separated \u2014 the provider files them as saves but they never reached the keeper.',
       sizeKey:true,
+      outcomeKey:true,
       layers:[
         L('goal','Goal',AC,by('goal'),mk(AC,'goal')),
         L('saved','Saved',G,by('saved'),mk(G,'saved')),
@@ -1387,8 +1402,8 @@ function vizPanel(grp,p){
     (live.length>1?'<button class="lchip solo" onclick="allLayers(\''+grp+'\')">reset</button>':'')+
     '</div>';
 
-  const legend=live.filter(function(l){return !off[l.k]})
-    .map(function(l){return lg(l.color,l.label,l.items.length)}).join('')+
+  const legend=(cfg.outcomeKey?shotOutcomeLegend(live,off):live.filter(function(l){return !off[l.k]})
+    .map(function(l){return lg(l.color,l.label,l.items.length)}).join(''))+
     (cfg.sizeKey?shotSizeKey():'')+
     (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'');
 

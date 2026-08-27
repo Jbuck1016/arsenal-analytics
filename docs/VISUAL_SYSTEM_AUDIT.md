@@ -14,6 +14,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - Nine overview cards fit on one desktop row, moving the visual answer higher in the viewport.
 - Scatter plots now state the relationship, population, units and median context; show the percentile legend; and do not invent negative axis space for metrics that cannot be negative.
 - Shot maps now include a proportional symbol key for 0.05, 0.20 and 0.50 xG rather than a text-only list.
+- The shot outcome legend demonstrates the actual goal, save, block, post and off-target glyphs rather than repeating identical colour dots.
 - Plot PDFs use a compressed high-quality image rather than embedding a multi-megabyte lossless canvas.
 - Incomplete pass vectors are dashed and labelled as such, so success versus failure does not depend on green versus red alone.
 
@@ -61,7 +62,6 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - Add short quadrant descriptions to relationship plots when the selected pair has a defensible football interpretation. Do not generate generic high/high labels that imply quality.
 - Consolidate duplicated layer counts where filter chips and the export legend repeat the same information without adding meaning.
 - Consider a collapsible Player overview on small screens; pitch-first fixes the ordering, but summary cards still consume substantial height.
-- Add a graphical outcome-shape key to shot maps so goal, saved, blocked, post and off-target remain distinguishable without colour.
 
 ### Data issues intentionally not disguised by styling
 

@@ -63,6 +63,9 @@ def main() -> int:
             "Example marker sizes: 0.05, 0.20 and 0.50 expected goals" in players and
             "cfg.sizeKey?shotSizeKey()" in players,
             "players.html: shot xG size encoding has a proportional symbol key")
+    require("function shotOutcomeLegend(live,off)" in players and
+            "outcomeKey:true" in players and "cfg.outcomeKey?shotOutcomeLegend" in players,
+            "players.html: shot outcome legend demonstrates each plotted glyph")
     require("role=\"button\" tabindex=\"0\" aria-label=\"Plot '+esc(d.label)" in players and
             "event.preventDefault();drill(" in players and
             "event.preventDefault();drillFor(" in players,
