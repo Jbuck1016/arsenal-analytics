@@ -1,6 +1,16 @@
 # Publication gating: verifying before data becomes visible
 
-Written 2026-08-24. Design note only. No migration attached.
+Written 2026-08-24. Summary gating implemented 2026-08-27.
+
+## Implemented summary gate
+
+Migration `20260827203000_gate_summary_publication.sql` removes the summary
+refresh from the `insights` step. The existing final `verify` step now runs
+`verify_rebuild()` first and refreshes the four browser-facing summary
+materialized views only after it passes, in the same transaction. A failure
+therefore leaves the previously published summaries untouched. This is a
+summary-publication guarantee; full last-known-good versioning of every
+analytical matview would still require the wrapper design below.
 
 ## The problem
 
@@ -9,7 +19,7 @@ in the wrong place. `rebuild_step('insights')` calls `refresh_site_summaries()`,
 the summaries and commits. `verify` is a separate step in a separate transaction afterwards. By
 the time it raises, the figures are already live and nothing rolls back.
 
-That is why the Methodology page now states plainly that verification does not gate publication.
+This ordering was corrected for the browser-facing summaries on 2026-08-27.
 
 ## Why the obvious fix is not available
 
@@ -54,9 +64,8 @@ wrappers over objects that are about to be dropped and recreated doubles the wor
 
 ## Live state, 2026-08-24
 
-Publication is still ungated. `refresh_site_summaries()` commits before `verify_rebuild()` runs,
-so a failing check names the problem but does not hold anything back. The Methodology page states
-this plainly rather than implying otherwise.
+Historical note: summary publication was ungated at this point. It is gated as
+described above as of 2026-08-27.
 
 `refresh_site_summaries()` is no longer callable by `anon` or `authenticated`, so an anonymous
 visitor can no longer trigger a refresh. That closes the abuse path but does not change the

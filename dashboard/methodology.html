@@ -229,12 +229,11 @@ tbody tr:last-child td{border-bottom:none}
   rows in an <code>invariants</code> table, each holding SQL that returns a count of violations.
   The verification step raises and names every failing check if any error-level check is non-zero.</p>
   <div class="callout warn">
-    <b>Verification does not gate publication, and this page will not pretend otherwise.</b> The
-    checks run as the final rebuild step, after the analytical views have already been refreshed
-    and committed. A failure therefore makes the rebuild end in error and names the problem, but it
-    does not roll anything back or prevent the refreshed figures from reaching this site. Failing
-    checks stay visible above rather than being suppressed. Gating publication on verification is
-    open work, not a property the platform currently has.
+    <b>Verification gates publication of the browser-facing summaries.</b> Insights are prepared
+    first, but the summary refresh waits until every error-level invariant passes. Verification and
+    publication run in one transaction, so a failure leaves the previously published summary
+    figures in place. The underlying analytical rebuild remains stepwise; this guarantee applies
+    specifically to the summary surfaces displayed here.
   </div>
   <p>Adding a check is an insert rather than a code change, which is the only way a practice like
   this survives contact with a busy season. <span id="mChecks">The current count is read live.</span></p>
