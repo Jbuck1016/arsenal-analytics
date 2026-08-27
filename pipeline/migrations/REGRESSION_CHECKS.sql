@@ -26,7 +26,8 @@ begin
   select string_agg(f, ', ') into bad from unnest(array[
     'public.refresh_site_summaries()','public.refresh_analytics()',
     'public.run_invariants()','public.verify_rebuild()',
-    'public.suppress_low_sample_insights()']) f
+    'public.suppress_low_sample_insights()',
+    'public.rebuild_step(text,text)']) f
   where has_function_privilege('anon', f, 'EXECUTE')
      or has_function_privilege('authenticated', f, 'EXECUTE')
      or has_function_privilege('public', f, 'EXECUTE');
@@ -58,6 +59,13 @@ begin
     'public.mv_league_availability','public.insights']) t
   where not has_table_privilege('anon', t, 'SELECT');
   if n <> 0 then raise exception 'CHECK 5 FAILED. % trust-page objects lost anon SELECT.', n; end if;
+
+  -- 5b. Public views must enforce caller rights rather than their owner's.
+  select count(*) into n
+  from pg_class c join pg_namespace nn on nn.oid=c.relnamespace and nn.nspname='public'
+  where c.relkind='v'
+    and not coalesce('security_invoker=true'=any(c.reloptions),false);
+  if n <> 0 then raise exception 'CHECK 5b FAILED. % public views lack security_invoker.', n; end if;
 
   -- 6. Every registered competition is classified, and league scoping is real.
   if exists (select 1 from leagues where competition_type not in ('league','domestic_cup','continental')) then

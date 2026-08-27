@@ -79,6 +79,16 @@ def main() -> int:
             "players.html: plot PDFs use a compressed opaque export image")
     require("@media(max-width:1180px){.split{grid-template-columns:1fr}.split-r{order:-1}}" in players,
             "players.html: pitch precedes the long metric table in single-column layouts")
+    require("function actionMark(" in players and
+            all(shape in players for shape in ["'triangle'", "'diamond'", "'square'", "'cross'", "'ring'"]),
+            "players.html: multi-action maps distinguish layers without colour")
+    require("class=\"player-overview\"" in players and
+            "OVOPEN=window.innerWidth>820" in players and
+            ".player-overview>summary{display:flex}" in players,
+            "players.html: overview is collapsible on small screens")
+    require("SC.x==='prog_carries_90'&&SC.y==='key_pass_90'" in players and
+            "quadrant names describe wide-player involvement, not overall quality" in players,
+            "players.html: quadrant labels are limited to a defensible pairing")
 
     match = pages["match.html"]
     require("activeVizs:['progressive']" in match and
@@ -115,6 +125,9 @@ def main() -> int:
     require("const labelled={}" in teams and "if(labelled[p.team])" in teams and
             "hover any dot for exact values" in teams,
             "teams.html: league scatter labels only selection and structural extremes")
+    require("LM.x==='ppda'&&LM.y==='field_tilt'" in teams and
+            "Quadrants are named only for this defensible pairing" in teams,
+            "teams.html: style quadrants are conditional and not quality claims")
     require("function mapSample(items,limit)" in teams and
             "mapSample(ps,1200)" in teams and "mapSample(rows,1800)" in teams and
             "evenly sampled from the returned population" in teams,
@@ -132,6 +145,9 @@ def main() -> int:
             "clone.querySelectorAll('.pitch-box')" in teams and
             "c.toDataURL('image/jpeg',0.9),'JPEG'" in teams,
             "teams.html: exports expand scrolling content and compress PDFs")
+    require("@media(max-width:640px){.ranking-chart{display:none}" in teams and
+            "The compact table carries every value" in teams,
+            "teams.html: mobile rankings replace the unreadable full chart with the complete table")
 
     if failures:
         print(f"\n{len(failures)} dashboard contract check(s) failed.")

@@ -162,6 +162,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 .dev-val{text-align:right;font:700 9.5px/1.15 var(--f-data);color:var(--text)}
 .dev-z{display:block;font-size:8px;color:var(--text3);margin-top:2px}
 @media(max-width:900px){.dev-groups{grid-template-columns:1fr}.dev-row{grid-template-columns:minmax(100px,1fr) minmax(110px,1.25fr) 52px}}
+.mobile-rank-note{display:none}
+@media(max-width:640px){.ranking-chart{display:none}.mobile-rank-note{display:block}}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -391,6 +393,11 @@ function renderLeagueMap(){
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
   s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">display median</text>';
+  if(LM.x==='ppda'&&LM.y==='field_tilt'){
+    const q=function(x,y,t,a){s+='<text x="'+x+'" y="'+y+'" text-anchor="'+a+'" fill="var(--text3)" font-size="9" font-weight="700" opacity=".72">'+t+'</text>'};
+    q(ML+8,MT+14,'HIGH PRESS + TERRITORY','start'); q(W-MR-8,MT+14,'TERRITORY, LOWER PRESS','end');
+    q(ML+8,H-MB-10,'PRESS WITHOUT TERRITORY','start'); q(W-MR-8,H-MB-10,'DEEPER / REACTIVE','end');
+  }
   const labelled={};
   labelled[SEL]=1;
   [
@@ -424,7 +431,8 @@ function renderLeagueMap(){
     '<div class="sect"><div class="viz-eyebrow">Relationship</div><div class="viz-title">'+esc(dy.label)+' vs '+esc(dx.label)+'</div>'+
     '<div class="viz-sub">'+esc(lgScopeLabel())+' · '+pts.length+' eligible teams · raw values · dashed guides are displayed-sample medians.</div>'+s+
     '<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. The highlighted team and axis extremes are labelled; hover any dot for exact values. '+
-    'Each quadrant is a style archetype. Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
+    (LM.x==='ppda'&&LM.y==='field_tilt'?'Quadrants are named only for this defensible pairing and describe style, not quality. ':'')+
+    'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
 }
 async function renderMatches(t){
   try{
@@ -671,7 +679,7 @@ function flowPattern(items,color,limit){
     const f=zone(sx,sy),t=zone(a.end_x,a.end_y);orig[f]=(orig[f]||0)+1;
     if(f!==t){const k=f+'>'+t;flows[k]=(flows[k]||0)+1}
   });
-  const os=Object.keys(orig),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]}).slice(0,limit||8);
+  const os=Object.keys(orig).sort(),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]||a.localeCompare(b)}).slice(0,limit||8);
   const om=Math.max.apply(null,os.map(function(k){return orig[k]}).concat([1]));
   const fm=Math.max.apply(null,fs.map(function(k){return flows[k]}).concat([1]));
   let s='<g class="pattern-layer">';
@@ -948,7 +956,8 @@ function renderRankings(){
       '</select></div></div>'+
     '<div class="foot" style="margin-top:8px">'+esc(lgScopeLabel())+' \u00B7 sorted best to worst by league percentile, so inverted metrics like PPDA and goals conceded put the strongest team on top. The hairline marks zero and bars show the raw-value range. '+
     (d.definition?esc(d.definition):'')+'</div></div>'+
-    '<div class="split2"><div class="sect">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
+    '<div class="mobile-rank-note foot" style="margin:0 0 8px">The compact table carries every value; the full comparison chart is shown on wider screens.</div>'+
+    '<div class="split2"><div class="sect ranking-chart">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
 }
 
 /* ---------- SEQUENCES ---------- */
@@ -1086,6 +1095,7 @@ async function snap(){
   const stage=document.createElement('div'),clone=el.cloneNode(true);
   stage.style.cssText='position:fixed;left:-100000px;top:0;width:'+el.clientWidth+'px;background:'+bg+';z-index:-1';
   clone.style.cssText='width:100%;height:auto;max-height:none;overflow:visible;padding:13px 18px';
+  clone.querySelectorAll('.vz-tog,.vz-filters').forEach(function(control){control.remove()});
   stage.appendChild(clone);document.body.appendChild(stage);
   try{
     if(document.fonts&&document.fonts.ready)await document.fonts.ready;

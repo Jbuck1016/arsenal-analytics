@@ -158,7 +158,13 @@ tr:hover td{background:var(--surface)}
   .side-top{display:grid;grid-template-columns:1fr 1fr}.side-top .inp{grid-column:1/-1}.plist{max-height:25vh}
   .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/74}
   .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
+  .player-overview>summary{display:flex}.player-overview:not([open]){margin-bottom:10px}.player-overview .dna{margin-top:9px}
 }
+.player-overview{border:0}.player-overview>summary{display:none;cursor:pointer;align-items:center;justify-content:space-between;
+  padding:10px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);
+  color:var(--text2);font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
+.player-overview>summary::after{content:'Show'}.player-overview[open]>summary::after{content:'Hide'}
+@media(max-width:820px){.player-overview>summary{display:flex}}
 .viz-eyebrow{font:700 8px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
 .viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:3px}
 .viz-sub{font:500 10px/1.45 var(--f-body);color:var(--text3);margin:0 0 7px;max-width:82ch}
@@ -171,6 +177,7 @@ tr:hover td{background:var(--surface)}
 .lchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
   color:var(--text2);font:600 10px/1 var(--f-body);padding:6px 9px;border-radius:5px;cursor:pointer;transition:.12s}
 .lchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.lchip .layer-glyph{width:12px;height:12px;display:block;overflow:visible;flex:0 0 auto}
 .lchip b{font-weight:700;color:var(--text3)}
 .lchip:hover{border-color:var(--border2);color:var(--text)}
 .lchip:focus-visible,.vzb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -183,6 +190,7 @@ tr:hover td{background:var(--surface)}
 .vzb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
 .viz-leg{display:flex;gap:13px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font:500 10px/1 'Inter';color:var(--text3)}
 .viz-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.viz-leg .layer-glyph{display:inline-block;width:13px;height:13px;margin-right:5px;vertical-align:-3px;overflow:visible}
 .viz-leg b{font-weight:700;color:var(--text2)}
 .viz-leg .size-key{display:inline-flex;align-items:center;gap:6px}
 .viz-leg .size-key svg{width:112px;height:27px;overflow:visible}
@@ -284,7 +292,7 @@ function scopeLabel(){
 function scopeQuery(q){if(PLGSCOPE!=='ALL')q.league='eq.'+PLGSCOPE;return q}
 const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Teams','teams.html'],['Sequences','sequences.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
 
-let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null;
+let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
 let VZ={passMode:'prog',outcome:'',off:{},mode:{Passing:'pattern',Carrying:'pattern',Combined:'pattern'}};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
@@ -601,7 +609,7 @@ function renderPlayer(p,pcts,pillars,dna){
     (!p.pool?'This player appeared from the bench but does not yet have enough evidence for a stable role classification or percentiles. Event plots remain available.':'Below the '+MIN90+'-nineties threshold, so no percentiles are computed.')+'</div></div>';
 
   if(pillars&&pillars.length){
-    h+='<div class="dna">';
+    h+='<details class="player-overview" '+(OVOPEN?'open ':'')+'ontoggle="OVOPEN=this.open"><summary>Player overview</summary><div class="dna">';
     pillars.forEach(function(pl){
       const t=tier(+pl.score),w=wmap[pl.pillar];
       h+='<div class="dcard"><div class="dcard-l"><span>'+esc(pl.pillar)+'</span>'+
@@ -618,7 +626,7 @@ function renderPlayer(p,pcts,pillars,dna){
          '<div style="font:500 9px/1.4 Inter;color:var(--text3)">best: '+esc(dna.top_pillar||'\u2014')+'</div></div>';
     }
     h+='</div><div class="foot" style="margin:-2px 0 9px">Pillars average a few uncorrelated marker metrics. '+
-       '<b>w</b> is the pillar\u2019s weight for this role. Completeness rewards no weak spot; Impact rewards the two strongest. Both ranked within role.</div>';
+       '<b>w</b> is the pillar\u2019s weight for this role. Completeness rewards no weak spot; Impact rewards the two strongest. Both ranked within role.</div></details>';
   }
 
   const groups=groupsFor(p.pool);
@@ -756,6 +764,11 @@ function scatterSvg(pts){
         'style="width:100%;height:auto;max-height:calc(100vh - 250px);display:block">';
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
+  if(SC.x==='prog_carries_90'&&SC.y==='key_pass_90'){
+    const q=function(x,y,t,a){s+='<text x="'+x+'" y="'+y+'" text-anchor="'+a+'" fill="var(--text3)" font-size="9" font-weight="700" opacity=".72">'+t+'</text>'};
+    q(ML+8,MT+14,'PASSING CREATOR','start'); q(W-MR-8,MT+14,'DUAL-THREAT CREATOR','end');
+    q(ML+8,H-MB-10,'LOW-VOLUME PROFILE','start'); q(W-MR-8,H-MB-10,'BALL-PROGRESSING CARRIER','end');
+  }
   s+='<line x1="'+ML+'" y1="'+(H-MB)+'" x2="'+(W-MR)+'" y2="'+(H-MB)+'" stroke="var(--border)"/>';
   s+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(H-MB)+'" stroke="var(--border)"/>';
   [0,0.25,0.5,0.75,1].forEach(function(f){
@@ -779,7 +792,8 @@ function scatterSvg(pts){
   s+='<text x="'+(W/2)+'" y="'+(H-6)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc((dx.label||'')+xdir)+'</text>';
   s+='<text transform="translate(13,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc((dy.label||'')+ydir)+'</text>';
   s+='</svg>'+legendHtml()+'<div class="foot" style="margin-top:4px">'+pts.length+' players \u00B7 '+POOL_NAME[SC.pool]+
-     ' \u00B7 '+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are medians of the players shown \u00B7 dot colour averages each player\u2019s two league-and-role percentiles</div></div>';
+     ' \u00B7 '+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 axes are per-90 values, not percentiles \u00B7 dashed lines are medians of the players shown \u00B7 dot colour averages each player\u2019s two league-and-role percentiles'+
+     (SC.x==='prog_carries_90'&&SC.y==='key_pass_90'?' \u00B7 quadrant names describe wide-player involvement, not overall quality':'')+'</div></div>';
   return s;
 }
 /* Delegated so it survives re-renders, and small marks get an invisible
@@ -1109,7 +1123,16 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
     '<path d="M68.8 70.2L67.2 69.35L67.2 71.05Z" fill="var(--text3)"/></svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
-function lg(c,t,n){return '<span><i style="background:'+c+'"></i>'+t+(n!=null?' <b>'+n+'</b>':'')+'</span>'}
+function markerKey(shape,c){
+  shape=shape||'circle';
+  const p={circle:'<circle cx="8" cy="8" r="4.5"',square:'<rect x="3.5" y="3.5" width="9" height="9"',
+    diamond:'<path d="M8 2L14 8L8 14L2 8Z"',triangle:'<path d="M8 2L14 13L2 13Z"',
+    cross:'<path d="M3 3L13 13M13 3L3 13"',ring:'<circle cx="8" cy="8" r="5"'};
+  const open=shape==='cross'||shape==='ring';
+  return '<svg class="layer-glyph" aria-hidden="true" viewBox="0 0 16 16">'+p[shape]+
+    (open?' fill="none" stroke="'+c+'" stroke-width="2"/>':' fill="'+c+'" fill-opacity=".82"/>')+'</svg>';
+}
+function lg(c,t,n,shape){return '<span>'+markerKey(shape,c)+t+'</span>'}
 /* Origin ring: hollow circle where the ball starts, hairline through the middle,
    solid dot where it arrives. Reads as a journey rather than a vector, and keeps
    both ends legible when lines overlap. */
@@ -1127,6 +1150,15 @@ function line(a,c,w,op,dash){
 }
 function dot(a,c,r,op){
   return '<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+((r||0.85)*0.68).toFixed(2)+'" fill="'+c+'" fill-opacity="'+(op==null?0.8:op)+'"/>';
+}
+function actionMark(a,c,r,op,shape){
+  const x=PX(a.x),y=PY(a.y),d=(r||.85)*.72,o=op==null?.8:op;
+  if(shape==='square')return '<rect x="'+(x-d)+'" y="'+(y-d)+'" width="'+(2*d)+'" height="'+(2*d)+'" fill="'+c+'" fill-opacity="'+o+'"/>';
+  if(shape==='diamond')return '<path d="M'+x+' '+(y-d*1.3)+'L'+(x+d*1.3)+' '+y+'L'+x+' '+(y+d*1.3)+'L'+(x-d*1.3)+' '+y+'Z" fill="'+c+'" fill-opacity="'+o+'"/>';
+  if(shape==='triangle')return '<path d="M'+x+' '+(y-d*1.4)+'L'+(x+d*1.3)+' '+(y+d)+'L'+(x-d*1.3)+' '+(y+d)+'Z" fill="'+c+'" fill-opacity="'+o+'"/>';
+  if(shape==='cross')return '<path d="M'+(x-d)+' '+(y-d)+'L'+(x+d)+' '+(y+d)+'M'+(x+d)+' '+(y-d)+'L'+(x-d)+' '+(y+d)+'" fill="none" stroke="'+c+'" stroke-width=".42" stroke-opacity="'+o+'"/>';
+  if(shape==='ring')return '<circle cx="'+x+'" cy="'+y+'" r="'+d+'" fill="none" stroke="'+c+'" stroke-width=".34" stroke-opacity="'+o+'"/>';
+  return dot(a,c,r,op);
 }
 /* Distinct glyph per outcome: filled ring for a goal, solid for a save,
    diamond for a block, hollow for off target. */
@@ -1160,7 +1192,7 @@ function shotOutcomeLegend(live,off){
     off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
   };
   return live.filter(function(l){return !off[l.k]}).map(function(l){
-    return '<span class="shot-key">'+glyph[l.k](l.color)+'<span>'+esc(l.label)+' <b>'+l.items.length+'</b></span></span>';
+    return '<span class="shot-key">'+glyph[l.k](l.color)+'<span>'+esc(l.label)+'</span></span>';
   }).join('');
 }
 function noData(msg){return '<div class="sect"><div class="empty" style="height:220px">'+esc(msg||'No events to plot')+'</div></div>'}
@@ -1178,7 +1210,7 @@ function flowPattern(items,color,limit){
     const f=zone(sx,sy),t=zone(a.end_x,a.end_y);orig[f]=(orig[f]||0)+1;
     if(f!==t){const k=f+'>'+t;flows[k]=(flows[k]||0)+1}
   });
-  const os=Object.keys(orig),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]}).slice(0,limit||8);
+  const os=Object.keys(orig).sort(),fs=Object.keys(flows).sort(function(a,b){return flows[b]-flows[a]||a.localeCompare(b)}).slice(0,limit||8);
   const om=Math.max.apply(null,os.map(function(k){return orig[k]}).concat([1]));
   const fm=Math.max.apply(null,fs.map(function(k){return flows[k]}).concat([1]));
   let s='<g class="pattern-layer">';
@@ -1213,11 +1245,13 @@ function outcomeTog(){
 function vizLayers(grp,p){
   const A=PACT||[], C=PCAR||[], R2=PREC||[];
   const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,Y=PAL.carry,N='var(--text3)';
-  const L=function(k,label,color,items,draw){return{k:k,label:label,color:color,items:items,draw:draw}};
+  const L=function(k,label,color,items,draw,shape){return{k:k,label:label,color:color,items:items,draw:draw,shape:shape||'circle'}};
   const pl=function(c,w,op,dash){return function(a){return line(a,c,w,op,dash)}};
-  const cl=function(c,w,op){return function(c2){
-    return line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},c,w,op)}};
+  const cl=function(c,w,op,dash){return function(c2){
+    return line({x:c2.start_x,y:c2.start_y,end_x:c2.end_x,end_y:c2.end_y},c,w,op,dash)}};
   const dt=function(c,r,op){return function(a){return dot({x:a.x,y:a.y},c,r,op)}};
+  const mt=function(c,r,op,shape){return function(a){return actionMark({
+    x:a.x!=null?a.x:a.start_x,y:a.y!=null?a.y:a.start_y},c,r,op,shape)}};
 
   if(grp==='Passing'){
     const all=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.end_x!=null});
@@ -1275,8 +1309,8 @@ function vizLayers(grp,p){
     return {title:'Carry map',sub:'Carries inferred from consecutive touches, 3m or longer. Progressive and box-entry carries are shown by default.',
       layers:[
         L('box','Into box',AC,C.filter(function(c2){return c2.into_box}),cl(AC,0.42,0.92)),
-        L('prog','Progressive',Y,C.filter(function(c2){return c2.is_progressive&&!c2.into_box}),cl(Y,0.3,0.75)),
-        L('other','Other carries',N,C.filter(function(c2){return !c2.is_progressive&&!c2.into_box}),cl(N,0.18,0.24))
+        L('prog','Progressive · dashed',Y,C.filter(function(c2){return c2.is_progressive&&!c2.into_box}),cl(Y,0.3,0.75,'1.8 .7')),
+        L('other','Other carries · dotted',N,C.filter(function(c2){return !c2.is_progressive&&!c2.into_box}),cl(N,0.18,0.32,'.35 .75'))
       ]};
   }
   if(grp==='Combined'){
@@ -1286,7 +1320,7 @@ function vizLayers(grp,p){
       layers:[
         L('pass','Passes',G,ps.filter(function(a){return !a.prog}),pl(G,0.15,0.24)),
         L('prog','Progressive passes',B,ps.filter(function(a){return a.prog}),pl(B,0.3,0.78)),
-        L('carry','Progressive carries',Y,C.filter(function(c2){return c2.is_progressive}),cl(Y,0.3,0.8))
+        L('carry','Progressive carries · dashed',Y,C.filter(function(c2){return c2.is_progressive}),cl(Y,0.3,0.8,'1.8 .7'))
       ]};
   }
   if(grp==='Tempo'){
@@ -1298,41 +1332,43 @@ function vizLayers(grp,p){
     return {title:'Where he releases quickly',
       sub:'Every receipt, placed where the ball arrived, coloured by how long he held it.',
       layers:[
-        L('u1','Under 1s','#34d399',band(0,1),mk('#34d399')),
-        L('u2','1-2s',G,band(1,2),mk(G)),
-        L('u5','2-5s',Y,band(2,5),mk(Y)),
-        L('o5','5s+',R,band(5,999),mk(R))
+        L('u1','Under 1s','#34d399',band(0,1),mt('#34d399',.8,.85,'circle'),'circle'),
+        L('u2','1-2s',G,band(1,2),mt(G,.85,.75,'square'),'square'),
+        L('u5','2-5s',Y,band(2,5),mt(Y,.9,.68,'diamond'),'diamond'),
+        L('o5','5s+',R,band(5,999),mt(R,.95,.75,'ring'),'ring')
       ]};
   }
   if(grp==='Defending'||grp==='Discipline'){
     if(grp==='Discipline'){
       const f=A.filter(function(a){return a.type==='Foul'});
       return {title:'Fouls',sub:'Fouls won and conceded.',
-        layers:[L('won','Fouls won',G,f.filter(function(a){return a.ok}),dt(G,0.85,0.8)),
-                L('com','Fouls conceded',R,f.filter(function(a){return !a.ok}),dt(R,0.85,0.6))]};
+        layers:[L('won','Fouls won',G,f.filter(function(a){return a.ok}),mt(G,.85,.8,'circle'),'circle'),
+                L('com','Fouls conceded',R,f.filter(function(a){return !a.ok}),mt(R,.9,.7,'cross'),'cross')]};
     }
     const C2={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',
               BlockedPass:Y,Challenge:'#f472b6',Save:'#22d3ee'};
     const LB={Tackle:'Tackles',Interception:'Interceptions',BallRecovery:'Recoveries',
               Clearance:'Clearances',BlockedPass:'Blocked passes',Challenge:'Challenges lost',Save:'Shot blocks'};
+    const SH={Tackle:'triangle',Interception:'diamond',BallRecovery:'circle',Clearance:'square',BlockedPass:'ring',Challenge:'cross',Save:'ring'};
     return {title:'Defensive actions',
       sub:'Defensive actions by type. Recoveries, tackles and interceptions indicate ball-winning; clearances, blocks and failed challenges are interventions, not all wins.',
       layers:Object.keys(C2).map(function(t){
-        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),dt(C2[t],0.85,0.74))})};
+        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),mt(C2[t],.9,.8,SH[t]),SH[t])})};
   }
   if(grp==='Aerial'){
     const ae=A.filter(function(a){return a.type==='Aerial'});
     const w=ae.filter(function(a){return a.ok}).length;
     return {title:'Aerial duels',sub:'Where he contests in the air. Win rate '+(ae.length?Math.round(100*w/ae.length):0)+'%.',
-      layers:[L('won','Won',G,ae.filter(function(a){return a.ok}),dt(G,1,0.8)),
-              L('lost','Lost',R,ae.filter(function(a){return !a.ok}),dt(R,1,0.5))]};
+      layers:[L('won','Won',G,ae.filter(function(a){return a.ok}),mt(G,1,.85,'triangle'),'triangle'),
+              L('lost','Lost',R,ae.filter(function(a){return !a.ok}),mt(R,1,.65,'cross'),'cross')]};
   }
   if(grp==='Goalkeeping'){
     const C2={Save:G,Claim:B,KeeperSweeper:AC,Punch:Y,KeeperPickup:N};
     const LB={Save:'Saves',Claim:'Claims',KeeperSweeper:'Sweeps',Punch:'Punches',KeeperPickup:'Pickups'};
+    const SH={Save:'circle',Claim:'square',KeeperSweeper:'triangle',Punch:'diamond',KeeperPickup:'ring'};
     return {title:'Goalkeeper actions',sub:'Saves, claims and sweeping actions. Sweeps further right mean a higher line.',
       layers:Object.keys(C2).map(function(t){
-        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),dt(C2[t],t==='KeeperSweeper'?1.2:0.9,0.78))})};
+        return L(t,LB[t],C2[t],A.filter(function(a){return a.type===t}),mt(C2[t],t==='KeeperSweeper'?1.2:.9,.8,SH[t]),SH[t])})};
   }
   if(grp==='Half-Spaces'){
     const inHS=function(a){return a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))};
@@ -1356,9 +1392,9 @@ function vizLayers(grp,p){
       base:'<rect x="'+PX(66.7)+'" y="0" width="'+PX(33.3)+'" height="68" fill="var(--accent)" fill-opacity="0.05"/>',
       layers:[
         L('shot','Shot',AC,hl.filter(isShot),cl(AC,0.5,0.95)),
-        L('carry','Carried forward',G,hl.filter(function(c2){return !isShot(c2)&&c2.is_progressive}),cl(G,0.34,0.78)),
+        L('carry','Carried forward · dashed',G,hl.filter(function(c2){return !isShot(c2)&&c2.is_progressive}),cl(G,0.34,0.78,'1.8 .7')),
         L('pass','Released a pass',B,hl.filter(function(c2){return !isShot(c2)&&!c2.is_progressive&&c2.release_type==='Pass'}),cl(B,0.3,0.68)),
-        L('lost','Lost it',R,hl.filter(function(c2){return !isShot(c2)&&!c2.is_progressive&&c2.release_type!=='Pass'}),cl(R,0.26,0.5))
+        L('lost','Lost it · dotted',R,hl.filter(function(c2){return !isShot(c2)&&!c2.is_progressive&&c2.release_type!=='Pass'}),cl(R,0.3,0.65,'.35 .75'))
       ]};
   }
   if(grp==='Set Pieces'){
@@ -1366,10 +1402,10 @@ function vizLayers(grp,p){
     return {title:'Set-piece involvement',
       sub:'Shots, aerial duels and shot-creating deliveries within ten seconds of a dead ball.',
       layers:[
-        L('shot','Shots',G,sp.filter(function(a){return a.is_shot}),dt(G,1.2,0.85)),
-        L('aerial','Aerials won',B,sp.filter(function(a){return a.type==='Aerial'&&a.ok}),dt(B,0.9,0.7)),
-        L('lost','Aerials lost',R,sp.filter(function(a){return a.type==='Aerial'&&!a.ok}),dt(R,0.9,0.45)),
-        L('deliv','Deliveries',Y,sp.filter(function(a){return a.type==='Pass'&&a.keypass&&a.end_x!=null}),pl(Y,0.4,0.85))
+        L('shot','Shots',G,sp.filter(function(a){return a.is_shot}),mt(G,1.2,.9,'circle'),'circle'),
+        L('aerial','Aerials won',B,sp.filter(function(a){return a.type==='Aerial'&&a.ok}),mt(B,.95,.8,'triangle'),'triangle'),
+        L('lost','Aerials lost',R,sp.filter(function(a){return a.type==='Aerial'&&!a.ok}),mt(R,.95,.7,'cross'),'cross'),
+        L('deliv','Deliveries',Y,sp.filter(function(a){return a.type==='Pass'&&a.keypass&&a.end_x!=null}),pl(Y,0.4,0.85),'diamond')
       ]};
   }
   return null;
@@ -1397,13 +1433,13 @@ function vizPanel(grp,p){
   const chips='<div class="vz-filters"><span class="vz-flabel">Show</span>'+
     live.map(function(l){
       return '<button class="lchip'+(off[l.k]?' off':'')+'" aria-pressed="'+(!off[l.k])+'" onclick="tglLayer(\''+grp+'\',\''+l.k+'\')">'+
-        '<i style="background:'+l.color+'"></i>'+esc(l.label)+' <b>'+l.items.length+'</b></button>';
+        markerKey(l.shape,l.color)+esc(l.label)+' <b>'+l.items.length+'</b></button>';
     }).join('')+
     (live.length>1?'<button class="lchip solo" onclick="allLayers(\''+grp+'\')">reset</button>':'')+
     '</div>';
 
   const legend=(cfg.outcomeKey?shotOutcomeLegend(live,off):live.filter(function(l){return !off[l.k]})
-    .map(function(l){return lg(l.color,l.label,l.items.length)}).join(''))+
+    .map(function(l){return lg(l.color,l.label,l.items.length,l.shape)}).join(''))+
     (cfg.sizeKey?shotSizeKey():'')+
     (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'');
 
@@ -1437,6 +1473,7 @@ async function exportViz(fmt){
   const clone=src.cloneNode(true);
   const ctl=clone.querySelector('.vz-filters');if(ctl)ctl.remove();
   const tg=clone.querySelector('.vz-tog');if(tg)tg.remove();
+  const xp=clone.querySelector('.viz-exp');if(xp)xp.remove();
   const eb=clone.querySelector('.viz-eyebrow');if(eb)eb.remove();
   const tt=clone.querySelector('.viz-title');if(tt)tt.remove();
   const box=clone.querySelector('.pitch-box');if(box){box.style.height='560px'}

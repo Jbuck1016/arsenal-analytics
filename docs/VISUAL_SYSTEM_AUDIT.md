@@ -17,6 +17,10 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - Player and Team shot outcome legends demonstrate the actual goal, save, block, post and off-target glyphs rather than repeating identical colour dots.
 - Plot PDFs use a compressed high-quality image rather than embedding a multi-megabyte lossless canvas.
 - Incomplete pass vectors are dashed and labelled as such, so success versus failure does not depend on green versus red alone.
+- Defensive, tempo, aerial, goalkeeper, discipline and set-piece maps use distinct circles, squares, diamonds, triangles, rings and crosses; carry families also use solid, dashed and dotted routes.
+- On phones, the nine-card Player overview is collapsed behind a clear Show/Hide control, while the selected pitch remains immediately visible.
+- Repeated counts were removed from plot legends where the interactive layer chips already state them.
+- Quadrant labels appear only for progressive-carries/key-passes and PPDA/field-tilt, with explicit wording that they describe involvement or style rather than quality.
 
 ### Match
 
@@ -36,6 +40,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - The League Map now states the relationship, scope, units and median basis.
 - Its axes cannot extend below zero when both displayed metrics are nonnegative.
 - Only the selected team and structural X/Y extremes are labelled. Every dot retains exact values on hover.
+- At phone width, Team Rankings removes the unreadably compressed all-team bar chart and keeps the complete, scrollable value table with an explicit explanation.
 - Player and Team plot modes, filters and layer toggles expose pressed state and visible keyboard focus.
 - Team pass maps report completed and incomplete populations separately; incomplete routes are dashed in both pattern and event modes.
 - Player metric rows and ranking values that open pitch evidence expose button roles, descriptive names and Enter/Space activation.
@@ -50,22 +55,17 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 5. **Density is disclosed.** Sampling never changes the stated population and is called out beside the visual.
 6. **The visual answer gets layout priority.** On narrow screens the pitch precedes supporting tables.
 
-## Remaining work, in priority order
+## Automated visual coverage
 
-### P1 — next visual implementation pass
-
-- Add automated visual baselines for the export layouts. Team sampled-event PNG/PDF, Player plot PNG/PDF and Match flow PNG were generated in this pass; all PNGs were visually inspected.
-- Extend non-colour distinctions beyond pass success/failure to the remaining multi-action maps so meaning survives colour-vision deficiencies and monochrome exports.
-
-### P2 — clarity and interaction
-
-- Add short quadrant descriptions to relationship plots when the selected pair has a defensible football interpretation. Do not generate generic high/high labels that imply quality.
-- Consolidate duplicated layer counts where filter chips and the export legend repeat the same information without adding meaning.
-- Consider a collapsible Player overview on small screens; pitch-first fixes the ordering, but summary cards still consume substantial height.
+`pipeline/tools/visual_regression.js` now captures and compares sixteen live-data baselines:
+Player desktop and mobile, Team tablet-light and desktop-monochrome, Match desktop and mobile-light,
+Player Compare, Team Rankings, Insights and Sequences, plus the rendered PNG and first PDF page for
+Player, Team and Match export paths. The comparison
+fails above a 0.2% pixel-change threshold and retains received/diff evidence on failure.
 
 ### Data issues intentionally not disguised by styling
 
-- Team populations still reflect the known cross-competition contamination until the reviewed Stage 3 database migration is applied. For example, Arsenal currently reports 54 matches in the live source. The UI must not locally rewrite that number.
+- Competition isolation is now enforced in the database. Arsenal resolves to its 33 Premier League matches; domestic-cup and continental fixtures cannot enter league metrics or rankings.
 - European teams below the six-match evidence threshold remain excluded from comparative plots by design.
 - Match shots do not currently expose xG in this view; uniform markers are the honest fallback.
 
