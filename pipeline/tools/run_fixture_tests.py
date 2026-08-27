@@ -14,7 +14,9 @@ from pathlib import Path
 
 
 class Log:
-    def __init__(self): self.parts: list[str] = []
+    def __init__(self, port: int):
+        self.parts: list[str] = []
+        self.port = port
     def phase(self, name: str):
         self.parts.append(f"\n{'='*78}\nPHASE: {name}\n{'='*78}\n")
     def command(self, cmd, result, redirected: Path | None = None):
@@ -31,7 +33,20 @@ class Log:
             self.parts.append("STDERR:\n"+error+"\n")
         else: self.parts.append("STDERR: <empty>\n")
         self.parts.append(f"EXIT STATUS: {result.returncode}\n")
-    def text(self): return "".join(self.parts)
+    def text(self):
+        text = "".join(self.parts)
+        # Keep the checked-in evidence stable across runs. The temporary
+        # directory suffix and free local port are execution details, not test
+        # results; leaving them literal makes every successful run dirty git.
+        text = re.sub(r"cup-isolation-e2e-[A-Za-z0-9_]+", "cup-isolation-e2e-<RUN>", text)
+        # initdb prints its suggested Windows command with cmd.exe caret
+        # escaping, including the generated directory suffix.
+        text = re.sub(r"cup\^-isolation\^-e2e\^-[A-Za-z0-9^_]+",
+                      "cup^-isolation^-e2e^-<RUN>", text)
+        text = re.sub(rf"(?<!\d){self.port}(?!\d)", "<PORT>", text)
+        text = re.sub(r"(\[master \(root-commit\) )[0-9a-f]+(\])",
+                      r"\1<COMMIT>\2", text)
+        return text
 
 
 def run(log: Log, name: str, cmd, *, cwd=None, stdout_file: Path | None = None, check=True):
@@ -66,7 +81,7 @@ def main() -> int:
     negatives = root / "pipeline/tools/negative_tests.py"
     regenerator = root / "pipeline/tools/regenerate_examples.py"
     results_path = root / "pipeline/tools/fixture/END_TO_END_TEST_RESULTS.txt"
-    work = Path(tempfile.mkdtemp(prefix="cup-isolation-e2e-")); log = Log(); port = free_port()
+    work = Path(tempfile.mkdtemp(prefix="cup-isolation-e2e-")); port = free_port(); log = Log(port)
     cluster = work / "cluster"; server_log = work / "postgres.log"
     psql = pg / ("psql.exe" if os.name == "nt" else "psql")
     initdb = pg / ("initdb.exe" if os.name == "nt" else "initdb")
