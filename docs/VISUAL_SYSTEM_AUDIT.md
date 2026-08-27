@@ -57,9 +57,9 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 
 ## Automated visual coverage
 
-`pipeline/tools/visual_regression.js` now captures and compares sixteen live-data baselines:
+`pipeline/tools/visual_regression.js` now captures and compares eighteen live-data baselines:
 Player desktop and mobile, Team tablet-light and desktop-monochrome, Match desktop and mobile-light,
-Player Compare, Team Rankings, Insights and Sequences, plus the rendered PNG and first PDF page for
+Player Compare, Team Rankings, Insights, Sequences, Validation and Methodology, plus the rendered PNG and first PDF page for
 Player, Team and Match export paths. The comparison
 fails above a 0.2% pixel-change threshold and retains received/diff evidence on failure.
 

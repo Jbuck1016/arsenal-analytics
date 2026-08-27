@@ -2,7 +2,7 @@
 
 These images are generated from live Supabase-backed Player, Team and Match
 plots at desktop, tablet and phone widths. Secondary coverage includes Player
-Compare, Team Rankings, Insights and Sequences. The set includes dark, light
+Compare, Team Rankings, Insights, Sequences, Validation and Methodology. The set includes dark, light
 and monochrome renders plus the first rendered page of each PNG/PDF export path.
 Update after an intentional design change:
 

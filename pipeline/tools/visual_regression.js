@@ -39,9 +39,9 @@ function compare(name,actual){
   for(const suffix of ['.received.png','.diff.png']){const f=path.join(OUT,name.replace('.png',suffix));if(fs.existsSync(f))fs.unlinkSync(f)}
   console.log(`PASS    ${name} (${(ratio*100).toFixed(3)}%)`);
 }
-async function snap(page,name,selector){
+async function snap(page,name,selector,viewportOnly){
   await page.waitForTimeout(350);
-  const buf=selector?await page.locator(selector).first().screenshot({animations:'disabled'}):await page.screenshot({fullPage:true,animations:'disabled'});
+  const buf=selector?await page.locator(selector).first().screenshot({animations:'disabled'}):await page.screenshot({fullPage:!viewportOnly,animations:'disabled'});
   compare(name,buf);
 }
 async function exportBaseline(page,name,trigger,isPdf){
@@ -83,7 +83,9 @@ async function main(){
       {name:'insights-desktop-light',url:'insights.html',size:{width:1280,height:900},theme:'light',ready:'.card',css:'#content .sec:first-child .card:nth-child(n+7){display:none}',sel:'#content .sec'},
       {name:'sequences-desktop-dark',url:'sequences.html',size:{width:1280,height:900},ready:'.scard',sel:'#main'},
       {name:'player-compare-desktop',url:`players.html?player=${player}`,size:{width:1280,height:900},ready:'.pname',act:()=>`setTab('Compare')`,after:'.cmp-row',sel:'#main'},
-      {name:'team-rankings-mobile',url:'teams.html?team=Arsenal',size:{width:390,height:844},ready:'.tname',act:()=>`setTab('Rankings')`,after:'#main table',sel:'#main'}
+      {name:'team-rankings-mobile',url:'teams.html?team=Arsenal',size:{width:390,height:844},ready:'.tname',act:()=>`setTab('Rankings')`,after:'#main table',sel:'#main'},
+      {name:'validation-desktop-light',url:'validation.html',size:{width:1280,height:900},theme:'light',ready:'#msStatus',viewport:true},
+      {name:'methodology-desktop-dark',url:'methodology.html',size:{width:1280,height:900},ready:'#mGoals',viewport:true}
     ];
     for(const c of cases.filter(c=>!only||c.name.includes(only))){
       const page=await browser.newPage({viewport:c.size,deviceScaleFactor:1});
@@ -94,7 +96,7 @@ async function main(){
       if(c.act){await page.evaluate(c.act());await page.locator(c.after||'.pitch-box').first().waitFor({state:'visible',timeout:20000})}
       if(c.css)await page.addStyleTag({content:c.css});
       if(c.mono)await page.addStyleTag({content:'html{filter:grayscale(1)!important}'});
-      await snap(page,`${c.name}.png`,c.sel);
+      await snap(page,`${c.name}.png`,c.sel,c.viewport);
       await page.close();
     }
     if(!only||only==='exports'){

@@ -28,7 +28,7 @@ The executable SQL regression suite passed against production after the final da
 - Player mobile overview is collapsible; Team mobile Rankings uses the complete table instead of an unreadably compressed all-team chart.
 - Repeated chip/legend counts were removed where they duplicated the same population.
 - Quadrants are limited to the two defensible style/involvement relationships and explicitly avoid quality claims.
-- Sixteen deterministic baselines pass at a 0.2% threshold: desktop, tablet and mobile; dark, light and monochrome; Player Compare, Team Rankings, Insights and Sequences; and the actual Player, Team and Match PNG/PDF export paths.
+- Eighteen deterministic baselines pass at a 0.2% threshold: desktop, tablet and mobile; dark, light and monochrome; Player Compare, Team Rankings, Insights, Sequences, Validation and Methodology; and the actual Player, Team and Match PNG/PDF export paths.
 - The static dashboard contract suite passes every data, accessibility, density, orientation and responsive rule.
 
 ## Release gates executed
@@ -38,7 +38,7 @@ PASS dashboard data contracts
 PASS migration order check
 PASS migration SHA-256 snapshot
 PASS JavaScript syntax checks
-PASS 16 visual screenshot/export comparisons
+PASS 18 visual screenshot/export comparisons
 PASS production SQL regression suite
 PASS production anonymous browser smoke: Validation, Methodology, Player, Team, Match, Insights, Sequences
 PASS Vercel production deployment status
