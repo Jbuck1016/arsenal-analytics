@@ -48,6 +48,59 @@ def main() -> int:
             "players.html: pass, shot, carry, receipt and zone primitives share PY()")
     require("Attack is always left-to-right." in players and "Attack is left to right." in players,
             "players.html: visual and accessible orientation labels agree")
+    require('data-chart-title="scatter"' in players and "raw per-90 values" in players,
+            "players.html: scatter has a visible title and measurement context")
+    require("x0>=0?Math.max(0,x0-padX)" in players and
+            "y0>=0?Math.max(0,y0-padY)" in players,
+            "players.html: scatter padding cannot invent negative values for nonnegative metrics")
+    require("'</svg>'+legendHtml()" in players,
+            "players.html: scatter explains its percentile colour scale")
+    require("function shotSizeKey()" in players and
+            "Example marker sizes: 0.05, 0.20 and 0.50 expected goals" in players and
+            "cfg.sizeKey?shotSizeKey()" in players,
+            "players.html: shot xG size encoding has a proportional symbol key")
+    require("c.toDataURL('image/jpeg',0.9),'JPEG'" in players and
+            "undefined,'FAST'" in players,
+            "players.html: plot PDFs use a compressed opaque export image")
+    require("@media(max-width:1180px){.split{grid-template-columns:1fr}.split-r{order:-1}}" in players,
+            "players.html: pitch precedes the long metric table in single-column layouts")
+
+    match = pages["match.html"]
+    require("activeVizs:['progressive']" in match and
+            '<div class="viz-btn on" data-viz="progressive">' in match,
+            "match.html: first match view defaults to the lower-density progressive-pass map")
+    require("if(!S.selPlayer&&evts.length>60)return renderProgressiveFlow" in match and
+            "Progressive Pass Flow" in match and
+            "select a player for event detail" in match,
+            "match.html: dense progressive team views aggregate repeated routes")
+    require("dense=!S.selPlayer&&evts.length>250" in match and
+            "dense team view" in match,
+            "match.html: dense all-pass maps fade context and explain how to refine it")
+    require("var r=7;" in match and "uniform marker size" in match and
+            "distance proxy (xG unavailable)" not in match,
+            "match.html: shots do not encode distance as invented chance quality")
+    require("const failed=color===PASS_FAIL" in match and "Incomplete (dashed)" in match and
+            "Incomplete · dashed" in players,
+            "player and match pass maps distinguish failure without colour alone")
+
+    teams = pages["teams.html"]
+    require('<div class="viz-eyebrow">Relationship</div>' in teams and
+            "eligible teams · raw values · dashed guides are displayed-sample medians" in teams,
+            "teams.html: league scatter states the relationship and measurement context")
+    require("const xmin=x0>=0?Math.max(0,x0-px):x0-px" in teams and
+            "const ymin=y0>=0?Math.max(0,y0-py):y0-py" in teams,
+            "teams.html: nonnegative scatter metrics cannot gain negative padding")
+    require("const labelled={}" in teams and "if(labelled[p.team])" in teams and
+            "hover any dot for exact values" in teams,
+            "teams.html: league scatter labels only selection and structural extremes")
+    require("function mapSample(items,limit)" in teams and
+            "mapSample(ps,1200)" in teams and "mapSample(rows,1800)" in teams and
+            "evenly sampled from the returned population" in teams,
+            "teams.html: season event drill-downs cap SVG density and disclose sampling")
+    require("clone=el.cloneNode(true)" in teams and "overflow:visible" in teams and
+            "clone.querySelectorAll('.pitch-box')" in teams and
+            "c.toDataURL('image/jpeg',0.9),'JPEG'" in teams,
+            "teams.html: exports expand scrolling content and compress PDFs")
 
     if failures:
         print(f"\n{len(failures)} dashboard contract check(s) failed.")

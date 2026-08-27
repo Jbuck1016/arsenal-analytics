@@ -367,7 +367,8 @@ function renderLeagueMap(){
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
   const x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
   const px=(x1-x0)*.1||1,py=(y1-y0)*.1||1;
-  const xmin=x0-px,xmax=x1+px,ymin=y0-py,ymax=y1+py;
+  const xmin=x0>=0?Math.max(0,x0-px):x0-px,xmax=x1+px;
+  const ymin=y0>=0?Math.max(0,y0-py):y0-py,ymax=y1+py;
   function SX(v){return ML+((v-xmin)/(xmax-xmin))*(W-ML-MR)}
   function SY(v){return H-MB-((v-ymin)/(ymax-ymin))*(H-MT-MB)}
   function med(a){const s=a.slice().sort(function(m,n){return m-n});return s[Math.floor(s.length/2)]}
@@ -386,11 +387,20 @@ function renderLeagueMap(){
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
   s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">display median</text>';
+  const labelled={};
+  labelled[SEL]=1;
+  [
+    pts.reduce(function(a,b){return b.x<a.x?b:a}),
+    pts.reduce(function(a,b){return b.x>a.x?b:a}),
+    pts.reduce(function(a,b){return b.y<a.y?b:a}),
+    pts.reduce(function(a,b){return b.y>a.y?b:a})
+  ].forEach(function(p){labelled[p.team]=1});
   pts.forEach(function(p){
     const on=p.team===SEL,cx=SX(p.x),cy=SY(p.y),right=cx<W-170;
-    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(on?8:5.5)+'" fill="'+(on?'var(--accent)':'var(--above)')+
+    s+='<circle class="pt" data-n="'+esc(tname(p.team))+'" data-v="'+esc(dx.label)+': '+p.x.toFixed(2)+' · '+esc(dy.label)+': '+p.y.toFixed(2)+
+       '" cx="'+cx+'" cy="'+cy+'" r="'+(on?8:5.5)+'" fill="'+(on?'var(--accent)':'var(--above)')+
        '" fill-opacity="'+(on?1:.55)+'"/>';
-    s+='<text x="'+(right?cx+11:cx-11)+'" y="'+(cy+4)+'" fill="'+(on?'var(--accent)':'var(--text3)')+
+    if(labelled[p.team])s+='<text x="'+(right?cx+11:cx-11)+'" y="'+(cy+4)+'" fill="'+(on?'var(--accent)':'var(--text3)')+
        '" font-size="'+(on?12:10)+'" font-weight="'+(on?800:500)+'" text-anchor="'+(right?'start':'end')+
        '" font-family="Inter">'+esc(tname(p.team))+'</text>';
   });
@@ -407,8 +417,10 @@ function renderLeagueMap(){
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderLeagueMap()">'+
       eligible.sort(function(a,b){return tname(a.team).localeCompare(tname(b.team))}).map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div></div>'+
-    '<div class="sect">'+s+'<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. Dashed lines are medians for the teams displayed, so each quadrant is a style archetype. '+
-    'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
+    '<div class="sect"><div class="viz-eyebrow">Relationship</div><div class="viz-title">'+esc(dy.label)+' vs '+esc(dx.label)+'</div>'+
+    '<div class="viz-sub">'+esc(lgScopeLabel())+' · '+pts.length+' eligible teams · raw values · dashed guides are displayed-sample medians.</div>'+s+
+    '<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. The highlighted team and axis extremes are labelled; hover any dot for exact values. '+
+    'Each quadrant is a style archetype. Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
 }
 async function renderMatches(t){
   try{
@@ -513,12 +525,12 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     (legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
 const MAPS=[
-  {k:'passes',l:'Completed passes',d:'The most repeated open-play passing routes. Switch to Events for every individual pass.'},
+  {k:'passes',l:'Completed passes',d:'The most repeated open-play passing routes. Events is the individual-action drill-down; dense seasons are evenly sampled and disclose the full count.'},
   {k:'prog',l:'Progressive passes',d:'Passes that meaningfully advance the ball toward goal.'},
   {k:'box',l:'Passes into the box',d:'Completed passes ending inside the penalty area. Shows how they actually get in.'},
-  {k:'carries',l:'Carries',d:'Repeated progressive carry routes. Switch to Events to inspect every carry of 3m or more.'},
+  {k:'carries',l:'Carries',d:'Repeated progressive carry routes. Events is the individual-action drill-down for carries of 3m or more; dense seasons are evenly sampled.'},
   {k:'heat',l:'Touch heatmap',d:'Smoothed on-ball action density, normalised within this selected team sample.'},
-  {k:'touches',l:'Raw touches',d:'Every on-ball action as a single mark. A drill-down view of the heatmap.'},
+  {k:'touches',l:'Raw touches',d:'On-ball actions as individual marks. Dense seasons are evenly sampled, with the full population stated below the pitch.'},
   {k:'def',l:'Defensive actions',d:'Locations of tackles, interceptions, recoveries, clearances, blocks and challenges. These are interventions, not all possession wins.'},
   {k:'combined',l:'Everything on the ball',d:'Passes, progressive passes and progressive carries on one pitch, coloured by action type rather than outcome.'},
   {k:'shots',l:'Shot map (for)',d:'Every shot taken. Marker area is expected goals (xG).'},
@@ -656,6 +668,18 @@ function flowPattern(items,color,limit){
   });
   return s+'</g>';
 }
+/* Keep explicit event drill-downs responsive across a full season. The sample is
+   deterministic and evenly spaced through the returned population; the legend
+   continues to report the complete population. */
+function mapSample(items,limit){
+  if(items.length<=limit)return items;
+  const out=[],step=items.length/limit;
+  for(let i=0;i<limit;i++)out.push(items[Math.floor(i*step)]);
+  return out;
+}
+function mapSampleNote(all,shown,label){
+  return shown.length<all.length?'<span>Displaying '+shown.length.toLocaleString()+' of '+all.length.toLocaleString()+' '+(label||'events')+' · evenly sampled from the returned population · use zone filters to refine</span>':'';
+}
 async function renderMaps(t){
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
@@ -666,26 +690,28 @@ async function renderMaps(t){
     // Solo view: green succeeded, red failed. Multi view: passes green,
     // progressive blue, carries yellow.
     const G=TPAL.ok,R=TPAL.fail,AC=TPAL.box,B=TPAL.prog,N='var(--text3)',Y=TPAL.carry;
-    let inner=zoneShade(),leg='';
+    let inner=zoneShade(),leg='',sampleLeg='';
     const pattern=MP.mode!=='events';
     const hasOutcome=['passes','prog','box'].indexOf(m.k)>=0;
 
     if(m.k==='passes'){
       const ps=ZONES.filter(function(a){return a.type==='Pass'&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
+      const shown=pattern?ps:mapSample(ps,1200);
       if(pattern){
         const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
         if(ok.length)inner+=flowPattern(ok,G,9);if(fail.length)inner+=flowPattern(fail,R,5);
-      }else ps.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
+      }else shown.forEach(function(a){inner+=tline(a,a.ok?G:R,0.13,a.ok?0.10:0.13)});
       leg='<span><i style="background:'+G+'"></i>Passes <b>'+ps.length.toLocaleString()+'</b></span>'+
-          (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Each vector is one event</span>');
+          (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Each displayed vector is one event</span>')+mapSampleNote(ps,shown,'pass events');
     }
     else if(m.k==='prog'){
       const ps=ZONES.filter(function(a){return a.prog&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
+      const shown=pattern?ps:mapSample(ps,1200);
       if(pattern){const ok=ps.filter(function(a){return a.ok}),fail=ps.filter(function(a){return !a.ok});
         if(ok.length)inner+=flowPattern(ok,B,8);if(fail.length)inner+=flowPattern(fail,R,5);
-      }else ps.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
+      }else shown.forEach(function(a){const c2=a.ok?B:R;inner+=tline(a,c2,0.22,a.ok?0.42:0.4)+origin(a,c2,0.22,a.ok?0.42:0.4)});
       leg='<span><i style="background:'+B+'"></i>Progressive passes <b>'+ps.length.toLocaleString()+'</b></span>'+
-        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>');
+        (pattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'<span>Rings mark where each pass began</span>')+mapSampleNote(ps,shown,'progressive-pass events');
     }
     else if(m.k==='box'){
       const ps=ZONES.filter(function(a){return a.into_box&&okFilter(a)&&a.end_x!=null&&inZone(a.x,a.y)});
@@ -702,13 +728,13 @@ async function renderMaps(t){
       const carries=CZONES.filter(function(c){return inZone(c.start_x,c.start_y)});
       if(pattern){const progressive=carries.filter(function(c){return c.is_progressive});pr=progressive.length;
         if(pr)inner+=flowPattern(progressive,Y,7);ot=carries.length-pr;
-      }else carries.forEach(function(c){
+      }else {const shown=mapSample(carries,1200);carries.forEach(function(c){if(c.is_progressive)pr++;else ot++});shown.forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
-        if(c.is_progressive){inner+=tline(a,Y,0.22,0.46)+origin(a,Y,0.22,0.46);pr++}
-        else {inner+=tline(a,N,0.13,0.13);ot++}
-      });
+        if(c.is_progressive)inner+=tline(a,Y,0.22,0.46)+origin(a,Y,0.22,0.46);
+        else inner+=tline(a,N,0.13,0.13);
+      });sampleLeg=mapSampleNote(carries,shown,'carry events')}
       leg='<span><i style="background:'+Y+'"></i>Progressive <b>'+pr.toLocaleString()+'</b></span>'+
-          (pattern?'<span>Pattern view omits '+ot.toLocaleString()+' ordinary carries</span>':'<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>');
+          (pattern?'<span>Pattern view omits '+ot.toLocaleString()+' ordinary carries</span>':'<span><i style="background:'+N+'"></i>Other carries <b>'+ot.toLocaleString()+'</b></span>')+sampleLeg;
     }
     else if(m.k==='heat'){
       const rows=ZONES.filter(function(a){return inZone(a.x,a.y)});
@@ -717,29 +743,30 @@ async function renderMaps(t){
         '<span><b>'+rows.length.toLocaleString()+'</b> actions \u00B7 scale normalised within this team sample</span>';
     }
     else if(m.k==='touches'){
-      ZONES.filter(function(a){return inZone(a.x,a.y)}).forEach(function(a){
+      const rows=ZONES.filter(function(a){return inZone(a.x,a.y)}),shown=mapSample(rows,1800);
+      shown.forEach(function(a){
         inner+='<circle cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="0.32" fill="'+AC+'" fill-opacity="0.18"/>';
       });
-      leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+ZONES.filter(function(a){return inZone(a.x,a.y)}).length.toLocaleString()+'</b></span>';
+      leg='<span><i style="background:'+AC+'"></i>On-ball actions <b>'+rows.length.toLocaleString()+'</b></span>'+mapSampleNote(rows,shown,'touches');
     }
     else if(m.k==='combined'){
       const ps=ZONES.filter(function(a){return a.type==='Pass'&&a.ok&&a.end_x!=null&&inZone(a.x,a.y)});
       let np=0,pp=0,cc=0;
       if(pattern){const progressive=ps.filter(function(a){return a.prog});pp=progressive.length;np=ps.length-pp;
         if(pp)inner+=flowPattern(progressive,B,7);
-      }else ps.forEach(function(a){
-        if(a.prog){inner+=tline(a,B,0.24,0.5)+origin(a,B,0.24,0.5);pp++}
-        else {inner+=tline(a,G,0.11,0.09);np++}
-      });
+      }else {pp=ps.filter(function(a){return a.prog}).length;np=ps.length-pp;const shown=mapSample(ps,900);shown.forEach(function(a){
+        if(a.prog)inner+=tline(a,B,0.24,0.5)+origin(a,B,0.24,0.5);
+        else inner+=tline(a,G,0.11,0.09);
+      });sampleLeg+=mapSampleNote(ps,shown,'pass events')}
       const progressiveCarries=CZONES.filter(function(c){return c.is_progressive&&inZone(c.start_x,c.start_y)});
       if(pattern){cc=progressiveCarries.length;if(cc)inner+=flowPattern(progressiveCarries,Y,6)}
-      else progressiveCarries.forEach(function(c){
+      else {cc=progressiveCarries.length;const shown=mapSample(progressiveCarries,500);shown.forEach(function(c){
         const a={x:c.start_x,y:c.start_y,end_x:c.end_x,end_y:c.end_y};
-        inner+=tline(a,Y,0.22,0.5)+origin({x:c.start_x,y:c.start_y},Y,0.22,0.5);cc++;
-      });
+        inner+=tline(a,Y,0.22,0.5)+origin({x:c.start_x,y:c.start_y},Y,0.22,0.5);
+      });sampleLeg+=mapSampleNote(progressiveCarries,shown,'progressive-carry events')}
       leg=(pattern?'<span>Pattern view omits '+np.toLocaleString()+' ordinary passes</span>':'<span><i style="background:'+G+'"></i>Passes <b>'+np.toLocaleString()+'</b></span>')+
           '<span><i style="background:'+B+'"></i>Progressive passes <b>'+pp.toLocaleString()+'</b></span>'+
-          '<span><i style="background:'+Y+'"></i>Progressive carries <b>'+cc.toLocaleString()+'</b></span>';
+          '<span><i style="background:'+Y+'"></i>Progressive carries <b>'+cc.toLocaleString()+'</b></span>'+sampleLeg;
     }
     else if(m.k==='def'){
       const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
@@ -1029,16 +1056,35 @@ function wireTips(){
 function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
   ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
   .map(function(a){return '<div class="lg"><div class="dot" style="background:'+a[0]+'"></div>'+a[1]+'</div>'}).join('')+'</div>'}
-async function snap(){const el=document.getElementById('main');
-  return await html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,
-    windowWidth:el.scrollWidth,height:el.scrollHeight,windowHeight:el.scrollHeight})}
+async function snap(){
+  const el=document.getElementById('main'),bg=getComputedStyle(document.body).backgroundColor;
+  /* The live main panel scrolls inside a fixed-height flex layout. Capture an
+     expanded off-screen clone so season maps are not clipped at the viewport. */
+  const stage=document.createElement('div'),clone=el.cloneNode(true);
+  stage.style.cssText='position:fixed;left:-100000px;top:0;width:'+el.clientWidth+'px;background:'+bg+';z-index:-1';
+  clone.style.cssText='width:100%;height:auto;max-height:none;overflow:visible;padding:13px 18px';
+  stage.appendChild(clone);document.body.appendChild(stage);
+  try{
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    /* Freeze viewport-relative pitches before html2canvas changes its virtual
+       window height; otherwise calc(100vh - …) expands after h is measured and
+       pushes the legend outside the captured bitmap. */
+    clone.querySelectorAll('.pitch-box').forEach(function(box){
+      box.style.height=Math.max(230,box.getBoundingClientRect().height)+'px';
+      box.style.maxHeight='none';
+    });
+    await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve)})});
+    const w=clone.scrollWidth,h=clone.scrollHeight;
+    return await html2canvas(clone,{backgroundColor:bg,scale:2,width:w,height:h,windowWidth:w,windowHeight:h});
+  }finally{stage.remove()}
+}
 async function exportPNG(){try{const c=await snap();const a=document.createElement('a');
   a.download=(SEL||'team').replace(/[^\w]+/g,'_')+'.png';a.href=c.toDataURL('image/png');a.click()}catch(e){alert(e.message)}}
 async function exportPDF(){try{const c=await snap();const jsPDF=window.jspdf.jsPDF;
   const pdf=new jsPDF({orientation:c.width>=c.height?'l':'p',unit:'pt',format:'a4'});
   const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
   const r=Math.min(pw/c.width,ph/c.height);
-  pdf.addImage(c.toDataURL('image/png'),'PNG',(pw-c.width*r)/2,20,c.width*r,c.height*r);
+  pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',(pw-c.width*r)/2,20,c.width*r,c.height*r,undefined,'FAST');
   pdf.save((SEL||'team').replace(/[^\w]+/g,'_')+'.pdf')}catch(e){alert(e.message)}}
 init();
 </script>
