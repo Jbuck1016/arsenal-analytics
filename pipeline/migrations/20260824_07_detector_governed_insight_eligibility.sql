@@ -4,7 +4,7 @@
 --
 -- Supersedes the eligibility body shipped in migration 05 and brings the
 -- live function into line with source control. Migration 05 remains in
--- the chain for replay from a clean schema; this file is the final state.
+-- the Stage 2/3 delta chain; this file is the final state.
 --
 -- Eligibility is governed by detector_requirements. No sample threshold
 -- is hardcoded. Proven live: the function definition contains

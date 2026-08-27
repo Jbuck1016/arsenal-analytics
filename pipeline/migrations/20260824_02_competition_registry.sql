@@ -1,7 +1,8 @@
 -- =====================================================================
 -- 20260824_02_competition_registry.sql
 -- Stage 3, migration 02. APPLIED 2026-08-24.
--- Replayable from a clean schema. Requires migration 01.
+-- Replayable from the established Stage 2 schema baseline. Requires
+-- migration 01; this is not a complete empty-database baseline.
 --
 -- Three-way competition classification, plus the canonical league-scoped
 -- sources that every league-mart entry object must read.

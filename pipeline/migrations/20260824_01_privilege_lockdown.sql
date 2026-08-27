@@ -1,8 +1,9 @@
 -- =====================================================================
 -- 20260824_01_privilege_lockdown.sql
 -- Stage 3, migration 01. APPLIED 2026-08-24.
--- Replayable from a clean schema. Explicitly transactional when run by
--- hand; Supabase wraps each migration in a transaction already.
+-- Replayable from the established Stage 2 schema baseline, not from an
+-- empty Supabase project. Explicitly transactional when run by hand;
+-- Supabase wraps each migration in a transaction already.
 --
 -- WHY THIS EXISTS
 --   Browser roles held INSERT, UPDATE and DELETE on 122 objects in the

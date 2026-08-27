@@ -5,6 +5,14 @@ PostgreSQL catalog and emits forward/reverse SQL; it does not alter the source
 database. Do not run either generated migration on production until its exact
 production output has separately passed review.
 
+The numbered files in `pipeline/migrations` are deltas from the established
+Stage 2 production schema. They are not a complete Supabase project baseline.
+On 2026-08-27, a fresh data-less Supabase preview branch lacked
+`run_invariants()`, `leagues`, `detector_requirements`, `mv_team_league`, and
+`v_team_sample`; migration 00 therefore rolled back at its first dependency on
+`run_invariants()`. Adopt a canonical `supabase/migrations` baseline and prove
+`supabase db reset` before using preview branches for this package.
+
 ## What is enforced
 
 - Topology uses every path across the complete closure, including edges where

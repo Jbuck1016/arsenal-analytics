@@ -293,13 +293,13 @@ Migrations 00 through 06. No materialized view was dropped. No raw row was writt
   evidence base.
 - Insight eligibility made rebuild-safe inside `suppress_low_sample_insights()`.
 
-### 7.3 Contamination still measured (warn level)
+### 7.3 Contamination still measured (warn level, live 2026-08-27)
 
 | Invariant | Violations |
 |---|---|
 | `league_mart_reads_scoped_sources` | 16 |
 | `no_non_league_fixture_in_metrics` | 42 |
-| `no_non_league_row_in_league_outputs` | 198 |
+| `no_non_league_row_in_league_outputs` | 1,122 |
 | `goals_reconcile` (error) | 1 |
 
 These are warn rather than error on purpose. The contamination is real and reported honestly, but
@@ -309,9 +309,11 @@ raising them before the destructive rebuild lands would abort every scheduled sc
 
 Three reasons, in order of weight.
 
-**The rebuild path is unmeasured.** Timing it needs a disposable branch, which is a billable
-action and outside the authorised scope. Running a 36-object destructive transaction on a live
-site with no measured duration is the operation that destroyed the metric stack once already.
+**The rebuild path is unmeasured.** A billable preview branch was tested on 27 August 2026, but
+Supabase branches are data-less and this repository does not yet carry a complete replayable
+schema baseline. Migration 00 rolled back because `run_invariants()` was absent. Running a
+36-object destructive transaction on a live site with no representative-volume timing remains
+the operation that destroyed the metric stack once already.
 
 **The scope premise changed under it.** The work was scoped to twelve entry objects. Recapture
 found 20 audited entries, 51 schema objects reading raw tables, and a 36-object closure.

@@ -67,7 +67,9 @@ ordering problem.
 1. Run `capture_dependency_manifest.sql` and save the output. The tree has grown at every
    recapture, so a stale capture is the main risk.
 2. Write the migration from that capture, literal definitions only, no CASCADE.
-3. Time it on a disposable branch. This is the gate that has never been satisfied.
+3. Time it on an isolated database carrying representative production-volume data. A standard
+   Supabase preview branch is data-less, so it can prove schema compatibility but not rebuild
+   timing or production-volume lock behaviour.
 4. Execute inside one transaction with an explicit `statement_timeout`, with preflight dependency
    assertions, raw-data conservation assertions against a baseline captured in the same
    transaction, and `verify_rebuild()` before `commit`.
@@ -78,20 +80,27 @@ ordering problem.
    them, inside the same migration.
 
 
-## Branch test procedure, 2026-08-25
+## Branch test result, 2026-08-27
 
-The migration is now generated rather than hand written, so the branch test is about timing and
-lock behaviour, not correctness of transcription.
+The temporary branch was created, reached `ACTIVE_HEALTHY`, tested, and deleted immediately after
+the failure was captured. Production was not touched.
 
-1. Create a disposable branch from production.
-2. On the branch, run `generate_cup_isolation.sql` twice, once forward and once reverse, and
-   commit both outputs.
-3. Run `validate_generated_migration.py` against both. It must exit 0.
-4. Run the forward migration with `\timing on`. Record wall clock for the whole transaction and
-   for the two heaviest steps, `mv_seq_state` and `build_insights()`.
-5. Confirm all four scoping invariants promote to error and `verify_rebuild()` returns clean.
-6. Run the reverse migration and confirm the branch returns to its pre-migration state.
-7. Delete the branch.
+The test stopped before cup-isolation generation. The branch did not contain the current Stage 2/3
+baseline: `run_invariants()`, `leagues`, `detector_requirements`, `mv_team_league`, and
+`v_team_sample` were absent. Applying migration 00 rolled back with PostgreSQL error `42883`:
+`function run_invariants() does not exist`. This proves the repository migration history is not
+currently sufficient to recreate production on a fresh Supabase branch.
+
+The next valid branch test has two prerequisites:
+
+1. Establish a canonical `supabase/migrations` baseline from the current production schema and
+   prove it with `supabase db reset` on an empty local database.
+2. For timing, load a sanitized dataset with representative event, match, sequence, and lineup
+   volumes. A data-less preview branch cannot measure the 36-object rebuild.
+
+After those prerequisites, generate forward and reverse from the same untouched catalog, validate
+both, execute forward with timing, assert the promoted invariants, execute reverse, and compare the
+exact captured baseline. Delete the branch when complete.
 
 If the forward transaction exceeds roughly ten minutes, split the refresh out of the transaction
 and gate publication instead, per the design above, rather than holding locks longer.
