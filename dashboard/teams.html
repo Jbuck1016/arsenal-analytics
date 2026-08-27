@@ -95,6 +95,8 @@ tr:hover td{background:var(--surface)}
 .viz-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font:500 10px/1 'Inter';color:var(--text3)}
 .viz-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .viz-leg b{font-weight:700;color:var(--text2)}
+.shot-key{display:inline-flex;align-items:center;gap:5px}
+.shot-key svg{width:13px;height:13px;overflow:visible;flex:none}
 .vz-tog{display:flex;gap:4px;margin:0 0 10px;background:var(--surface);border-radius:7px;padding:3px;flex-wrap:wrap}
 .vz-tog.sm{margin:0}
 .vz-tog.sm .vzb{font-size:9.5px;padding:5px 9px}
@@ -624,6 +626,20 @@ function shotMark(x,y,r,c,op,oc){
     return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+c+'" stroke-width="0.26" stroke-opacity="'+Math.min(1,op*1.6)+'"/>';
   return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
+function shotOutcomeLegend(counts,forTeam){
+  const colours={goal:TPAL.box,saved:forTeam?TPAL.ok:TPAL.fail,blocked:'#a78bfa',post:TPAL.carry,off:forTeam?TPAL.ok:TPAL.fail};
+  const labels={goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'};
+  const glyph={
+    goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
+    saved:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="'+c+'" fill-opacity=".8"/></svg>'},
+    blocked:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 1.5L14.5 8L8 14.5L1.5 8Z" fill="'+c+'" fill-opacity=".75"/></svg>'},
+    post:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="2"/></svg>'},
+    off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
+  };
+  return ['goal','saved','blocked','post','off'].filter(function(k){return counts[k]}).map(function(k){
+    return '<span class="shot-key">'+glyph[k](colours[k])+'<span>'+labels[k]+' <b>'+counts[k]+'</b></span></span>';
+  }).join('');
+}
 function origin(a,c,w,op){
   const sx=(a.start_x!=null?a.start_x:a.x), sy=(a.start_y!=null?a.start_y:a.y);
   return '<circle cx="'+PX(sx)+'" cy="'+PY(sy)+'" r="'+(w*1.0).toFixed(2)+'" fill="none" stroke="'+c+
@@ -810,11 +826,7 @@ async function renderMaps(t){
                '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+
                (a.is_goal?'Goal':'Shot')+'" data-v="xG '+xg.toFixed(3)+(a.dist_m?' \u00B7 '+a.dist_m+' m':'')+'"/>';
       });
-      leg='<span><i style="background:'+TPAL.box+'"></i>Goal <b>'+g+'</b></span>'+
-          '<span><i style="background:'+(forTeam?G:R)+'"></i>Saved <b>'+(ocn.saved||0)+'</b></span>'+
-          '<span><i style="background:'+(forTeam?G:R)+'"></i>Off target <b>'+(ocn.off||0)+'</b></span>'+
-          '<span><i style="background:#a78bfa"></i>Blocked <b>'+(ocn.blocked||0)+'</b></span>'+
-          (ocn.post?'<span><i style="background:'+Y+'"></i>Post <b>'+ocn.post+'</b></span>':'')+
+      leg=shotOutcomeLegend({goal:g,saved:ocn.saved||0,blocked:ocn.blocked||0,post:ocn.post||0,off:ocn.off||0},forTeam)+
           '<span>xG <b>'+sx.toFixed(1)+'</b> \u00B7 marker area refs <b>0.05 / 0.20 / 0.50</b></span>';
     }
     main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+(pattern&&['passes','prog','box','carries','combined'].indexOf(m.k)>=0?' Aggregated into a 6 by 4 zone grid.':'')+' Attack is left to right, across all '+t.matches+' matches.'+zoneNote()+(hasOutcome?outcomeNote():''),

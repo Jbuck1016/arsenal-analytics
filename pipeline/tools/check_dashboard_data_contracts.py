@@ -103,6 +103,9 @@ def main() -> int:
             "match.html: visualization selectors expose keyboard button semantics")
 
     teams = pages["teams.html"]
+    require("function shotOutcomeLegend(counts,forTeam)" in teams and
+            "shotOutcomeLegend({goal:g" in teams and "class=\"shot-key\"" in teams,
+            "teams.html: shot outcome legend demonstrates each plotted glyph")
     require('<div class="viz-eyebrow">Relationship</div>' in teams and
             "eligible teams · raw values · dashed guides are displayed-sample medians" in teams,
             "teams.html: league scatter states the relationship and measurement context")
