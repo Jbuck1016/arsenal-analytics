@@ -36,6 +36,8 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - Its axes cannot extend below zero when both displayed metrics are nonnegative.
 - Only the selected team and structural X/Y extremes are labelled. Every dot retains exact values on hover.
 - Player and Team plot modes, filters and layer toggles expose pressed state and visible keyboard focus.
+- Player metric rows and ranking values that open pitch evidence expose button roles, descriptive names and Enter/Space activation.
+- The pitch-evidence overlay exposes dialog semantics, moves focus to Close, responds to Escape and returns focus to its trigger.
 
 ## Visual principles now enforced
 
@@ -57,7 +59,6 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 
 - Add short quadrant descriptions to relationship plots when the selected pair has a defensible football interpretation. Do not generate generic high/high labels that imply quality.
 - Consolidate duplicated layer counts where filter chips and the export legend repeat the same information without adding meaning.
-- Add keyboard focus and concise accessible names to the remaining clickable metric rows.
 - Consider a collapsible Player overview on small screens; pitch-first fixes the ordering, but summary cards still consume substantial height.
 - Add a graphical outcome-shape key to shot maps so goal, saved, blocked, post and off-target remain distinguishable without colour.
 

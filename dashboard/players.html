@@ -201,6 +201,7 @@ tr:hover td{background:var(--surface)}
 .val-link{font-weight:700;cursor:pointer;border-bottom:1px dotted var(--text3);padding-bottom:1px}
 .val-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .row.drill:hover{background:var(--surface2)}
+.row.drill:focus-visible,.val-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dico{margin-left:5px;color:var(--text3);font-size:8px;opacity:.65}
 .drill-wrap{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);z-index:120;display:none;align-items:center;justify-content:center;padding:24px}
 .drill-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;width:min(980px,94vw);max-height:92vh;overflow:auto;position:relative;box-shadow:0 18px 60px rgba(0,0,0,.5)}
@@ -255,8 +256,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
-<div class="drill-wrap" id="drillWrap" onclick="if(event.target===this)closeDrill()">
-  <div class="drill-card"><button class="drill-x" onclick="closeDrill()">&times;</button>
+<div class="drill-wrap" id="drillWrap" role="dialog" aria-modal="true" aria-label="Metric pitch evidence" onclick="if(event.target===this)closeDrill()">
+  <div class="drill-card"><button class="drill-x" aria-label="Close pitch evidence" onclick="closeDrill()">&times;</button>
     <div id="drillBody"></div></div>
 </div>
 
@@ -662,7 +663,7 @@ function metricCard(g,pm){
   ms.forEach(function(d){
     const r=pm[d.key],pct=r?r.pct:null,t=tier(pct==null?null:+pct);
     const dk=DRILL[d.key];
-    h+='<div class="row'+(dk?' drill':'')+'"'+(dk?' onclick="drill(\''+d.key+'\')" title="Click to see these actions on the pitch"':'')+'>'+
+    h+='<div class="row'+(dk?' drill':'')+'"'+(dk?' role="button" tabindex="0" aria-label="Plot '+esc(d.label)+' actions on the pitch" onclick="drill(\''+d.key+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();drill(\''+d.key+'\')}" title="Click to see these actions on the pitch"':'')+'>'+
        '<div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+(dk?'<span class="dico">\u25F1</span>':'')+'</div>'+
        '<div class="row-val">'+(r?fmt(r.value,d.unit):'<span class="na">n/a</span>')+'</div>'+
        '<div class="bar"><div class="bar-f" style="width:'+(pct==null?0:pct)+'%;background:'+t.c+'"></div></div>'+
@@ -1053,8 +1054,8 @@ async function renderRank(){
         '<td><span class="badge">'+esc(r.pool)+'</span></td>'+
         '<td class="num">'+r.n90.toFixed(1)+'</td>'+
         '<td class="num">'+(DRILL[RK.metric]
-           ? '<span class="val-link" onclick="drillFor(\''+r.id+'\',\''+RK.metric+'\')" '+
-             'title="Click to plot these actions on the pitch">'+fmt(r.value,d.unit)+'</span>'
+           ? '<span class="val-link" role="button" tabindex="0" aria-label="Plot '+esc(r.name)+' '+esc(d.label)+' actions on the pitch" onclick="drillFor(\''+r.id+'\',\''+RK.metric+'\')" '+
+             'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();drillFor(\''+r.id+'\',\''+RK.metric+'\')}" title="Click to plot these actions on the pitch">'+fmt(r.value,d.unit)+'</span>'
            : '<span style="font-weight:700">'+fmt(r.value,d.unit)+'</span>')+'</td>'+
         '<td><div class="rankbar" title="'+esc(fmt(r.value,d.unit))+' within the range shown">'+
           '<div class="rankbar-zero" style="left:'+zeroPct+'%"></div>'+
@@ -1514,7 +1515,16 @@ function xtOf(x,y){
   return (XTG[gx]&&XTG[gx][gy])||0;
 }
 function pm_of(k){return PMCACHE[k]||null}
-function closeDrill(){document.getElementById('drillWrap').style.display='none'}
+let DRILL_RETURN=null;
+function closeDrill(){
+  document.getElementById('drillWrap').style.display='none';
+  if(DRILL_RETURN&&document.contains(DRILL_RETURN))DRILL_RETURN.focus();
+  DRILL_RETURN=null;
+}
+document.addEventListener('keydown',function(e){
+  const wrap=document.getElementById('drillWrap');
+  if(e.key==='Escape'&&wrap&&wrap.style.display==='flex'){e.preventDefault();closeDrill()}
+});
 
 /* Plot the actions behind a value for ANY player, without changing the current selection. */
 async function drillFor(pid,key){
@@ -1535,6 +1545,7 @@ async function drillFor(pid,key){
 }
 function drill(key){
   const p=playerOf(SEL); if(!p||!PACT)return;
+  DRILL_RETURN=document.activeElement;
   const d=defOf(key)||{}; const kind=DRILL[key];
   const A=PACT, C=PCAR||[];
   const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,Y=PAL.carry,N='var(--text3)';
@@ -1612,13 +1623,14 @@ function drill(key){
     '<div class="viz-title">'+esc(d.label||key)+' \u2014 '+esc(p.player_name)+'</div>'+
     '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b> per 90 \u00B7 '+r.pct+'th percentile among '+
       (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+
-    '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right.')+'" viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
+    '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+
     '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
     '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
     '<path d="M68.8 70.2L67.2 69.35L67.2 71.05Z" fill="var(--text3)"/></svg></div>'+
     '<div class="viz-leg">'+leg+'</div>';
   document.getElementById('drillWrap').style.display='flex';
+  document.querySelector('#drillWrap .drill-x').focus();
 }
 
 function toggleDark(){var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}}

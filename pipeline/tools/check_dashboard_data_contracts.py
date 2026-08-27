@@ -46,7 +46,7 @@ def main() -> int:
             "players.html: WhoScored y-axis is inverted once at the renderer boundary")
     require(players.count("PY(") >= 9,
             "players.html: pass, shot, carry, receipt and zone primitives share PY()")
-    require("Attack is always left-to-right." in players and "Attack is left to right." in players,
+    require("Attack is always left-to-right." in players and "Attack is left to right;" in players,
             "players.html: visual and accessible orientation labels agree")
     require("Orientation · attack left → right · team right = bottom edge" in players and
             "Orientation · attack left → right · team right = bottom edge" in pages["teams.html"] and
@@ -63,6 +63,14 @@ def main() -> int:
             "Example marker sizes: 0.05, 0.20 and 0.50 expected goals" in players and
             "cfg.sizeKey?shotSizeKey()" in players,
             "players.html: shot xG size encoding has a proportional symbol key")
+    require("role=\"button\" tabindex=\"0\" aria-label=\"Plot '+esc(d.label)" in players and
+            "event.preventDefault();drill(" in players and
+            "event.preventDefault();drillFor(" in players,
+            "players.html: metric pitch drill-downs are keyboard operable")
+    require("role=\"dialog\" aria-modal=\"true\"" in players and
+            "aria-label=\"Close pitch evidence\"" in players and
+            "e.key==='Escape'" in players and "DRILL_RETURN.focus()" in players,
+            "players.html: pitch evidence dialog manages close and return focus")
     require("c.toDataURL('image/jpeg',0.9),'JPEG'" in players and
             "undefined,'FAST'" in players,
             "players.html: plot PDFs use a compressed opaque export image")
