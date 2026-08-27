@@ -213,10 +213,10 @@ function tier(p){if(p==null)return{c:'var(--text3)'};if(p>=80)return{c:'var(--el
 function fmt(v,u){if(v==null)return'\u2014';return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+(u==='%'?'%':(u==='m'?' m':''))}
 function tdefOf(k){for(var i=0;i<TDEFS.length;i++)if(TDEFS[i].key===k)return TDEFS[i];return null}
 function teamOf(n){for(var i=0;i<TEAMS.length;i++)if(TEAMS[i].team===n)return TEAMS[i];return null}
-function lgOf(t){return (DIR[t]&&DIR[t].league)||'USA-MLS'}
+function lgOf(t){return (DIR[t]&&DIR[t].league)||null}
 function lgName(code){
   for(var i=0;i<LEAGUES.length;i++)if(LEAGUES[i].league===code)return LEAGUES[i].display_name;
-  return code;
+  return code||'League unavailable';
 }
 function lgScopeLabel(){return LG==='ALL'?'All leagues':lgName(LG)}
 /* Every list, ranking and map is scoped to the chosen league. Percentiles and ranks
@@ -269,7 +269,7 @@ async function init(){
     const qt=new URLSearchParams(location.search).get('team');
     if(qt&&teamOf(qt)){
       SEL=qt;
-      if(LG!=='ALL'&&!inScope(SEL))LG=lgOf(SEL);
+      if(LG!=='ALL'&&!inScope(SEL))LG=lgOf(SEL)||'ALL';
     }else{
       const preferred=teamOf('Los Angeles FC');
       SEL=(preferred&&inScope(preferred.team))?preferred.team:((scopedTeams()[0]||{}).team||null);

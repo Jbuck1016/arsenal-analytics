@@ -246,7 +246,7 @@ const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 /* League scope is shared with teams.html and insights.html via localStorage, so a
    choice made on one page carries to the others. */
 var TEAM_LG={}, LG_SCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
-function lgOfTeam(t){return TEAM_LG[t]||'USA-MLS'}
+function lgOfTeam(t){return TEAM_LG[t]||null}
 function teamInScope(t){return LG_SCOPE==='ALL'||lgOfTeam(t)===LG_SCOPE}
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};

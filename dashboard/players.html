@@ -262,8 +262,8 @@ const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:
 const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
 var PLG={}, PLEAGUES=[],
     PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
-function lgOfTeam(t){return PLG[t]||'USA-MLS'}
-function leagueLabel(t){var c=lgOfTeam(t);for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===c)return PLEAGUES[i].display_name;return c}
+function lgOfTeam(t){return PLG[t]||null}
+function leagueLabel(t){var c=lgOfTeam(t);for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===c)return PLEAGUES[i].display_name;return c||'League unavailable'}
 function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
 function scopeLabel(){
   if(PLGSCOPE==='ALL')return 'All leagues';

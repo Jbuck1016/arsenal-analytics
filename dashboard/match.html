@@ -643,8 +643,7 @@ async function loadTeams(){
       .sort((a,b)=>b.matches-a.matches)
       .map(l=>({v:l.league,l:l.display_name,n:l.matches}));
   }catch(e){console.warn('league summary unavailable',e)}
-  if(!LEAGUES.length)LEAGUES=[{v:'USA-MLS',l:'MLS',n:0}];
-  if(!SELCOMPS.size)SELCOMPS=new Set([LEAGUES[0].v]);
+  if(!SELCOMPS.size&&LEAGUES.length)SELCOMPS=new Set([LEAGUES[0].v]);
   try{
     const rows=await sbAll('mv_team_season',{select:'team',order:'team.asc'});
     names=rows.map(r=>r.team);
@@ -657,7 +656,7 @@ async function loadTeams(){
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
-      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',league:LEAGUE_OF[n]||'USA-MLS',comps:LEAGUES};
+      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',league:LEAGUE_OF[n]||null,comps:LEAGUES};
     TEAMS[n].display=dispName(n);
   });
   if(!TEAMS[S.team]||!inComps(S.team)){
@@ -2323,7 +2322,8 @@ function initTeamSwitcher(){
 }
 function inComps(team){
   if(!SELCOMPS.size)return true;
-  return SELCOMPS.has(LEAGUE_OF[team]||'USA-MLS');
+  const league=LEAGUE_OF[team];
+  return !!league&&SELCOMPS.has(league);
 }
 function initCompFilters(){
   const el=document.getElementById('compGroup');

@@ -236,7 +236,7 @@ function card(ins){
 var ALL=[], DIR={}, LEAGUES=[];
 var STATE={lens:'all', team:'all',
   league:(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})()};
-function lgOf(t){return (DIR[t]&&DIR[t].league)||'USA-MLS'}
+function lgOf(t){return (DIR[t]&&DIR[t].league)||null}
 function inLeague(t){return STATE.league==='ALL'||lgOf(t)===STATE.league}
 
 function visible(){
