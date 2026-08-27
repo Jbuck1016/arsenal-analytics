@@ -78,3 +78,33 @@ shares the inverted WhoScored y-axis transform:
 ```text
 python pipeline/tools/check_dashboard_data_contracts.py
 ```
+
+## Supabase migration snapshot
+
+The exact production migration history is stored under `supabase/migrations`
+and frozen by `supabase/LIVE_HISTORY_MANIFEST.sha256`. Check that none of the
+192 captured historical migrations changed, that version numbers remain
+unique, and that later repository-authored migrations are canonically named:
+
+```text
+python pipeline/tools/check_supabase_migration_snapshot.py
+```
+
+This proves repository fidelity to the history recorded by production. It does
+not prove that the captured history can recreate the current schema. That
+requires `supabase db reset` or an empty preview-branch replay; neither should
+be claimed until it has completed successfully.
+
+## Public-view caller-rights hardening
+
+`run_security_invoker_tests.py` executes the public-view hardening migration
+against disposable local PostgreSQL clusters. The fixture covers the success
+path, exact owner/ACL/comment/reloptions preservation, anonymous reads after
+conversion, a missing-dependency-privilege failure, and exact rollback:
+
+```text
+python pipeline/tools/run_security_invoker_tests.py --pg-bin C:\path\to\pgsql\bin
+```
+
+The harness does not contact Supabase and does not apply the migration to
+production.
