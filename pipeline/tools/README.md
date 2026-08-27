@@ -67,3 +67,14 @@ python pipeline/tools/run_fixture_tests.py --pg-bin C:\path\to\pgsql\bin --updat
 The normal run does not update examples. `regenerate_examples.py --check`
 deletes both examples, regenerates them from the exact fixture and generator,
 then fails if Git reports a difference.
+
+## Dashboard data contracts
+
+The lightweight frontend guard checks the five active dashboard pages for the
+silent MLS fallback, verifies the Player directory is built from all
+appearances rather than starters, and confirms every Player pitch primitive
+shares the inverted WhoScored y-axis transform:
+
+```text
+python pipeline/tools/check_dashboard_data_contracts.py
+```
