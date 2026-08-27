@@ -173,6 +173,7 @@ tr:hover td{background:var(--surface)}
 .lchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .lchip b{font-weight:700;color:var(--text3)}
 .lchip:hover{border-color:var(--border2);color:var(--text)}
+.lchip:focus-visible,.vzb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lchip.off{opacity:.34}
 .lchip.off i{background:var(--text3)!important}
 .lchip.solo{color:var(--text3);font-weight:500}
@@ -1189,7 +1190,7 @@ function okF(a){
 }
 function outcomeTog(){
   return '<div class="vz-tog">'+[['','Both'],['ok','Successful'],['fail','Unsuccessful']].map(function(o){
-    return '<button class="vzb'+(VZ.outcome===o[0]?' on':'')+'" onclick="VZ.outcome=\''+o[0]+'\';pick(SEL)">'+o[1]+'</button>'
+    return '<button class="vzb'+(VZ.outcome===o[0]?' on':'')+'" aria-pressed="'+(VZ.outcome===o[0])+'" onclick="VZ.outcome=\''+o[0]+'\';pick(SEL)">'+o[1]+'</button>'
   }).join('')+'</div>';
 }
 /* One definition per layer supplies its colour, its legend entry and its filter
@@ -1211,8 +1212,8 @@ function vizLayers(grp,p){
       sub:showAll?'Every open-play pass. Progressive and box entries stay highlighted.'
                  :'Completed progressive passes and passes into the box, open play only.',
       tog:'<div class="vz-tog">'+
-        '<button class="vzb'+(!showAll?' on':'')+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
-        '<button class="vzb'+(showAll?' on':'')+'" onclick="VZ.passMode=\'all\';pick(SEL)">All passes</button></div>',
+        '<button class="vzb'+(!showAll?' on':'')+'" aria-pressed="'+(!showAll)+'" onclick="VZ.passMode=\'prog\';pick(SEL)">Progressive &amp; into box</button>'+
+        '<button class="vzb'+(showAll?' on':'')+'" aria-pressed="'+showAll+'" onclick="VZ.passMode=\'all\';pick(SEL)">All passes</button></div>',
       layers:[
         L('box','Into box',AC,base.filter(function(a){return a.into_box&&a.ok}),pl(AC,0.4,0.92)),
         L('prog','Progressive',B,base.filter(function(a){return a.prog&&a.ok&&!a.into_box}),pl(B,0.3,0.72)),
@@ -1379,7 +1380,7 @@ function vizPanel(grp,p){
 
   const chips='<div class="vz-filters"><span class="vz-flabel">Show</span>'+
     live.map(function(l){
-      return '<button class="lchip'+(off[l.k]?' off':'')+'" onclick="tglLayer(\''+grp+'\',\''+l.k+'\')">'+
+      return '<button class="lchip'+(off[l.k]?' off':'')+'" aria-pressed="'+(!off[l.k])+'" onclick="tglLayer(\''+grp+'\',\''+l.k+'\')">'+
         '<i style="background:'+l.color+'"></i>'+esc(l.label)+' <b>'+l.items.length+'</b></button>';
     }).join('')+
     (live.length>1?'<button class="lchip solo" onclick="allLayers(\''+grp+'\')">reset</button>':'')+
@@ -1391,8 +1392,8 @@ function vizPanel(grp,p){
     (isPattern?'<span>Nodes = origin volume \u00B7 arrows = strongest repeated zone flows \u00B7 top three labelled</span>':'');
 
   const mode=supportsPattern?'<div class="vz-tog">'+
-    '<button class="vzb'+(isPattern?' on':'')+'" onclick="VZ.mode[\''+grp+'\']=\'pattern\';refreshViz()">Pattern</button>'+
-    '<button class="vzb'+(!isPattern?' on':'')+'" onclick="VZ.mode[\''+grp+'\']=\'events\';refreshViz()">Events</button></div>':'';
+    '<button class="vzb'+(isPattern?' on':'')+'" aria-pressed="'+isPattern+'" onclick="VZ.mode[\''+grp+'\']=\'pattern\';refreshViz()">Pattern</button>'+
+    '<button class="vzb'+(!isPattern?' on':'')+'" aria-pressed="'+(!isPattern)+'" onclick="VZ.mode[\''+grp+'\']=\'events\';refreshViz()">Events</button></div>':'';
   return pitchWrap(cfg.title,cfg.sub+(isPattern?' Aggregated into a 6 by 4 zone grid.':''),inner,legend,mode+(cfg.tog||'')+chips);
 }
 function tglLayer(grp,k){

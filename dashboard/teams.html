@@ -102,6 +102,7 @@ tr:hover td{background:var(--surface)}
 .vz-flabel{font:700 8.5px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
 .vzb{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter';padding:6px 10px;border-radius:5px;cursor:pointer}
 .vzb:hover{color:var(--text)}
+.vzb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .vzb.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
 .split2{display:grid;grid-template-columns:1.05fr .95fr;gap:12px;align-items:start}
 @media(max-width:1150px){.split2{grid-template-columns:1fr}}
@@ -544,24 +545,24 @@ function mapCtrl(){
   const canPattern=['passes','prog','box','carries','combined'].indexOf(MP.kind)>=0;
   const hasOutcome=['passes','prog','box'].indexOf(MP.kind)>=0;
   return '<div class="vz-tog">'+MAPS.map(function(m){
-      return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
+      return '<button class="vzb'+(MP.kind===m.k?' on':'')+'" aria-pressed="'+(MP.kind===m.k)+'" onclick="MP.kind=\''+m.k+'\';renderMaps(teamOf(SEL))">'+m.l+'</button>'
     }).join('')+'</div>'+
     (canPattern?'<div class="vz-tog sm">'+
-      '<button class="vzb'+(MP.mode==='pattern'?' on':'')+'" onclick="MP.mode=\'pattern\';renderMaps(teamOf(SEL))">Pattern</button>'+
-      '<button class="vzb'+(MP.mode==='events'?' on':'')+'" onclick="MP.mode=\'events\';renderMaps(teamOf(SEL))">Events</button></div>':'')+
+      '<button class="vzb'+(MP.mode==='pattern'?' on':'')+'" aria-pressed="'+(MP.mode==='pattern')+'" onclick="MP.mode=\'pattern\';renderMaps(teamOf(SEL))">Pattern</button>'+
+      '<button class="vzb'+(MP.mode==='events'?' on':'')+'" aria-pressed="'+(MP.mode==='events')+'" onclick="MP.mode=\'events\';renderMaps(teamOf(SEL))">Events</button></div>':'')+
     (MP.kind==='def'?'<div class="vz-tog sm">'+[['wins','Ball wins'],['interventions','Interventions'],['failures','Failures']].map(function(o){
-      return '<button class="vzb'+(MP.defMode===o[0]?' on':'')+'" onclick="MP.defMode=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
+      return '<button class="vzb'+(MP.defMode===o[0]?' on':'')+'" aria-pressed="'+(MP.defMode===o[0])+'" onclick="MP.defMode=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
     }).join('')+'</div>':'')+
     '<div class="vz-filters">'+(hasOutcome?'<span class="vz-flabel">Outcome</span>'+
     '<div class="vz-tog sm">'+[['ok','Successful'],['fail','Unsuccessful'],['','Both']].map(function(o){
-      return '<button class="vzb'+(MP.outcome===o[0]?' on':'')+'" onclick="MP.outcome=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
+      return '<button class="vzb'+(MP.outcome===o[0]?' on':'')+'" aria-pressed="'+(MP.outcome===o[0])+'" onclick="MP.outcome=\''+o[0]+'\';renderMaps(teamOf(SEL))">'+o[1]+'</button>'
     }).join('')+'</div>':'')+
     '<span class="vz-flabel">Zone</span>'+
     '<div class="vz-tog sm">'+thirds.map(function(t){
-      return '<button class="vzb'+(MP.third===t[0]?' on':'')+'" onclick="MP.third=\''+t[0]+'\';renderMaps(teamOf(SEL))">'+t[1]+'</button>'
+      return '<button class="vzb'+(MP.third===t[0]?' on':'')+'" aria-pressed="'+(MP.third===t[0])+'" onclick="MP.third=\''+t[0]+'\';renderMaps(teamOf(SEL))">'+t[1]+'</button>'
     }).join('')+'</div>'+
     '<div class="vz-tog sm">'+lanes.map(function(l){
-      return '<button class="vzb'+(MP.lane===l[0]?' on':'')+'" onclick="MP.lane=\''+l[0]+'\';renderMaps(teamOf(SEL))">'+l[1]+'</button>'
+      return '<button class="vzb'+(MP.lane===l[0]?' on':'')+'" aria-pressed="'+(MP.lane===l[0])+'" onclick="MP.lane=\''+l[0]+'\';renderMaps(teamOf(SEL))">'+l[1]+'</button>'
     }).join('')+'</div></div>';
 }
 /* Zone test runs on where the action STARTS. Attack is left to right, so with the

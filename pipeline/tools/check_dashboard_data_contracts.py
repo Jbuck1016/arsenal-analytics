@@ -105,6 +105,11 @@ def main() -> int:
             "mapSample(ps,1200)" in teams and "mapSample(rows,1800)" in teams and
             "evenly sampled from the returned population" in teams,
             "teams.html: season event drill-downs cap SVG density and disclose sampling")
+    require("aria-pressed=\"'+(MP.kind===m.k)+'\"" in teams and
+            "aria-pressed=\"'+(MP.mode==='pattern')+'\"" in teams and
+            "aria-pressed=\"'+(!off[l.k])+'\"" in players and
+            ".lchip:focus-visible,.vzb:focus-visible" in players,
+            "player and team plot toggles expose pressed state and focus")
     require("clone=el.cloneNode(true)" in teams and "overflow:visible" in teams and
             "clone.querySelectorAll('.pitch-box')" in teams and
             "c.toDataURL('image/jpeg',0.9),'JPEG'" in teams,
