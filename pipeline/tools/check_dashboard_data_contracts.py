@@ -48,6 +48,10 @@ def main() -> int:
             "players.html: pass, shot, carry, receipt and zone primitives share PY()")
     require("Attack is always left-to-right." in players and "Attack is left to right." in players,
             "players.html: visual and accessible orientation labels agree")
+    require("Orientation · attack left → right · team right = bottom edge" in players and
+            "Orientation · attack left → right · team right = bottom edge" in pages["teams.html"] and
+            "Orientation · attack bottom → top · team right = screen right" in pages["match.html"],
+            "player, team and match pitches teach their page-specific orientation")
     require('data-chart-title="scatter"' in players and "raw per-90 values" in players,
             "players.html: scatter has a visible title and measurement context")
     require("x0>=0?Math.max(0,x0-padX)" in players and

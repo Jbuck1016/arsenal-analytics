@@ -211,6 +211,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px;flex-shrink:0;gap:4px;position:relative;z-index:50}
 .dl-wrap{position:relative;z-index:100}
 .panel-title{font:700 13.5px/1.2 var(--f-display);letter-spacing:-.015em;color:var(--text)}
+.panel-title-wrap{min-width:0}
+.panel-orient{font:700 8px/1.2 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-top:2px}
 .panel-legend{display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center;flex-shrink:0;padding:4px;max-height:32px;overflow:hidden;row-gap:2px}
 .leg{display:flex;align-items:center;gap:4px;font-size:9px;font-family:var(--f-body);font-weight:500;letter-spacing:.01em;color:var(--text2);white-space:nowrap;line-height:1.3}
 .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -1115,6 +1117,9 @@ function buildPanel(area,viz,sz,teamOverride){
   const panel=document.createElement('div');panel.className='panel';
   const head=document.createElement('div');head.className='panel-head';
   const title=document.createElement('div');title.className='panel-title';
+  const titleWrap=document.createElement('div');titleWrap.className='panel-title-wrap';
+  const orient=document.createElement('div');orient.className='panel-orient';orient.textContent='Orientation · attack bottom → top · team right = screen right';
+  titleWrap.append(title,orient);
   const btns=document.createElement('div');btns.style.cssText='display:flex;gap:3px';
   const jdpBtn=document.createElement('button');jdpBtn.className='jdp-btn'+(S.showJdP?' on':'');jdpBtn.textContent='JdP';jdpBtn.onclick=()=>{S.showJdP=!S.showJdP;renderAll();};
   // Export button lives in the title row, right-aligned
@@ -1122,7 +1127,7 @@ function buildPanel(area,viz,sz,teamOverride){
   const dlBtn=document.createElement('button');dlBtn.className='dl-btn';dlBtn.textContent='\u2B07 Export';
   const dlMenu=document.createElement('div');dlMenu.className='dl-menu';
   dlWrap.append(dlBtn,dlMenu);
-  btns.append(jdpBtn,dlWrap);head.append(title,btns);
+  btns.append(jdpBtn,dlWrap);head.append(titleWrap,btns);
   const body=document.createElement('div');body.className='panel-body';
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;min-width:0;min-height:0;flex:1';
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
@@ -1144,7 +1149,7 @@ function buildPanel(area,viz,sz,teamOverride){
   let panelTitle=buildPanelTitle(viz,teamOverride);
   if(viz==='progressive'&&!S.selPlayer&&evts.length>60)panelTitle=panelTitle.replace('Progressive Passes','Progressive Pass Flow');
   title.textContent=panelTitle;
-  can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top.');
+  can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top; the attacking team’s right side is screen right.');
   // Export menu
   const vLabel=(viz==='progressive'&&!S.selPlayer&&evts.length>60)?'Progressive Pass Flow':(VIZ_LABELS[viz]||viz);const mkItem=(txt,fn)=>{const b=document.createElement('button');b.className='dl-menu-item';b.textContent=txt;b.onclick=e=>{e.stopPropagation();dlWrap.classList.remove('open');dlMenu.style.display='none';fn();};return b;};
   dlMenu.append(mkItem('Download PDF',()=>downloadPDF(can,vLabel)));

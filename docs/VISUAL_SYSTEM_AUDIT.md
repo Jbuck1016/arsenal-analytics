@@ -8,6 +8,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 
 - The complete appearance population now feeds the player directory, so substitutes are not lost when role metadata is absent or starts are zero.
 - All pitch primitives share one WhoScored-to-screen Y transform. Attack is left to right; the attacking right side is drawn at the bottom of the horizontal pitch.
+- Every horizontal pitch now states that attacking right is the bottom edge.
 - Pass, carry and combined views open on a 6 by 4 pattern summary. Individual events remain a drill-down.
 - On single-column layouts the pitch now appears before the long metric table.
 - Nine overview cards fit on one desktop row, moving the visual answer higher in the viewport.
@@ -19,6 +20,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 ### Match
 
 - The first passing view is Progressive rather than the all-pass hairball.
+- Every vertical Match panel states that attack is bottom to top and team right is screen right.
 - Dense team-level Progressive views aggregate the strongest repeated completed routes. Player selections and smaller samples retain event-level vectors.
 - The all-pass drill-down fades dense team context and tells the viewer to select a player or time window to trace routes.
 - Shot markers are uniform when xG is unavailable. Distance remains hover detail and is no longer encoded as a false chance-quality proxy.
@@ -46,7 +48,6 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 
 ### P1 — next visual implementation pass
 
-- Standardise orientation language across horizontal Player/Team pitches and the vertical Match pitch. The current conventions are each valid, but the system should teach the change of frame once.
 - Add automated visual baselines for the export layouts. Team sampled-event PNG/PDF, Player plot PNG/PDF and Match flow PNG were generated in this pass; all PNGs were visually inspected.
 - Extend non-colour distinctions beyond pass success/failure to the remaining multi-action maps so meaning survives colour-vision deficiencies and monochrome exports.
 
