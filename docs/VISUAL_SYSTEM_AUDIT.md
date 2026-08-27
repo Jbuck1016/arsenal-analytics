@@ -25,6 +25,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 - The all-pass drill-down fades dense team context and tells the viewer to select a player or time window to trace routes.
 - Shot markers are uniform when xG is unavailable. Distance remains hover detail and is no longer encoded as a false chance-quality proxy.
 - Incomplete pass vectors use a dashed treatment in addition to colour.
+- Visualization selectors expose button roles, keyboard activation and live pressed state.
 
 ### Team
 
@@ -55,7 +56,7 @@ Reviewed against the live local dashboard on 27 August 2026. This pass covered t
 
 - Add short quadrant descriptions to relationship plots when the selected pair has a defensible football interpretation. Do not generate generic high/high labels that imply quality.
 - Consolidate duplicated layer counts where filter chips and the export legend repeat the same information without adding meaning.
-- Add keyboard focus, pressed state and concise accessible names to clickable metric rows, layer chips and plot controls.
+- Add keyboard focus, pressed state and concise accessible names to the remaining clickable metric rows and layer chips.
 - Consider a collapsible Player overview on small screens; pitch-first fixes the ordering, but summary cards still consume substantial height.
 - Add a graphical outcome-shape key to shot maps so goal, saved, blocked, post and off-target remain distinguishable without colour.
 

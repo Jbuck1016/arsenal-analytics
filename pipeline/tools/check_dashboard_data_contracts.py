@@ -86,6 +86,10 @@ def main() -> int:
     require("const failed=color===PASS_FAIL" in match and "Incomplete (dashed)" in match and
             "Incomplete · dashed" in players,
             "player and match pass maps distinguish failure without colour alone")
+    require("btn.setAttribute('role','button')" in match and
+            "btn.setAttribute('aria-pressed'" in match and
+            "e.key==='Enter'||e.key===' '" in match,
+            "match.html: visualization selectors expose keyboard button semantics")
 
     teams = pages["teams.html"]
     require('<div class="viz-eyebrow">Relationship</div>' in teams and

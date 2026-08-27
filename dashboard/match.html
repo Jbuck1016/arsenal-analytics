@@ -126,6 +126,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
 .viz-btn{padding:6px 4px;font:500 10px/1.2 'Inter',sans-serif;text-align:center;cursor:pointer;background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:6px;transition:.13s;user-select:none}
 .viz-btn:hover{background:var(--surface2);color:var(--text)}
+.viz-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .viz-btn.on{background:var(--bg);color:var(--accent);border-color:var(--border);border-left:3px solid var(--accent);font-weight:600}
 .viz-btn .team-only{display:inline-block;font:700 7px/1 'Inter',sans-serif;padding:1px 4px;border-radius:2px;background:var(--surface2);color:var(--text3);margin-left:3px;letter-spacing:.03em;vertical-align:middle}
 .team-only-banner{background:rgba(212,160,23,0.15);color:#8a6500;border:1px solid rgba(212,160,23,0.3);border-radius:6px;padding:6px 10px;font:500 10px/1.3 'Inter',sans-serif;margin-bottom:4px;text-align:center}
@@ -2404,7 +2405,29 @@ function initCompFilters(){
   });
 }
 function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select played match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
-function initVizButtons(){document.querySelectorAll('.viz-btn').forEach(btn=>{btn.onclick=()=>{const viz=btn.dataset.viz;const adding=!btn.classList.contains('on');if(adding){if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);while(S.activeVizs.length>2){const removed=S.activeVizs.shift();const old=document.querySelector('.viz-btn[data-viz="'+removed+'"]');if(old)old.classList.remove('on');}btn.classList.add('on');}else{btn.classList.remove('on');S.activeVizs=S.activeVizs.filter(v=>v!==viz);}if(S.selMatch)renderAll();updateStats();};});}
+function initVizButtons(){
+  document.querySelectorAll('.viz-btn').forEach(btn=>{
+    btn.setAttribute('role','button');btn.setAttribute('tabindex','0');
+    btn.setAttribute('aria-pressed',btn.classList.contains('on')?'true':'false');
+    const activate=()=>{
+      const viz=btn.dataset.viz,adding=!btn.classList.contains('on');
+      if(adding){
+        if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);
+        while(S.activeVizs.length>2){
+          const removed=S.activeVizs.shift(),old=document.querySelector('.viz-btn[data-viz="'+removed+'"]');
+          if(old){old.classList.remove('on');old.setAttribute('aria-pressed','false')}
+        }
+        btn.classList.add('on');btn.setAttribute('aria-pressed','true');
+      }else{
+        btn.classList.remove('on');btn.setAttribute('aria-pressed','false');
+        S.activeVizs=S.activeVizs.filter(v=>v!==viz);
+      }
+      if(S.selMatch)renderAll();updateStats();
+    };
+    btn.onclick=activate;
+    btn.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}};
+  });
+}
 function initFilters(){document.querySelectorAll('.period-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.periods.add(cb.value);else S.periods.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.outcome-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.outcomes.add(cb.value);else S.outcomes.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.pos-grp-btn').forEach(btn=>{btn.onclick=()=>{const g=btn.dataset.grp;if(g==='all'){S.posGroups.clear();}else{if(S.posGroups.has(g))S.posGroups.delete(g);else S.posGroups.add(g);}document.querySelectorAll('.pos-grp-btn').forEach(b=>{const bg=b.dataset.grp;if(bg==='all')b.classList.toggle('on',S.posGroups.size===0);else b.classList.toggle('on',S.posGroups.has(bg));});if(S.selMatch){renderAll();renderPlayerList();}};});}
 function initTabs(){document.querySelectorAll('.htab').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('.htab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');const tab=btn.dataset.tab;document.getElementById('tabMatch').style.display=tab==='match'?'flex':'none';document.getElementById('tabSeason').style.display=tab==='season'?'block':'none';document.getElementById('tabPlayers').style.display=tab==='players'?'flex':'none';document.getElementById('tabPlayers').classList.toggle('show',tab==='players');document.getElementById('tabMomentum').style.display=tab==='momentum'?'flex':'none';document.getElementById('tabMomentum').classList.toggle('show',tab==='momentum');if(tab==='season'&&!S.seasonData.length)loadSeasonStats();if(tab==='players'&&!S.psPlayersLoaded)loadAllPlayerEvents();if(tab==='momentum')renderMomentumTab();};});}
 function resetStats(){/* noop */}
