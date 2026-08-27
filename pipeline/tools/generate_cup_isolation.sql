@@ -11,27 +11,36 @@ set mig.expect_matviews=:'expect_matviews';
 set mig.expect_views=:'expect_views';
 
 create function pg_temp._scope_definition(p_name text, p_def text)
-returns text language sql immutable as $fn$
-  select case p_name
-    when 'mv_game_goals' then regexp_replace(
-      p_def, 'where[[:space:]]+([a-z_][a-z0-9_]*\.)?is_goal',
-      E'where \\1is_goal and \\1period is distinct from 5', 'i')
-    when 'mv_team_league' then
-      'select team, league, events from ('
-      || ' select e.team, e.league, count(*) as events,'
-      || ' row_number() over (partition by e.team order by count(*) desc, e.league) as rk'
-      || ' from v_league_events e where e.team is not null'
-      || ' group by e.team, e.league) ranked where rk = 1'
-    else regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(
-      p_def,
-      'coalesce\([[:space:]]*([a-z_][a-z0-9_]*)\.league[[:space:]]*,[[:space:]]*''USA-MLS''(?:::text)?[[:space:]]*\)',
-      E'\\1.league', 'gi'),
-      '\mleft[[:space:]]+join[[:space:]]+mv_team_league\M', 'join mv_team_league', 'gi'),
-      '(\mfrom|\mjoin)([[:space:]]+)events\M', E'\\1\\2v_league_events', 'gi'),
-      '(\mfrom|\mjoin)([[:space:]]+)matches\M', E'\\1\\2v_league_matches', 'gi'),
-      '(\mfrom|\mjoin)([[:space:]]+)sequences\M', E'\\1\\2v_league_sequences', 'gi'),
-      '(\mfrom|\mjoin)([[:space:]]+)lineups\M', E'\\1\\2v_league_lineups', 'gi')
-  end
+returns text language plpgsql immutable as $fn$
+declare q text:=p_def;
+begin
+  if p_name='mv_game_goals' then return regexp_replace(
+    q, 'where[[:space:]]+([a-z_][a-z0-9_]*\.)?is_goal',
+    E'where \\1is_goal and \\1period is distinct from 5', 'i'); end if;
+  if p_name='mv_team_league' then return
+    'select team, league, events from ('
+    || ' select e.team, e.league, count(*) as events,'
+    || ' row_number() over (partition by e.team order by count(*) desc, e.league) as rk'
+    || ' from v_league_events e where e.team is not null'
+    || ' group by e.team, e.league) ranked where rk = 1'; end if;
+  q:=regexp_replace(q,
+    'coalesce\([[:space:]]*([a-z_][a-z0-9_]*)\.league[[:space:]]*,[[:space:]]*''USA-MLS''(?:::text)?[[:space:]]*\)',
+    E'\\1.league','gi');
+  q:=regexp_replace(q,'\mleft[[:space:]]+join[[:space:]]+mv_team_league\M','join mv_team_league','gi');
+  -- Preserve the raw table name as an alias. pg_get_viewdef qualifies columns
+  -- with that implicit alias when the source had no explicit alias. Without
+  -- it, replacing `from events` leaves references such as events.team broken.
+  q:=regexp_replace(q,'(\mfrom|\mjoin)([[:space:]]*\(*[[:space:]]*)events\M',E'\\1\\2v_league_events as events','gi');
+  q:=regexp_replace(q,'(\mfrom|\mjoin)([[:space:]]*\(*[[:space:]]*)matches\M',E'\\1\\2v_league_matches as matches','gi');
+  q:=regexp_replace(q,'(\mfrom|\mjoin)([[:space:]]*\(*[[:space:]]*)sequences\M',E'\\1\\2v_league_sequences as sequences','gi');
+  q:=regexp_replace(q,'(\mfrom|\mjoin)([[:space:]]*\(*[[:space:]]*)lineups\M',E'\\1\\2v_league_lineups as lineups','gi');
+  -- If the original source already had an alias, retain that alias rather
+  -- than emitting two. SQL clause keywords are excluded from this collapse.
+  q:=regexp_replace(q,
+    '\m(v_league_events|v_league_matches|v_league_sequences|v_league_lineups)[[:space:]]+as[[:space:]]+(events|matches|sequences|lineups)[[:space:]]+(?!where\M|join\M|left\M|right\M|full\M|inner\M|cross\M|group\M|order\M|having\M|limit\M|offset\M|union\M|intersect\M|except\M|on\M)([a-z_][a-z0-9_]*)',
+    E'\\1 as \\3','gi');
+  return q;
+end
 $fn$;
 
 create temporary table _seed(name text primary key);

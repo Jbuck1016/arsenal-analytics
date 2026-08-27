@@ -232,7 +232,7 @@ EXIT STATUS: 0
 PHASE: generator: reverse
 ==============================================================================
 COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:<PORT>/execution_fixture -v direction=reverse -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
-STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\reverse.sql (29485 bytes, sha256=4f90401bf17b5a3b8f1448730ea168878cf25c8fcf447c16a10d3df3a3a5a654)
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\reverse.sql (29485 bytes, sha256=db2d11911943f960f6e9e86662567ddedce4e4dc8d2d17bfd6cd7b4da7e0eadb)
 STDERR: <empty>
 EXIT STATUS: 0
 
@@ -240,8 +240,52 @@ EXIT STATUS: 0
 PHASE: generator: forward
 ==============================================================================
 COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:<PORT>/execution_fixture -v direction=forward -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
-STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\forward.sql (28964 bytes, sha256=73ecbd319eb685d48d15d7f7c5dd18e86bb47fb8fdf82cfa087e0698d13c88f5)
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\forward.sql (29005 bytes, sha256=126e37efd69d90541c6140be19bb823345ebb64bbe84cc23609f7da80e4322a5)
 STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: render reverse query
+==============================================================================
+COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\arsenal-analytics\pipeline\tools\render_generator_query.py --direction reverse --objects 12 --matviews 9 --views 3
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_reverse_query.sql (21459 bytes, sha256=fb7d6216a5c2951c120f7c204c9caea7a856fa2754e3302b9ed39a4c1d85e4b2)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: execute reverse query
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:<PORT>/execution_fixture -f C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_reverse_query.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_reverse.sql (29485 bytes, sha256=db2d11911943f960f6e9e86662567ddedce4e4dc8d2d17bfd6cd7b4da7e0eadb)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: compare reverse output
+==============================================================================
+RESULT: EXACT MATCH
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: render forward query
+==============================================================================
+COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\arsenal-analytics\pipeline\tools\render_generator_query.py --direction forward --objects 12 --matviews 9 --views 3
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_forward_query.sql (21459 bytes, sha256=28e29ed4a1200c141b19c76f17212b888dd7251dc9af0d76f8f0abf8e97f305a)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: execute forward query
+==============================================================================
+COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:<PORT>/execution_fixture -f C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_forward_query.sql
+STDOUT: redirected to C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\connector_forward.sql (29005 bytes, sha256=126e37efd69d90541c6140be19bb823345ebb64bbe84cc23609f7da80e4322a5)
+STDERR: <empty>
+EXIT STATUS: 0
+
+==============================================================================
+PHASE: connector adapter: compare forward output
+==============================================================================
+RESULT: EXACT MATCH
 EXIT STATUS: 0
 
 ==============================================================================
@@ -268,7 +312,7 @@ PHASE: CTE collision negative test
 COMMAND: C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe -X -qAt -d postgresql://postgres@127.0.0.1:<PORT>/cte_guard_fixture -v direction=forward -v expect_objects=12 -v expect_matviews=9 -v expect_views=3 -f C:\Users\jbuck\arsenal-analytics\pipeline\tools\generate_cup_isolation.sql
 STDOUT: <empty>
 STDERR:
-psql:C:/Users/jbuck/arsenal-analytics/pipeline/tools/generate_cup_isolation.sql:151: ERROR:  GENERATOR ABORT. Raw-table CTE collision requires manual handling: mv_team_lanes
+psql:C:/Users/jbuck/arsenal-analytics/pipeline/tools/generate_cup_isolation.sql:160: ERROR:  GENERATOR ABORT. Raw-table CTE collision requires manual handling: mv_team_lanes
 CONTEXT:  PL/pgSQL function inline_code_block line 24 at RAISE
 EXIT STATUS: 3
 
@@ -652,15 +696,21 @@ STDOUT: <empty>
 STDERR:
 warning: in the working copy of 'pipeline/tools/README.md', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/capture_dependency_manifest.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/check_dashboard_data_contracts.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/check_supabase_migration_snapshot.py', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/fixture/EXAMPLE_forward_fixture.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/fixture/assert_forward.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/assert_security_invoker.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/fixture/fixture.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/fixture/security_invoker_fixture.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/fixture/state_snapshot.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/generate_cup_isolation.sql', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/negative_tests.py', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/regenerate_examples.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/render_generator_query.py', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/run_fixture_tests.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipeline/tools/run_security_invoker_tests.py', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'pipeline/tools/validate_generated_migration.py', LF will be replaced by CRLF the next time Git touches it
 EXIT STATUS: 0
 
@@ -670,18 +720,24 @@ PHASE: example check: create baseline commit
 COMMAND: git -c user.name=fixture-test -c user.email=fixture@test.invalid commit -m "fixture baseline"
 STDOUT:
 [master (root-commit) <COMMIT>] fixture baseline
- 12 files changed, 1599 insertions(+)
+ 18 files changed, 2165 insertions(+)
  create mode 100644 pipeline/tools/README.md
  create mode 100644 pipeline/tools/capture_dependency_manifest.sql
+ create mode 100644 pipeline/tools/check_dashboard_data_contracts.py
+ create mode 100644 pipeline/tools/check_supabase_migration_snapshot.py
  create mode 100644 pipeline/tools/fixture/EXAMPLE_forward_fixture.sql
  create mode 100644 pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql
  create mode 100644 pipeline/tools/fixture/assert_forward.sql
+ create mode 100644 pipeline/tools/fixture/assert_security_invoker.sql
  create mode 100644 pipeline/tools/fixture/fixture.sql
+ create mode 100644 pipeline/tools/fixture/security_invoker_fixture.sql
  create mode 100644 pipeline/tools/fixture/state_snapshot.sql
  create mode 100644 pipeline/tools/generate_cup_isolation.sql
  create mode 100644 pipeline/tools/negative_tests.py
  create mode 100644 pipeline/tools/regenerate_examples.py
+ create mode 100644 pipeline/tools/render_generator_query.py
  create mode 100644 pipeline/tools/run_fixture_tests.py
+ create mode 100644 pipeline/tools/run_security_invoker_tests.py
  create mode 100644 pipeline/tools/validate_generated_migration.py
 STDERR: <empty>
 EXIT STATUS: 0
@@ -692,7 +748,7 @@ PHASE: example regeneration (delete + regenerate + git diff)
 COMMAND: C:\Users\jbuck\anaconda3\python.exe C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\repro-repo\pipeline\tools\regenerate_examples.py --psql C:\Users\jbuck\Documents\Codex\2026-08-23\files-pasted-by-the-user-football\work\postgresql-17.11\pgsql\bin\psql.exe --database postgresql://postgres@127.0.0.1:<PORT>/regen_fixture --repo-root C:\Users\jbuck\AppData\Local\Temp\cup-isolation-e2e-<RUN>\repro-repo --check
 STDOUT:
 generated pipeline\tools\fixture\EXAMPLE_reverse_fixture.sql (29485 bytes)
-generated pipeline\tools\fixture\EXAMPLE_forward_fixture.sql (28964 bytes)
+generated pipeline\tools\fixture\EXAMPLE_forward_fixture.sql (29005 bytes)
 git diff regeneration check exit 0
 STDERR: <empty>
 EXIT STATUS: 0

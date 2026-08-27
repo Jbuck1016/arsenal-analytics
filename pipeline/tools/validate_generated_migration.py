@@ -19,7 +19,7 @@ def raw_reads(body: str) -> list[str]:
     ctes = {m.group(1).lower() for m in re.finditer(
         r"(?:with|,)\s+(?:recursive\s+)?\"?(\w+)\"?\s+as\s*\(", clean, re.I)}
     found = []
-    for m in re.finditer(r"\b(?:from|join)\s+(?:(?:public|\"public\")\s*\.\s*)?\"?(\w+)\"?", clean, re.I):
+    for m in re.finditer(r"\b(?:from|join)\s*\(*\s*(?:(?:public|\"public\")\s*\.\s*)?\"?(\w+)\"?", clean, re.I):
         name = m.group(1).lower()
         if name in RAW and name not in ctes:
             found.append(name)
@@ -72,7 +72,8 @@ def validate(path: Path, direction: str, objects: int, matviews: int, views: int
         check("original definitions restored", "period is distinct from 5" not in "\n".join(body for _, _, body in created))
         check("reverse never calls verify_rebuild", "select verify_rebuild();" not in sql)
         check("reverse compares captured invariant baseline", "Invariant results differ" in sql)
-        check("reverse restores exact registry JSON", "jsonb_populate_record" in sql and "fixture original registry note" in sql)
+        check("reverse restores exact registry JSON", "jsonb_populate_record" in sql and
+              "baseline_registry jsonb:=" in sql and "Registry row differs" in sql)
         check("reverse restores captured severities", "baseline jsonb" in sql and "set severity=item.severity" in sql)
         check("reverse does not hardcode warn", "set severity='warn'" not in sql and "set severity = 'warn'" not in sql)
     return failures

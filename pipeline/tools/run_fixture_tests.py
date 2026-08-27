@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import re
+import difflib
 from pathlib import Path
 
 
@@ -77,6 +78,7 @@ def main() -> int:
     snapshot_sql = root / "pipeline/tools/fixture/state_snapshot.sql"
     assert_forward = root / "pipeline/tools/fixture/assert_forward.sql"
     generator = root / "pipeline/tools/generate_cup_isolation.sql"
+    connector_renderer = root / "pipeline/tools/render_generator_query.py"
     validator = root / "pipeline/tools/validate_generated_migration.py"
     negatives = root / "pipeline/tools/negative_tests.py"
     regenerator = root / "pipeline/tools/regenerate_examples.py"
@@ -112,9 +114,29 @@ def main() -> int:
         common = ["-X","-qAt","-d",env_db("execution_fixture"),"-v","expect_objects=12","-v","expect_matviews=9","-v","expect_views=3","-f",generator]
         run(log,"generator: reverse",[psql,*common[:4],"-v","direction=reverse",*common[4:]],stdout_file=reverse)
         run(log,"generator: forward",[psql,*common[:4],"-v","direction=forward",*common[4:]],stdout_file=forward)
+        for direction, expected in (("reverse", reverse), ("forward", forward)):
+            query_file=work/f"connector_{direction}_query.sql"
+            run(log,f"connector adapter: render {direction} query",[
+                sys.executable,connector_renderer,"--direction",direction,
+                "--objects","12","--matviews","9","--views","3"],stdout_file=query_file)
+            actual_file=work/f"connector_{direction}.sql"
+            run(log,f"connector adapter: execute {direction} query",[
+                psql,"-X","-qAt","-d",env_db("execution_fixture"),"-f",query_file],stdout_file=actual_file)
+            log.phase(f"connector adapter: compare {direction} output")
+            equal=actual_file.read_bytes()==expected.read_bytes()
+            log.parts.append(f"RESULT: {'EXACT MATCH' if equal else 'MISMATCH'}\nEXIT STATUS: {0 if equal else 1}\n")
+            if not equal:
+                diff=list(difflib.unified_diff(
+                    expected.read_text(encoding="utf-8").splitlines(),
+                    actual_file.read_text(encoding="utf-8").splitlines(),
+                    fromfile="psql-generator",tofile="connector-adapter",lineterm=""))
+                log.parts.append("\n".join(diff[:80])+"\n")
+                raise RuntimeError(f"connector {direction} output differs from psql generator")
         if a.update_examples:
-            (root/"pipeline/tools/fixture/EXAMPLE_forward_fixture.sql").write_bytes(forward.read_bytes())
-            (root/"pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql").write_bytes(reverse.read_bytes())
+            for destination,source in (
+                (root/"pipeline/tools/fixture/EXAMPLE_forward_fixture.sql",forward),
+                (root/"pipeline/tools/fixture/EXAMPLE_reverse_fixture.sql",reverse)):
+                destination.write_text(source.read_text(encoding="utf-8"),encoding="utf-8",newline="\n")
         log.phase("seed-to-seed topology assertion")
         depths={name:int(depth) for name,depth in re.findall(r"^-- DEPTH (\w+)=(\d+)$",forward.read_text(encoding="utf-8"),re.M)}
         topology_ok=depths.get("mv_team_breakdown",-1)>depths.get("v_team_sample",-1)

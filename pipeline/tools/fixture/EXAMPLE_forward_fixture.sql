@@ -106,7 +106,7 @@ comment on materialized view public.mv_game_goals is 'fixture: exact original co
 create materialized view public.mv_state_segments as
 SELECT game_id,
     team
-   FROM v_league_events
+   FROM v_league_events as events
   WHERE (team IS NOT NULL);
 alter materialized view public.mv_state_segments owner to postgres;
 revoke all on public.mv_state_segments from public, anon, authenticated, service_role;
@@ -116,7 +116,7 @@ grant SELECT on public.mv_state_segments to authenticated;
 create materialized view public.mv_team_lanes as
 SELECT game_id,
     home_team AS team
-   FROM v_league_matches m;
+   FROM v_league_matches as m;
 alter materialized view public.mv_team_lanes owner to postgres;
 revoke all on public.mv_team_lanes from public, anon, authenticated, service_role;
 grant SELECT on public.mv_team_lanes to anon;
@@ -135,7 +135,7 @@ create materialized view public.mv_team_match as
 SELECT game_id,
     team,
     count(*) AS n
-   FROM v_league_events
+   FROM v_league_events as events
   GROUP BY game_id, team;
 alter materialized view public.mv_team_match owner to postgres;
 revoke all on public.mv_team_match from public, anon, authenticated, service_role;
@@ -145,8 +145,8 @@ grant SELECT on public.mv_team_match to authenticated;
 create view public.v_season_stats as
 SELECT m.game_id,
     e.team
-   FROM (events e
-     JOIN v_league_matches m ON ((m.game_id = e.game_id)));
+   FROM (v_league_events as e
+     JOIN v_league_matches as m ON ((m.game_id = e.game_id)));
 alter view public.v_season_stats owner to postgres;
 revoke all on public.v_season_stats from public, anon, authenticated, service_role;
 grant SELECT on public.v_season_stats to anon;
@@ -156,7 +156,7 @@ create view public.v_team_sample as
 SELECT team,
     min(league) AS league,
     count(*) AS matches
-   FROM v_league_sequences s
+   FROM v_league_sequences as s
   GROUP BY team;
 alter view public.v_team_sample owner to postgres;
 revoke all on public.v_team_sample from public, anon, authenticated, service_role;

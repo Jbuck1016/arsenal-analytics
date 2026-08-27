@@ -40,6 +40,20 @@ python pipeline/tools/validate_generated_migration.py forward.sql reverse.sql --
 python pipeline/tools/negative_tests.py forward.sql reverse.sql --objects 36 --matviews 28 --views 8
 ```
 
+When direct `psql` credentials are unavailable, render the same generator as a
+single-result SQL query for the Supabase SQL connector:
+
+```text
+python pipeline/tools/render_generator_query.py --direction reverse > reverse-query.sql
+python pipeline/tools/render_generator_query.py --direction forward > forward-query.sql
+```
+
+The end-to-end harness executes both connector queries against the fixture and
+requires their generated migration text to match the native psql generator
+byte-for-byte. Generate reverse first from the untouched catalog, then forward.
+The reviewed production pair is stored in `pipeline/generated`; never regenerate
+reverse after forward has been applied.
+
 `capture_dependency_manifest.sql` provides a human-readable capture using the
 same topology algorithm. It is tooling, not a migration.
 

@@ -52,7 +52,7 @@ create materialized view mv_team_lanes as
 create view v_season_stats as
  select m.game_id,e.team from events e join matches m on m.game_id=e.game_id;
 create materialized view mv_state_segments as
- select game_id,team from events where team is not null;
+ select events.game_id,events.team from events where events.team is not null;
 create view v_team_sample with(security_invoker=true) as
  select s.team,min(s.league) league,count(*) matches from sequences s group by s.team;
 
