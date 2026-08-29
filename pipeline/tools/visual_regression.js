@@ -15,7 +15,9 @@ const DASH=path.join(ROOT,'dashboard');
 const OUT=path.join(__dirname,'visual-baselines');
 const update=process.argv.includes('--update');
 const only=(process.argv.find(a=>a.startsWith('--case='))||'').split('=')[1];
-const player='380706',game='1993913';
+// Keep deterministic live fixtures inside the active season boundary. These
+// ids are updated only when the registered season changes.
+const player='367185',game='1983546';
 
 function server(){
   const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'};
@@ -90,9 +92,20 @@ async function main(){
     for(const c of cases.filter(c=>!only||c.name.includes(only))){
       const page=await browser.newPage({viewport:c.size,deviceScaleFactor:1});
       page.on('pageerror',e=>console.error(`PAGE ${c.name}: ${e.message}`));
+      page.on('response',async r=>{
+        if(r.status()>=400){
+          let body='';try{body=(await r.text()).slice(0,500)}catch{}
+          console.error(`HTTP ${c.name}: ${r.status()} ${r.url()} ${body}`);
+        }
+      });
       await page.addInitScript(t=>{localStorage.setItem('theme',t);localStorage.setItem('siteAccess','granted-v1')},c.theme||'dark');
       await page.goto(`${base}/${c.url}`,{waitUntil:'domcontentloaded'});
-      await page.locator(c.ready).first().waitFor({state:'visible',timeout:45000});
+      try{
+        await page.locator(c.ready).first().waitFor({state:'visible',timeout:45000});
+      }catch(error){
+        console.error(`READY ${c.name}: ${(await page.locator('body').innerText()).slice(0,1200)}`);
+        throw error;
+      }
       if(c.act){await page.evaluate(c.act());await page.locator(c.after||'.pitch-box').first().waitFor({state:'visible',timeout:20000})}
       if(c.css)await page.addStyleTag({content:c.css});
       if(c.mono)await page.addStyleTag({content:'html{filter:grayscale(1)!important}'});

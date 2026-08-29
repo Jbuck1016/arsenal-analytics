@@ -65,7 +65,7 @@ fails above a 0.2% pixel-change threshold and retains received/diff evidence on 
 
 ### Data issues intentionally not disguised by styling
 
-- Competition isolation is now enforced in the database. Arsenal resolves to its 33 Premier League matches; domestic-cup and continental fixtures cannot enter league metrics or rankings.
+- Competition and season isolation are enforced at the analytical boundary. Arsenal currently resolves to 1 match in the active 2026/27 Premier League season; domestic-cup, continental, and prior-season fixtures remain archived but cannot enter live metrics or rankings.
 - European teams below the six-match evidence threshold remain excluded from comparative plots by design.
 - Match shots do not currently expose xG in this view; uniform markers are the honest fallback.
 

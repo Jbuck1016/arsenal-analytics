@@ -290,7 +290,7 @@ async function init(){
       sbAll('mv_team_all',{select:'team,matches,goals_pg,goals_against_pg,possession_pct,field_tilt,ppda,def_height,shots_pg,shots_against_pg,passes_per_seq'}),
       sbAll('mv_player_season',{select:'player_id,player_name,team,nineties'}),
       sbAll('mv_player_role',{select:'player_id,pool'}),
-      sbAll('matches',{select:'game_id,date,home_team,away_team,home_score,away_score',home_score:'not.is.null',order:'date.desc'}),
+      sbAll('v_league_matches',{select:'game_id,date,home_team,away_team,home_score,away_score',home_score:'not.is.null',order:'date.desc'}),
       sbAll('team_names',{select:'event_name,match_name,display_name'})
     ]);
     (r[4]||[]).forEach(function(m){NAMEMAP[m.event_name]=m.display_name;NAMEMAP[m.match_name]=m.display_name;});
@@ -351,7 +351,7 @@ async function init(){
         if(n) document.getElementById('nInsight').textContent=n+' reads';
       }catch(e){}
       try{
-        const u2=new URL(SB+'/rest/v1/sequences'); u2.searchParams.set('select','seq_uid');
+        const u2=new URL(SB+'/rest/v1/v_league_sequences'); u2.searchParams.set('select','seq_uid');
         const r2=await fetch(u2,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
         const cr2=r2.headers.get('content-range'); const n2=cr2?cr2.split('/')[1]:null;
         if(n2) document.getElementById('nSeq').textContent=(+n2).toLocaleString()+' chains';

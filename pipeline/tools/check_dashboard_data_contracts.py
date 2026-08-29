@@ -9,7 +9,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DASHBOARD = ROOT / "dashboard"
-ACTIVE_PAGES = ["index.html", "insights.html", "match.html", "players.html", "teams.html"]
+ACTIVE_PAGES = [
+    "index.html", "insights.html", "match.html", "players.html",
+    "teams.html", "sequences.html",
+]
 
 
 def main() -> int:
@@ -29,6 +32,16 @@ def main() -> int:
         require(not silent_mls.search(source), f"{name}: no silent USA-MLS fallback")
     require("LEAGUES=[{v:'USA-MLS',l:'MLS',n:0}]" not in pages["match.html"],
             "match.html: no fabricated zero-match MLS league list")
+
+    # Raw history is retained for ingestion and audit, but active pages must
+    # read the current-season boundary rather than querying archive tables.
+    raw_browser_read = re.compile(
+        r"(?:sbAll|sbGet)\(['\"](?:events|matches|sequences|lineups)['\"]"
+        r"|/rest/v1/(?:events|matches|sequences|lineups)(?:[?'\"]|$)"
+    )
+    for name, source in pages.items():
+        require(not raw_browser_read.search(source),
+                f"{name}: browser data reads are current-season scoped")
 
     players = pages["players.html"]
     require("sbAll('mv_player_season',{select:'player_id,player_name,team,nineties,apps,starts,minutes'})" in players,

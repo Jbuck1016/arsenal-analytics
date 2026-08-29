@@ -721,12 +721,12 @@ async function loadMatches(){
     }else{
       q.home_score='not.is.null';
     }
-    const m=await sbAll('matches',q);all=all.concat(m);
+    const m=await sbAll('v_league_matches',q);all=all.concat(m);
   }
   all.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   S.matches=all;renderMatchSelect();
 }
-async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters]=await Promise.all([sbAll('events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'}),sbRpc('get_starter_names',{p_game_id:gid})]);S.events=evts;S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
+async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters]=await Promise.all([sbAll('v_league_events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'}),sbRpc('get_starter_names',{p_game_id:gid})]);S.events=evts;S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
@@ -1412,7 +1412,7 @@ function getPlayerTotalMins(player){const m=computePlayerMinutesMap();let total=
 function computeAllSquadStats(){if(S._sqStatsCache)return S._sqStatsCache;const t=T();const players={};const allTeam=S.psAllEvents.filter(e=>e.team===t.name);allTeam.forEach(e=>{if(!players[e.player])players[e.player]=[];players[e.player].push(e);});const sorted=[...allTeam].sort((a,b)=>(a.game_id-b.game_id)||a.period-b.period||a.minute-b.minute||a.second-b.second);const saCount={};for(let i=1;i<sorted.length;i++){if(sorted[i].is_shot&&sorted[i].game_id===sorted[i-1].game_id&&sorted[i-1].type==='Pass'){saCount[sorted[i-1].player]=(saCount[sorted[i-1].player]||0)+1;}}const result=[];Object.entries(players).forEach(([name,evts])=>{const p=evts.filter(e=>e.type==='Pass'),sp=p.filter(e=>e.outcome_type==='Successful'),pr=p.filter(e=>isProgPass(e)),fw=p.filter(e=>e.end_x!=null&&e.end_x>e.x+3),la=p.filter(e=>e.end_x!=null&&Math.abs(e.end_x-e.x)<=3),ft=p.filter(e=>e.end_x!=null&&e.end_x>=66),z1=p.filter(e=>e.end_x!=null&&e.end_x>=66&&e.end_x<=83&&e.end_y>=21&&e.end_y<=79),bx=p.filter(e=>e.end_x!=null&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79),sh=evts.filter(e=>e.is_shot),gl=evts.filter(e=>e.is_goal),df=evts.filter(e=>DEF_TYPES.includes(e.type)),dw=df.filter(e=>e.outcome_type==='Successful'),pl=Math.max(1,p.length),dl=Math.max(1,df.length),mc=new Set(evts.map(e=>e.game_id)).size,mins=getPlayerTotalMins(name);result.push({name,_matches:mc,_mins:mins,passes:p.length,pass_acc:Math.round(sp.length/pl*100),progressive:pr.length,fwd_pct:Math.round(fw.length/pl*100),lat_pct:Math.round(la.length/pl*100),key_passes:saCount[name]||0,zone14:z1.length,final_third:ft.length,into_box:bx.length,shot_assists:saCount[name]||0,shots:sh.length,goals:gl.length,def_actions:df.length,def_won_pct:Math.round(dw.length/dl*100),tackles:evts.filter(e=>e.type==='Tackle').length,interceptions:evts.filter(e=>e.type==='Interception').length,clearances:evts.filter(e=>e.type==='Clearance').length,aerials:evts.filter(e=>e.type==='Aerial').length,ball_recoveries:evts.filter(e=>e.type==='BallRecovery').length});});S._sqStatsCache=result;return result;}
 
 /* PLAYER STATS TAB */
-async function loadAllPlayerEvents(){if(S.psPlayersLoaded)return;const t=T();document.getElementById('psList').innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const evts=await sbAll('events',{team:'eq.'+t.name,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal',order:'game_id.asc,minute.asc,second.asc'});S.psAllEvents=evts;S.psPlayersLoaded=true;renderPsPlayerList();}
+async function loadAllPlayerEvents(){if(S.psPlayersLoaded)return;const t=T();document.getElementById('psList').innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const evts=await sbAll('v_league_events',{team:'eq.'+t.name,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal',order:'game_id.asc,minute.asc,second.asc'});S.psAllEvents=evts;S.psPlayersLoaded=true;renderPsPlayerList();}
 
 function renderPsPlayerList(filter){const el=document.getElementById('psList');const t=T();const players={};S.psAllEvents.forEach(e=>{if(e.team!==t.name)return;if(!players[e.player])players[e.player]={passes:0,shots:0,matches:new Set()};if(e.type==='Pass')players[e.player].passes++;if(e.is_shot)players[e.player].shots++;players[e.player].matches.add(e.game_id);});const gOf=name=>{const pos=S.playerPos[name];if(!pos)return 4;if(pos==='GK')return 0;if(['DC','DL','DR','DMC'].includes(pos))return 1;if(['MC','AMC','AML','AMR','ML','MR'].includes(pos))return 2;if(['FW','FWL','FWR'].includes(pos))return 3;return 4;};const lastName=n=>{const parts=n.trim().split(/\s+/);return (parts[parts.length-1]||n).toLowerCase();};let entries=Object.entries(players);if(filter){const f=filter.toLowerCase();entries=entries.filter(([n])=>n.toLowerCase().includes(f));}entries.sort((a,b)=>{const ra=gOf(a[0]),rb=gOf(b[0]);if(ra!==rb)return ra-rb;return lastName(a[0]).localeCompare(lastName(b[0]));});const groupLabels=['GOALKEEPERS','DEFENDERS','MIDFIELDERS','FORWARDS','OTHER'];let html='';let lastG=-1;entries.forEach(([name,st])=>{const g=gOf(name);if(g!==lastG){html+='<div class="ps-group-hdr">'+groupLabels[g]+'</div>';lastG=g;}const pos=S.playerPos[name]||'';const mins=getPlayerTotalMins(name)||0;html+='<div class="ps-item'+(S.psPlayer===name?' sel':'')+'" data-player="'+esc(name)+'"><span class="p-b pos">'+esc(pos||'—')+'</span><span class="p-name">'+esc(name)+'</span><span class="p-mins">'+mins+"'</span></div>";});el.innerHTML=html;el.querySelectorAll('.ps-item').forEach(item=>{item.addEventListener('click',()=>{S.psPlayer=item.dataset.player;renderPsPlayerList(document.getElementById('psSearch').value);renderPlayerProfile();});});}
 
@@ -1617,7 +1617,7 @@ async function openCellMatchModal(gid,oppName,colKey){
     // If no gid, try to find via opponent match
     let realGid=gid;if(!realGid||realGid==='null'||realGid==='undefined'){const mm=S.matches.find(mm=>mm.home_team===oppName||mm.away_team===oppName);if(mm)realGid=mm.game_id;}
     if(!realGid){body.innerHTML='<div class="report-error">Could not resolve match id for this row.</div>';return;}
-    const evts=await sbAll('events',{game_id:'eq.'+realGid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'});
+    const evts=await sbAll('v_league_events',{game_id:'eq.'+realGid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal'});
     const vizType=COL_VIZ_MAP[colKey]||'passes';
     // Filter for team
     const teamAllEvts=evts.filter(e=>e.team===t.name);
@@ -2464,7 +2464,7 @@ async function openDeepLink(){
   const gid=new URLSearchParams(location.search).get('game');
   if(!gid)return;
   try{
-    const rows=await sbAll('matches',{game_id:'eq.'+gid,
+    const rows=await sbAll('v_league_matches',{game_id:'eq.'+gid,
       select:'game_id,home_team,away_team,competition,season'});
     const m=rows&&rows[0]; if(!m)return;
     const hev=evName(m.home_team);

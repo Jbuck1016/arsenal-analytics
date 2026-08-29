@@ -327,8 +327,8 @@ async function init(){
   try{
     document.getElementById('tabs').innerHTML=tabsHtml();
     const r=await Promise.all([
-      sbAll('sequences',{select:'team',is_open_play:'eq.true',limit:'1'}),
-      sbAll('matches',{select:'game_id,home_team,away_team,date'})
+      sbAll('v_league_sequences',{select:'team',is_open_play:'eq.true',limit:'1'}),
+      sbAll('v_league_matches',{select:'game_id,home_team,away_team,date'})
     ]);
     r[1].forEach(function(m){MATCHES[m.game_id]=m});
     // team list from the style view (guaranteed to have sequence data)
@@ -362,7 +362,7 @@ async function loadCandidates(){
     if(MODE==='type'){
       rows=await sbRpc('top_sequences_by_type',{p_tag:TAG,p_n:12});
     }else{
-      rows=await sbAll('sequences',{team:'eq.'+TEAMSEL,is_open_play:'eq.true',
+      rows=await sbAll('v_league_sequences',{team:'eq.'+TEAMSEL,is_open_play:'eq.true',
         order:'xt_sum.desc',limit:'12',
         select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
     }
@@ -406,7 +406,7 @@ async function choosePick(i){
   try{
     const hits=await sbRpc('similar_sequences',{p_seq:PICK.seq_uid,p_n:12});
     const ids=hits.map(function(x){return '"'+x.seq_uid+'"'});
-    const paths=await sbAll('sequences',{seq_uid:'in.('+ids.join(',')+')',
+    const paths=await sbAll('v_league_sequences',{seq_uid:'in.('+ids.join(',')+')',
       select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
     const pm={};paths.forEach(function(p){pm[p.seq_uid]=p});
     NB=hits.map(function(h){return Object.assign({},pm[h.seq_uid]||{},{dist:h.dist})})

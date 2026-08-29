@@ -438,7 +438,7 @@ async function renderMatches(t){
   try{
     const rows=await sbAll('mv_team_match',{team:'eq.'+encodeURIComponent(t.team).replace(/%20/g,' '),select:'*'});
     const gids=rows.map(function(r){return r.game_id});
-    const ms=await sbAll('matches',{game_id:'in.('+gids.join(',')+')',select:'game_id,date,home_team,away_team,home_score,away_score'});
+    const ms=await sbAll('v_league_matches',{game_id:'in.('+gids.join(',')+')',select:'game_id,date,home_team,away_team,home_score,away_score'});
     const mm={};ms.forEach(function(m){mm[m.game_id]=m});
     const list=rows.map(function(r){
       const m=mm[r.game_id]||{};const home=m.home_team===t.team;
