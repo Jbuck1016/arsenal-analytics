@@ -70,8 +70,10 @@ async function exportBaseline(page,name,trigger,isPdf){
 }
 async function main(){
   fs.mkdirSync(OUT,{recursive:true});
-  const s=server();await new Promise(ok=>s.listen(0,'127.0.0.1',ok));
-  const base=`http://127.0.0.1:${s.address().port}`;
+  const externalBase=(process.env.VISUAL_BASE_URL||'').replace(/\/$/,'');
+  const s=externalBase?null:server();
+  if(s)await new Promise(ok=>s.listen(0,'127.0.0.1',ok));
+  const base=externalBase||`http://127.0.0.1:${s.address().port}`;
   const browser=await chromium.launch({headless:true,
     executablePath:process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'});
   try{
@@ -132,6 +134,9 @@ async function main(){
       await exportBaseline(page,'match-export',()=>page.evaluate(()=>downloadPDF(document.querySelector('.pitch-canvas'),'Progressive passing')),true);
       await page.close();
     }
-  } finally {await browser.close();await new Promise(ok=>s.close(ok))}
+  } finally {
+    await browser.close();
+    if(s)await new Promise(ok=>s.close(ok));
+  }
 }
 main().catch(e=>{console.error(e.stack||e);process.exit(1)});
