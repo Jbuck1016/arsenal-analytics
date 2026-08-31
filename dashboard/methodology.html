@@ -228,12 +228,11 @@ tbody tr:last-child td{border-bottom:none}
   <p>The automated checks live as
   rows in an <code>invariants</code> table, each holding SQL that returns a count of violations.
   The verification step raises and names every failing check if any error-level check is non-zero.</p>
-  <div class="callout warn">
-    <b>Verification gates publication of the browser-facing summaries.</b> Insights are prepared
-    first, but the summary refresh waits until every error-level invariant passes. Verification and
-    publication run in one transaction, so a failure leaves the previously published summary
-    figures in place. The underlying analytical rebuild remains stepwise; this guarantee applies
-    specifically to the summary surfaces displayed here.
+  <div class="callout">
+    <b>Verification gates the entire analytical rebuild.</b> Every materialized analytical layer,
+    insight, and browser summary now refreshes inside one transaction. Error-level verification is
+    the final step; any failure rolls the whole transaction back and leaves every public metric at
+    its last-known-good version. A service-role-only failure hook tests that rollback path.
   </div>
   <p>Adding a check is an insert rather than a code change, which is the only way a practice like
   this survives contact with a busy season. <span id="mChecks">The current count is read live.</span></p>
@@ -298,6 +297,10 @@ angle    = degrees( atan( 7.32 * ((100 - x) * 1.05)
     it would be harder to defend line by line. That trade has not been re-examined since the
     compression was measured.</p>
   </div>
+  <p><b>Predictive check.</b> A live temporal holdout now fits the same feature family on the first
+  80% of current-season matches and scores it on the final 20%. Sparse cells fall back to broader
+  training-only shot-shape rates. This is an out-of-time baseline, not external validation or a
+  claim that the production lookup has been replaced.</p>
 
   <!-- ================= XT ================= -->
   <h2 id="xt">Expected threat</h2>
@@ -318,6 +321,9 @@ y_bin = floor(y / 100 *  8)   clamped 0..7</code></pre>
     it has not been validated for these competitions. Both the ordering and the absolute values are
     borrowed.</p>
   </div>
+  <p>The database publishes a separate internal directional check comparing xT on shot-ending and
+  other possessions. It is explicitly a software sanity check; the live status retains
+  <code>externally_validated = false</code>.</p>
 
   <!-- ================= SEQUENCES ================= -->
   <h2 id="seq">Possession sequences</h2>
@@ -588,11 +594,14 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
       set('msRange', (+d.xg_min).toFixed(4)+' to '+(+d.xg_max).toFixed(4));
       set('msSparse', d.sparse_bins+' of '+d.lookup_bins+' hold fewer than '+
           d.sparse_threshold+' shots ('+(+d.sparse_shot_share_pct).toFixed(2)+'% of shots)');
-      set('msStatus', (d.holdout_run||d.out_of_sample_tested)
-          ? 'holdout run'
-          : 'no temporal holdout or out-of-sample test');
     })
     .catch(function(){ markUnavailable(SUPPORT_IDS); });
+
+  fetch(SB+'/rest/v1/v_xg_temporal_holdout?select=validation_shots,validation_from,validation_through,brier_score,log_loss',{headers:HD})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(rows){var d=rows&&rows[0];if(!d)throw new Error('empty');
+      set('msStatus','out-of-time: '+Number(d.validation_shots).toLocaleString()+' shots · '+d.validation_from+' to '+d.validation_through+' · Brier '+Number(d.brier_score).toFixed(5));
+    }).catch(function(){set('msStatus','temporal holdout unavailable',true);});
 })();
 </script>
 </body>

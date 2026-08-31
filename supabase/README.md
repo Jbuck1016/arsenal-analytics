@@ -15,11 +15,12 @@ Run the offline integrity check with:
 python pipeline/tools/check_supabase_migration_snapshot.py
 ```
 
-Important limit: this is an exact history capture, not yet proof that the
-history recreates the current schema. Docker is unavailable on the capture
-host, so `supabase db reset` has not run. The next preview-branch test must
-replay this directory against an empty Supabase database before the baseline
-is called reproducible.
+The exact history is intentionally preserved even though an empty replay now
+reproduces its historical cascade defect. Do not edit those 192 files to make
+the replay green. The canonical replacement is generated from the production
+catalog into `baseline/20260831_public_schema.sql`; that generated file is tested independently
+on an empty disposable PostgreSQL database.
 
-`20260827180929_harden_existing_public_views.sql` is a new, locally tested
-migration. It has not been applied to production.
+Run `pipeline/tools/check_supabase_migration_snapshot.py` for the frozen-history
+hashes and the exact current count of later repository-authored migrations;
+the checker, not a prose count in this README, is canonical.

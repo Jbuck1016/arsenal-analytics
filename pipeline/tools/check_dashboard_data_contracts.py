@@ -114,9 +114,11 @@ def main() -> int:
     require("dense=!S.selPlayer&&evts.length>250" in match and
             "dense team view" in match,
             "match.html: dense all-pass maps fade context and explain how to refine it")
-    require("var r=7;" in match and "uniform marker size" in match and
-            "distance proxy (xG unavailable)" not in match,
-            "match.html: shots do not encode distance as invented chance quality")
+    require("sbAll('v_match_events'" in match and
+            "marker area = fitted xG" in match and
+            "15*Math.sqrt(xg)" in match and
+            "uniform marker size" not in match,
+            "match.html: shot area uses real fitted xG rather than a distance proxy")
     require("const failed=color===PASS_FAIL" in match and "Incomplete (dashed)" in match and
             "Incomplete · dashed" in players,
             "player and match pass maps distinguish failure without colour alone")

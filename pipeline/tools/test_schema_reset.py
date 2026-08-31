@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Replay every checked-in Supabase migration on a fresh local PostgreSQL."""
 from __future__ import annotations
-import argparse, os, shutil, socket, subprocess, tempfile
+import argparse, os, shutil, socket, subprocess, sys, tempfile
 from pathlib import Path
 
 def port():
@@ -14,8 +14,12 @@ def run(cmd, **kw):
     return r
 
 def main():
-    a=argparse.ArgumentParser();a.add_argument('--pg-bin',required=True,type=Path);args=a.parse_args()
-    root=Path(__file__).resolve().parents[2]; migrations=sorted((root/'supabase/migrations').glob('*.sql'))
+    a=argparse.ArgumentParser();a.add_argument('--pg-bin',required=True,type=Path);a.add_argument('--python-lib',type=Path);a.add_argument('--baseline',type=Path);args=a.parse_args()
+    if args.python_lib:
+        sys.path.insert(0,str(args.python_lib))
+    import psycopg
+    root=Path(__file__).resolve().parents[2]
+    migrations=[args.baseline.resolve()] if args.baseline else sorted((root/'supabase/migrations').glob('*.sql'))
     work=Path(tempfile.mkdtemp(prefix='schema-reset-'));cluster=work/'cluster';log=work/'postgres.log';p=port();started=False
     exe=lambda n: args.pg_bin/(n+'.exe' if os.name=='nt' else n)
     try:
@@ -32,16 +36,24 @@ def main():
         url=f'postgresql://postgres@127.0.0.1:{p}/postgres'
         # Minimal Supabase role surface required by the checked-in DDL. This is
         # equivalent to the roles supplied by `supabase start` around Postgres.
-        run([exe('psql'),'-X','-v','ON_ERROR_STOP=1','-d',url,'-c',
-             'create role anon nologin; create role authenticated nologin; create role service_role nologin;'])
-        for i,m in enumerate(migrations,1):
-            r=subprocess.run([str(exe('psql')),'-X','-v','ON_ERROR_STOP=1','-d',url,'-f',str(m)],capture_output=True,text=True)
-            if r.returncode:
-                print(f'FAIL {i}/{len(migrations)} {m.name}\n{r.stdout}\n{r.stderr}')
-                return 1
-            print(f'PASS {i}/{len(migrations)} {m.name}')
-        check=run([exe('psql'),'-X','-qAt','-d',url,'-c',"select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','v','m','p');"])
-        print(f'RESET PASS: {len(migrations)} migrations; {check.stdout.strip()} public relations')
+        with psycopg.connect(url,autocommit=True) as conn:
+            conn.execute('create schema if not exists extensions; create role anon nologin; create role authenticated nologin; create role service_role nologin;')
+            for i,m in enumerate(migrations,1):
+                try:
+                    conn.execute(m.read_text(encoding='utf-8'))
+                except Exception as exc:
+                    print(f'FAIL {i}/{len(migrations)} {m.name}\n{exc}')
+                    return 1
+                print(f'PASS {i}/{len(migrations)} {m.name}')
+            count=conn.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','v','m','p')").fetchone()[0]
+            if args.baseline:
+                missing=conn.execute("select count(*) from unnest(array['events','matches','v_league_events','mv_shot_xg','player_search','v_match_events']) n where to_regclass('public.'||n) is null").fetchone()[0]
+                mutable=conn.execute("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e') and not exists(select 1 from unnest(coalesce(p.proconfig,'{}'::text[])) x where x like 'search_path=%')").fetchone()[0]
+                seeded=conn.execute("select (select count(*) from metric_catalog)+(select count(*) from invariants)+(select count(*) from xt_grid)").fetchone()[0]
+                raw=conn.execute("select (select count(*) from events)+(select count(*) from matches)+(select count(*) from lineups)").fetchone()[0]
+                if missing or mutable or seeded == 0 or raw:
+                    raise RuntimeError(f'baseline assertions failed: missing={missing}, mutable_search_path={mutable}, seeded={seeded}, raw_rows={raw}')
+        print(f'RESET PASS: {len(migrations)} migrations; {count} public relations')
         return 0
     finally:
         if started: subprocess.run([str(exe('pg_ctl')),'-D',str(cluster),'-m','fast','-w','stop'],capture_output=True)

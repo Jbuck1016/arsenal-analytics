@@ -96,12 +96,11 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
 this season's shots, using distance, angle, whether the shot was a header, whether it was a big
 chance, and whether it came in open play. Nothing external is used.</p>
 
-<p><b>What follows is an in-sample calibration diagnostic, not evidence of predictive
-performance.</b> The bin conversion rates are fitted on this season's shots and then evaluated
-against those same outcomes, so the model is being scored on the data that produced it. It shows
-the model is internally consistent and unbiased in aggregate. It does not show it would perform
-on shots it has not seen. <b>No temporal holdout, cross-validation or out-of-sample test has been
-run.</b></p>
+<p>The aggregate line below remains an <b>in-sample fit diagnostic</b>. It is now accompanied by a
+temporal holdout: the same feature family is fitted on the first 80% of current-season matches and
+scored only on the final 20%. Sparse cells fall back to a broader shot-shape rate estimated on the
+training split. This is a genuine unseen-time test, although it is still one season split rather
+than repeated cross-validation or external validation.</p>
 
 <p id="xgCal" class="dim">loading calibration&hellip;</p>
 
@@ -120,17 +119,19 @@ mistake it for validation. What follows describes the support behind the model i
 <tr><td>Assigned xG range</td><td class="num" id="msRange">loading&hellip;</td></tr>
 <tr><td>Sparse bins</td><td class="num" id="msSparse">loading&hellip;</td></tr>
 <tr><td>Validation status</td><td class="num" id="msStatus">loading&hellip;</td></tr>
+<tr><td>Temporal holdout window</td><td class="num" id="hoWindow">loading&hellip;</td></tr>
+<tr><td>Holdout accuracy</td><td class="num" id="hoScores">loading&hellip;</td></tr>
+<tr><td>Holdout goals</td><td class="num" id="hoGoals">loading&hellip;</td></tr>
+<tr><td>Largest holdout estimate</td><td class="num" id="hoMax">loading&hellip;</td></tr>
 </tbody>
 </table>
 
 <div class="callout warn">
-  <b>What this does not prove.</b> The model is fitted on the same shots it is currently assessed
-  against. Its aggregate agreement with observed goals is therefore largely guaranteed by
-  construction and should not be interpreted as predictive validation. The model also compresses
-  chance quality into a narrow range, capped at 0.53, and a share of its lookup bins contain fewer
-  than twenty shots. It is transparent and directionally useful, but its per-shot estimates,
-  especially at the extremes, are not yet validated. The useful next test is a temporal holdout or
-  walk-forward evaluation, which has not been run.
+  <b>What this does not prove.</b> One temporal split does not establish transportability across
+  seasons or competitions. The production lookup still contains sparse cells and compresses the
+  best chances; the holdout estimator reduces sparse-cell reliance through hierarchical fallback,
+  but it is not a replacement model. Treat the reported scores as the first predictive baseline,
+  not a completed validation programme.
 </div>
 
 <h2><span class="n">02</span> xT &mdash; a borrowed grid <span class="tierbadge t4">Tier 4</span></h2>
@@ -152,10 +153,7 @@ grid as a static 96-row table; there is no fitting step anywhere in the pipeline
   withdrawn rather than restated.
 </div>
 
-<p>What can honestly be said about xT is internal consistency: possessions that end in a shot
-carry several times the expected threat of those that do not, so the measure rises where danger
-does. That is a sanity check on the implementation, not evidence the borrowed values are correct
-for these leagues.</p>
+<p id="xtSanity">Loading the internal xT directional check&hellip;</p>
 
 <p class="dim">The <em>relative</em> ordering of pitch zones is directionally plausible and consistent with
 how the game is generally understood, but it has not been validated for these competitions
@@ -329,9 +327,6 @@ generated from the live database · figures reproducible from the platform
       set('msRange', (+d.xg_min).toFixed(4)+' to '+(+d.xg_max).toFixed(4));
       set('msSparse', d.sparse_bins+' of '+d.lookup_bins+' hold fewer than '+
           d.sparse_threshold+' shots ('+(+d.sparse_shot_share_pct).toFixed(2)+'% of shots)');
-      set('msStatus', (d.holdout_run||d.out_of_sample_tested)
-          ? 'holdout run'
-          : 'no temporal holdout or out-of-sample test');
     })
     .catch(function(){
       ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
@@ -340,6 +335,22 @@ generated from the live database · figures reproducible from the platform
         el.className=(el.className+' unavail').trim();
       });
     });
+
+  fetch(SB+'/rest/v1/v_xg_temporal_holdout?select=*',{headers:HD})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(rows){var d=rows&&rows[0];if(!d)throw new Error('empty');
+      document.getElementById('msStatus').textContent='temporal holdout run';
+      document.getElementById('hoWindow').textContent=d.validation_from+' to '+d.validation_through+' ('+(+d.validation_shots).toLocaleString()+' shots)';
+      document.getElementById('hoScores').textContent='Brier '+(+d.brier_score).toFixed(5)+' · log loss '+(+d.log_loss).toFixed(5);
+      document.getElementById('hoGoals').textContent=(+d.predicted_goals).toFixed(1)+' predicted · '+d.actual_goals+' actual · '+(+d.goal_error_pct).toFixed(1)+'% error';
+      document.getElementById('hoMax').textContent=(+d.maximum_prediction).toFixed(4)+' xG';
+    }).catch(function(){['msStatus','hoWindow','hoScores','hoGoals','hoMax'].forEach(function(id){var e=document.getElementById(id);e.textContent='unavailable';e.className=(e.className+' unavail').trim();});});
+
+  fetch(SB+'/rest/v1/v_xt_model_status?select=*',{headers:HD})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(rows){var d=rows&&rows[0];if(!d)throw new Error('empty');
+      document.getElementById('xtSanity').innerHTML='The internal directional check is live: shot-ending possessions average <b>'+Number(d.shot_ending_mean_xt).toFixed(4)+'</b> xT versus <b>'+Number(d.other_mean_xt).toFixed(4)+'</b> for other possessions, a <b>'+Number(d.internal_directional_ratio).toFixed(2)+'×</b> ratio. This is a sanity check on implementation, not validation of the borrowed grid.';
+    }).catch(function(){document.getElementById('xtSanity').textContent='Internal xT status unavailable.';});
 })();
 </script>
 </body>

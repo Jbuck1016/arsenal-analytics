@@ -30,8 +30,8 @@ The executable SQL regression suite passed against production after the final da
 - The generated cup-isolation forward and reverse SQL were both executed against fresh disposable PostgreSQL databases.
 - Forward assertions, reverse assertions, exact baseline restoration, topology checks, negative tests and deterministic regeneration all passed before production application.
 - The production forward application and finalization migrations completed; the reverse remains a tested recovery artifact and was not applied to production.
-- The migration SHA-256 snapshot passes for all 192 recorded migrations plus the three intentional later migrations.
-- The repository now includes `pipeline/tools/test_schema_reset.py`, which replays the complete history against disposable PostgreSQL. It exposes an older migration-history defect at `20260806001605_player_stints_and_squad_role_safe.sql`: an historical cascade removed objects that later migrations assume still exist. A canonical squashed baseline is still required before claiming `supabase db reset` support; this long-term item is not disguised as complete.
+- The migration SHA-256 snapshot passes for all 192 frozen live-history migrations plus nine intentional repository-authored migrations. The executable checker is canonical; this sentence must be updated whenever another later migration is added.
+- `pipeline/tools/test_schema_reset.py` now executes the SQL itself through psycopg on a disposable PostgreSQL cluster. The unmodified history reproducibly fails at `20260806001641_state_output_and_percentiles_safe.sql` because prior cascades removed `player_search`. `pipeline/tools/capture_canonical_baseline.sql` captures the current catalog instead of editing that frozen history; the generated squash and empty-database replay are the required replacement proof.
 
 ## Visual verification
 
@@ -57,3 +57,14 @@ PASS Vercel production deployment status
 ```
 
 Production URL: <https://futscout.xyz>
+
+## Trust-system follow-up — 31 August 2026
+
+- `shots_in_xg_model` now compares current-season, non-own-goal shots to the current-season model. The 28-shot gross difference is entirely intentional own-goal exclusion; unexplained omissions are 0.
+- `played_without_events` now checks the canonical current-season match/event views. The three earlier warnings were archived 2025/26 Arsenal fixtures; the live count is 0.
+- Bundesliga is inactive until ingestion begins. The migration refuses to deactivate it if current-season matches, events, or team-name coverage exist, so activation must arrive with the ingestion rollout and proper whitelist.
+- The xG evidence now includes a genuine temporal holdout: 7,305 training shots and 1,805 later validation shots, Brier 0.07852, log loss 0.27523, 200.53 predicted goals versus 185 actual (+8.4%), maximum estimate 0.5719. This is a first out-of-time baseline, not external validation.
+- The xT status surface records 96 borrowed grid cells, `fitted_on_platform_competitions = false`, and `externally_validated = false`. Its live 5.90× shot-ending directional ratio is labelled as an implementation sanity check only.
+- Match shot maps now read fitted per-shot xG and scale marker area by xG. The 28 intentionally excluded own goals retain an unscaled fallback marker.
+- Supabase's security advisor reports zero mutable-`search_path` application functions after pinning the 11 reported functions. Extension-owned functions were not altered.
+- The only non-zero published invariant is the known `xg_bins_sparse` warning at 18; there are no error-level failures.

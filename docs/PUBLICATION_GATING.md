@@ -1,6 +1,8 @@
 # Publication gating: verifying before data becomes visible
 
-Written 2026-08-24. Summary gating implemented 2026-08-27.
+Written 2026-08-24. Summary gating implemented 2026-08-27. Full atomic path
+implemented and rollback-tested 2026-08-31; activation requires an execution
+surface that is not bounded by PostgREST's request timeout.
 
 ## Implemented summary gate
 
@@ -11,6 +13,18 @@ materialized views only after it passes, in the same transaction. A failure
 therefore leaves the previously published summaries untouched. This is a
 summary-publication guarantee; full last-known-good versioning of every
 analytical matview would still require the wrapper design below.
+
+## Full atomic path prepared
+
+`rebuild_all_verified()` now wraps every analytical refresh, insights, final
+verification and summary publication in a PL/pgSQL subtransaction. A
+service-role-only deliberate failure after preflight rolled back its probe
+write and recorded a failed run, proving the rollback boundary. A real run
+through PostgREST was cancelled by the gateway before it began and left the
+run pending; no metric was published. The scraper therefore remains on the
+existing stepwise path until a database-side worker or direct database
+connection is explicitly approved. The atomic routine is not described as
+operational gating until that activation lands.
 
 ## The problem
 
