@@ -131,6 +131,11 @@ def main() -> int:
     require('.pitch-area[data-count="4"]{overflow-y:auto;align-content:flex-start}' in match and
             'height:min(720px,72vh)' in match,
             "match.html: four-plot layout preserves readable pitch height")
+    require('@media(min-width:1400px)' in match and
+            'width:calc((100% - 36px)/4)' in match and
+            "const wideFour=n===4&&window.matchMedia('(min-width: 1400px)').matches" in match and
+            'wideFour?4:Math.min(3,Math.ceil(n/2))' in match,
+            "match.html: wide four-plot layout uses four portrait-friendly columns")
     require("legendEl.innerHTML=items.map" in match and
             "Draw compact legend ON canvas" not in match and
             '.panel-viz-defensive{width:min(100%,880px)' in match,

@@ -561,6 +561,12 @@ html:not(.dark) .concept-info-bar{background:rgba(251,250,246,.92)}
 .ps-main{background:transparent}.ps-hl-card,.sb-group,.mom-chart-wrap,.mom-heat-panel,.mom-moments{border-radius:4px;background:rgba(22,27,36,.82)}
 html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart-wrap,html:not(.dark) .mom-heat-panel,html:not(.dark) .mom-moments{background:rgba(251,250,246,.92)}
 
+@media(min-width:1400px){
+  .pitch-area[data-count="4"]{flex-wrap:nowrap;overflow:hidden;align-content:stretch}
+  .pitch-area[data-count="4"] .panel{width:calc((100% - 36px)/4);height:100%;max-height:100%;flex:0 0 calc((100% - 36px)/4)}
+  .pitch-area[data-count="4"] .panel-head{min-height:54px}
+}
+
 @media(max-width:1100px){
   .side{width:248px}.pitch-area{overflow-y:auto;align-content:flex-start}
   .pitch-area[data-count="3"] .panel,.pitch-area[data-count="4"] .panel,.pitch-area[data-count="5"] .panel,.pitch-area[data-count="6"] .panel{width:calc(50% - 6px);flex-basis:calc(50% - 6px);height:min(720px,72vh)}
@@ -885,14 +891,15 @@ function getKeyPasses(){const vt=VT();let evts=[...S.events].filter(e=>e.team===
 /* PITCH - COORDINATE FIX */
 const PITCH_RATIO=520/840;
 function calcCanvasSize(cH,cW,n){
-  const cols=n<=1?1:n===2?2:n===3?3:Math.min(3,Math.ceil(n/2));
+  const wideFour=n===4&&window.matchMedia('(min-width: 1400px)').matches;
+  const cols=n<=1?1:n===2?2:n===3?3:wideFour?4:Math.min(3,Math.ceil(n/2));
   const rows=Math.ceil(n/cols);
   // Target panel heights in vh
-  const targetVh=n<=1?0.80:(n<=3?0.75:0.42);
+  const targetVh=n<=1?0.80:(n<=3||wideFour?0.75:0.42);
   const panelH=Math.floor(window.innerHeight*targetVh);
   // Canvas area within panel = panelH minus head(28)+legend(22)+gap
   const aH=panelH-54;
-  const aW=Math.floor((cW-(cols-1)*8)/cols)-4;
+  const aW=Math.floor((cW-24-(cols-1)*12)/cols)-28;
   let h=aH,w=Math.floor(h*PITCH_RATIO);
   if(w>aW){w=aW;h=Math.floor(w/PITCH_RATIO);}
   return{w:Math.max(w,180),h:Math.max(h,260)};
