@@ -201,8 +201,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .pitch-area{flex:1;display:flex;flex-wrap:wrap;min-height:0;overflow:hidden;padding:8px;gap:8px;align-content:stretch;justify-content:center;align-items:stretch;position:relative;z-index:2;margin-top:0!important}
 .pitch-area[data-count="1"] .panel{width:100%;height:100%;max-height:100%;flex:0 0 100%}
 .pitch-area[data-count="2"] .panel{width:calc(50% - 4px);height:100%;max-height:100%;flex:0 0 calc(50% - 4px)}
-.pitch-area[data-count="3"] .panel{width:calc(33.333% - 6px);height:100%;max-height:100%;flex:0 0 calc(33.333% - 6px)}
-.pitch-area[data-count="4"] .panel{width:calc(50% - 8px);height:calc(50% - 4px);max-height:calc(50% - 4px);flex:0 0 calc(50% - 8px)}
+.pitch-area[data-count="3"] .panel{width:calc((100% - 24px)/3);height:100%;max-height:100%;flex:0 0 calc((100% - 24px)/3)}
+.pitch-area[data-count="4"]{overflow-y:auto;align-content:flex-start}
+.pitch-area[data-count="4"] .panel{width:calc(50% - 6px);height:min(720px,72vh);max-height:none;flex:0 0 calc(50% - 6px)}
 .pitch-area[data-count="6"] .panel{width:calc(33.333% - 6px);height:calc(50% - 4px);max-height:calc(50% - 4px);flex:0 0 calc(33.333% - 6px)}
 .pitch-area[data-count="8"] .panel{width:calc(25% - 6px);height:calc(50% - 4px);max-height:calc(50% - 4px);flex:0 0 calc(25% - 6px)}
 .pitch-area[data-count="3"] .panel-context,.pitch-area[data-count="4"] .panel-context,.pitch-area[data-count="6"] .panel-context,.pitch-area[data-count="8"] .panel-context{display:none}
@@ -219,6 +220,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .panel{display:flex;flex-direction:column;min-width:0;min-height:0;flex:0 1 auto;max-width:100%;max-height:80vh;animation:fadeIn .2s ease;box-sizing:border-box;position:relative}
 .pitch-area.single-viz .panel{flex:0 1 auto}
+.pitch-area.single-viz[data-count="1"] .panel-viz-shots{height:auto;max-height:none;align-self:flex-start}
+.pitch-area.single-viz[data-count="1"] .panel-viz-defensive{width:min(100%,920px);flex-basis:min(100%,920px)}
+.pitch-area.single-viz .panel-viz-shots .panel-body{flex:none}
+.pitch-area.single-viz .panel-viz-shots .pitch-canvas{width:min(100%,760px);height:auto}
+.pitch-area.single-viz .panel-viz-defensive .pitch-canvas{width:min(100%,470px);height:auto}
 .panel-head{display:flex;align-items:flex-start;justify-content:space-between;padding:0 4px 4px;flex-shrink:0;gap:6px;position:relative;z-index:50}
 .dl-wrap{position:relative;z-index:100}
 .panel-title{font:700 13.5px/1.2 var(--f-display);letter-spacing:-.015em;color:var(--text);white-space:normal;overflow-wrap:anywhere}
@@ -535,6 +541,7 @@ html:not(.dark) .view-team-bar{background:rgba(251,250,246,.9)}
 .timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:rgba(251,250,246,.82)}
 .pitch-area{padding:12px;gap:12px;background:transparent}
 .pitch-area.single-viz[data-count="1"] .panel{width:min(100%,1040px);flex-basis:min(100%,1040px)}
+.pitch-area.single-viz[data-count="1"] .panel-viz-defensive{width:min(100%,880px);flex-basis:min(100%,880px)}
 .pitch-area[data-count="2"] .panel{width:calc(50% - 6px);flex-basis:calc(50% - 6px)}
 .panel{background:rgba(22,27,36,.78);border:1px solid var(--border);border-radius:5px;padding:12px;box-shadow:var(--shadow);overflow:hidden;max-height:none}
 html:not(.dark) .panel{background:rgba(251,250,246,.9)}
@@ -563,7 +570,7 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
   html,body{height:auto;min-height:100%;overflow:auto}.app{height:auto;min-height:100vh}.hdr{height:auto;min-height:58px;flex-wrap:wrap;padding:10px 12px;gap:8px}.hdr-info{flex:1;min-width:0}.hdr-right{width:100%;margin-left:0;gap:5px;overflow-x:auto;padding-bottom:2px}.btn-fp,.btn-exp,.btn-report{padding:6px 8px}.main{flex-direction:column;overflow:visible}.side{width:100%;max-height:42vh;border-right:0;border-bottom:1px solid var(--border)}.viz-grid{grid-template-columns:1fr 1fr}.content{min-height:78vh;overflow:visible}.pitch-area{overflow:visible}.pitch-area[data-count] .panel{width:100%;height:min(720px,78vh);flex-basis:100%}.view-team-bar{justify-content:flex-start;overflow-x:auto}.panel{padding:10px}.panel-title{font-size:13px}.panel-orient{white-space:normal}.ps-tab.show{flex-direction:column}.ps-side{width:100%;max-height:36vh;border-right:0;border-bottom:1px solid var(--border)}.ps-main{padding:16px 12px}.ps-profile-hdr{flex-direction:column}.ps-toggle-wrap{flex-wrap:wrap}.ps-pitch-grid{display:grid;grid-template-columns:1fr}.ps-pitch-canvas{max-width:100%;height:auto}.concept-info-bar.show{display:none}
 }
 </style>
-<script src="gate.js"></script>
+<script src="gate.js?v=20260901"></script>
 <meta name="robots" content="noindex,nofollow">
 </head>
 <body>
@@ -1106,23 +1113,9 @@ function renderDefensive(ctx,c,evts,titleEl,legendEl){
   S.canvasEvents.set(c,stored);
   const wonCount=evts.filter(e=>e.outcome_type==='Successful').length;
   titleEl.textContent='Defensive Actions';
-  // Draw compact legend ON canvas top-left corner (removes HTML legend entirely)
   const items=Object.entries(DEF_COLORS).filter(([tp])=>counts[tp]);
-  if(items.length){
-    ctx.save();
-    const fs=9,lineH=13,padX=8,padY=5;
-    ctx.font='bold '+fs+'px Inter,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
-    const rows=[...items.map(([tp])=>tp+' ('+counts[tp]+')'),'Successful outcome: '+pct(wonCount,evts.length)];
-    const maxW=Math.max(...rows.map(r=>ctx.measureText(r).width));
-    const boxW=maxW+padX*2+12,boxH=rows.length*lineH+padY*2;
-    const bx=PM+6,by=PM+6;
-    ctx.fillStyle='rgba(240,234,214,0.92)';drawPill(ctx,bx,by,boxW,boxH,5);ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=0.8;drawPill(ctx,bx,by,boxW,boxH,5);ctx.stroke();
-    items.forEach(([tp,col],i)=>{const y=by+padY+i*lineH+lineH/2;ctx.fillStyle=col;ctx.fillText(defensiveGlyph(tp),bx+padX,y);ctx.fillStyle='#333';ctx.fillText(tp+' ('+counts[tp]+')',bx+padX+10,y);});
-    const yw=by+padY+items.length*lineH+lineH/2;ctx.fillStyle='#444';ctx.fillText('Successful outcome: '+pct(wonCount,evts.length),bx+padX+3,yw);
-    ctx.restore();
-  }
-  legendEl.innerHTML='';
+  legendEl.innerHTML=items.map(([tp,col])=>'<span class="leg"><span class="leg-mark" style="color:'+col+'">'+esc(defensiveGlyph(tp))+'</span>'+esc(tp)+' ('+counts[tp]+')</span>').join('')+
+    '<span class="leg">'+wonCount+' / '+evts.length+' successful · '+pct(wonCount,evts.length)+'</span>';
 }
 
 function renderPressure(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const gw=60,gh=96,sigma=5;const grid=Array.from({length:gh},()=>new Float32Array(gw));evts.forEach(e=>{if(e.x==null)return;const gi=Math.min(gw-1,Math.max(0,Math.floor((1-e.y/100)*gw)));const gj=Math.min(gh-1,Math.max(0,Math.floor((1-e.x/100)*gh)));grid[gj][gi]++;});const blur=Array.from({length:gh},()=>new Float32Array(gw));for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){let s=0,w=0;for(let dj=-sigma*2;dj<=sigma*2;dj++)for(let di=-sigma*2;di<=sigma*2;di++){const nj=j+dj,ni=i+di;if(nj<0||nj>=gh||ni<0||ni>=gw)continue;const g=Math.exp(-(dj*dj+di*di)/(2*sigma*sigma));s+=grid[nj][ni]*g;w+=g;}blur[j][i]=s/w;}let max=0,peakJ=0,peakI=0;blur.forEach((r,j)=>r.forEach((v,i)=>{if(v>max){max=v;peakJ=j;peakI=i;}}));if(!max)max=1;const pw=c.width-2*PM,ph=c.height-2*PM;const cw=pw/gw,ch=ph/gh;for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const v=blur[j][i]/max;if(v<0.06)continue;ctx.fillStyle=pressureColor(v,0.6*v);ctx.fillRect(PM+i*cw,PM+j*ch,cw+1,ch+1);}// redraw pitch lines on top
@@ -1308,7 +1301,7 @@ function buildPanelContext(viz){
   const scope=document.createElement('div');scope.className='panel-context-scope';scope.textContent=(S.selPlayer&&!TEAM_VIZ.has(viz)?S.selPlayer:'Team view')+(S.timeFilter?' · '+S.timeFilter.s+'–'+S.timeFilter.e+' min':' · full match');rail.appendChild(scope);return rail;
 }
 function buildPanel(area,viz,sz,teamOverride){
-  const panel=document.createElement('div');panel.className='panel';
+  const panel=document.createElement('div');panel.className='panel panel-viz-'+viz;
   const panelTeam=teamOverride||VT();const panelColor=panelTeam===T().name?T().color:'#5aa9ff';panel.dataset.team=panelTeam;panel.style.setProperty('--panel-team',panelColor);if(S.compareMode)panel.classList.add('compare-panel');
   const head=document.createElement('div');head.className='panel-head';
   const title=document.createElement('div');title.className='panel-title';
@@ -1329,7 +1322,7 @@ function buildPanel(area,viz,sz,teamOverride){
   if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
   const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;can.dataset.team=panelTeam;can.dataset.teamColor=panelColor;if(S.selPlayer&&!TEAM_VIZ.has(viz))can.dataset.subject=S.selPlayer;can.setAttribute('role','img');canWrap.appendChild(can);
-  const canvasSz=viz==='shots'?{w:sz.w,h:Math.max(320,Math.round(sz.w*1.2))}:sz;
+  const canvasSz=viz==='shots'?{w:Math.max(420,Math.round(sz.w*1.45)),h:Math.max(330,Math.round(sz.w*0.92))}:sz;
   const ctx=setupHiDpiCanvas(can,canvasSz.w,canvasSz.h);
   body.appendChild(canWrap);
   let pairEl=null;if(viz==='network'||viz==='combos'){const side=document.createElement('div');side.className='net-side';pairEl=document.createElement('div');side.append(pairEl);body.appendChild(side);}
@@ -2615,7 +2608,15 @@ function syncVizSelectionUi(){
   const status=document.getElementById('plotLayoutStatus');if(status)status.textContent=S.activeVizs.length+' / '+S.plotSlots;
 }
 function initPlotLayout(){
-  document.querySelectorAll('.plot-count-btn').forEach(btn=>{btn.onclick=()=>{S.plotSlots=+btn.dataset.count;while(S.activeVizs.length>S.plotSlots)S.activeVizs.shift();if(!S.activeVizs.length)S.activeVizs=['progressive'];syncVizSelectionUi();if(S.selMatch)renderAll();updateStats();};});syncVizSelectionUi();
+  const setCount=count=>{
+    S.plotSlots=count;
+    while(S.activeVizs.length>S.plotSlots)S.activeVizs.shift();
+    const candidates=[...document.querySelectorAll('.viz-btn')].map(b=>b.dataset.viz).filter(Boolean);
+    for(const viz of candidates){if(S.activeVizs.length>=S.plotSlots)break;if(!S.activeVizs.includes(viz))S.activeVizs.push(viz);}
+    if(!S.activeVizs.length)S.activeVizs=['progressive'];
+  };
+  document.querySelectorAll('.plot-count-btn').forEach(btn=>{btn.onclick=()=>{setCount(+btn.dataset.count);syncVizSelectionUi();if(S.selMatch)renderAll();updateStats();};});
+  setCount(S.plotSlots);syncVizSelectionUi();
 }
 function initVizButtons(){
   initPlotLayout();

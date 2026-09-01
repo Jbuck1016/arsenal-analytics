@@ -107,10 +107,10 @@ def main() -> int:
     require("activeVizs:['progressive']" in match and
             '<div class="viz-btn on" data-viz="progressive">' in match,
             "match.html: first match view defaults to the lower-density progressive-pass map")
-    require("if(!S.selPlayer&&evts.length>60)return renderProgressiveFlow" in match and
-            "Progressive Pass Flow" in match and
-            "select a player for event detail" in match,
-            "match.html: dense progressive team views aggregate repeated routes")
+    require("const dense=!S.selPlayer&&evts.length>60" in match and
+            ".slice(0,36):evts" in match and
+            "36 largest advances shown" in match,
+            "match.html: dense progressive team views cap observed pass vectors")
     require("dense=!S.selPlayer&&evts.length>250" in match and
             "dense team view" in match,
             "match.html: dense all-pass maps fade context and explain how to refine it")
@@ -119,9 +119,22 @@ def main() -> int:
             "15*Math.sqrt(xg)" in match and
             "uniform marker size" not in match,
             "match.html: shot area uses real fitted xG rather than a distance proxy")
-    require("const failed=color===PASS_FAIL" in match and "Incomplete (dashed)" in match and
+    require(",failed=color===PASS_FAIL" in match and "ctx.setLineDash([])" in match and
+            "ctx.moveTo(p2.cx-r,p2.cy-r)" in match and
             "Incomplete · dashed" in players,
             "player and match pass maps distinguish failure without colour alone")
+    require("for(const viz of candidates)" in match and
+            "if(S.activeVizs.length>=S.plotSlots)break" in match,
+            "match.html: plot-count controls fill the requested number of slots")
+    require('width:calc((100% - 24px)/3)' in match,
+            "match.html: three-plot widths include both inter-panel gaps")
+    require('.pitch-area[data-count="4"]{overflow-y:auto;align-content:flex-start}' in match and
+            'height:min(720px,72vh)' in match,
+            "match.html: four-plot layout preserves readable pitch height")
+    require("legendEl.innerHTML=items.map" in match and
+            "Draw compact legend ON canvas" not in match and
+            '.panel-viz-defensive{width:min(100%,880px)' in match,
+            "match.html: defensive action legend stays outside the pitch")
     require("btn.setAttribute('role','button')" in match and
             "btn.setAttribute('aria-pressed'" in match and
             "e.key==='Enter'||e.key===' '" in match,
