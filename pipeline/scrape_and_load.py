@@ -152,6 +152,7 @@ def upsert_players_and_lineups(
     game_data: dict,
     game_id: str,
     league: str = "USA-MLS",
+    write_shared_players: bool = True,
 ) -> None:
     team_names = {
         int(game_data["home"]["teamId"]): game_data["home"]["name"],
@@ -214,7 +215,10 @@ def upsert_players_and_lineups(
 
     for _r in lineups_payload:
         _r["league"] = league
-    if players_payload:
+    # Historical matches must never move a present-day player back to an old
+    # club. Events retain player names and lineups retain player IDs, so the
+    # training archive does not need to mutate this current identity table.
+    if players_payload and write_shared_players:
         sb.table("players").upsert(players_payload, on_conflict="player_id").execute()
     # lineups has no unique constraint; clear + reinsert for idempotency
     sb.table("lineups").delete().eq("game_id", game_id).execute()
@@ -349,33 +353,45 @@ def league_expected_clubs(sb: Client, league: str) -> int:
 
 
 def process_match(
-    sb: Client, ws: sd.WhoScored, sched_row: pd.Series, league: str, season: str
+    sb: Client,
+    ws: sd.WhoScored,
+    sched_row: pd.Series,
+    league: str,
+    season: str,
+    historical: bool = False,
 ) -> tuple[str, int]:
     # GUARD: refuse to write a match whose clubs are not registered to this league.
     # Fails OPEN only when the league has no whitelist yet, so a brand new league can
     # be bootstrapped from its first scrape. Everything else is refused.
-    allowed = league_whitelist(sb, league)
-    expected = league_expected_clubs(sb, league)
-    known = league_club_count(sb, league)
-    # Enforce only when the whitelist is COMPLETE for that league. A fixed threshold does
-    # not work: twelve clubs is complete for nobody and looks complete against a floor.
-    if expected and known >= expected:
-        home = str(sched_row.get("home_team") or "").strip()
-        away = str(sched_row.get("away_team") or "").strip()
-        unknown = [t for t in (home, away) if t and t not in allowed]
-        if unknown:
-            print(
-                f"  !! SKIPPED: {', '.join(unknown)} not registered to {league} "
-                f"({known}/{expected} clubs known). This match was not written.",
-                flush=True,
-            )
-            return "", 0
+    if not historical:
+        allowed = league_whitelist(sb, league)
+        expected = league_expected_clubs(sb, league)
+        known = league_club_count(sb, league)
+        # Enforce only when the whitelist is COMPLETE for that league. A fixed threshold does
+        # not work: twelve clubs is complete for nobody and looks complete against a floor.
+        if expected and known >= expected:
+            home = str(sched_row.get("home_team") or "").strip()
+            away = str(sched_row.get("away_team") or "").strip()
+            unknown = [t for t in (home, away) if t and t not in allowed]
+            if unknown:
+                print(
+                    f"  !! SKIPPED: {', '.join(unknown)} not registered to {league} "
+                    f"({known}/{expected} clubs known). This match was not written.",
+                    flush=True,
+                )
+                return "", 0
 
     game_id = upsert_match(sb, sched_row, league, season)
     print(f"  -> match row upserted (game_id={game_id})")
     game_data = ensure_event_json(ws, game_id, league, season)
     print(f"  -> loaded raw json ({len(game_data.get('events', []))} events)")
-    upsert_players_and_lineups(sb, game_data, game_id, league)
+    upsert_players_and_lineups(
+        sb,
+        game_data,
+        game_id,
+        league,
+        write_shared_players=not historical,
+    )
     n = upsert_events(sb, game_data, game_id, league)
     print(f"  -> upserted {n} events (league={league})")
     return game_id, n

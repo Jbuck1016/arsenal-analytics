@@ -71,10 +71,38 @@ def played_matches(sched: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def loaded_game_ids(sb) -> set[str]:
-    """game_ids that already have events in Supabase (the resume set)."""
-    resp = sb.table("v_loaded_games").select("game_id").execute()
-    return {str(r["game_id"]) for r in (resp.data or [])}
+def loaded_game_ids(
+    sb,
+    historical: bool = False,
+    league: str | None = None,
+    season: str | None = None,
+) -> set[str]:
+    """game_ids that already have events in the requested publication scope."""
+    if historical:
+        if not league or not season:
+            raise ValueError("historical resume detection requires league and season")
+        resp = sb.rpc(
+            "historical_loaded_game_ids",
+            {"p_league": league, "p_season": season},
+        ).execute()
+        return {str(r["game_id"]) for r in (resp.data or [])}
+
+    loaded: set[str] = set()
+    page = 1000
+    offset = 0
+    while True:
+        resp = (
+            sb.table("v_loaded_games")
+            .select("game_id")
+            .range(offset, offset + page - 1)
+            .execute()
+        )
+        rows = resp.data or []
+        loaded.update(str(r["game_id"]) for r in rows)
+        if len(rows) < page:
+            break
+        offset += page
+    return loaded
 
 
 def purge_null_cache(ws, game_id: str, league: str, season: str) -> None:
@@ -87,15 +115,13 @@ def purge_null_cache(ws, game_id: str, league: str, season: str) -> None:
         pass
 
 
-def fetch_leagues(sb) -> list[dict]:
-    """Active leagues from the registry, so adding a league needs no code change."""
+def fetch_leagues(sb, active_only: bool = True) -> list[dict]:
+    """Leagues from the registry, optionally limited to live ingestion."""
     try:
-        res = (
-            sb.table("leagues")
-            .select("league, display_name, season, is_active")
-            .eq("is_active", True)
-            .execute()
-        )
+        query = sb.table("leagues").select("league, display_name, season, is_active")
+        if active_only:
+            query = query.eq("is_active", True)
+        res = query.execute()
         rows = res.data or []
     except Exception as e:  # noqa: BLE001
         print(f"Could not read the leagues registry ({e}); falling back to {DEFAULT_LEAGUE}.",
@@ -110,7 +136,7 @@ def fetch_leagues(sb) -> list[dict]:
 
 def choose_leagues(sb, args) -> list[tuple[str, str]]:
     """Resolve which leagues to scrape: flags first, then an interactive menu."""
-    registry = fetch_leagues(sb)
+    registry = fetch_leagues(sb, active_only=not getattr(args, "historical", False))
     by_id = {r["league"]: r for r in registry}
 
     def with_season(lid: str) -> tuple[str, str]:
@@ -184,6 +210,8 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
         print(f"  !! could not open {league}: {msg}", file=sys.stderr, flush=True)
         print("     (is it mapped to a WhoScored name in league_dict.json?)",
               file=sys.stderr, flush=True)
+        if getattr(args, "historical", False):
+            raise RuntimeError(f"could not open historical target {league} {season}") from e
         return 0, 0, 0
 
     print(f"Reading full schedule for {league} {season}...", flush=True)
@@ -193,11 +221,21 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
         print(f"  !! could not read schedule: {e}", file=sys.stderr, flush=True)
         print("     (usually means no fixtures published for that season yet)",
               file=sys.stderr, flush=True)
+        if getattr(args, "historical", False):
+            raise RuntimeError(f"could not read historical schedule {league} {season}") from e
         return 0, 0, 0
 
     played = played_matches(sched)
-    loaded = loaded_game_ids(sb)
+    if getattr(args, "historical", False) and played.empty:
+        raise RuntimeError(f"historical schedule has no played fixtures: {league} {season}")
+    loaded = loaded_game_ids(
+        sb,
+        historical=getattr(args, "historical", False),
+        league=league,
+        season=season,
+    )
     todo = played[~played["game_id"].astype(str).isin(loaded)].copy()
+    missing_total = len(todo)
     if args.limit and args.limit > 0:
         todo = todo.head(args.limit)
 
@@ -210,25 +248,38 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
         print(f"  est. runtime       : ~{round((n * avg_gap) / 60)} min", flush=True)
 
     if args.list:
-        if n:
+        if n and getattr(args, "list_details", True):
             cols = [c for c in ("date", "home_team", "away_team", "home_score", "away_score", "game_id")
                     if c in todo.columns]
             print(todo[cols].to_string(index=False), flush=True)
         else:
             print("  nothing to do.", flush=True)
-        return 0, 0, n
+        return 0, 0, missing_total
     if n == 0:
         print("  nothing to do — all played matches already loaded.", flush=True)
         return 0, 0, 0
 
     succeeded = failed = consecutive = 0
     for i, (_, row) in enumerate(todo.iterrows(), start=1):
+        stop_at = getattr(args, "stop_at_monotonic", None)
+        if stop_at is not None and time.monotonic() >= stop_at:
+            print("  nightly time budget reached; stopping cleanly.", flush=True)
+            break
         gid = str(row.get("game_id"))
         print(f"[{i}/{n}] {row.get('date')} {row.get('home_team')} vs {row.get('away_team')} "
               f"(game_id={gid})", flush=True)
         purge_null_cache(ws, gid, league, season)
         try:
-            process_match(sb, ws, row, league, season)
+            game_id, _ = process_match(
+                sb,
+                ws,
+                row,
+                league,
+                season,
+                historical=getattr(args, "historical", False),
+            )
+            if not game_id:
+                raise RuntimeError("match was rejected before ingestion")
             print("  -> success", flush=True)
             succeeded += 1
             consecutive = 0
@@ -243,9 +294,10 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
         if i < n:
             time.sleep(random.uniform(args.min_gap, args.max_gap))
 
+    remaining = max(0, missing_total - succeeded)
     print(f"  {league}: {succeeded} loaded, {failed} failed, "
-          f"{n - succeeded - failed} remaining", flush=True)
-    return succeeded, failed, n - succeeded - failed
+          f"{remaining} remaining", flush=True)
+    return succeeded, failed, remaining
 
 
 def main() -> int:
@@ -266,7 +318,12 @@ def main() -> int:
                    help="give up on a league after this many failures in a row")
     p.add_argument("--list", action="store_true", help="print the plan and exit without scraping")
     p.add_argument("--no-rebuild", action="store_true", help="skip the analytics rebuild afterwards")
+    p.add_argument("--historical", action="store_true",
+                   help="archive mode: preserve current player teams and never rebuild live analytics")
     args = p.parse_args()
+
+    if args.historical:
+        args.no_rebuild = True
 
     if args.min_gap > args.max_gap:
         args.min_gap, args.max_gap = args.max_gap, args.min_gap
