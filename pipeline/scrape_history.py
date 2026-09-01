@@ -7,7 +7,6 @@ never trigger an analytics rebuild, and never overwrite a current player team.
 from __future__ import annotations
 
 import argparse
-import time
 from types import SimpleNamespace
 
 from scrape_and_load import get_supabase
@@ -38,8 +37,6 @@ def build_parser() -> argparse.ArgumentParser:
                         help="write data; omission is a read-only schedule manifest")
     parser.add_argument("--verbose-plan", action="store_true",
                         help="print every missing fixture in read-only mode")
-    parser.add_argument("--hours", type=float, default=8.0,
-                        help="cleanly stop after this many hours (default: 8)")
     parser.add_argument("--max-matches", type=int, default=0,
                         help="overall write cap for a test run; 0 means no cap")
     parser.add_argument("--limit-per-league", type=int, default=0,
@@ -63,14 +60,11 @@ def main() -> int:
     args = build_parser().parse_args()
     seasons = selected_seasons(args)
     leagues = tuple(args.league or TOP_FIVE)
-    if args.hours <= 0:
-        raise SystemExit("--hours must be greater than zero")
     if args.min_gap > args.max_gap:
         args.min_gap, args.max_gap = args.max_gap, args.min_gap
 
     install_league_dict()
     sb = get_supabase()
-    stop_at = time.monotonic() + args.hours * 3600
     total_ok = total_failed = total_remaining = 0
 
     mode = "EXECUTE" if args.execute else "READ-ONLY MANIFEST"
@@ -83,9 +77,6 @@ def main() -> int:
 
     for season in seasons:
         for league in leagues:
-            if args.execute and time.monotonic() >= stop_at:
-                print("Nightly time budget reached before the next league.", flush=True)
-                break
             remaining_cap = 0
             if args.max_matches:
                 remaining_cap = args.max_matches - total_ok
@@ -106,7 +97,7 @@ def main() -> int:
                 list_details=args.verbose_plan,
                 historical=True,
                 no_rebuild=True,
-                stop_at_monotonic=stop_at if args.execute else None,
+                stop_at_monotonic=None,
             )
             try:
                 ok, failed, remaining = scrape_one_league(

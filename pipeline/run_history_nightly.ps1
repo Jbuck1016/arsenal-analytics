@@ -1,7 +1,6 @@
 param(
     [ValidateSet("2526", "2425", "2324")]
     [string]$Season = "2526",
-    [double]$Hours = 8,
     [int]$MaxMatches = 0,
     [switch]$Headless,
     [switch]$Execute
@@ -16,7 +15,6 @@ $log = Join-Path $logDir "history_${Season}_$stamp.log"
 $arguments = @(
     (Join-Path $PSScriptRoot "scrape_history.py"),
     "--season", $Season,
-    "--hours", $Hours,
     "--max-matches", $MaxMatches
 )
 if ($Headless) { $arguments += "--headless" }

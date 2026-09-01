@@ -14,7 +14,8 @@ research without changing the live current-season dashboard.
   event names and lineup player IDs remain available for training joins.
 - Resume detection uses a league-and-season-scoped, service-only RPC; reruns
   skip games that already have events without exposing the archive publicly.
-- A nightly time budget and consecutive-failure circuit breaker stop cleanly.
+- A consecutive-failure circuit breaker stops a league cleanly when the source
+  appears blocked. Healthy runs continue until the selected season is complete.
 
 ## Order
 
@@ -61,11 +62,11 @@ Two-match ingestion test:
 python pipeline\scrape_history.py --season 2526 --max-matches 2 --execute
 ```
 
-Eight-hour resumable nightly run:
+Continuous resumable season run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File pipeline\run_history_nightly.ps1 `
-  -Season 2526 -Hours 8 -Execute
+  -Season 2526 -Execute
 ```
 
 Run this with the normal visible Chrome session on the current host. Headless
@@ -73,9 +74,11 @@ Chrome failed to connect during the verified manifest, while the visible session
 completed all five leagues. The `-Headless` switch remains available for a
 future bounded retest, but it is not the supported nightly configuration yet.
 
-Rerun the same command to resume. After the season is complete, repeat it with
-`2425`, then `2324`. `--all-seasons` exists for supervised continuous runs but
-should not be the first production invocation.
+The process runs until the selected season is complete unless it is interrupted
+or the consecutive-failure circuit breaker detects source blocking. Rerun the
+same command to resume after either case. After the season is complete, repeat
+it with `2425`, then `2324`. `--all-seasons` exists for supervised continuous
+runs but should not be the first production invocation.
 
 The default 60–120 second interval is deliberate anti-block protection. Do not
 reduce it until a bounded test demonstrates that WhoScored remains stable.
