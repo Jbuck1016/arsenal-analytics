@@ -30,8 +30,9 @@ The executable SQL regression suite passed against production after the final da
 - The generated cup-isolation forward and reverse SQL were both executed against fresh disposable PostgreSQL databases.
 - Forward assertions, reverse assertions, exact baseline restoration, topology checks, negative tests and deterministic regeneration all passed before production application.
 - The production forward application and finalization migrations completed; the reverse remains a tested recovery artifact and was not applied to production.
-- The migration SHA-256 snapshot passes for all 192 frozen live-history migrations plus nine intentional repository-authored migrations. The executable checker is canonical; this sentence must be updated whenever another later migration is added.
+- The migration SHA-256 snapshot passes for all 192 frozen live-history migrations plus thirteen applied repository-authored migrations. The executable checker is canonical; this sentence must be updated whenever another later migration is added.
 - `pipeline/tools/test_schema_reset.py` now executes the SQL itself through psycopg on a disposable PostgreSQL cluster. The unmodified history reproducibly fails at `20260806001641_state_output_and_percentiles_safe.sql` because prior cascades removed `player_search`. `pipeline/tools/capture_canonical_baseline.sql` captures the current catalog instead of editing that frozen history; the generated squash and empty-database replay are the required replacement proof.
+- The canonical squash contains 3,721 generated statements with SHA-256 `5c78ceecf147f5daa3d53d2fac30677f11484817439a2716562e9a699c768013`. It replayed on a fresh PostgreSQL cluster and produced 138 queryable public relations. The replay asserted zero excluded data rows, zero unpopulated materialized views, zero mutable application-function search paths, zero caller-rights violations, and zero anonymous write grants. A secret-pattern scan passed; the only inserted rows are the fifteen published configuration/registry tables named in the baseline README.
 
 ## Visual verification
 

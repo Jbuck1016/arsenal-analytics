@@ -19,7 +19,9 @@ The exact history is intentionally preserved even though an empty replay now
 reproduces its historical cascade defect. Do not edit those 192 files to make
 the replay green. The canonical replacement is generated from the production
 catalog into `baseline/20260831_public_schema.sql`; that generated file is tested independently
-on an empty disposable PostgreSQL database.
+on an empty disposable PostgreSQL database. The 31 August baseline replay is
+green: 3,721 statements, 138 queryable public relations, SHA-256 recorded next
+to the SQL file.
 
 Run `pipeline/tools/check_supabase_migration_snapshot.py` for the frozen-history
 hashes and the exact current count of later repository-authored migrations;

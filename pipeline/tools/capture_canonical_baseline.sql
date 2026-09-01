@@ -39,11 +39,17 @@ do $roles$ begin
   if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
   if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
   if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin; end if;
+  if not exists(select 1 from pg_roles where rolname='supabase_admin') then create role supabase_admin nologin; end if;
 end $roles$;
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
 create extension if not exists pg_trgm;
 create extension if not exists unaccent;
+do $optional_extensions$ begin
+  if exists(select 1 from pg_available_extensions where name='pg_cron') then
+    execute 'create extension if not exists pg_cron with schema extensions';
+  end if;
+end $optional_extensions$;
 $ddl$);
 
   for r in
@@ -58,7 +64,13 @@ $ddl$);
   for r in
     select c.oid,c.relname,s.seqstart,s.seqincrement,s.seqmin,s.seqmax,s.seqcache,s.seqcycle
     from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_sequence s on s.seqrelid=c.oid
-    where n.nspname='public' order by c.relname
+    where n.nspname='public'
+      and c.relname <> '_schema_baseline_export_seq_seq'
+      and not exists(
+        select 1 from pg_depend d
+        where d.classid='pg_class'::regclass and d.objid=c.oid and d.deptype='i'
+      )
+    order by c.relname
   loop
     insert into public._schema_baseline_export(section,ddl) values('sequences',format(
       'create sequence public.%I start with %s increment by %s minvalue %s maxvalue %s cache %s %s;',
@@ -81,7 +93,7 @@ $ddl$);
     from pg_attribute a left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
     where a.attrelid=r.oid and a.attnum>0 and not a.attisdropped;
     insert into public._schema_baseline_export(section,ddl)
-    values('tables',format('create table public.%I (\n  %s\n)%s;',r.relname,cols,
+    values('tables',format(E'create table public.%I (\n  %s\n)%s;',r.relname,cols,
       case when r.reloptions is null then '' else format(' with (%s)',array_to_string(r.reloptions,',')) end));
     if r.relrowsecurity then insert into public._schema_baseline_export(section,ddl) values('rls',format('alter table public.%I enable row level security;',r.relname)); end if;
     if r.relforcerowsecurity then insert into public._schema_baseline_export(section,ddl) values('rls',format('alter table public.%I force row level security;',r.relname)); end if;
@@ -89,7 +101,10 @@ $ddl$);
 
   for r in
     select conrelid::regclass::text rel,conname,pg_get_constraintdef(oid,true) def
-    from pg_constraint where connamespace='public'::regnamespace and contype in('p','u','c','x','f')
+    from pg_constraint
+    where connamespace='public'::regnamespace
+      and conrelid <> 'public._schema_baseline_export'::regclass
+      and contype in('p','u','c','x','f')
     order by case contype when 'f' then 2 else 1 end,conrelid::regclass::text,conname
   loop
     insert into public._schema_baseline_export(section,ddl)
@@ -100,7 +115,7 @@ $ddl$);
   -- bodies (which may themselves reference views) are restored.
   for r in
     select p.oid,n.nspname,p.proname,p.proretset,p.prorettype,
-      pg_get_function_identity_arguments(p.oid) args,pg_get_function_result(p.oid) result
+      pg_get_function_arguments(p.oid) args,pg_get_function_result(p.oid) result
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.prokind='f'
       and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e')
@@ -121,12 +136,14 @@ $ddl$);
   loop
     if r.relkind='v' then
       insert into public._schema_baseline_export(section,ddl)
-      values('relations',format('create view public.%I as %s;',r.relname,pg_get_viewdef(r.oid,true)));
+      values('relations',format('create view public.%I as %s;',r.relname,
+        rtrim(pg_get_viewdef(r.oid,true),E';\n\r\t ')));
       if r.reloptions is not null then insert into public._schema_baseline_export(section,ddl)
         values('relation_options',format('alter view public.%I set (%s);',r.relname,array_to_string(r.reloptions,','))); end if;
     else
       insert into public._schema_baseline_export(section,ddl)
-      values('relations',format('create materialized view public.%I as %s with no data;',r.relname,pg_get_viewdef(r.oid,true)));
+      values('relations',format('create materialized view public.%I as %s with no data;',r.relname,
+        rtrim(pg_get_viewdef(r.oid,true),E';\n\r\t ')));
       if r.reloptions is not null then insert into public._schema_baseline_export(section,ddl)
         values('relation_options',format('alter materialized view public.%I set (%s);',r.relname,array_to_string(r.reloptions,','))); end if;
     end if;
@@ -141,8 +158,36 @@ $ddl$);
   loop insert into public._schema_baseline_export(section,ddl) values('functions',r.def||';'); end loop;
 
   for r in
-    select indexdef from pg_indexes where schemaname='public' and tablename<>'_schema_baseline_export'
-    order by tablename,indexname
+    select c.relname,c.relkind,pg_get_userbyid(c.relowner) owner_name
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relkind in('r','p','v','m','S')
+      and c.relname not in ('_schema_baseline_export','_schema_baseline_export_seq_seq')
+    order by c.relname
+  loop
+    kind:=case r.relkind when 'v' then 'view' when 'm' then 'materialized view'
+      when 'S' then 'sequence' else 'table' end;
+    insert into public._schema_baseline_export(section,ddl) values('owners',format(
+      'alter %s public.%I owner to %I;',kind,r.relname,r.owner_name));
+  end loop;
+
+  for r in
+    select p.oid::regprocedure::text identity,pg_get_userbyid(p.proowner) owner_name
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public'
+      and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e')
+    order by identity
+  loop insert into public._schema_baseline_export(section,ddl) values('owners',format(
+    'alter function %s owner to %I;',r.identity,r.owner_name)); end loop;
+
+  for r in
+    select pg_get_indexdef(i.indexrelid) indexdef
+    from pg_index i
+    join pg_class t on t.oid=i.indrelid
+    join pg_class ix on ix.oid=i.indexrelid
+    join pg_namespace n on n.oid=t.relnamespace
+    where n.nspname='public' and t.relname<>'_schema_baseline_export'
+      and not exists(select 1 from pg_constraint c where c.conindid=i.indexrelid)
+    order by t.relname,ix.relname
   loop insert into public._schema_baseline_export(section,ddl) values('indexes',r.indexdef||';'); end loop;
 
   for r in
@@ -167,26 +212,74 @@ $ddl$);
   end loop;
 
   for r in
-    select c.relname,c.relkind,coalesce(g.rolname,'PUBLIC') grantee,string_agg(a.privilege_type,',' order by a.privilege_type) privileges
+    select c.relname,c.relkind,d.description
+    from pg_description d join pg_class c on c.oid=d.objoid
+    join pg_namespace n on n.oid=c.relnamespace
+    where d.classoid='pg_class'::regclass and d.objsubid=0 and n.nspname='public'
+      and c.relkind in('r','p','v','m','S')
+      and c.relname not in ('_schema_baseline_export','_schema_baseline_export_seq_seq')
+    order by c.relname
+  loop
+    kind:=case r.relkind when 'v' then 'view' when 'm' then 'materialized view'
+      when 'S' then 'sequence' else 'table' end;
+    insert into public._schema_baseline_export(section,ddl) values('comments',format(
+      'comment on %s public.%I is %L;',kind,r.relname,r.description));
+  end loop;
+
+  for r in
+    select c.relname,a.attname,d.description
+    from pg_description d join pg_class c on c.oid=d.objoid
+    join pg_namespace n on n.oid=c.relnamespace
+    join pg_attribute a on a.attrelid=c.oid and a.attnum=d.objsubid
+    where d.classoid='pg_class'::regclass and d.objsubid>0 and n.nspname='public'
+      and c.relkind in('r','p','v','m')
+      and c.relname<>'_schema_baseline_export'
+    order by c.relname,a.attnum
+  loop insert into public._schema_baseline_export(section,ddl) values('comments',format(
+    'comment on column public.%I.%I is %L;',r.relname,r.attname,r.description)); end loop;
+
+  for r in
+    select p.oid::regprocedure::text identity,d.description
+    from pg_description d join pg_proc p on p.oid=d.objoid
+    join pg_namespace n on n.oid=p.pronamespace
+    where d.classoid='pg_proc'::regclass and d.objsubid=0 and n.nspname='public'
+    order by identity
+  loop insert into public._schema_baseline_export(section,ddl) values('comments',format(
+    'comment on function %s is %L;',r.identity,r.description)); end loop;
+
+  insert into public._schema_baseline_export(section,ddl) values('acl_reset',$ddl$
+revoke all on all tables in schema public from public,anon,authenticated,service_role;
+revoke all on all sequences in schema public from public,anon,authenticated,service_role;
+revoke all on all functions in schema public from public,anon,authenticated,service_role;
+$ddl$);
+
+  for r in
+    select c.relname,c.relkind,coalesce(g.rolname,'PUBLIC') grantee,
+      a.privilege_type,a.is_grantable
     from pg_class c join pg_namespace n on n.oid=c.relnamespace
     cross join lateral aclexplode(c.relacl) a
     left join pg_roles g on g.oid=a.grantee
-    where n.nspname='public' and c.relname<>'_schema_baseline_export'
-    group by c.relname,c.relkind,g.rolname order by c.relname,g.rolname
+    where n.nspname='public'
+      and c.relname not in ('_schema_baseline_export','_schema_baseline_export_seq_seq')
+    order by c.relname,g.rolname,a.privilege_type
   loop
     kind:=case when r.relkind='S' then 'sequence' else 'table' end;
     insert into public._schema_baseline_export(section,ddl)
-    values('grants',format('grant %s on %s public.%I to %I;',r.privileges,kind,r.relname,r.grantee));
+    values('grants',format('grant %s on %s public.%I to %s%s;',r.privilege_type,kind,r.relname,
+      case when r.grantee='PUBLIC' then 'PUBLIC' else quote_ident(r.grantee) end,
+      case when r.is_grantable then ' with grant option' else '' end));
   end loop;
 
   for r in
     select p.oid::regprocedure::text identity,coalesce(g.rolname,'PUBLIC') grantee,
-      string_agg(a.privilege_type,',' order by a.privilege_type) privileges
+      a.privilege_type,a.is_grantable
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace cross join lateral aclexplode(p.proacl) a
     left join pg_roles g on g.oid=a.grantee where n.nspname='public'
-    group by p.oid,g.rolname order by identity,grantee
+    order by identity,grantee,a.privilege_type
   loop insert into public._schema_baseline_export(section,ddl)
-    values('grants',format('grant %s on function %s to %I;',r.privileges,r.identity,r.grantee)); end loop;
+    values('grants',format('grant %s on function %s to %s%s;',r.privilege_type,r.identity,
+      case when r.grantee='PUBLIC' then 'PUBLIC' else quote_ident(r.grantee) end,
+      case when r.is_grantable then ' with grant option' else '' end)); end loop;
 
   for r in select unnest(array[
     'detector_priority','detector_requirements','invariants','league_mart_entry_objects','leagues',
@@ -198,6 +291,20 @@ $ddl$);
       'insert into public.%I select * from jsonb_populate_recordset(null::public.%I,$seed$%s$seed$::jsonb);',
       r.relname,r.relname,payload)); end if;
   end loop;
+
+  -- All materialized views were created WITH NO DATA so dependency ordering
+  -- could be restored without querying an unpopulated parent. Populate them
+  -- only after functions and configuration seeds exist, in the same captured
+  -- topological order. On an empty reset this is fast and leaves every public
+  -- read surface queryable rather than in PostgreSQL's unscannable state.
+  for r in
+    select c.relname
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    join baseline_rel_order o on o.oid=c.oid
+    where n.nspname='public' and c.relkind='m'
+    order by o.ord,c.relname
+  loop insert into public._schema_baseline_export(section,ddl) values('materialized_data',format(
+    'refresh materialized view public.%I;',r.relname)); end loop;
 
   insert into public._schema_baseline_export(section,ddl) values
   ('finish','commit;');

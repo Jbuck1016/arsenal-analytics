@@ -17,6 +17,7 @@ The canonical baseline is generated from the current production catalogs:
 
 The capture includes public schema definitions, dependency-ordered views,
 materialized views, functions, indexes, triggers, RLS, policies, grants,
-reloptions, and non-sensitive configuration seeds. It explicitly excludes raw
+grant options, owners, comments, reloptions, and non-sensitive configuration
+seeds. The generated SHA-256 is verified before replay. It explicitly excludes raw
 events, matches, lineups, players, insights, biographies, LAFC tracker content,
 and rebuild-run history.

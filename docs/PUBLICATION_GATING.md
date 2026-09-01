@@ -1,8 +1,8 @@
 # Publication gating: verifying before data becomes visible
 
-Written 2026-08-24. Summary gating implemented 2026-08-27. Full atomic path
-implemented and rollback-tested 2026-08-31; activation requires an execution
-surface that is not bounded by PostgREST's request timeout.
+Written 2026-08-24. Summary gating implemented 2026-08-27. An in-place atomic
+path was rollback-tested on 2026-08-31, then disabled after its live
+availability test exposed read-lock timeouts.
 
 ## Implemented summary gate
 
@@ -14,17 +14,24 @@ therefore leaves the previously published summaries untouched. This is a
 summary-publication guarantee; full last-known-good versioning of every
 analytical matview would still require the wrapper design below.
 
-## Full atomic path prepared
+## Full atomic path: rollback-safe but not production-safe
 
-`rebuild_all_verified()` now wraps every analytical refresh, insights, final
+`rebuild_all_verified()` can wrap every analytical refresh, insights, final
 verification and summary publication in a PL/pgSQL subtransaction. A
 service-role-only deliberate failure after preflight rolled back its probe
-write and recorded a failed run, proving the rollback boundary. A real run
-through PostgREST was cancelled by the gateway before it began and left the
-run pending; no metric was published. The scraper therefore remains on the
-existing stepwise path until a database-side worker or direct database
-connection is explicitly approved. The atomic routine is not described as
-operational gating until that activation lands.
+write and recorded a failed run, proving the rollback boundary. A real queued
+run executed for 12m49s and correctly rolled back when verification found a
+stale current-season invariant. However, a second in-flight smoke test showed
+Player and Match API HTTP 500s while ordinary refreshes held read-blocking
+locks. That run was canceled and rolled back; the Cron schedule is disabled and
+the shipped scraper remains stepwise.
+
+The replacement migration is locally validated but requires separate approval:
+22 natural-key unique indexes make all 68 materialized views eligible for
+`REFRESH MATERIALIZED VIEW CONCURRENTLY`, and the three refresh functions are
+rewritten to use it. On a disposable replay, 68/68 views were concurrent-ready
+and a concurrent refresh succeeded inside a transaction. Production activation
+must still repeat the in-flight browser smoke before it can be called complete.
 
 ## The problem
 
