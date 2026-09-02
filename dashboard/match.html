@@ -192,6 +192,36 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .timeline svg{display:block;width:100%;height:32px!important;max-height:32px!important}
 .timeline svg rect,.timeline svg *{max-height:32px}
 .timeline.hidden{display:none}
+.timeline svg{touch-action:none}
+/* Time-window stats panel */
+.tw-panel{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;padding:9px 12px 11px;max-height:36vh;overflow-y:auto;position:relative;z-index:4}
+.tw-panel.hidden{display:none}
+.tw-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.tw-title{font:700 12px/1.2 var(--f-display);letter-spacing:-.01em;color:var(--text);white-space:nowrap}
+.tw-sub{font:500 10px/1.35 var(--f-data);color:var(--text3)}
+.tw-sub.warn{color:var(--gold)}
+.tw-key{display:flex;gap:12px;align-items:center;margin-left:auto;min-width:0}
+.tw-key span{display:inline-flex;align-items:center;gap:5px;font:600 10px/1 'Inter',sans-serif;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tw-key i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.tw-key i.a{background:var(--accent)}
+.tw-key i.b{background:var(--blue)}
+.tw-clear{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font:600 10px/1 'Inter',sans-serif;padding:5px 10px;border-radius:6px;cursor:pointer;transition:.15s;flex-shrink:0}
+.tw-clear:hover{color:var(--text);border-color:var(--border2)}
+.tw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:8px 10px}
+.tw-row{display:flex;align-items:center;gap:9px;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 10px}
+.tw-v{flex:0 0 54px;font:700 12.5px/1.2 var(--f-data);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-v.a{text-align:left}
+.tw-v.b{text-align:right}
+.tw-v.lead{color:var(--text)}
+.tw-mid{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tw-lbl{font:600 9px/1.2 'Inter',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tw-track{width:100%;height:4px;border-radius:2px;overflow:hidden;background:var(--surface2);display:flex}
+.tw-track i{height:100%;display:block}
+.tw-track i.a{background:var(--accent)}
+.tw-track i.b{background:var(--blue)}
+.tw-diff{font:700 9.5px/1.2 var(--f-data);color:var(--text3);white-space:nowrap}
+.tw-diff.up{color:var(--green)}
+.tw-diff.down{color:var(--red-bright)}
 .tl-bar{flex:1;min-width:0;background:var(--surface2);border-radius:2px 2px 0 0;cursor:pointer;transition:.15s;position:relative}
 .tl-bar:hover{background:var(--accent-glow)}
 .tl-bar.on{background:var(--accent)}
@@ -539,6 +569,7 @@ html:not(.dark) .view-team-bar{background:rgba(251,250,246,.9)}
 .vt-cmp-btn.on{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .compare-name{font:700 10px/1 var(--f-data);padding:5px 8px;border-radius:3px}.compare-name.a{color:var(--gold);background:rgba(226,184,119,.08)}.compare-name.b{color:var(--blue);background:rgba(90,169,255,.08)}.compare-vs{font:600 8px/1 var(--f-data);color:var(--text3)}.compare-note{font:500 8px/1 var(--f-data);color:var(--text3);margin-right:auto}
 .timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:rgba(251,250,246,.82)}
+.tw-panel{background:rgba(22,27,36,.72)}html:not(.dark) .tw-panel{background:rgba(251,250,246,.86)}
 .pitch-area{padding:12px;gap:12px;background:transparent}
 .pitch-area.single-viz[data-count="1"] .panel{width:min(100%,1040px);flex-basis:min(100%,1040px)}
 .pitch-area.single-viz[data-count="1"] .panel-viz-defensive{width:min(100%,880px);flex-basis:min(100%,880px)}
@@ -666,6 +697,7 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
     <div class="content">
       <div class="view-team-bar" id="viewTeamBar"></div>
       <div class="timeline hidden" id="timeline"></div>
+      <div class="tw-panel hidden" id="twPanel"></div>
       <div class="pitch-area" id="pitchArea">
         <div class="loading"><div class="spinner"></div> Select a match to begin</div>
       </div>
@@ -829,7 +861,7 @@ function setupHiDpiCanvas(can,logicalW,logicalH){const dpr=window.devicePixelRat
    concepts keep the team subject. The same subject is used by exports. */
 function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;const subject=(S.selPlayer&&!TEAM_VIZ.has(viz))?S.selPlayer:team;if(!S.selMatch)return subject+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return subject+' '+vizLabel;const isTeamHome=m.home_team===team;const oppName=isTeamHome?m.away_team:m.home_team;const ha=isTeamHome?'H':'A';return subject+' '+vizLabel+' \u2014 vs '+oppName+' \u00B7 '+ha;}
 
-let S={team:'LAFC',matches:[],events:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['progressive'],plotSlots:2,shapeMode:'shift',periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
+let S={team:'LAFC',matches:[],events:[],sequences:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['progressive'],plotSlots:2,shapeMode:'shift',periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
 function T(){return TEAMS[S.team]||TEAMS.LAFC}
 function VT(){return S.viewTeam||(S.matchTeams&&S.matchTeams[0])||T().name}
 function isOppView(){return S.viewTeam&&S.viewTeam!==T().name}
@@ -858,7 +890,7 @@ async function loadMatches(){
   all.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   S.matches=all;renderMatchSelect();
 }
-async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters]=await Promise.all([sbAll('v_match_events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal,xg,shot_dist_m,shot_angle_deg'}),sbRpc('get_starter_names',{p_game_id:gid})]);S.events=evts;S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
+async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters,seqs]=await Promise.all([sbAll('v_match_events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal,xg,shot_dist_m,shot_angle_deg'}),sbRpc('get_starter_names',{p_game_id:gid}),sbAll('sequences',{game_id:'eq.'+gid,select:'team,period,start_min,start_sec,dur_s,is_open_play'}).catch(()=>[])]);S.events=evts;S.sequences=Array.isArray(seqs)?seqs:[];S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
@@ -1399,6 +1431,7 @@ function pressureDelta(e){
   if(e.type==='Pass'&&isProgPass(e))return 1;
   return 0;
 }
+function tlEndMax(){let mx=90;for(const e of S.events){const m=e.minute||0;if(m>mx)mx=m;}return mx+1;}
 function buildTimeline(){
   const tl=document.getElementById('timeline');if(!S.selMatch){tl.classList.add('hidden');return;}
   tl.classList.remove('hidden');
@@ -1409,25 +1442,52 @@ function buildTimeline(){
   const maxAbs=Math.max(...momentum.map(v=>Math.abs(v)),1);
   // Render SVG inside timeline
   const W=tl.clientWidth||600,H=32,padX=8;const innerW=W-padX*2;const step=innerW/N;const cy=H/2;
+  const SPAN=N*5;// axis covers 0-90; stoppage time folds into the right edge
+  const xAt=m=>padX+Math.max(0,Math.min(SPAN,m))/SPAN*innerW;
   let path='';momentum.forEach((v,i)=>{const x=padX+i*step+step/2;const y=cy-(v/maxAbs)*(H/2-6);path+=(i===0?'M':'L')+x+','+y+' ';});
-  // Active time-filter highlight — height strictly clamped to H, pointer-events only on rect
-  const filterBars=[];for(let i=0;i<N;i++){const x=padX+i*step,on=S.timeFilter&&S.timeFilter.s===i*5;filterBars.push('<rect x="'+x+'" y="0" width="'+step+'" height="'+H+'" fill="'+(on?'rgba(239,1,7,0.12)':'transparent')+'" data-s="'+(i*5)+'" data-e="'+((i+1)*5)+'" style="cursor:pointer;pointer-events:auto"></rect>');}
+  // Active time-window highlight: one rect spanning the selected minutes
+  const on=!!S.timeFilter;const selX=on?xAt(S.timeFilter.s):0,selW=on?Math.max(1,xAt(S.timeFilter.e)-selX):0;
+  const selRectSvg='<rect id="tlSel" x="'+selX+'" y="0.5" width="'+selW+'" height="'+(H-1)+'" fill="rgba(239,1,7,0.14)" stroke="rgba(239,1,7,0.5)" stroke-width="0.75" pointer-events="none"'+(on?'':' visibility="hidden"')+'></rect>';
   // Goal markers
-  const goalMarkers=goals.map(g=>{const x=padX+g.b*step+step/2;const col=g.team==='us'?'var(--accent)':'#2563eb';return'<text x="'+x+'" y="'+(cy-6)+'" text-anchor="middle" font-size="8" fill="'+col+'">\u2605</text>';}).join('');
+  const goalMarkers=goals.map(g=>{const x=padX+g.b*step+step/2;const col=g.team==='us'?'var(--accent)':'#2563eb';return'<text x="'+x+'" y="'+(cy-6)+'" text-anchor="middle" font-size="8" fill="'+col+'">★</text>';}).join('');
   // Time labels
   const labels=[];for(let i=0;i<N;i+=3){const x=padX+i*step+step/2;labels.push('<text x="'+x+'" y="'+(H-1)+'" text-anchor="middle" font-size="5" fill="var(--text3)">'+(i*5)+"'</text>");}
-  const svg='<svg role="img" aria-label="Five-minute attacking-event differential timeline; select a segment to filter the match views" width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="display:block;width:100%;height:'+H+'px;max-height:'+H+'px;pointer-events:auto">'
-    +'<title>Five-minute attacking-event differential. Click a segment to filter every match view to that interval; click it again to clear.</title>'+filterBars.join('')
+  // Transparent capture layer on top so drags land on one predictable target
+  const capture='<rect id="tlCap" x="0" y="0" width="'+W+'" height="'+H+'" fill="transparent" style="cursor:ew-resize;pointer-events:auto;touch-action:none"></rect>';
+  const svg='<svg role="img" aria-label="Five-minute attacking-event differential timeline; drag across it to filter the match views to a minute range" width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="display:block;width:100%;height:'+H+'px;max-height:'+H+'px;pointer-events:auto">'
+    +'<title>Five-minute attacking-event differential. Drag across the timeline to filter every match view to that minute range; click a single segment to select it, and click it again to clear.</title>'+selRectSvg
     +'<line x1="'+padX+'" y1="'+cy+'" x2="'+(W-padX)+'" y2="'+cy+'" stroke="var(--border2)" stroke-width="0.5"></line>'
     +'<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"></path>'
     +'<path d="'+path+'L'+(padX+N*step-step/2)+','+cy+' L'+(padX+step/2)+','+cy+' Z" fill="var(--accent)" opacity="0.1"></path>'
     +goalMarkers
     +labels.join('')
+    +capture
     +'</svg>';
   tl.innerHTML=svg;
-  tl.querySelectorAll('rect[data-s]').forEach(r=>{r.onclick=()=>{const s=+r.dataset.s,e=+r.dataset.e;if(S.timeFilter&&S.timeFilter.s===s){S.timeFilter=null;}else{S.timeFilter={s,e};}buildTimeline();renderAll();updateStats();};});
+  const svgEl=tl.querySelector('svg'),cap=tl.querySelector('#tlCap'),sel=tl.querySelector('#tlSel');
+  // clientX -> minute on the 0-90 axis, via the rendered box (viewBox is 0 0 W H, non-uniform scale)
+  const rawMinAt=cx=>{const r=svgEl.getBoundingClientRect();if(!r.width)return 0;const vx=(cx-r.left)/r.width*W;return Math.max(0,Math.min(SPAN,(vx-padX)/innerW*SPAN));};
+  let dragging=false,rawFrom=0,fromMin=0,toMin=0;
+  const paint=(a,b)=>{const s0=Math.min(a,b),e0=Math.max(a,b);sel.setAttribute('visibility','visible');sel.setAttribute('x',xAt(s0));sel.setAttribute('width',Math.max(1,xAt(e0)-xAt(s0)));};
+  cap.addEventListener('pointerdown',ev=>{ev.preventDefault();dragging=true;rawFrom=rawMinAt(ev.clientX);fromMin=toMin=Math.round(rawFrom);try{cap.setPointerCapture(ev.pointerId);}catch(_){}paint(fromMin,toMin);});
+  cap.addEventListener('pointermove',ev=>{if(!dragging)return;toMin=Math.round(rawMinAt(ev.clientX));paint(fromMin,toMin);});
+  const finish=ev=>{
+    if(!dragging)return;dragging=false;
+    try{cap.releasePointerCapture(ev.pointerId);}catch(_){}
+    if(Math.abs(toMin-fromMin)<1){
+      // Sub-minute drag behaves as the old per-bucket click: select, or clear if already selected
+      const bi=Math.min(N-1,Math.max(0,Math.floor(rawFrom/5))),bs=bi*5,be=bs+5;
+      if(S.timeFilter&&S.timeFilter.s===bs)S.timeFilter=null;else S.timeFilter={s:bs,e:be};
+    }else{
+      let s1=Math.min(fromMin,toMin),e1=Math.max(fromMin,toMin);
+      if(e1>=SPAN)e1=tlEndMax();// dragged to the right edge: take stoppage time too
+      S.timeFilter={s:s1,e:e1};
+    }
+    buildTimeline();renderAll();updateStats();
+  };
+  cap.addEventListener('pointerup',finish);
+  cap.addEventListener('pointercancel',finish);
 }
-
 /* STATS BAR */
 function renderMomentumTab(){
   const wrap=document.getElementById('momWrap');if(!S.selMatch||!S.events.length){wrap.innerHTML='<div class="empty" style="padding-top:80px">Select a match in the Match Analysis tab to view momentum</div>';return;}
@@ -1491,7 +1551,103 @@ function renderMomentumTab(){
   const momEx=document.getElementById('momExplain'),momTog=document.getElementById('momExplainToggle');if(momEx&&momTog){const hdr=momEx.querySelector('.mom-explain-hdr');hdr.onclick=()=>{S._momExplainOpen=!momEx.classList.contains('open');momEx.classList.toggle('open');momTog.textContent=momEx.classList.contains('open')?'\u2212':'+';};}
 }
 
-function updateStats(){/* h2h stats bar removed */}
+const TW_METRICS=[
+  {k:'poss',label:'Possession',fmt:'pct1'},
+  {k:'passes',label:'Passes',fmt:'int'},
+  {k:'pass_acc',label:'Pass accuracy',fmt:'pct0'},
+  {k:'prog',label:'Progressive passes',fmt:'int'},
+  {k:'ft_entries',label:'Final third entries',fmt:'int'},
+  {k:'box',label:'Passes into box',fmt:'int'},
+  {k:'shots',label:'Shots',fmt:'int'},
+  {k:'xg',label:'xG',fmt:'x2'},
+  {k:'goals',label:'Goals',fmt:'int'},
+  {k:'defs',label:'Defensive actions',fmt:'int'},
+  {k:'recov',label:'Recoveries',fmt:'int'},
+  {k:'touches',label:'Touches',fmt:'int'}
+];
+function twRound(v,f){if(f==='pct1')return Math.round(v*10)/10;if(f==='x2')return Math.round(v*100)/100;return Math.round(v);}
+function twFmt(v,f){if(v==null||!isFinite(v))return 'n/a';if(f==='pct1')return v.toFixed(1)+'%';if(f==='pct0')return Math.round(v)+'%';if(f==='x2')return v.toFixed(2);return String(Math.round(v));}
+function twFmtDiff(v,f){const sg=v>0?'+':'';if(f==='pct1')return sg+v.toFixed(1);if(f==='x2')return sg+v.toFixed(2);return sg+String(v);}
+// Team stats for one side inside [s,e). Period filter applies; the player filter deliberately does not.
+function twTeamStats(team,s,e){
+  let ev=S.events.filter(x=>x.team===team);
+  if(S.periods.size)ev=ev.filter(x=>S.periods.has(String(x.period)));
+  ev=ev.filter(x=>x.minute>=s&&x.minute<e);
+  const p=ev.filter(x=>x.type==='Pass'),okp=p.filter(x=>x.outcome_type==='Successful').length;
+  return{
+    passes:p.length,
+    pass_acc:p.length?okp/p.length*100:0,
+    prog:p.filter(x=>isProgPass(x)).length,
+    ft_entries:p.filter(x=>x.x!=null&&x.end_x!=null&&x.x<66&&x.end_x>=66).length,
+    box:p.filter(x=>x.end_x!=null&&x.end_x>=83&&x.end_y>=21&&x.end_y<=79).length,
+    shots:ev.filter(x=>x.is_shot).length,
+    xg:ev.reduce((t,x)=>t+(Number(x.xg)||0),0),
+    goals:ev.filter(x=>x.is_goal).length,
+    defs:ev.filter(x=>DEF_TYPES.includes(x.type)).length,
+    recov:ev.filter(x=>x.type==='BallRecovery').length,
+    touches:ev.filter(x=>x.x!=null).length
+  };
+}
+// Real ball time: clip every possession sequence to the window and sum the overlap.
+function twBallMinutes(a,b,s,e){
+  const out={a:0,b:0,total:0,any:false};
+  const seqs=S.sequences||[];
+  if(!seqs.length)return out;
+  out.any=true;
+  seqs.forEach(q=>{
+    if(S.periods.size&&q.period!=null&&!S.periods.has(String(q.period)))return;
+    const st=(Number(q.start_min)||0)+(Number(q.start_sec)||0)/60;
+    const en=st+(Number(q.dur_s)||0)/60;
+    const ov=Math.min(en,e)-Math.max(st,s);
+    if(!(ov>0))return;
+    if(q.team===a)out.a+=ov;else if(q.team===b)out.b+=ov;else return;
+    out.total+=ov;
+  });
+  return out;
+}
+function updateStats(){
+  const el=document.getElementById('twPanel');if(!el)return;
+  if(!S.selMatch||!S.timeFilter||!S.events.length){el.classList.add('hidden');el.innerHTML='';return;}
+  const pair=(S.matchTeams&&S.matchTeams.length===2)?S.matchTeams:[...new Set(S.events.map(x=>x.team))];
+  const a=VT(),b=pair.find(t=>t&&t!==a);
+  if(!b){el.classList.add('hidden');el.innerHTML='';return;}
+  const s=S.timeFilter.s,e=S.timeFilter.e;
+  const sa=twTeamStats(a,s,e),sb=twTeamStats(b,s,e);
+  const ball=twBallMinutes(a,b,s,e);
+  const denom=ball.a+ball.b,possOk=ball.any&&denom>0;
+  sa.poss=possOk?ball.a/denom*100:null;
+  sb.poss=possOk?ball.b/denom*100:null;
+  const rows=TW_METRICS.map(m=>{
+    const va=sa[m.k],vb=sb[m.k];
+    const known=va!=null&&vb!=null&&isFinite(va)&&isFinite(vb);
+    const d=known?twRound(va-vb,m.fmt):null;
+    const cls=d==null?'':(d>0?' up':(d<0?' down':''));
+    const dtxt=d==null?'no data':(d===0?'level':twFmtDiff(d,m.fmt));
+    const tot=known?(Math.abs(va)+Math.abs(vb)):0;
+    const wa=tot>0?Math.abs(va)/tot*100:0,wb=tot>0?Math.abs(vb)/tot*100:0;
+    return'<div class="tw-row">'
+      +'<div class="tw-v a'+(known&&va>vb?' lead':'')+'">'+esc(twFmt(va,m.fmt))+'</div>'
+      +'<div class="tw-mid"><div class="tw-lbl" title="'+esc(m.label)+'">'+esc(m.label)+'</div>'
+      +'<div class="tw-track"><i class="a" style="width:'+wa.toFixed(2)+'%"></i><i class="b" style="width:'+wb.toFixed(2)+'%"></i></div>'
+      +'<div class="tw-diff'+cls+'">'+esc(dtxt)+'</div></div>'
+      +'<div class="tw-v b'+(known&&vb>va?' lead':'')+'">'+esc(twFmt(vb,m.fmt))+'</div>'
+      +'</div>';
+  }).join('');
+  let sub,warn=false;
+  if(!ball.any){sub='Possession unavailable: no sequence data for this match';warn=true;}
+  else if(!possOk){sub='Possession unavailable: no recorded ball time in this window';warn=true;}
+  else sub='Ball time recorded: '+denom.toFixed(2)+' min';
+  const per=S.periods.size?(' · period '+[...S.periods].sort().join(' + ')):'';
+  el.classList.remove('hidden');
+  el.innerHTML='<div class="tw-hd">'
+    +'<span class="tw-title">Window '+s+'–'+e+' min</span>'
+    +'<span class="tw-sub'+(warn?' warn':'')+'">'+esc(sub+per)+'</span>'
+    +'<span class="tw-key"><span><i class="a"></i>'+esc(dispName(a))+'</span><span><i class="b"></i>'+esc(dispName(b))+'</span></span>'
+    +'<button class="tw-clear" id="twClear">Clear window</button>'
+    +'</div><div class="tw-grid">'+rows+'</div>';
+  const btn=document.getElementById('twClear');
+  if(btn)btn.onclick=()=>{S.timeFilter=null;buildTimeline();renderAll();updateStats();};
+}
 function highlightActiveStat(){}
 
 /* PLAYER LIST */
@@ -2647,7 +2803,7 @@ function initVizButtons(){
 }
 function initFilters(){document.querySelectorAll('.period-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.periods.add(cb.value);else S.periods.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.outcome-cb').forEach(cb=>{cb.onchange=()=>{if(cb.checked)S.outcomes.add(cb.value);else S.outcomes.delete(cb.value);if(S.selMatch){renderAll();updateStats();}};});document.querySelectorAll('.pos-grp-btn').forEach(btn=>{btn.onclick=()=>{const g=btn.dataset.grp;if(g==='all'){S.posGroups.clear();}else{if(S.posGroups.has(g))S.posGroups.delete(g);else S.posGroups.add(g);}document.querySelectorAll('.pos-grp-btn').forEach(b=>{const bg=b.dataset.grp;if(bg==='all')b.classList.toggle('on',S.posGroups.size===0);else b.classList.toggle('on',S.posGroups.has(bg));});if(S.selMatch){renderAll();renderPlayerList();}};});}
 function initTabs(){document.querySelectorAll('.htab').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('.htab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');const tab=btn.dataset.tab;document.getElementById('tabMatch').style.display=tab==='match'?'flex':'none';document.getElementById('tabSeason').style.display=tab==='season'?'block':'none';document.getElementById('tabPlayers').style.display=tab==='players'?'flex':'none';document.getElementById('tabPlayers').classList.toggle('show',tab==='players');document.getElementById('tabMomentum').style.display=tab==='momentum'?'flex':'none';document.getElementById('tabMomentum').classList.toggle('show',tab==='momentum');if(tab==='season'&&!S.seasonData.length)loadSeasonStats();if(tab==='players'&&!S.psPlayersLoaded)loadAllPlayerEvents();if(tab==='momentum')renderMomentumTab();};});}
-function resetStats(){/* noop */}
+function resetStats(){S.sequences=[];const el=document.getElementById('twPanel');if(el){el.classList.add('hidden');el.innerHTML='';}}
 
 /* HELPERS */
 function leg(color,text){return'<span class="leg"><span class="leg-dot" style="background:'+color+'"></span>'+text+'</span>';}
