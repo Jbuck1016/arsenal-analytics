@@ -196,6 +196,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Time-window stats panel */
 .tw-panel{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;padding:9px 12px 11px;max-height:36vh;overflow-y:auto;position:relative;z-index:4}
 .tw-panel.hidden{display:none}
+/* Collapsed keeps the header line so the scope in effect is never hidden, and gives the rest back to the plots. */
+.tw-panel.collapsed{max-height:none;overflow:visible;padding-top:7px;padding-bottom:7px}
+.tw-panel.collapsed .tw-hd{margin-bottom:0}
+.tw-panel.collapsed .tw-sub,.tw-panel.collapsed .tw-key{display:none}
+.tw-panel.collapsed .tw-clear{margin-left:auto}
 .tw-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 .tw-title{font:700 12px/1.2 var(--f-display);letter-spacing:-.01em;color:var(--text);white-space:nowrap}
 .tw-sub{font:500 10px/1.35 var(--f-data);color:var(--text3)}
@@ -207,7 +212,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tw-key i.b{background:var(--blue)}
 .tw-clear{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font:600 10px/1 'Inter',sans-serif;padding:5px 10px;border-radius:6px;cursor:pointer;transition:.15s;flex-shrink:0}
 .tw-clear:hover{color:var(--text);border-color:var(--border2)}
+.tw-clear:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tw-toggle{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font:600 10px/1 'Inter',sans-serif;padding:5px 9px;border-radius:6px;cursor:pointer;transition:.15s;flex-shrink:0}
+.tw-toggle:hover{color:var(--text);border-color:var(--border2)}
+.tw-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tw-chev{display:inline-block;font-size:9px;line-height:1;transition:transform .15s}
+.tw-panel.collapsed .tw-chev{transform:rotate(-90deg)}
+@media (prefers-reduced-motion:reduce){.tw-toggle,.tw-clear,.tw-chev{transition:none}}
 .tw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:8px 10px}
+.tw-grid[hidden]{display:none}
 .tw-row{display:flex;align-items:center;gap:9px;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 10px}
 .tw-v{flex:0 0 54px;font:700 12.5px/1.2 var(--f-data);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tw-v.a{text-align:left}
@@ -1611,6 +1624,18 @@ function twBallMinutes(a,b,s,e){
   });
   return out;
 }
+// Collapsed state is a viewer preference, so it outlives match and window changes.
+const TW_COLLAPSE_KEY='matchWinStatsCollapsed';
+function twIsCollapsed(){try{return localStorage.getItem(TW_COLLAPSE_KEY)==='1';}catch(_){return false;}}
+function twStoreCollapsed(v){try{localStorage.setItem(TW_COLLAPSE_KEY,v?'1':'0');}catch(_){}}
+function twApplyCollapsed(collapsed){
+  const el=document.getElementById('twPanel');if(!el)return;
+  el.classList.toggle('collapsed',collapsed);
+  const grid=document.getElementById('twGrid');if(grid)grid.hidden=collapsed;
+  const btn=document.getElementById('twToggle');
+  if(btn){btn.setAttribute('aria-expanded',collapsed?'false':'true');
+    const t=btn.querySelector('.tw-toggle-txt');if(t)t.textContent=collapsed?'Show stats':'Hide stats';}
+}
 function updateStats(){
   const el=document.getElementById('twPanel');if(!el)return;
   if(!S.selMatch||!S.events.length){el.classList.add('hidden');el.innerHTML='';return;}
@@ -1658,15 +1683,22 @@ function updateStats(){
   if(!ball.any)bits.push('ball time unavailable for this match');
   const sub=bits.join(' · ');
   const per=S.periods.size?(' · period '+[...S.periods].sort().join(' + ')):'';
+  const collapsed=twIsCollapsed();
   el.classList.remove('hidden');
+  el.classList.toggle('collapsed',collapsed);
   el.innerHTML='<div class="tw-hd">'
+    +'<button class="tw-toggle" id="twToggle" type="button" aria-expanded="'+(collapsed?'false':'true')+'" aria-controls="twGrid">'
+    +'<span class="tw-chev" aria-hidden="true">\u25BE</span><span class="tw-toggle-txt">'+(collapsed?'Show stats':'Hide stats')+'</span></button>'
     +'<span class="tw-title">'+esc(isWin?('Window '+s+'–'+e+' min'):'Full match')+'</span>'
     +'<span class="tw-sub'+(warn?' warn':'')+'">'+esc(sub+per)+'</span>'
     +'<span class="tw-key"><span><i class="a"></i>'+esc(dispName(a))+'</span><span><i class="b"></i>'+esc(dispName(b))+'</span></span>'
-    +(isWin?'<button class="tw-clear" id="twClear">Clear window</button>':'')
-    +'</div><div class="tw-grid">'+rows+'</div>';
+    +(isWin?'<button class="tw-clear" id="twClear" type="button">Clear window</button>':'')
+    +'</div><div class="tw-grid" id="twGrid"'+(collapsed?' hidden':'')+'>'+rows+'</div>';
   const btn=document.getElementById('twClear');
   if(btn)btn.onclick=()=>{S.timeFilter=null;buildTimeline();renderAll();updateStats();};
+  const tog=document.getElementById('twToggle');
+  // Plot canvases are sized from the measured area, so they need a rebuild once the panel gives its space back.
+  if(tog)tog.onclick=()=>{const next=!twIsCollapsed();twStoreCollapsed(next);twApplyCollapsed(next);if(S.selMatch)renderAll();};
 }
 function highlightActiveStat(){}
 
