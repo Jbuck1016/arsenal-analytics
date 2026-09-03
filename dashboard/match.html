@@ -1613,14 +1613,17 @@ function twBallMinutes(a,b,s,e){
 }
 function updateStats(){
   const el=document.getElementById('twPanel');if(!el)return;
-  if(!S.selMatch||!S.timeFilter||!S.events.length){el.classList.add('hidden');el.innerHTML='';return;}
+  if(!S.selMatch||!S.events.length){el.classList.add('hidden');el.innerHTML='';return;}
   const pair=(S.matchTeams&&S.matchTeams.length===2)?S.matchTeams:[...new Set(S.events.map(x=>x.team))];
   const a=VT(),b=pair.find(t=>t&&t!==a);
   if(!b){el.classList.add('hidden');el.innerHTML='';return;}
-  const s=S.timeFilter.s,e=S.timeFilter.e;
+  // With no drag selection the panel covers the whole match: that full-match row is
+  // the baseline a window is read against, and the only one checkable against the views.
+  const isWin=!!S.timeFilter;
+  const lastMin=S.events.reduce((t,x)=>Math.max(t,Number(x.minute)||0),0);
+  const s=isWin?S.timeFilter.s:0,e=isWin?S.timeFilter.e:lastMin+1;
   const sa=twTeamStats(a,s,e),sb=twTeamStats(b,s,e);
   const ball=twBallMinutes(a,b,s,e);
-  const denom=ball.a+ball.b,ballOk=ball.any&&denom>0;
   // Possession is pass share, the same definition mv_team_match and Team Profiles use.
   const passTot=sa.passes+sb.passes,possOk=passTot>0;
   sa.poss=possOk?sa.passes/passTot*100:null;
@@ -1651,18 +1654,16 @@ function updateStats(){
   let warn=false;
   const bits=[];
   if(possOk)bits.push('Possession is pass share');
-  else{bits.push('Possession unavailable: no passes by either team in this window');warn=true;}
+  else{bits.push('Possession unavailable: no passes by either team in this '+(isWin?'window':'match'));warn=true;}
   if(!ball.any)bits.push('ball time unavailable for this match');
-  else if(!ballOk)bits.push('no recorded ball time in this window');
-  else bits.push('ball time recorded: '+denom.toFixed(2)+' min');
   const sub=bits.join(' · ');
   const per=S.periods.size?(' · period '+[...S.periods].sort().join(' + ')):'';
   el.classList.remove('hidden');
   el.innerHTML='<div class="tw-hd">'
-    +'<span class="tw-title">Window '+s+'–'+e+' min</span>'
+    +'<span class="tw-title">'+esc(isWin?('Window '+s+'–'+e+' min'):'Full match')+'</span>'
     +'<span class="tw-sub'+(warn?' warn':'')+'">'+esc(sub+per)+'</span>'
     +'<span class="tw-key"><span><i class="a"></i>'+esc(dispName(a))+'</span><span><i class="b"></i>'+esc(dispName(b))+'</span></span>'
-    +'<button class="tw-clear" id="twClear">Clear window</button>'
+    +(isWin?'<button class="tw-clear" id="twClear">Clear window</button>':'')
     +'</div><div class="tw-grid">'+rows+'</div>';
   const btn=document.getElementById('twClear');
   if(btn)btn.onclick=()=>{S.timeFilter=null;buildTimeline();renderAll();updateStats();};
