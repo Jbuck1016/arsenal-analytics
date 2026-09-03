@@ -890,7 +890,7 @@ async function loadMatches(){
   all.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   S.matches=all;renderMatchSelect();
 }
-async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters,seqs]=await Promise.all([sbAll('v_match_events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal,xg,shot_dist_m,shot_angle_deg'}),sbRpc('get_starter_names',{p_game_id:gid}),sbAll('sequences',{game_id:'eq.'+gid,select:'team,period,start_min,start_sec,dur_s,is_open_play'}).catch(()=>[])]);S.events=evts;S.sequences=Array.isArray(seqs)?seqs:[];S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
+async function loadMatch(gid){const area=document.getElementById('pitchArea');area.innerHTML='<div class="loading"><div class="spinner"></div> Loading...</div>';const[evts,starters,seqs]=await Promise.all([sbAll('v_match_events',{game_id:'eq.'+gid,select:'game_id,type,x,y,end_x,end_y,player,team,period,minute,second,outcome_type,is_shot,is_goal,xg,shot_dist_m,shot_angle_deg'}),sbRpc('get_starter_names',{p_game_id:gid}),sbAll('v_league_sequences',{game_id:'eq.'+gid,select:'team,period,start_min,start_sec,dur_s,is_open_play'}).catch(()=>[])]);S.events=evts;S.sequences=Array.isArray(seqs)?seqs:[];S.starters=new Set(starters.map(s=>s.player_name));S.playerPos={};starters.forEach(s=>{S.playerPos[s.player_name]=s.player_pos});S.selMatch=gid;S.selPlayer=null;S.cmpPlayer=null;S.timeFilter=null;const m=S.matches.find(mm=>mm.game_id==gid);const tn=T().name;
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
@@ -1551,8 +1551,12 @@ function renderMomentumTab(){
   const momEx=document.getElementById('momExplain'),momTog=document.getElementById('momExplainToggle');if(momEx&&momTog){const hdr=momEx.querySelector('.mom-explain-hdr');hdr.onclick=()=>{S._momExplainOpen=!momEx.classList.contains('open');momEx.classList.toggle('open');momTog.textContent=momEx.classList.contains('open')?'\u2212':'+';};}
 }
 
+// mv_team_match.is_touch_proxy: a located event that is not an administrative marker.
+const NON_TOUCH_TYPES=new Set(['SubstitutionOn','SubstitutionOff','Card','FormationChange','FormationSet','Start','End','CornerAwarded','OffsideGiven','OffsideProvoked']);
+function isTouchProxy(e){return e.x!=null&&!NON_TOUCH_TYPES.has(e.type);}
 const TW_METRICS=[
   {k:'poss',label:'Possession',fmt:'pct1'},
+  {k:'tilt',label:'Field tilt',fmt:'pct1'},
   {k:'passes',label:'Passes',fmt:'int'},
   {k:'pass_acc',label:'Pass accuracy',fmt:'pct0'},
   {k:'prog',label:'Progressive passes',fmt:'int'},
@@ -1563,11 +1567,12 @@ const TW_METRICS=[
   {k:'goals',label:'Goals',fmt:'int'},
   {k:'defs',label:'Defensive actions',fmt:'int'},
   {k:'recov',label:'Recoveries',fmt:'int'},
-  {k:'touches',label:'Touches',fmt:'int'}
+  {k:'touches',label:'Touches',fmt:'int'},
+  {k:'ball_time',label:'Ball time (min)',fmt:'min1',needsSeq:true}
 ];
-function twRound(v,f){if(f==='pct1')return Math.round(v*10)/10;if(f==='x2')return Math.round(v*100)/100;return Math.round(v);}
-function twFmt(v,f){if(v==null||!isFinite(v))return 'n/a';if(f==='pct1')return v.toFixed(1)+'%';if(f==='pct0')return Math.round(v)+'%';if(f==='x2')return v.toFixed(2);return String(Math.round(v));}
-function twFmtDiff(v,f){const sg=v>0?'+':'';if(f==='pct1')return sg+v.toFixed(1);if(f==='x2')return sg+v.toFixed(2);return sg+String(v);}
+function twRound(v,f){if(f==='pct1'||f==='min1')return Math.round(v*10)/10;if(f==='x2')return Math.round(v*100)/100;return Math.round(v);}
+function twFmt(v,f){if(v==null||!isFinite(v))return 'n/a';if(f==='pct1')return v.toFixed(1)+'%';if(f==='pct0')return Math.round(v)+'%';if(f==='x2')return v.toFixed(2);if(f==='min1')return v.toFixed(1);return String(Math.round(v));}
+function twFmtDiff(v,f){const sg=v>0?'+':'';if(f==='pct1'||f==='min1')return sg+v.toFixed(1);if(f==='x2')return sg+v.toFixed(2);return sg+String(v);}
 // Team stats for one side inside [s,e). Period filter applies; the player filter deliberately does not.
 function twTeamStats(team,s,e){
   let ev=S.events.filter(x=>x.team===team);
@@ -1585,7 +1590,8 @@ function twTeamStats(team,s,e){
     goals:ev.filter(x=>x.is_goal).length,
     defs:ev.filter(x=>DEF_TYPES.includes(x.type)).length,
     recov:ev.filter(x=>x.type==='BallRecovery').length,
-    touches:ev.filter(x=>x.x!=null).length
+    touches:ev.filter(isTouchProxy).length,
+    ft_touches:ev.filter(x=>isTouchProxy(x)&&x.x>=66.7).length
   };
 }
 // Real ball time: clip every possession sequence to the window and sum the overlap.
@@ -1614,10 +1620,19 @@ function updateStats(){
   const s=S.timeFilter.s,e=S.timeFilter.e;
   const sa=twTeamStats(a,s,e),sb=twTeamStats(b,s,e);
   const ball=twBallMinutes(a,b,s,e);
-  const denom=ball.a+ball.b,possOk=ball.any&&denom>0;
-  sa.poss=possOk?ball.a/denom*100:null;
-  sb.poss=possOk?ball.b/denom*100:null;
-  const rows=TW_METRICS.map(m=>{
+  const denom=ball.a+ball.b,ballOk=ball.any&&denom>0;
+  // Possession is pass share, the same definition mv_team_match and Team Profiles use.
+  const passTot=sa.passes+sb.passes,possOk=passTot>0;
+  sa.poss=possOk?sa.passes/passTot*100:null;
+  sb.poss=possOk?sb.passes/passTot*100:null;
+  // Field tilt is the share of combined final-third touch-proxy events.
+  const tiltTot=sa.ft_touches+sb.ft_touches,tiltOk=tiltTot>0;
+  sa.tilt=tiltOk?sa.ft_touches/tiltTot*100:null;
+  sb.tilt=tiltOk?sb.ft_touches/tiltTot*100:null;
+  // Ball time stays a separate metric and only appears when the match has sequence rows.
+  sa.ball_time=ball.any?ball.a:null;
+  sb.ball_time=ball.any?ball.b:null;
+  const rows=TW_METRICS.filter(m=>!m.needsSeq||ball.any).map(m=>{
     const va=sa[m.k],vb=sb[m.k];
     const known=va!=null&&vb!=null&&isFinite(va)&&isFinite(vb);
     const d=known?twRound(va-vb,m.fmt):null;
@@ -1633,10 +1648,14 @@ function updateStats(){
       +'<div class="tw-v b'+(known&&vb>va?' lead':'')+'">'+esc(twFmt(vb,m.fmt))+'</div>'
       +'</div>';
   }).join('');
-  let sub,warn=false;
-  if(!ball.any){sub='Possession unavailable: no sequence data for this match';warn=true;}
-  else if(!possOk){sub='Possession unavailable: no recorded ball time in this window';warn=true;}
-  else sub='Ball time recorded: '+denom.toFixed(2)+' min';
+  let warn=false;
+  const bits=[];
+  if(possOk)bits.push('Possession is pass share');
+  else{bits.push('Possession unavailable: no passes by either team in this window');warn=true;}
+  if(!ball.any)bits.push('ball time unavailable for this match');
+  else if(!ballOk)bits.push('no recorded ball time in this window');
+  else bits.push('ball time recorded: '+denom.toFixed(2)+' min');
+  const sub=bits.join(' · ');
   const per=S.periods.size?(' · period '+[...S.periods].sort().join(' + ')):'';
   el.classList.remove('hidden');
   el.innerHTML='<div class="tw-hd">'
