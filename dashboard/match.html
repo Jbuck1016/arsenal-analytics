@@ -1124,7 +1124,7 @@ function shotOutcomeLegend(counts,pal){
     off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
   };
   return ['goal','saved','blocked','post','off'].filter(function(k){return counts[k]}).map(function(k){
-    return '<span class="leg shot-key">'+glyph[k](pal[k])+'<span>'+labels[k]+' <b>'+counts[k]+'</b></span></span>';
+    return '<span class="leg shot-key" data-shot-key="'+k+'" data-color="'+pal[k]+'">'+glyph[k](pal[k])+'<span>'+labels[k]+' <b>'+counts[k]+'</b></span></span>';
   }).join('');
 }
 function renderShotMap(ctx,c,evts,titleEl,legendEl){
@@ -1155,7 +1155,7 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,
       outcome:(e.is_goal?'Goal':(e.outcome_type||k))+(Number.isFinite(xg)?' · xG '+xg.toFixed(2):''),type:'Shot',dist:dist.toFixed(0)});
   });
-  const sr=shotPitchRect(c),summaryY=sr.y+sr.h+22,summary=[['SHOTS',evts.length],['GOALS',goals],['TOTAL xG',xgKnown?totalXg.toFixed(2):'—'],['AVG DIST',evts.length?(distTotal/evts.length).toFixed(1)+'m':'—']];
+  const sr=shotPitchRect(c),summaryY=sr.y+sr.h+22,summary=[['SHOTS',evts.length],['GOALS',goals],['TOTAL xG',xgKnown?totalXg.toFixed(2):'n/a'],['AVG DIST',evts.length?(distTotal/evts.length).toFixed(1)+'m':'n/a']];
   if(summaryY+44<c.height){const cellW=(c.width-2*PM)/summary.length;summary.forEach((s,i)=>{const x=PM+i*cellW;if(i){ctx.strokeStyle=CT().line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,summaryY);ctx.lineTo(x,summaryY+38);ctx.stroke();}ctx.fillStyle=CT().text;ctx.font='700 14px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(String(s[1]),x+cellW/2,summaryY+16);ctx.fillStyle=CT().textSoft;ctx.font='700 7px JetBrains Mono,monospace';ctx.fillText(s[0],x+cellW/2,summaryY+31);});}
   S.canvasEvents.set(c,stored);
   titleEl.textContent='Attacking-Half Shot Map';
@@ -1414,6 +1414,9 @@ function buildPanel(area,viz,sz,teamOverride){
   if(teamOverride)S.viewTeam=teamOverride;
   const evts=getFiltered(viz);
   callRenderer(viz,ctx,can,evts,title,legend,pairEl);
+  // Remember the render inputs so exports can redraw this plot at print
+  // resolution rather than upscaling the screen bitmap.
+  can._exp={viz:viz,evts:evts,team:teamOverride||null,w:canvasSz.w,h:canvasSz.h};
   if(viz!=='network'&&viz!=='combos')body.appendChild(buildPanelContext(viz));
   S.viewTeam=origVT;
   // Title with team prefix in compare mode
@@ -2075,8 +2078,13 @@ async function openCellMatchModal(gid,oppName,colKey){
     const can=document.createElement('canvas');can.setAttribute('role','img');can.setAttribute('aria-label',(colDef?colDef.label:colKey)+' pitch visualization. Attack is bottom to top.');
     body.appendChild(can);
     const legend=document.createElement('div');legend.className='panel-legend';body.appendChild(legend);
-    const ctx=setupHiDpiCanvas(can,560,Math.round(560/PITCH_RATIO));const noopT={textContent:''};
+    const cellH=Math.round(560/PITCH_RATIO);
+    const ctx=setupHiDpiCanvas(can,560,cellH);const noopT={textContent:''};
     callRenderer(vizType,ctx,can,teamEvts,noopT,legend,null);
+    // Season cells draw from row-scoped events, so only tag views that depend on
+    // nothing but those events; anything reading live match state stays on the
+    // screen bitmap rather than redrawing against the wrong match.
+    if(EXP_PURE_VIZ.has(vizType))can._exp={viz:vizType,evts:teamEvts,team:null,w:560,h:cellH};
     // Hover tooltips
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
     can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
@@ -2199,7 +2207,7 @@ function computeVizStats(viz){
     const zoneCounts={};const zoneLabels=['Def L','Def C','Def R','Mid L','Mid C','Mid R','Att L','Att C','Att R'];
     evts.forEach(e=>{if(e.x==null||e.y==null)return;const xi=e.x<33?0:e.x<66?1:2;const yi=e.y<33?2:e.y<66?1:0;const idx=xi*3+yi;zoneCounts[idx]=(zoneCounts[idx]||0)+1;});
     let peakIdx=0,peakVal=-1;Object.entries(zoneCounts).forEach(([k,v])=>{if(v>peakVal){peakVal=v;peakIdx=+k;}});
-    const peakLabel=touches?zoneLabels[peakIdx]:'\u2014';
+    const peakLabel=touches?zoneLabels[peakIdx]:'n/a';
     return[['Touches',touches],['In Final Third',touchesFT],['In Own Half',touchesOwn],['Peak Zone',peakLabel]];
   }
   if(viz==='shape'){
@@ -2214,7 +2222,7 @@ function computeVizStats(viz){
     const pairs={};for(let i=0;i<sortedN.length-1;i++){const p=sortedN[i];for(let j=i+1;j<Math.min(i+3,sortedN.length);j++){const n=sortedN[j];if(n.player===p.player)continue;const key=[p.player,n.player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}
     const entries=Object.entries(pairs).sort((a,b)=>b[1]-a[1]);
     const topEntry=entries[0];
-    const topName=topEntry?(lastName(topEntry[0].split('|||')[0])+'\u2194'+lastName(topEntry[0].split('|||')[1])):'\u2014';
+    const topName=topEntry?(lastName(topEntry[0].split('|||')[0])+'\u2194'+lastName(topEntry[0].split('|||')[1])):'n/a';
     return[['Connections',entries.length],['Top Combo',topName],['Total Passes',passes.length],['Accuracy',acc+'%']];
   }
   if(viz==='xt'){
@@ -2289,216 +2297,418 @@ const EXP_PANEL='#1a1d24';
 const EXP_TEXT='#f0f2f8';
 const EXP_MUTED='#8a94b0';
 const EXP_BORDER='rgba(255,255,255,0.10)';
+const EXP_RULE='rgba(255,255,255,0.07)';
+const EXP_DIM='#69739180';
 
-function _drawHeaderBand(ctx,W,topH,cfg){
-  const tc=cfg.teamColor;
-  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,topH);
-  // Left 6px accent bar full header height
-  ctx.fillStyle=tc;ctx.fillRect(0,0,6,topH);
-  const padX=48;
+/* One type and spacing scale, shared by portrait, landscape and the square card
+   so the three formats read as the same document at different sizes. */
+function _expScale(k){
+  const r=function(v){return Math.max(1,Math.round(v*k))};
+  return {k:k,pad:r(56),gap:r(20),rule:r(1),
+    eyebrow:r(19),title:r(74),accent:r(31),meta:r(24),body:r(22),
+    note:r(19),legend:r(21),statV:r(60),statL:r(18),foot:r(20)};
+}
+/* Exported copy avoids em dashes, including any inherited from screen strings. */
+function _expCopy(s){return String(s==null?'':s).replace(/\u2014/g,'\u00B7').replace(/\s+/g,' ').trim();}
+function _expWrap(ctx,text,maxW){
+  const words=_expCopy(text).split(' ').filter(Boolean),lines=[];let line='';
+  words.forEach(function(wd){
+    const t=line?line+' '+wd:wd;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=wd;}else line=t;
+  });
+  if(line)lines.push(line);
+  return lines;
+}
+/* Canvas has no letter-spacing, so eyebrows and stat labels are set glyph by
+   glyph. Assumes textAlign left. */
+function _expTrackedW(ctx,text,sp){
+  const s=String(text||'');let w=0;
+  for(let i=0;i<s.length;i++)w+=ctx.measureText(s[i]).width+sp;
+  return Math.max(0,w-sp);
+}
+function _expTracked(ctx,text,x,y,sp){
+  const s=String(text||'');let cx=x;
+  for(let i=0;i<s.length;i++){ctx.fillText(s[i],cx,y);cx+=ctx.measureText(s[i]).width+sp;}
+  return Math.max(0,cx-x-sp);
+}
+function _expTrackedCentre(ctx,text,cx,y,sp){
+  const w=_expTrackedW(ctx,text,sp);_expTracked(ctx,text,cx-w/2,y,sp);return w;
+}
+function _expRule(ctx,x,y,w,col){ctx.fillStyle=col||EXP_RULE;ctx.fillRect(x,Math.round(y),w,1);}
+
+/* ---- what the export carries over from the panel the user is looking at ---- */
+const EXP_PURE_VIZ=new Set(['passes','progressive','final_third','zone14','box_passes','shots','defensive','heatmap','pressure','xt']);
+function _expPanelOf(srcCanvas){return srcCanvas&&srcCanvas.closest?srcCanvas.closest('.panel'):null;}
+function _expOrientation(srcCanvas){
+  const panel=_expPanelOf(srcCanvas),el=panel?panel.querySelector('.panel-orient'):null;
+  const t=el?_expCopy(el.textContent):'';
+  return t||'Orientation · attack bottom → top · team right = screen right';
+}
+/* Plain statements of what each plot draws. CONCEPT_LEGENDS wins wherever the
+   page defines one, because that is the wording already shown on screen. */
+const EXP_PLOT_DESC={
+  passes:'Every observed pass, drawn from where it was played to where it arrived.',
+  final_third:'Passes whose endpoint falls in the attacking third.',
+  zone14:'Passes whose endpoint falls in Zone 14, the central area just outside the box.',
+  box_passes:'Passes whose endpoint falls inside the opposition box.',
+  shots:'Every recorded shot, placed where it was struck.',
+  defensive:'Recorded defensive actions, placed where each was registered.',
+  heatmap:'Smoothed density of the recorded event locations.',
+  keypasses:'Passes that directly preceded a shot.',
+  network:'Average touch positions of the starting XI, linked by repeated pass combinations.',
+  combos:'Repeated passer to receiver combinations, drawn between average positions.'
+};
+function _expDescription(viz){
+  const raw=CONCEPT_LEGENDS[viz];
+  return _expCopy(raw?raw.replace(/<[^>]*>/g,''):(EXP_PLOT_DESC[viz]||''));
+}
+/* Read the legend straight off the panel so the export shows the same keys,
+   counts and caveats. Text-only entries become notes, set under the keys: these
+   are the sampling and data-availability disclosures. */
+function _expCollectLegend(srcCanvas){
+  const keys=[],notes=[],panel=_expPanelOf(srcCanvas);
+  const legEl=panel?panel.querySelector('.panel-legend'):null;
+  const isHex=function(c){return /^#[0-9a-f]{6}$/i.test(String(c||'').trim())};
+  if(legEl)Array.prototype.forEach.call(legEl.querySelectorAll('.leg'),function(sp){
+    const txt=_expCopy(sp.textContent);
+    if(!txt)return;
+    const oc=sp.getAttribute('data-shot-key'),oCol=sp.getAttribute('data-color');
+    if(oc&&isHex(oCol)){keys.push({kind:'shot',oc:oc,color:oCol,text:txt});return;}
+    const dot=sp.querySelector('.leg-dot');
+    if(dot){keys.push({kind:'dot',color:dot.style.background||dot.style.backgroundColor||EXP_TEXT,text:txt});return;}
+    const mark=sp.querySelector('.leg-mark');
+    if(mark){
+      const g=_expCopy(mark.textContent);
+      keys.push({kind:'mark',glyph:g||'●',color:mark.style.color||EXP_TEXT,text:_expCopy(txt.replace(g,''))});return;
+    }
+    notes.push(txt);
+  });
+  if(panel)Array.prototype.forEach.call(panel.querySelectorAll('.team-only-banner,.opp-warn-banner'),function(b){
+    const t=_expCopy(b.textContent);if(t)notes.push(t);
+  });
+  return {keys:keys,notes:notes};
+}
+/* Shot keys reuse drawShotMark, the same routine the on-screen map uses, so the
+   exported grammar cannot drift from what the user saw. */
+function _expLegendGlyph(ctx,k,cx,cy,r){
+  if(k.kind==='shot'){drawShotMark(ctx,cx,cy,r,k.color,k.oc);return;}
+  if(k.kind==='mark'){
+    ctx.fillStyle=k.color;ctx.font='800 '+Math.round(r*2.3)+'px JetBrains Mono,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(k.glyph,cx,cy);ctx.textAlign='left';return;
+  }
+  ctx.fillStyle=k.color;ctx.beginPath();ctx.arc(cx,cy,r*0.8,0,Math.PI*2);ctx.fill();
+}
+/* Lays keys out in rows, then the notes as wrapped muted copy. Returns the block
+   height; pass measureOnly to size it before committing to a layout. */
+function _expLegend(ctx,x,y,w,legend,T,measureOnly){
+  const keys=(legend&&legend.keys)||[],notes=(legend&&legend.notes)||[];
+  const glyphW=Math.round(T.legend*1.6),gapIn=Math.round(T.legend*0.42),gapOut=Math.round(T.legend*1.15);
+  const rowH=Math.round(T.legend*1.9),keyFont='600 '+T.legend+'px Inter,system-ui,sans-serif';
+  ctx.font=keyFont;
+  const rows=[];let row=[],rw=0;
+  keys.forEach(function(k){
+    const itemW=glyphW+gapIn+ctx.measureText(k.text).width;
+    if(rw+itemW>w&&row.length){rows.push(row);row=[];rw=0;}
+    row.push({k:k,w:itemW});rw+=itemW+gapOut;
+  });
+  if(row.length)rows.push(row);
+  let cy=y;
+  rows.forEach(function(r){
+    if(!measureOnly){
+      let cx=x;
+      r.forEach(function(it){
+        _expLegendGlyph(ctx,it.k,cx+glyphW/2,cy+rowH/2,Math.round(T.legend*0.6));
+        ctx.fillStyle=EXP_TEXT;ctx.font=keyFont;ctx.textAlign='left';ctx.textBaseline='middle';
+        ctx.fillText(it.k.text,cx+glyphW+gapIn,cy+rowH/2);
+        cx+=it.w+gapOut;
+      });
+    }
+    cy+=rowH;
+  });
+  if(notes.length){
+    ctx.font='400 '+T.note+'px Inter,system-ui,sans-serif';
+    const lh=Math.round(T.note*1.5);
+    if(rows.length)cy+=Math.round(T.note*0.45);
+    notes.forEach(function(n){
+      _expWrap(ctx,n,w).forEach(function(ln){
+        if(!measureOnly){ctx.fillStyle=EXP_MUTED;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(ln,x,cy+lh/2);}
+        cy+=lh;
+      });
+    });
+  }
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
-  if(cfg.playerName){
-    ctx.fillStyle=EXP_TEXT;ctx.font='800 68px Archivo,Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.playerName,padX,116);
-    ctx.fillStyle=tc;ctx.font='500 28px Inter,system-ui,sans-serif';
-    ctx.fillText((cfg.teamName||'')+(cfg.viewLabel?(' \u00B7 '+cfg.viewLabel):''),padX,156);
-  }else{
-    ctx.fillStyle=EXP_TEXT;ctx.font='bold 96px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.teamName,padX,128);
-    ctx.fillStyle=tc;ctx.font='500 40px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.viewLabel,padX,172);
-  }
-  ctx.fillStyle=EXP_MUTED;ctx.font='28px Inter,system-ui,sans-serif';
-  if(cfg.matchDesc)ctx.fillText(cfg.matchDesc,padX,208);
-  ctx.fillStyle=EXP_MUTED;ctx.font='24px Inter,system-ui,sans-serif';
-  const compLine=[cfg.competition,cfg.ha?('\u00B7 '+cfg.ha):''].filter(Boolean).join(' ');
-  if(compLine)ctx.fillText(compLine,padX,238);
-  if(cfg.timeFilter){
-    ctx.font='bold 22px Inter,system-ui,sans-serif';
-    const txt='\u23F1 '+cfg.timeFilter;
-    const tw=ctx.measureText(txt).width,pw=tw+28,ph=34,px=padX,py=topH-56;
-    ctx.fillStyle=tc;_expPill(ctx,px,py,pw,ph,17);ctx.fill();
-    ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(txt,px+14,py+ph/2+1);
-    ctx.textBaseline='alphabetic';
-  }
+  return cy-y;
 }
 
-function _drawPitchBand(ctx,x,y,w,h,pitchCanvas){
-  ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
-  if(!pitchCanvas)return;
-  const pad=24;const availW=w-pad*2,availH=h-pad*2;
-  const r=pitchCanvas.width/pitchCanvas.height;
-  let iw,ih;if(r>availW/availH){iw=availW;ih=iw/r;}else{ih=availH;iw=ih*r;}
-  const ix=Math.round(x+(w-iw)/2),iy=Math.round(y+(h-ih)/2);
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  ctx.drawImage(pitchCanvas,ix,iy,iw,ih);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;
-  ctx.strokeRect(ix+0.5,iy+0.5,iw-1,ih-1);
+/* ---- plot fidelity ---- */
+/* The on-screen canvas is only a few hundred pixels wide. Blowing that bitmap up
+   to print size is what made exports look coarse, so redraw the plot through the
+   same renderer at export resolution instead. */
+/* The attacking-half pitch derives its height from its width, so at the panel
+   widths the board actually uses it overruns the screen canvas: the lower half
+   is cut off and the in-plot summary row is suppressed. The export is not bound
+   by the panel box, so it is drawn at the height that view asks for. Same
+   renderer, same events, nothing clipped. */
+function _expLogicalSize(src){
+  if(src.viz!=='shots')return {w:src.w,h:src.h};
+  const needed=Math.round((src.w-2*PM)/(68/52.5)+150);
+  return {w:src.w,h:Math.max(src.h,needed)};
 }
-
-function _drawStatsBand(ctx,x,y,w,h,cfg){
+function _expRenderPitch(srcCanvas,devW,devH){
+  const src=srcCanvas&&srcCanvas._exp;
+  if(!src||!src.viz||!src.w||!src.h||!devW||!devH)return null;
+  const L=_expLogicalSize(src);
+  const ss=Math.max(1,Math.min(6,Math.min(devW/L.w,devH/L.h)));
+  let off=null;
+  const prevVT=S.viewTeam;
+  try{
+    off=document.createElement('canvas');
+    off.width=Math.round(L.w*ss);off.height=Math.round(L.h*ss);
+    const ctx=off.getContext('2d');
+    ctx.scale(ss,ss);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    const shim={width:L.w,height:L.h};
+    if(src.team)S.viewTeam=src.team;
+    callRenderer(src.viz,ctx,shim,src.evts,{textContent:''},{innerHTML:''},{innerHTML:''});
+    S.canvasEvents.delete(shim);
+  }catch(e){console.warn('export: high-resolution redraw failed, using screen bitmap',e);off=null;}
+  finally{S.viewTeam=prevVT;}
+  return off;
+}
+function _expAspect(c){
+  if(!c)return 1;
+  if(c._exp&&c._exp.w&&c._exp.h){const L=_expLogicalSize(c._exp);return L.w/L.h;}
+  return (c.width||1)/(c.height||1);
+}
+function _expFit(asp,w,h){
+  if(!(asp>0))asp=1;
+  let iw=w,ih=w/asp;
+  if(ih>h){ih=h;iw=h*asp;}
+  return {w:Math.max(1,iw),h:Math.max(1,ih)};
+}
+function _expDrawPitch(ctx,x,y,w,h,pitchCanvas,SC){
   ctx.fillStyle=EXP_PANEL;ctx.fillRect(x,y,w,h);
-  const stats=(cfg.stats||[]).slice(0,4);const n=Math.max(1,stats.length);const colW=w/n;
-  ctx.textAlign='center';
-  stats.forEach((s,i)=>{
+  if(!pitchCanvas)return;
+  const hi=_expRenderPitch(pitchCanvas,Math.round(w*SC),Math.round(h*SC));
+  ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(hi||pitchCanvas,Math.round(x),Math.round(y),Math.round(w),Math.round(h));
+  ctx.restore();
+  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
+}
+/* Places plot and legend inside one box. A tall plot leaves the sides of a page
+   empty, so its legend goes in a rail beside it; a wide plot keeps the legend
+   underneath. Whichever arrangement yields the larger plot wins. */
+function _expPlotBlock(ctx,x,y,w,h,pitchCanvas,legend,T,SC){
+  const gap=Math.round(T.gap*1.4),asp=_expAspect(pitchCanvas);
+  const stackLegH=_expLegend(ctx,0,0,w,legend,T,true);
+  const stackFit=_expFit(asp,w,Math.max(40,h-stackLegH-gap));
+  let mode='stack',fit=stackFit,railW=0,railLegH=0;
+  if(asp<1.05){
+    railW=Math.round(w*0.28);
+    railLegH=_expLegend(ctx,0,0,railW,legend,T,true);
+    const railFit=_expFit(asp,w-railW-gap,h);
+    if(railLegH<=h&&railFit.w*railFit.h>stackFit.w*stackFit.h){mode='rail';fit=railFit;}
+  }
+  if(mode==='rail'){
+    // Rail copy sits on the top edge of the plot rather than floating in the
+    // middle of the column, so the two blocks share a baseline.
+    const px=Math.round(x+(w-railW-gap-fit.w)/2),py=Math.round(y+(h-fit.h)/2);
+    _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC);
+    _expLegend(ctx,x+w-railW,py,railW,legend,T,false);
+  }else{
+    const used=fit.h+gap+stackLegH;
+    const px=Math.round(x+(w-fit.w)/2),py=Math.round(y+Math.max(0,(h-used)/2));
+    _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC);
+    _expLegend(ctx,x,py+fit.h+gap,w,legend,T,false);
+  }
+}
+
+/* ---- page furniture ---- */
+function _expVenue(ha){return ha==='H'?'Home':ha==='A'?'Away':'';}
+/* Laid out twice: once to measure, once to draw, so the band and its accent bar
+   can be painted underneath the type rather than composited behind it. */
+function _expHeaderPass(ctx,W,cfg,T,draw){
+  const tc=cfg.teamColor||EXP_MUTED,padX=T.pad;
+  let cy=T.pad;
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  const eyebrow=_expCopy(cfg.competition).toUpperCase();
+  if(eyebrow){
+    cy+=T.eyebrow;
+    ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_MUTED;_expTracked(ctx,eyebrow,padX,cy,Math.max(1,T.eyebrow*0.16));}
+    cy+=Math.round(T.gap*0.9);
+  }
+  cy+=T.title;
+  ctx.font='800 '+T.title+'px Archivo,Inter,system-ui,sans-serif';
+  if(draw){ctx.fillStyle=EXP_TEXT;ctx.fillText(_expCopy(cfg.playerName||cfg.teamName||''),padX,cy);}
+  cy+=Math.round(T.gap*0.7)+T.accent;
+  ctx.font='600 '+T.accent+'px Inter,system-ui,sans-serif';
+  if(draw){ctx.fillStyle=tc;ctx.fillText(_expCopy(cfg.viewLabel),padX,cy);}
+  const metaBits=[];
+  if(cfg.playerName&&cfg.teamName)metaBits.push(_expCopy(cfg.teamName));
+  if(cfg.opponent)metaBits.push('vs '+_expCopy(cfg.opponent));
+  const venue=_expVenue(cfg.ha);if(venue)metaBits.push(venue);
+  if(metaBits.length){
+    cy+=Math.round(T.gap*0.75)+T.meta;
+    ctx.font='500 '+T.meta+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_TEXT;ctx.fillText(metaBits.join('  ·  '),padX,cy);}
+  }
+  if(cfg.matchDesc){
+    cy+=Math.round(T.gap*0.45)+T.meta;
+    ctx.font='400 '+T.meta+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_MUTED;ctx.fillText(_expCopy(cfg.matchDesc),padX,cy);}
+  }
+  if(cfg.timeFilter){
+    const fs=Math.round(T.meta*0.86);
+    ctx.font='700 '+fs+'px Inter,system-ui,sans-serif';
+    const txt=_expCopy('Time window '+cfg.timeFilter);
+    const pw=ctx.measureText(txt).width+Math.round(fs*1.6),ph=Math.round(fs*2),py=cy+Math.round(T.gap*0.9);
+    if(draw){
+      ctx.fillStyle=tc;_expPill(ctx,padX,py,pw,ph,Math.round(ph/2));ctx.fill();
+      ctx.fillStyle='#0f1218';ctx.textBaseline='middle';ctx.fillText(txt,padX+Math.round(fs*0.8),py+ph/2+1);
+      ctx.textBaseline='alphabetic';
+    }
+    cy=py+ph;
+  }
+  return cy+T.pad;
+}
+function _expHeader(ctx,W,cfg,T){
+  const h=_expHeaderPass(ctx,W,cfg,T,false);
+  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,h);
+  ctx.fillStyle=cfg.teamColor||EXP_MUTED;ctx.fillRect(0,0,Math.max(4,Math.round(6*T.k)),h);
+  _expHeaderPass(ctx,W,cfg,T,true);
+  _expRule(ctx,0,h-1,W,EXP_BORDER);
+  return h;
+}
+/* Orientation disclosure plus, where the page defines one, what the plot shows. */
+function _expContext(ctx,x,y,w,orient,desc,T){
+  let cy=y;
+  if(orient){
+    ctx.fillStyle=EXP_MUTED;ctx.font='700 '+T.note+'px Inter,system-ui,sans-serif';
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    cy+=T.note;
+    _expTracked(ctx,orient.toUpperCase(),x,cy,Math.max(1,T.note*0.1));
+  }
+  if(desc){
+    ctx.font='400 '+T.body+'px Inter,system-ui,sans-serif';
+    const lh=Math.round(T.body*1.5),lines=_expWrap(ctx,desc,w).slice(0,3);
+    cy+=Math.round(T.gap*0.6);
+    lines.forEach(function(ln){cy+=lh;ctx.fillStyle=EXP_DIM;ctx.fillText(ln,x,cy-Math.round(lh*0.28));});
+  }
+  return cy-y;
+}
+function _drawStatsBand(ctx,x,y,w,h,cfg,T){
+  T=T||_expScale(1);
+  const stats=(cfg.stats||[]).slice(0,4),n=Math.max(1,stats.length),colW=w/n;
+  ctx.fillStyle=EXP_PANEL;ctx.fillRect(x,y,w,h);
+  _expRule(ctx,x,y,w,EXP_BORDER);
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  stats.forEach(function(s,i){
     const cx=x+colW*i+colW/2;
-    ctx.fillStyle=cfg.teamColor;ctx.font='bold 72px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.value),cx,y+h/2+12);
-    ctx.fillStyle=EXP_MUTED;ctx.font='bold 22px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.label).toUpperCase(),cx,y+h-32);
+    if(i){ctx.fillStyle=EXP_RULE;ctx.fillRect(Math.round(x+colW*i),y+Math.round(h*0.24),1,Math.round(h*0.52));}
+    ctx.fillStyle=cfg.teamColor||EXP_TEXT;ctx.font='800 '+T.statV+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillText(_expCopy(s.value),cx,y+Math.round(h*0.6));
+    ctx.fillStyle=EXP_MUTED;ctx.font='700 '+T.statL+'px Inter,system-ui,sans-serif';
+    ctx.textAlign='left';
+    _expTrackedCentre(ctx,_expCopy(s.label).toUpperCase(),cx,y+h-Math.round(T.statL*1.4),Math.max(1,T.statL*0.14));
+    ctx.textAlign='center';
   });
   ctx.textAlign='left';
 }
-
-function _drawFooterBand(ctx,x,y,w,h,cfg){
+function _drawFooterBand(ctx,x,y,w,h,cfg,T){
+  T=T||_expScale(1);
   ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y+0.5);ctx.lineTo(x+w,y+0.5);ctx.stroke();
-  const cy=y+h/2;ctx.textBaseline='middle';
-  ctx.font='normal 24px Inter,system-ui,sans-serif';
-  ctx.textAlign='center';ctx.fillStyle=EXP_TEXT;
-  if(cfg.matchDesc)ctx.fillText(cfg.matchDesc,x+w/2,cy);
+  _expRule(ctx,x,y,w,EXP_BORDER);
+  const cy=y+h/2,pad=T.pad;
+  ctx.textBaseline='middle';ctx.font='500 '+T.foot+'px Inter,system-ui,sans-serif';
+  ctx.textAlign='left';ctx.fillStyle=EXP_TEXT;
+  ctx.fillText(_expCopy(cfg.teamName||''),x+pad,cy);
+  if(cfg.matchDesc){
+    ctx.textAlign='center';ctx.fillStyle=EXP_MUTED;
+    ctx.fillText(_expCopy(cfg.matchDesc),x+w/2,cy);
+  }
   ctx.textAlign='right';ctx.fillStyle=EXP_MUTED;
-  ctx.fillText(currentDateStr(),x+w-48,cy);
+  ctx.fillText('Generated '+currentDateStr(),x+w-pad,cy);
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
 }
 
 /* Master — portrait A4 @ 300 DPI (2480 x 3508 px). We draw in a logical
    1240x1754 coordinate system and scale the context 2x for sharp output. */
 function renderExportCanvas(pitchCanvas,config){
-  const LW=1240,LH=1754;const PW=2480,PH=3508;
+  const LW=1240,LH=1754,PW=2480,PH=3508,SC=PW/LW,T=_expScale(1);
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
   const ctx=off.getContext('2d');
-  ctx.scale(PW/LW,PH/LH);
+  ctx.scale(SC,SC);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
-  const headerH=Math.round(LH*0.15),pitchH=Math.round(LH*0.65),statsH=Math.round(LH*0.12),footerH=LH-headerH-pitchH-statsH;
-  _drawHeaderBand(ctx,LW,headerH,config);
-  _drawPitchBand(ctx,0,headerH,LW,pitchH,pitchCanvas);
-  _drawStatsBand(ctx,0,headerH+pitchH,LW,statsH,config);
-  _drawFooterBand(ctx,0,headerH+pitchH+statsH,LW,footerH,config);
+  const headerH=_expHeader(ctx,LW,config,T);
+  const footerH=Math.round(T.foot*3.4),statsH=Math.round(T.statV*2.7);
+  const statsY=LH-footerH-statsH;
+  const inner=LW-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.7);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(pitchCanvas),
+    _expDescription(_vizFromLabel(config.viewLabel,pitchCanvas)),T);
+  y+=Math.round(T.gap*1.4);
+  _expPlotBlock(ctx,T.pad,y,inner,Math.max(80,statsY-Math.round(T.gap*1.4)-y),
+    pitchCanvas,_expCollectLegend(pitchCanvas),T,SC);
+  _drawStatsBand(ctx,0,statsY,LW,statsH,config,T);
+  _drawFooterBand(ctx,0,LH-footerH,LW,footerH,config,T);
   return off;
 }
 
-/* Story card — 1080x1080 exact, edge-to-edge pitch */
+/* Story card — 1080x1080 exact, same system at card scale */
 function renderStoryCanvas(pitchCanvas,config){
-  const W=1080,H=1080;
+  const W=1080,H=1080,T=_expScale(0.52);
   const off=document.createElement('canvas');off.width=W;off.height=H;
   const ctx=off.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,W,H);
-  const topH=Math.round(H*0.18),midH=Math.round(H*0.62),botH=H-topH-midH;
-  // Top accent band
-  const tc=config.teamColor;
-  ctx.fillStyle=tc;ctx.fillRect(0,0,W,topH);
-  ctx.textBaseline='alphabetic';ctx.textAlign='left';
-  const title=config.playerName||(config.teamName?config.teamName+' \u2014 Team Analysis':'Team Analysis');
-  ctx.fillStyle='#fff';ctx.font='800 48px Archivo,Inter,system-ui,sans-serif';
-  ctx.fillText(title,42,86);
-  ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='bold 20px Inter,system-ui,sans-serif';
-  ctx.fillText((config.viewLabel||'').toUpperCase(),42,120);
-  ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='normal 18px Inter,system-ui,sans-serif';
-  const sub=[config.matchDesc,config.competition].filter(Boolean).join(' \u00B7 ');
-  if(sub)ctx.fillText(sub,42,150);
-  // Middle pitch — edge to edge horizontally
-  ctx.fillStyle=EXP_BG;ctx.fillRect(0,topH,W,midH);
-  if(pitchCanvas){
-    const r=pitchCanvas.width/pitchCanvas.height;
-    let iw=W,ih=iw/r;
-    if(ih>midH){ih=midH;iw=ih*r;}
-    const ix=Math.round((W-iw)/2),iy=Math.round(topH+(midH-ih)/2);
-    ctx.drawImage(pitchCanvas,ix,iy,iw,ih);
-  }
-  // Bottom — 2 stats + team name
-  const botY=topH+midH;
-  ctx.fillStyle=EXP_BG;ctx.fillRect(0,botY,W,botH);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(0,botY+0.5);ctx.lineTo(W,botY+0.5);ctx.stroke();
-  const stats=(config.stats||[]).slice(0,2);const n=Math.max(1,stats.length);
-  const statsZoneW=W*0.65,colW=statsZoneW/n;
-  ctx.textAlign='center';
-  stats.forEach((s,i)=>{
-    const cx=40+colW*i+colW/2;
-    ctx.fillStyle='#fff';ctx.font='800 68px Archivo,Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.value),cx,botY+botH/2+14);
-    ctx.fillStyle=EXP_MUTED;ctx.font='bold 16px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.label).toUpperCase(),cx,botY+botH-28);
-  });
-  ctx.textAlign='right';ctx.fillStyle=tc;ctx.font='bold 22px Inter,system-ui,sans-serif';
-  ctx.fillText((config.teamName||'')+' Analytics',W-32,botY+botH/2+8);
-  ctx.textAlign='left';
+  const headerH=_expHeader(ctx,W,config,T);
+  const footerH=Math.round(T.foot*3.2),statsH=Math.round(T.statV*2.6);
+  const statsY=H-footerH-statsH;
+  const inner=W-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.6);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(pitchCanvas),'',T);
+  y+=Math.round(T.gap*1.2);
+  _expPlotBlock(ctx,T.pad,y,inner,Math.max(60,statsY-Math.round(T.gap*1.2)-y),
+    pitchCanvas,_expCollectLegend(pitchCanvas),T,1);
+  _drawStatsBand(ctx,0,statsY,W,statsH,config,T);
+  _drawFooterBand(ctx,0,H-footerH,W,footerH,config,T);
   return off;
-}
-
-/* Header for landscape multi-panel: two rows, left/right justified, compact */
-function _drawLandscapeHeader(ctx,W,topH,cfg,viewLabels){
-  const tc=cfg.teamColor;
-  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,topH);
-  ctx.fillStyle=tc;ctx.fillRect(0,0,6,topH);
-  const padL=48,padR=48,padTop=40;
-  ctx.textBaseline='alphabetic';
-  // Row 1: team name (LEFT, 52px bold white) | match info (RIGHT, 16px muted)
-  const row1Y=padTop+46;
-  ctx.textAlign='left';
-  ctx.fillStyle=EXP_TEXT;ctx.font='bold 52px Inter,system-ui,sans-serif';
-  ctx.fillText(cfg.teamName||'',padL,row1Y);
-  if(cfg.matchDesc){
-    ctx.textAlign='right';
-    ctx.fillStyle=EXP_MUTED;ctx.font='normal 16px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.matchDesc,W-padR,row1Y-6);
-  }
-  // Row 2: view labels joined (LEFT, 18px accent) | competition + H/A (RIGHT, 14px muted)
-  const row2Y=row1Y+30;
-  ctx.textAlign='left';
-  ctx.fillStyle=tc;ctx.font='500 18px Inter,system-ui,sans-serif';
-  ctx.fillText((viewLabels||cfg.viewLabel||'').toString(),padL,row2Y);
-  const compLine=[cfg.competition,cfg.ha?('\u00B7 '+cfg.ha):''].filter(Boolean).join(' ');
-  if(compLine){
-    ctx.textAlign='right';
-    ctx.fillStyle=EXP_MUTED;ctx.font='normal 14px Inter,system-ui,sans-serif';
-    ctx.fillText(compLine,W-padR,row2Y);
-  }
-  // Optional time-filter pill, bottom-left
-  if(cfg.timeFilter){
-    ctx.textAlign='left';
-    ctx.font='bold 14px Inter,system-ui,sans-serif';
-    const txt='\u23F1 '+cfg.timeFilter;
-    const tw=ctx.measureText(txt).width,pw=tw+20,ph=24,px=padL,py=topH-36;
-    ctx.fillStyle=tc;_expPill(ctx,px,py,pw,ph,12);ctx.fill();
-    ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(txt,px+10,py+ph/2+1);
-    ctx.textBaseline='alphabetic';
-  }
-  ctx.textAlign='left';
 }
 
 /* Landscape multi-panel — A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
 function renderAllPanelsCanvas(panels,config){
-  const LW=1754,LH=1240;const PW=3508,PH=2480;
+  const LW=1754,LH=1240,PW=3508,PH=2480,SC=PW/LW;
+  const T=_expScale(0.72),CT_=_expScale(0.55);
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
   const ctx=off.getContext('2d');
-  ctx.scale(PW/LW,PH/LH);
+  ctx.scale(SC,SC);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
-  const headerH=Math.round(LH*0.18),statsH=Math.round(LH*0.13),footerH=Math.round(LH*0.08);
-  const gridTop=headerH,gridH=LH-headerH-statsH-footerH;
-  const viewLabels=panels.map(p=>p.label).filter(Boolean).join(' \u00B7 ');
-  _drawLandscapeHeader(ctx,LW,headerH,config,viewLabels);
-  const n=panels.length;
+  const hdrCfg={};for(const k in config)hdrCfg[k]=config[k];
+  hdrCfg.viewLabel=panels.map(function(p){return p.label}).filter(Boolean).join('  ·  ');
+  const headerH=_expHeader(ctx,LW,hdrCfg,T);
+  const footerH=Math.round(T.foot*3.2),statsH=Math.round(T.statV*2.6);
+  const statsY=LH-footerH-statsH;
+  const inner=LW-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.6);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(panels[0]&&panels[0].canvas),'',T);
+  y+=Math.round(T.gap*1.2);
+  const gridH=Math.max(80,statsY-Math.round(T.gap*1.2)-y),n=panels.length;
   if(n){
     const cols=n<=2?Math.max(1,n):3,rows=Math.ceil(n/cols);
-    const cellW=LW/cols,cellH=gridH/rows;
-    const titleH=36; // 28px baseline + descender, then 8px gap → pitch starts at y+44
-    panels.forEach((p,i)=>{
-      const col=i%cols,row=Math.floor(i/cols);
-      const x=col*cellW,y=gridTop+row*cellH;
-      // Title above pitch, with 8px gap
-      ctx.fillStyle=config.teamColor;ctx.font='bold 18px Inter,system-ui,sans-serif';ctx.textAlign='center';
-      ctx.fillText((p.label||'').toUpperCase(),x+cellW/2,y+26);
-      ctx.textAlign='left';
-      const pitchTop=y+titleH+8;
-      _drawPitchBand(ctx,x,pitchTop,cellW,cellH-(titleH+8),p.canvas);
+    const cellW=inner/cols,cellH=gridH/rows,pad=Math.round(CT_.gap);
+    panels.forEach(function(p,i){
+      const cx=T.pad+(i%cols)*cellW,cy=y+Math.floor(i/cols)*cellH;
+      ctx.fillStyle=config.teamColor||EXP_TEXT;ctx.font='700 '+CT_.accent+'px Inter,system-ui,sans-serif';
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      _expTracked(ctx,_expCopy(p.label).toUpperCase(),cx,cy+CT_.accent,Math.max(1,CT_.accent*0.1));
+      const top=cy+CT_.accent+pad;
+      _expPlotBlock(ctx,cx,top,cellW-pad,Math.max(40,cellH-(top-cy)-pad),
+        p.canvas,_expCollectLegend(p.canvas),CT_,SC);
     });
   }
-  _drawStatsBand(ctx,0,gridTop+gridH,LW,statsH,config);
-  _drawFooterBand(ctx,0,gridTop+gridH+statsH,LW,footerH,config);
+  _drawStatsBand(ctx,0,statsY,LW,statsH,config,T);
+  _drawFooterBand(ctx,0,LH-footerH,LW,footerH,config,T);
   return off;
 }
 
