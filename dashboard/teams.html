@@ -72,6 +72,36 @@ select option,.sel option{background:var(--bg2);color:var(--text)}
 .sect-h{font:700 10px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;display:flex;justify-content:space-between}
 .row{display:grid;grid-template-columns:170px 66px 1fr 30px;align-items:center;gap:9px;padding:4px 0}
 .row-lbl{font:500 11.5px/1.3 var(--f-body);color:var(--text2);cursor:help;border-bottom:1px dotted var(--border2);justify-self:start}
+
+/* Profile stats open the league ranking for that metric. A real button, so
+   Enter and Space work and the row can say where it goes; it keeps the .row
+   class, so the grid and its narrow-screen override still apply.
+   The dotted underline on the label was already there, implying something to
+   click that did not exist. Now it is the resting state of a control, and a
+   metric with no ranking to open (.row-static) drops it, so the two are told
+   apart without relying on colour. */
+.row-go{width:calc(100% + 12px);margin:0 -6px;padding:4px 6px;border:0;border-radius:6px;
+  background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
+  transition:background-color .12s}
+.row-go .row-lbl{cursor:pointer}
+.row-go:hover{background:var(--surface)}
+.row-go:hover .row-lbl{color:var(--text);border-bottom-style:solid}
+.row-go:focus-visible{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface)}
+.row-go:focus-visible .row-lbl{color:var(--text);border-bottom-style:solid}
+/* One arrow on the row being pointed at, rather than forty on the page at rest. */
+.row-go .row-lbl::after{content:' \2192';font-weight:700;opacity:0}
+.row-go:hover .row-lbl::after,.row-go:focus-visible .row-lbl::after{opacity:1}
+.row-static .row-lbl{border-bottom:0}
+
+/* The six summary bubbles do the same thing. They carry the arrow at rest,
+   because unlike the rows they have no underline to inherit. */
+.kpi-go{cursor:pointer;font:inherit;color:inherit;text-align:left;
+  transition:background-color .12s,border-color .12s}
+.kpi-go:hover{background:var(--bg3);border-color:var(--border2)}
+.kpi-go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpi-go .kpi-l::after{content:' \2192';font-weight:800;opacity:.45}
+.kpi-go:hover .kpi-l::after,.kpi-go:focus-visible .kpi-l::after{opacity:1}
+@media (prefers-reduced-motion:reduce){.row-go,.kpi-go{transition:none}}
 .row-val{font:500 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
 .bar-f{height:100%;border-radius:5px}
@@ -319,6 +349,33 @@ async function draw(){
   if(TAB==='Matches')return renderMatches(t);
   if(TAB==='Squad')return renderSquad(t);
 }
+/* Every profile stat is a way into the ranking for that metric. A metric is
+   only offered if it is in the ranking's own option list, which is built from
+   TDEFS; nothing is mapped or substituted, so a metric with no counterpart
+   simply is not a control. */
+function rankable(key){return !!(key&&tdefOf(key))}
+function rankBy(key){
+  if(!rankable(key))return;
+  RKT.metric=key;
+  setTab('Rankings');   /* switches tab, redraws the strip, and calls draw() */
+}
+function goAttrs(key,label){
+  return ' type="button" onclick="rankBy(\''+esc(key).replace(/'/g,"\\'")+'\')"'+
+    ' aria-label="Rank all teams by '+esc(String(label||'').toLowerCase())+'"';
+}
+/* One metric row, used by the profile panels and by the channel block, so the
+   two cannot drift apart. */
+function metricRow(d,r){
+  const pc=r?+r.pct:null,tc=tier(pc),go=rankable(d.key);
+  const body='<div class="row-lbl">'+esc(d.label)+'</div>'+
+    '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
+    '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
+    '<div class="row-pct" style="color:'+tc.c+'">'+(pc==null?'':pc)+'</div>';
+  const tip=' title="'+esc(d.definition||'')+'"';
+  return go
+    ? '<button class="row row-go"'+tip+goAttrs(d.key,d.label)+'>'+body+'</button>'
+    : '<div class="row row-static"'+tip+'>'+body+'</div>';
+}
 function teamHead(t){
   const p=PCT[t.team]||{};
   const gd=(t.goals_pg-t.goals_against_pg);
@@ -327,18 +384,21 @@ function teamHead(t){
     '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' \u00B7 '+mcount(t.matches)+' \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
     (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
     '<div class="kpis">'+
-    kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct)+
-    kpi('Field tilt',(+t.field_tilt).toFixed(1)+'%',p.field_tilt)+
-    kpi('PPDA',(+t.ppda).toFixed(2),p.ppda,'lower = presses harder')+
-    kpi('Line height',(+t.def_height).toFixed(1),p.def_height)+
-    kpi('Directness',(+t.directness).toFixed(2)+' m',p.directness)+
-    kpi('Shots',(+t.shots_pg).toFixed(1),p.shots_pg)+
+    kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct,'','possession_pct')+
+    kpi('Field tilt',(+t.field_tilt).toFixed(1)+'%',p.field_tilt,'','field_tilt')+
+    kpi('PPDA',(+t.ppda).toFixed(2),p.ppda,'lower = presses harder','ppda')+
+    kpi('Line height',(+t.def_height).toFixed(1),p.def_height,'','def_height')+
+    kpi('Directness',(+t.directness).toFixed(2)+' m',p.directness,'','directness')+
+    kpi('Shots',(+t.shots_pg).toFixed(1),p.shots_pg,'','shots_pg')+
     '</div>';
 }
-function kpi(l,v,p,sub){
-  const c=p?tier(+p.pct).c:'var(--text)';
-  return '<div class="kpi"><div class="kpi-l">'+l+'</div><div class="kpi-v" style="color:'+c+'">'+v+'</div>'+
-    '<div class="kpi-s">'+(p?('league percentile '+p.pct):(sub||''))+'</div></div>';
+function kpi(l,v,p,sub,key){
+  const c=p?tier(+p.pct).c:'var(--text)',go=rankable(key);
+  const body='<div class="kpi-l">'+l+'</div><div class="kpi-v" style="color:'+c+'">'+v+'</div>'+
+    '<div class="kpi-s">'+(p?('league percentile '+p.pct):(sub||''))+'</div>';
+  return go
+    ? '<button class="kpi kpi-go"'+goAttrs(key,l)+'>'+body+'</button>'
+    : '<div class="kpi">'+body+'</div>';
 }
 function renderProfile(t){
   const p=PCT[t.team]||{};
@@ -347,13 +407,7 @@ function renderProfile(t){
   groups.filter(function(g){return g!=='Channels'}).forEach(function(g){
     const ms=TDEFS.filter(function(d){return d.grp===g});
     h+='<div class="sect"><div class="sect-h"><span>'+esc(g)+'</span></div>';
-    ms.forEach(function(d){
-      const r=p[d.key],pc=r?+r.pct:null,tc=tier(pc);
-      h+='<div class="row"><div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
-         '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
-         '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
-         '<div class="row-pct" style="color:'+tc.c+'">'+(pc==null?'':pc)+'</div></div>';
-    });
+    ms.forEach(function(d){h+=metricRow(d,p[d.key])});
     h+='</div>';
   });
   h+='</div>';
@@ -878,13 +932,7 @@ function channelBlock(t){
   let h='<div class="sect"><div class="sect-h"><span>Final-third channels</span></div>'+
     '<div class="foot" style="margin:-4px 0 10px">Where their final-third involvement happens across the width of the pitch. '+
     'The three shares sum to 100%.</div>';
-  ms.forEach(function(d){
-    const r=p[d.key],pc=r?+r.pct:null,tc=tier(pc);
-    h+='<div class="row"><div class="row-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
-       '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
-       '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
-       '<div class="row-pct" style="color:'+tc.c+'">'+(pc==null?'':pc)+'</div></div>';
-  });
+  ms.forEach(function(d){h+=metricRow(d,p[d.key])});
   return h+'</div>';
 }
 function laneViz(t){
