@@ -852,8 +852,13 @@ function getXT(x,y){return XT[Math.min(11,Math.floor(x/100*12))][Math.min(7,Math
 let PASS_OK='#1a6b3a',PASS_FAIL='#c0392b';
 /* Canvas can't read CSS variables, so the palette is mirrored here and swapped
    whenever the theme changes. */
+/* Set while an export is being drawn. Exports are always light, so the pitch,
+   pass colours and in-plot type have to resolve light even when the workspace
+   is dark. Without this the same plot exported from the two themes came out as
+   two different pictures. */
+let EXP_LIGHT=false;
 function CT(){
-  const d=document.documentElement.classList.contains('dark');
+  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
   return d?{pitch:'#111722',line:'rgba(182,194,212,0.22)',lineStrong:'rgba(226,184,119,0.52)',
             band:'rgba(90,169,255,0.018)',text:'rgba(242,245,250,0.90)',textSoft:'rgba(182,194,212,0.48)',
             chipBg:'rgba(14,18,25,0.92)',chipText:'#f2f5fa',passOk:'#3ddc97',passFail:'#ff6b63'}
@@ -1077,7 +1082,9 @@ function drawAttackingHalfPitch(ctx,c){
    theme keeps the same hues at a lower lightness so they stay readable on the
    cream pitch. */
 function shotPalette(forTeam){
-  const d=document.documentElement.classList.contains('dark');
+  /* EXP_LIGHT for the same reason CT() honours it: an export is always the light
+     document, so the marker colours cannot depend on the workspace theme. */
+  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
   const ok=d?'#22e39a':'#0f7a52',fail=d?'#ff5a5a':'#bf3535';
   return {goal:d?'#f0a5ff':'#a1279b',saved:forTeam?ok:fail,blocked:d?'#a78bfa':'#6641cf',
           post:d?'#ffc93c':'#9a6b00',off:forTeam?ok:fail};
@@ -2283,20 +2290,27 @@ function buildExportConfig(pitchCanvas,viewLabel,opts){
 function _expTeamInitials(name){const caps=(name||'').match(/[A-Z]/g);if(caps&&caps.length>=2)return caps.join('').slice(0,4);return (name||'FC').substring(0,3).toUpperCase();}
 function _expPill(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 
-/* ---- DARK THEME PALETTE ---- */
-const EXP_BG='#101319';
-const EXP_PANEL='#1a1d24';
-const EXP_TEXT='#f0f2f8';
-const EXP_MUTED='#8a94b0';
-const EXP_BORDER='rgba(255,255,255,0.10)';
-const EXP_RULE='rgba(255,255,255,0.07)';
-const EXP_DIM='#69739180';
+/* ---- EXPORT PALETTE ----
+   An export is a document, not a screenshot of the app, so it renders light
+   whichever theme the workspace is in. It is the same light palette the rest of
+   the site now shares from theme.css, hard coded here because the canvas cannot
+   read a custom property and because the output must not change when the reader
+   flips the theme. It also ends the mismatch the dark card had: dark chrome
+   wrapped around a cream pitch that the renderer draws light regardless. */
+const EXP_BG='#faf8f3';                    /* card canvas   (--bg)  */
+const EXP_PANEL='#f4f1e9';                 /* raised band   (--bg2) */
+const EXP_TEXT='#16191f';                  /* primary       (--text) */
+const EXP_MUTED='#4a5262';                 /* secondary     (--text2) */
+const EXP_LABEL='#6b7280';                 /* small labels  (--text3) */
+const EXP_BORDER='rgba(22,25,31,0.16)';
+const EXP_RULE='rgba(22,25,31,0.09)';
+const EXP_DIM='#4a5262';
 
 /* One type and spacing scale, shared by portrait, landscape and the square card
    so the three formats read as the same document at different sizes. */
 function _expScale(k){
   const r=function(v){return Math.max(1,Math.round(v*k))};
-  return {k:k,pad:r(56),gap:r(20),rule:r(1),
+  return {k:k,pad:r(40),gap:r(20),rule:r(1),
     eyebrow:r(19),title:r(74),accent:r(31),meta:r(24),body:r(22),
     note:r(19),legend:r(21),statV:r(60),statL:r(18),foot:r(20)};
 }
@@ -2357,9 +2371,13 @@ function _expDescription(viz){
 /* Read the legend straight off the panel so the export shows the same keys,
    counts and caveats. Text-only entries become notes, set under the keys: these
    are the sampling and data-availability disclosures. */
-function _expCollectLegend(srcCanvas){
+function _expCollectLegend(srcCanvas,drawnLegend){
   const keys=[],notes=[],panel=_expPanelOf(srcCanvas);
-  const legEl=panel?panel.querySelector('.panel-legend'):null;
+  /* drawnLegend is the strip the export redraw wrote, so its colours were
+     resolved under the export theme. The panel strip is the fallback, and is
+     still the source of the banners below. */
+  const legEl=(drawnLegend&&drawnLegend.querySelector('.leg'))?drawnLegend
+    :(panel?panel.querySelector('.panel-legend'):null);
   const isHex=function(c){return /^#[0-9a-f]{6}$/i.test(String(c||'').trim())};
   if(legEl)Array.prototype.forEach.call(legEl.querySelectorAll('.leg'),function(sp){
     const txt=_expCopy(sp.textContent);
@@ -2446,24 +2464,27 @@ function _expLogicalSize(src){
   const needed=Math.round((src.w-2*PM)/(68/52.5)+150);
   return {w:src.w,h:Math.max(src.h,needed)};
 }
-function _expRenderPitch(srcCanvas,devW,devH){
+function _expRenderPitch(srcCanvas,devW,devH,legendSink){
   const src=srcCanvas&&srcCanvas._exp;
   if(!src||!src.viz||!src.w||!src.h||!devW||!devH)return null;
   const L=_expLogicalSize(src);
   const ss=Math.max(1,Math.min(6,Math.min(devW/L.w,devH/L.h)));
   let off=null;
-  const prevVT=S.viewTeam;
+  const prevVT=S.viewTeam,prevLight=EXP_LIGHT;
   try{
+    EXP_LIGHT=true;syncCanvasTheme();
     off=document.createElement('canvas');
     off.width=Math.round(L.w*ss);off.height=Math.round(L.h*ss);
     const ctx=off.getContext('2d');
     ctx.scale(ss,ss);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     const shim={width:L.w,height:L.h};
     if(src.team)S.viewTeam=src.team;
-    callRenderer(src.viz,ctx,shim,src.evts,{textContent:''},{innerHTML:''},{innerHTML:''});
+    /* A real element for the legend, so the keys are the ones this redraw
+       generated rather than the ones the screen drew under the screen theme. */
+    callRenderer(src.viz,ctx,shim,src.evts,{textContent:''},legendSink||{innerHTML:''},{innerHTML:''});
     S.canvasEvents.delete(shim);
   }catch(e){console.warn('export: high-resolution redraw failed, using screen bitmap',e);off=null;}
-  finally{S.viewTeam=prevVT;}
+  finally{S.viewTeam=prevVT;EXP_LIGHT=prevLight;syncCanvasTheme();}
   return off;
 }
 function _expAspect(c){
@@ -2477,10 +2498,10 @@ function _expFit(asp,w,h){
   if(ih>h){ih=h;iw=h*asp;}
   return {w:Math.max(1,iw),h:Math.max(1,ih)};
 }
-function _expDrawPitch(ctx,x,y,w,h,pitchCanvas,SC){
+function _expDrawPitch(ctx,x,y,w,h,pitchCanvas,SC,legendSink){
   ctx.fillStyle=EXP_PANEL;ctx.fillRect(x,y,w,h);
   if(!pitchCanvas)return;
-  const hi=_expRenderPitch(pitchCanvas,Math.round(w*SC),Math.round(h*SC));
+  const hi=_expRenderPitch(pitchCanvas,Math.round(w*SC),Math.round(h*SC),legendSink);
   ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.drawImage(hi||pitchCanvas,Math.round(x),Math.round(y),Math.round(w),Math.round(h));
   ctx.restore();
@@ -2489,93 +2510,151 @@ function _expDrawPitch(ctx,x,y,w,h,pitchCanvas,SC){
 /* Places plot and legend inside one box. A tall plot leaves the sides of a page
    empty, so its legend goes in a rail beside it; a wide plot keeps the legend
    underneath. Whichever arrangement yields the larger plot wins. */
+/* Plot then legend, always in that order: the pitch takes the whole width it
+   can and its keys sit underneath it, left aligned, the way the fingerprint card
+   reads. The old layout could move the legend into a rail beside a tall plot,
+   which bought a little plot area at the cost of two different documents
+   depending on the plot's shape. */
 function _expPlotBlock(ctx,x,y,w,h,pitchCanvas,legend,T,SC){
-  const gap=Math.round(T.gap*1.4),asp=_expAspect(pitchCanvas);
-  const stackLegH=_expLegend(ctx,0,0,w,legend,T,true);
-  const stackFit=_expFit(asp,w,Math.max(40,h-stackLegH-gap));
-  let mode='stack',fit=stackFit,railW=0,railLegH=0;
-  if(asp<1.05){
-    railW=Math.round(w*0.28);
-    railLegH=_expLegend(ctx,0,0,railW,legend,T,true);
-    const railFit=_expFit(asp,w-railW-gap,h);
-    if(railLegH<=h&&railFit.w*railFit.h>stackFit.w*stackFit.h){mode='rail';fit=railFit;}
-  }
-  if(mode==='rail'){
-    // Rail copy sits on the top edge of the plot rather than floating in the
-    // middle of the column, so the two blocks share a baseline.
-    const px=Math.round(x+(w-railW-gap-fit.w)/2),py=Math.round(y+(h-fit.h)/2);
-    _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC);
-    _expLegend(ctx,x+w-railW,py,railW,legend,T,false);
-  }else{
-    const used=fit.h+gap+stackLegH;
-    const px=Math.round(x+(w-fit.w)/2),py=Math.round(y+Math.max(0,(h-used)/2));
-    _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC);
-    _expLegend(ctx,x,py+fit.h+gap,w,legend,T,false);
-  }
+  const gap=Math.round(T.gap*1.1),asp=_expAspect(pitchCanvas);
+  /* The panel's own legend sizes the space to reserve. The redraw then hands
+     back the legend it generated, which is the one actually drawn: same keys,
+     but the colours resolved under the export theme rather than the screen's.
+     Both come from the same renderer, so the height does not move. */
+  const legH=_expLegend(ctx,0,0,w,legend,T,true);
+  const fit=_expFit(asp,w,Math.max(40,h-legH-gap));
+  const px=Math.round(x+(w-fit.w)/2),py=Math.round(y);
+  const sink=document.createElement('div');
+  _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC,sink);
+  const drawn=_expCollectLegend(pitchCanvas,sink);
+  _expLegend(ctx,x,py+fit.h+gap,w,(drawn&&drawn.keys.length?drawn:legend),T,false);
 }
 
 /* ---- page furniture ---- */
 function _expVenue(ha){return ha==='H'?'Home':ha==='A'?'Away':'';}
-/* Laid out twice: once to measure, once to draw, so the band and its accent bar
-   can be painted underneath the type rather than composited behind it. */
+/* Right hand block of the header: the small tracked eyebrow over the plot
+   title, both right aligned, sized down and wrapped if the subject name leaves
+   it little room. Returns its width so the name knows where to stop. */
+/* The panel title is written for the board, where it has to say who and which
+   fixture: "Los Angeles FC Progressive Passes . vs Portland Timbers . H". On the
+   card the subject is already the headline and the fixture is already the line
+   under it, so the title keeps only the part that is not said twice. */
+function _expPlotTitle(cfg){
+  let t=_expCopy(cfg.viewLabel);
+  if(!t)return '';
+  t=t.split(' \u00B7 vs ')[0].trim();
+  const subject=_expCopy(cfg.playerName||'')||_expCopy(cfg.teamName||'');
+  if(subject&&t.indexOf(subject)===0)t=t.slice(subject.length).trim();
+  return t||_expCopy(cfg.viewLabel);
+}
+function _expTitleBlock(ctx,rx,baseY,maxW,cfg,T,draw){
+  const eyebrow=_expCopy(cfg.competition).toUpperCase(),title=_expPlotTitle(cfg);
+  let fs=T.accent,lines=[title];
+  if(title){
+    for(;;){
+      ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+      if(ctx.measureText(title).width<=maxW||fs<=Math.round(T.accent*0.72))break;
+      fs=Math.round(fs*0.94);
+    }
+    lines=_expWrap(ctx,title,maxW).slice(0,2);
+  }
+  const lh=Math.round(fs*1.22);
+  if(draw){
+    ctx.textAlign='right';ctx.textBaseline='alphabetic';
+    if(eyebrow){
+      ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';ctx.fillStyle=EXP_LABEL;
+      const sp=Math.max(1,T.eyebrow*0.18),ew=_expTrackedW(ctx,eyebrow,sp);
+      ctx.textAlign='left';
+      _expTracked(ctx,eyebrow,rx-ew,baseY-lh*lines.length-Math.round(T.gap*0.55),sp);
+    }
+    ctx.textAlign='right';ctx.fillStyle=EXP_TEXT;
+    ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+    lines.forEach(function(ln,i){ctx.fillText(ln,rx,baseY-lh*(lines.length-1-i));});
+    ctx.textAlign='left';
+  }
+  let w=0;
+  ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+  lines.forEach(function(ln){w=Math.max(w,ctx.measureText(ln).width);});
+  if(eyebrow){
+    ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';
+    w=Math.max(w,_expTrackedW(ctx,eyebrow,Math.max(1,T.eyebrow*0.18)));
+  }
+  return {w:w,lines:lines.length,lh:lh};
+}
+/* Header, laid out the way the player fingerprint card reads: subject name
+   large and dark on the left, the eyebrow and plot title small and right
+   aligned, then the fixture context underneath, then a hairline rule. The team
+   colour survives as the keyline beside the name, which is where the
+   fingerprint card puts its accent; it is no longer the colour of the title or
+   of the numbers. Measured first, then drawn, so the rule lands on the bottom
+   edge of whatever the type needed. */
 function _expHeaderPass(ctx,W,cfg,T,draw){
-  const tc=cfg.teamColor||EXP_MUTED,padX=T.pad;
+  const tc=cfg.teamColor||EXP_TEXT,padX=T.pad,inner=W-padX*2;
+  const keyW=Math.max(3,Math.round(4*T.k)),keyGap=Math.round(T.gap*0.7);
+  const nameX=padX+keyW+keyGap;
   let cy=T.pad;
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
-  const eyebrow=_expCopy(cfg.competition).toUpperCase();
-  if(eyebrow){
-    cy+=T.eyebrow;
-    ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';
-    if(draw){ctx.fillStyle=EXP_MUTED;_expTracked(ctx,eyebrow,padX,cy,Math.max(1,T.eyebrow*0.16));}
-    cy+=Math.round(T.gap*0.9);
-  }
+  const name=_expCopy(cfg.playerName||cfg.teamName||'');
   cy+=T.title;
-  ctx.font='800 '+T.title+'px Archivo,Inter,system-ui,sans-serif';
-  if(draw){ctx.fillStyle=EXP_TEXT;ctx.fillText(_expCopy(cfg.playerName||cfg.teamName||''),padX,cy);}
-  cy+=Math.round(T.gap*0.7)+T.accent;
-  ctx.font='600 '+T.accent+'px Inter,system-ui,sans-serif';
-  if(draw){ctx.fillStyle=tc;ctx.fillText(_expCopy(cfg.viewLabel),padX,cy);}
+  /* Reserve the right hand block first, then let the name use the rest. */
+  const probe=_expTitleBlock(ctx,padX+inner,cy,Math.round(inner*0.42),cfg,T,false);
+  const nameMax=inner-keyW-keyGap-probe.w-Math.round(T.gap*1.6);
+  let nameFs=T.title;
+  for(;;){
+    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    if(ctx.measureText(name).width<=nameMax||nameFs<=Math.round(T.title*0.6))break;
+    nameFs=Math.round(nameFs*0.95);
+  }
+  const nameTop=cy-nameFs;
+  if(draw){
+    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.fillText(name,nameX,cy);
+    ctx.fillStyle=tc;ctx.fillRect(padX,Math.round(nameTop+nameFs*0.08),keyW,Math.round(nameFs*0.92));
+  }
+  _expTitleBlock(ctx,padX+inner,cy,Math.round(inner*0.42),cfg,T,draw);
+  /* Everything the reader needs to place the plot: team, opponent, venue, then
+     the fixture and its date. */
   const metaBits=[];
   if(cfg.playerName&&cfg.teamName)metaBits.push(_expCopy(cfg.teamName));
   if(cfg.opponent)metaBits.push('vs '+_expCopy(cfg.opponent));
   const venue=_expVenue(cfg.ha);if(venue)metaBits.push(venue);
   if(metaBits.length){
-    cy+=Math.round(T.gap*0.75)+T.meta;
-    ctx.font='500 '+T.meta+'px Inter,system-ui,sans-serif';
-    if(draw){ctx.fillStyle=EXP_TEXT;ctx.fillText(metaBits.join('  ·  '),padX,cy);}
+    cy+=Math.round(T.gap*0.8)+T.meta;
+    ctx.font='600 '+T.meta+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_MUTED;ctx.textAlign='left';ctx.fillText(metaBits.join('  \u00B7  '),nameX,cy);}
   }
   if(cfg.matchDesc){
-    cy+=Math.round(T.gap*0.45)+T.meta;
+    cy+=Math.round(T.gap*0.4)+T.meta;
     ctx.font='400 '+T.meta+'px Inter,system-ui,sans-serif';
-    if(draw){ctx.fillStyle=EXP_MUTED;ctx.fillText(_expCopy(cfg.matchDesc),padX,cy);}
+    if(draw){ctx.fillStyle=EXP_LABEL;ctx.textAlign='left';ctx.fillText(_expCopy(cfg.matchDesc),nameX,cy);}
   }
   if(cfg.timeFilter){
-    const fs=Math.round(T.meta*0.86);
+    const fs=Math.round(T.meta*0.82);
     ctx.font='700 '+fs+'px Inter,system-ui,sans-serif';
     const txt=_expCopy('Time window '+cfg.timeFilter);
-    const pw=ctx.measureText(txt).width+Math.round(fs*1.6),ph=Math.round(fs*2),py=cy+Math.round(T.gap*0.9);
+    const pw=ctx.measureText(txt).width+Math.round(fs*1.7),ph=Math.round(fs*2.1),py=cy+Math.round(T.gap*0.75);
     if(draw){
-      ctx.fillStyle=tc;_expPill(ctx,padX,py,pw,ph,Math.round(ph/2));ctx.fill();
-      ctx.fillStyle='#0f1218';ctx.textBaseline='middle';ctx.fillText(txt,padX+Math.round(fs*0.8),py+ph/2+1);
+      ctx.fillStyle=EXP_PANEL;_expPill(ctx,nameX,py,pw,ph,Math.round(ph/2));ctx.fill();
+      ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;_expPill(ctx,nameX+0.5,py+0.5,pw-1,ph-1,Math.round(ph/2));ctx.stroke();
+      ctx.fillStyle=EXP_TEXT;ctx.textBaseline='middle';ctx.textAlign='left';
+      ctx.fillText(txt,nameX+Math.round(fs*0.85),py+ph/2+1);
       ctx.textBaseline='alphabetic';
     }
     cy=py+ph;
   }
-  return cy+T.pad;
+  return cy+Math.round(T.pad*0.72);
 }
 function _expHeader(ctx,W,cfg,T){
   const h=_expHeaderPass(ctx,W,cfg,T,false);
-  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,h);
-  ctx.fillStyle=cfg.teamColor||EXP_MUTED;ctx.fillRect(0,0,Math.max(4,Math.round(6*T.k)),h);
   _expHeaderPass(ctx,W,cfg,T,true);
-  _expRule(ctx,0,h-1,W,EXP_BORDER);
+  _expRule(ctx,T.pad,h-1,W-T.pad*2,EXP_BORDER);
   return h;
 }
 /* Orientation disclosure plus, where the page defines one, what the plot shows. */
 function _expContext(ctx,x,y,w,orient,desc,T){
   let cy=y;
   if(orient){
-    ctx.fillStyle=EXP_MUTED;ctx.font='700 '+T.note+'px Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_LABEL;ctx.font='700 '+T.note+'px Inter,system-ui,sans-serif';
     ctx.textAlign='left';ctx.textBaseline='alphabetic';
     cy+=T.note;
     _expTracked(ctx,orient.toUpperCase(),x,cy,Math.max(1,T.note*0.1));
@@ -2588,6 +2667,9 @@ function _expContext(ctx,x,y,w,orient,desc,T){
   }
   return cy-y;
 }
+/* Summary numbers read as numbers. They used to be set in the brand red, which
+   made four neutral counts look like four findings; red is kept for accent and
+   for negative semantics, not for every statistic. */
 function _drawStatsBand(ctx,x,y,w,h,cfg,T){
   T=T||_expScale(1);
   const stats=(cfg.stats||[]).slice(0,4),n=Math.max(1,stats.length),colW=w/n;
@@ -2597,29 +2679,34 @@ function _drawStatsBand(ctx,x,y,w,h,cfg,T){
   stats.forEach(function(s,i){
     const cx=x+colW*i+colW/2;
     if(i){ctx.fillStyle=EXP_RULE;ctx.fillRect(Math.round(x+colW*i),y+Math.round(h*0.24),1,Math.round(h*0.52));}
-    ctx.fillStyle=cfg.teamColor||EXP_TEXT;ctx.font='800 '+T.statV+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.font='800 '+T.statV+'px Archivo,Inter,system-ui,sans-serif';
     ctx.fillText(_expCopy(s.value),cx,y+Math.round(h*0.6));
-    ctx.fillStyle=EXP_MUTED;ctx.font='700 '+T.statL+'px Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_LABEL;ctx.font='700 '+T.statL+'px Inter,system-ui,sans-serif';
     ctx.textAlign='left';
     _expTrackedCentre(ctx,_expCopy(s.label).toUpperCase(),cx,y+h-Math.round(T.statL*1.4),Math.max(1,T.statL*0.14));
     ctx.textAlign='center';
   });
   ctx.textAlign='left';
 }
+/* Provenance, split the way the fingerprint card splits it: what this is on the
+   left, where the numbers came from on the right. */
 function _drawFooterBand(ctx,x,y,w,h,cfg,T){
   T=T||_expScale(1);
   ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
-  _expRule(ctx,x,y,w,EXP_BORDER);
+  _expRule(ctx,x+T.pad,y,w-T.pad*2,EXP_BORDER);
   const cy=y+h/2,pad=T.pad;
   ctx.textBaseline='middle';ctx.font='500 '+T.foot+'px Inter,system-ui,sans-serif';
-  ctx.textAlign='left';ctx.fillStyle=EXP_TEXT;
-  ctx.fillText(_expCopy(cfg.teamName||''),x+pad,cy);
-  if(cfg.matchDesc){
-    ctx.textAlign='center';ctx.fillStyle=EXP_MUTED;
-    ctx.fillText(_expCopy(cfg.matchDesc),x+w/2,cy);
-  }
-  ctx.textAlign='right';ctx.fillStyle=EXP_MUTED;
-  ctx.fillText('Generated '+currentDateStr(),x+w-pad,cy);
+  const src='Event data WhoScored (Opta)  \u00B7  generated '+currentDateStr();
+  const room=w-pad*2-ctx.measureText(src).width-Math.round(T.gap*2);
+  /* Context on the left, source on the right. The left side gives up its least
+     load bearing part rather than running into the right side. */
+  const parts=[_expCopy(cfg.teamName||''),_expCopy(cfg.competition||''),_expCopy(cfg.matchDesc||'')].filter(Boolean);
+  let left=parts.join('  \u00B7  ');
+  while(parts.length>1&&ctx.measureText(left).width>room){parts.pop();left=parts.join('  \u00B7  ');}
+  ctx.textAlign='left';ctx.fillStyle=EXP_MUTED;
+  ctx.fillText(left,x+pad,cy);
+  ctx.textAlign='right';ctx.fillStyle=EXP_LABEL;
+  ctx.fillText(src,x+w-pad,cy);
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
 }
 
@@ -2677,7 +2764,10 @@ function renderAllPanelsCanvas(panels,config){
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
   const hdrCfg={};for(const k in config)hdrCfg[k]=config[k];
-  hdrCfg.viewLabel=panels.map(function(p){return p.label}).filter(Boolean).join('  ·  ');
+  /* Panel labels are board titles, so they repeat the subject and the fixture.
+     On the card those are already the headline and the line under it. */
+  const panelTitle=function(lbl){return _expPlotTitle({viewLabel:lbl,playerName:config.playerName,teamName:config.teamName})};
+  hdrCfg.viewLabel=panels.map(function(p){return panelTitle(p.label)}).filter(Boolean).join('  ·  ');
   const headerH=_expHeader(ctx,LW,hdrCfg,T);
   const footerH=Math.round(T.foot*3.2),statsH=Math.round(T.statV*2.6);
   const statsY=LH-footerH-statsH;
@@ -2691,9 +2781,9 @@ function renderAllPanelsCanvas(panels,config){
     const cellW=inner/cols,cellH=gridH/rows,pad=Math.round(CT_.gap);
     panels.forEach(function(p,i){
       const cx=T.pad+(i%cols)*cellW,cy=y+Math.floor(i/cols)*cellH;
-      ctx.fillStyle=config.teamColor||EXP_TEXT;ctx.font='700 '+CT_.accent+'px Inter,system-ui,sans-serif';
+      ctx.fillStyle=EXP_TEXT;ctx.font='700 '+CT_.accent+'px Inter,system-ui,sans-serif';
       ctx.textAlign='left';ctx.textBaseline='alphabetic';
-      _expTracked(ctx,_expCopy(p.label).toUpperCase(),cx,cy+CT_.accent,Math.max(1,CT_.accent*0.1));
+      _expTracked(ctx,panelTitle(p.label).toUpperCase(),cx,cy+CT_.accent,Math.max(1,CT_.accent*0.1));
       const top=cy+CT_.accent+pad;
       _expPlotBlock(ctx,cx,top,cellW-pad,Math.max(40,cellH-(top-cy)-pad),
         p.canvas,_expCollectLegend(p.canvas),CT_,SC);
@@ -2726,8 +2816,9 @@ function renderScoutCanvas(){
   ctx.fillStyle=EXP_TEXT;ctx.font='bold 72px Inter,system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillText(S.psPlayer,48,122);
   ctx.font='bold 22px Inter,system-ui,sans-serif';const pbw=ctx.measureText(pos).width+32;
-  ctx.fillStyle=tc;_expPill(ctx,48,146,pbw,36,18);ctx.fill();
-  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pos,48+pbw/2,146+18);
+  ctx.fillStyle=EXP_BG;_expPill(ctx,48,146,pbw,36,18);ctx.fill();
+  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;_expPill(ctx,48.5,146.5,pbw-1,35,18);ctx.stroke();
+  ctx.fillStyle=EXP_TEXT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pos,48+pbw/2,146+18);
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillStyle=EXP_MUTED;ctx.font='500 26px Inter,system-ui,sans-serif';
   ctx.fillText((t.display||t.name)+' \u00B7 2025\u201326 Season',48+pbw+20,172);
@@ -2739,7 +2830,7 @@ function renderScoutCanvas(){
   ctx.textAlign='center';
   headlines.forEach((h,i)=>{
     const cx=colW*i+colW/2;
-    ctx.fillStyle=tc;ctx.font='bold 44px Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.font='bold 44px Inter,system-ui,sans-serif';
     ctx.fillText(String(h[1]),cx,statsRowY+statsRowH/2+6);
     ctx.fillStyle=EXP_MUTED;ctx.font='bold 18px Inter,system-ui,sans-serif';
     ctx.fillText(h[0].toUpperCase(),cx,statsRowY+statsRowH-22);
@@ -2756,7 +2847,7 @@ function renderScoutCanvas(){
   sbGroups.forEach(g=>{
     const title=g.querySelector('.sb-group-title');
     if(title&&yC<barsY+barsH-30){
-      ctx.fillStyle=tc;ctx.font='bold 17px Inter,system-ui,sans-serif';ctx.fillText(title.textContent.toUpperCase(),48,yC);yC+=22;
+      ctx.fillStyle=EXP_TEXT;ctx.font='bold 17px Inter,system-ui,sans-serif';ctx.fillText(title.textContent.toUpperCase(),48,yC);yC+=22;
     }
     g.querySelectorAll('.sb-row').forEach(r=>{
       if(yC>barsY+barsH-18)return;
@@ -2799,7 +2890,7 @@ function renderScoutCanvas(){
     const ix=cx+(gcellW-iw)/2,iy=cy+pad;
     ctx.drawImage(mini,ix,iy,iw,ih);
     ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.strokeRect(ix+0.5,iy+0.5,iw-1,ih-1);
-    ctx.fillStyle=tc;ctx.font='bold 15px Inter,system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillStyle=EXP_TEXT;ctx.font='bold 15px Inter,system-ui,sans-serif';ctx.textAlign='center';
     ctx.fillText(v.l.toUpperCase(),cx+gcellW/2,cy+gcellH-10);
   });
   ctx.textAlign='left';
@@ -2821,7 +2912,7 @@ function renderReportCanvas(reportText,stats){
   ctx.fillStyle=tc;ctx.fillRect(0,0,6,headerH);
   ctx.fillStyle=EXP_TEXT;ctx.font='bold 82px Inter,system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillText(t.name,48,128);
-  ctx.fillStyle=tc;ctx.font='500 38px Inter,system-ui,sans-serif';
+  ctx.fillStyle=EXP_MUTED;ctx.font='500 38px Inter,system-ui,sans-serif';
   ctx.fillText('Match Report',48,182);
   ctx.fillStyle=EXP_MUTED;ctx.font='26px Inter,system-ui,sans-serif';
   ctx.fillText(stats.matchLabel||'',48,224);
@@ -2852,7 +2943,7 @@ function renderReportCanvas(reportText,stats){
       pills.forEach(pl=>{
         const lbl=pl[0]+': '+pl[1];const pw=ctx.measureText(lbl).width+28;
         ctx.fillStyle=EXP_PANEL;_expPill(ctx,px,yC,pw,36,18);ctx.fill();
-        ctx.fillStyle=tc;ctx.textBaseline='middle';ctx.fillText(lbl,px+14,yC+18);
+        ctx.fillStyle=EXP_TEXT;ctx.textBaseline='middle';ctx.fillText(lbl,px+14,yC+18);
         ctx.textBaseline='alphabetic';px+=pw+10;
       });
       yC+=54;
