@@ -1,0 +1,53 @@
+/* ---------------------------------------------------------------------------
+   Shared page shell: the header strip and its tab bar.
+
+   Linked BEFORE each page's inline <style>, so anything a page declares after
+   the link still wins. Only rules the pages already agreed on live here; where
+   a page genuinely differed, that difference stayed inline on that page as a
+   small override rather than being harmonised. Extraction pass only, so the
+   rendering is byte for byte what it was.
+
+   Used by players.html, teams.html, match.html and sequences.html. NOT by
+   glossary.html, which shares only the class name "hdr": its markup is
+   hdr-mark / hdr-t / hdr-s and it defines none of the custom properties below.
+
+   Relies on the host page defining: --bg2, --bg3, --border, --border2,
+   --surface, --accent, --text, --text3, --shadow, --f-display. Every page that
+   links this file already declares all of them.
+--------------------------------------------------------------------------- */
+
+/* Header bar.
+   match.html runs a wider gap and sits above a higher stacking context, so it
+   overrides gap and z-index inline. */
+.hdr{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;box-shadow:var(--shadow);z-index:10}
+
+/* Logo chip. Geometry only: the four pages set the glyph's font and colour
+   differently, so those stay inline (match.html also recolours the chip). */
+.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+
+/* Title block. match.html has no .hdr-title element; it uses .hdr-info. */
+.hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
+.hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
+
+/* Right-hand action cluster. match.html runs a wider gap, set inline. */
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* League picker, players.html and teams.html. */
+.lgpick select{background:var(--bg);color:var(--text);border:1px solid var(--line2,var(--border));
+  border-radius:4px;padding:2px 6px;font:700 10px/1.3 inherit;cursor:pointer;max-width:150px}
+.lgpick select:hover{border-color:var(--accent)}
+.lgpick select:focus{outline:none;border-color:var(--accent)}
+
+/* Tab bar. players.html and teams.html additionally let this scroll
+   horizontally, which sequences.html does not, so that stays inline on them.
+   match.html uses .hdr-tabs and is untouched by these rules. */
+.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
+.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+
+/* Cross-page nav links inside the tab bar, players.html and teams.html only. */
+.tab-x{text-decoration:none;color:var(--text3)}
+.tab-x:hover{color:var(--accent)}
+.tab-div{width:1px;align-self:stretch;background:var(--border2);margin:3px 5px;flex-shrink:0}
