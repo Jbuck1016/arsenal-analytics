@@ -31,23 +31,78 @@
 .hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
 
 /* Right-hand action cluster. match.html runs a wider gap, set inline. */
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px}
 
-/* League picker, players.html and teams.html. */
+/* Header actions on players.html and teams.html. Scoped to .hdr-right so the
+   same .lnk class keeps its existing look everywhere else on those pages, and
+   compound enough (0,2,0) to outrank each page's own .lnk without editing it.
+   match.html has no .lnk in its header, so none of this reaches it. */
+.hdr-right .lnk{display:inline-flex;align-items:center;gap:5px;
+  background:transparent;border:1px solid var(--border);color:var(--text2);
+  font:600 10.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.02em;
+  padding:7px 11px;border-radius:7px;text-decoration:none;white-space:nowrap;cursor:pointer;
+  transition:color .15s,background-color .15s,border-color .15s}
+.hdr-right .lnk:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.hdr-right .lnk.acc{color:var(--accent);border-color:var(--accent-glow);background:var(--accent-dim)}
+.hdr-right .lnk.acc:hover{background:var(--accent-glow);color:var(--accent)}
+.hdr-right .lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* League picker, players.html and teams.html.
+   No max-width: a select sizes itself to its widest option, so the chosen label
+   is always readable. The old 150px cap cut "Premier League (20 available)"
+   mid-word. */
 .lgpick select{background:var(--bg);color:var(--text);border:1px solid var(--line2,var(--border));
-  border-radius:4px;padding:2px 6px;font:700 10px/1.3 inherit;cursor:pointer;max-width:150px}
-.lgpick select:hover{border-color:var(--accent)}
-.lgpick select:focus{outline:none;border-color:var(--accent)}
+  border-radius:6px;padding:3px 7px;font:700 10px/1.3 inherit;cursor:pointer;
+  max-width:none;width:auto;min-width:0;text-overflow:clip;
+  /* field-sizing tracks the option actually selected, so the control is only as
+     wide as the label it is showing. Where it is not supported, width:auto falls
+     back to the widest option, which is roomier but still never truncates. */
+  field-sizing:content;
+  transition:border-color .15s,background-color .15s}
+.lgpick select:hover{border-color:var(--accent);background:var(--bg2)}
+/* Keyboard focus must stay visible; only the mouse focus ring is dropped. */
+.lgpick select:focus{border-color:var(--accent)}
+.lgpick select:focus:not(:focus-visible){outline:none}
+.lgpick select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Tab bar. players.html and teams.html additionally let this scroll
    horizontally, which sequences.html does not, so that stays inline on them.
-   match.html uses .hdr-tabs and is untouched by these rules. */
-.tabs{display:flex;gap:2px;margin-left:20px;background:var(--surface);border-radius:8px;padding:3px}
-.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer}
-.tab:hover{color:var(--text)}
-.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
+   match.html uses .hdr-tabs and is untouched by these rules.
+
+   Overflow cue: a shaded edge that appears only when there is more tab bar in
+   that direction. Two layers per side. The cover is attached to the scrolling
+   content, so it travels with the tabs and parks over its own shadow once you
+   reach that end; the shadow is attached to the box, so it stays pinned at the
+   edge. On a bar that fits, and on any bar that is not a scroll container at
+   all, the covers sit exactly on the shadows and nothing is drawn. That is why
+   sequences.html needs no exception here: its tab bar does not scroll, so it
+   never paints a cue, and no layout property is involved either way. */
+.tabs{display:flex;gap:2px;margin-left:20px;border-radius:8px;padding:3px;
+  background-color:var(--surface);
+  background-image:
+    linear-gradient(to right,var(--bg2) 55%,rgba(0,0,0,0)),
+    linear-gradient(to left,var(--bg2) 55%,rgba(0,0,0,0)),
+    linear-gradient(to right,color-mix(in srgb,var(--text3) 90%,transparent),color-mix(in srgb,var(--text3) 12%,transparent) 55%,rgba(0,0,0,0)),
+    linear-gradient(to left,color-mix(in srgb,var(--text3) 90%,transparent),color-mix(in srgb,var(--text3) 12%,transparent) 55%,rgba(0,0,0,0));
+  background-repeat:no-repeat;
+  background-position:left center,right center,left center,right center;
+  background-size:34px 100%,34px 100%,26px 100%,26px 100%;
+  background-attachment:local,local,scroll,scroll;
+  scroll-behavior:smooth}
+.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;
+  white-space:nowrap;transition:color .15s,background-color .15s}
+.tab:hover{color:var(--text);background:var(--surface2)}
+/* Active tab carries weight and a filled chip, not colour alone. */
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow);font-weight:800}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Cross-page nav links inside the tab bar, players.html and teams.html only. */
 .tab-x{text-decoration:none;color:var(--text3)}
 .tab-x:hover{color:var(--accent)}
 .tab-div{width:1px;align-self:stretch;background:var(--border2);margin:3px 5px;flex-shrink:0}
+
+/* Anything animated above is a courtesy, so drop it when asked. */
+@media (prefers-reduced-motion:reduce){
+  .tabs{scroll-behavior:auto}
+  .tab,.hdr-right .lnk,.lgpick select{transition:none}
+}
