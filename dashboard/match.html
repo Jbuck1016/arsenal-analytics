@@ -598,6 +598,8 @@ html:not(.dark) .panel{background:rgba(251,250,246,.9)}
 .panel-legend{min-height:28px;max-height:none;padding:9px 1px 0;gap:7px 14px;border-top:1px solid var(--border);margin-top:10px}
 .leg{font-family:var(--f-data);font-size:8.5px}.leg-dot{width:7px;height:7px}
 .leg-mark{width:11px;height:11px;display:inline-grid;place-items:center;flex:0 0 11px;font:800 11px/1 var(--f-data)}
+.shot-key{gap:5px}.shot-key svg{width:13px;height:13px;overflow:visible;flex:none}.shot-key b{font-weight:700;color:var(--text)}
+.leg-note{white-space:normal;line-height:1.35;flex:1 1 100%;opacity:.7}
 .jdp-btn,.dl-btn{border-radius:3px;font-family:var(--f-data);padding:5px 8px}
 .concept-info-bar{background:rgba(22,27,36,.9);border-color:var(--border);font-family:var(--f-data);max-height:none;padding:8px 14px}
 html:not(.dark) .concept-info-bar{background:rgba(251,250,246,.92)}
@@ -1077,12 +1079,61 @@ function drawAttackingHalfPitch(ctx,c){
   ctx.fillStyle=th.textSoft;ctx.font='700 10px Inter,sans-serif';ctx.textAlign='center';ctx.fillText('ATTACKING \u2191',c.width/2,r.y-8);
 }
 
+/* Canonical shot outcome grammar, shared with the Team Profiles shot map so a
+   marker means the same thing on both pages. Shape carries the outcome, colour
+   only reinforces it. Dark theme uses the Team Profiles values verbatim; light
+   theme keeps the same hues at a lower lightness so they stay readable on the
+   cream pitch. */
+function shotPalette(forTeam){
+  const d=document.documentElement.classList.contains('dark');
+  const ok=d?'#22e39a':'#0f7a52',fail=d?'#ff5a5a':'#bf3535';
+  return {goal:d?'#f0a5ff':'#a1279b',saved:forTeam?ok:fail,blocked:d?'#a78bfa':'#6641cf',
+          post:d?'#ffc93c':'#9a6b00',off:forTeam?ok:fail};
+}
+/* Same five shapes as teams.html shotMark(): goal is a filled disc inside a
+   thin ring, saved a filled disc, blocked a diamond, post and off target are
+   hollow rings separated by stroke weight rather than by colour alone. */
+function drawShotMark(ctx,cx,cy,r,col,oc){
+  if(oc==='goal'){
+    ctx.beginPath();ctx.arc(cx,cy,r*1.7,0,Math.PI*2);
+    ctx.strokeStyle=hexAlpha(col,0.55);ctx.lineWidth=Math.max(1,r*0.2);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();return;
+  }
+  if(oc==='blocked'){const d=r*1.25;
+    ctx.beginPath();ctx.moveTo(cx,cy-d);ctx.lineTo(cx+d,cy);ctx.lineTo(cx,cy+d);ctx.lineTo(cx-d,cy);ctx.closePath();
+    ctx.fillStyle=hexAlpha(col,0.75);ctx.fill();return;
+  }
+  if(oc==='post'||oc==='off'){
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=hexAlpha(col,0.9);
+    ctx.lineWidth=oc==='post'?Math.max(2.2,r*0.42):Math.max(1.2,r*0.22);
+    ctx.stroke();return;
+  }
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=hexAlpha(col,0.8);ctx.fill();
+}
+/* Legend glyphs mirror the canvas shapes one for one, and match the SVG keys
+   used by shotOutcomeLegend() on Team Profiles. Rendered into the panel legend
+   strip below the canvas, so it can never sit over pitch markings or markers. */
+function shotOutcomeLegend(counts,pal){
+  const labels={goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'};
+  const glyph={
+    goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
+    saved:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="'+c+'" fill-opacity=".8"/></svg>'},
+    blocked:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 1.5L14.5 8L8 14.5L1.5 8Z" fill="'+c+'" fill-opacity=".75"/></svg>'},
+    post:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="2"/></svg>'},
+    off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
+  };
+  return ['goal','saved','blocked','post','off'].filter(function(k){return counts[k]}).map(function(k){
+    return '<span class="leg shot-key">'+glyph[k](pal[k])+'<span>'+labels[k]+' <b>'+counts[k]+'</b></span></span>';
+  }).join('');
+}
 function renderShotMap(ctx,c,evts,titleEl,legendEl){
   drawAttackingHalfPitch(ctx,c);
   // Area, rather than radius, scales with fitted xG so a 0.40 chance is
-  // visually twice a 0.20 chance. Outcome remains encoded by shape and color.
-  const C={goal:'#f5b800',saved:'#2563eb',post:'#a855f7',blocked:'#f97316',off:'#9ca3af'};
-  let goals=0,saved=0,blocked=0,post=0,off=0,totalXg=0,xgKnown=0,distTotal=0;const stored=[];
+  // visually twice a 0.20 chance. Shots the view returns without an xG fall
+  // back to one fixed size and claim no value.
+  const C=shotPalette(!isOppView());
+  let goals=0,saved=0,blocked=0,post=0,off=0,totalXg=0,xgKnown=0,xgMissing=0,distTotal=0;const stored=[];
   function kindOf(e){
     if(e.is_goal)return 'goal';
     var o=(e.outcome_type||'')+' '+(e.type||'');
@@ -1091,53 +1142,29 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     if(/Saved/i.test(o))return 'saved';
     return 'off';
   }
-  function star(cx,cy,r,fill,stroke){
-    ctx.beginPath();
-    for(var i=0;i<10;i++){
-      var ang=Math.PI/5*i-Math.PI/2,rad=(i%2===0)?r:r*0.46;
-      var x=cx+Math.cos(ang)*rad,y=cy+Math.sin(ang)*rad;
-      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-    }
-    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
-    ctx.strokeStyle=stroke;ctx.lineWidth=1.6;ctx.stroke();
-  }
   evts.forEach(function(e){
     if(e.x==null||e.y==null)return;
     var p=toShotXY(e.x,e.y,c);
     var dist=e.shot_dist_m!=null?Number(e.shot_dist_m):Math.sqrt(Math.pow(100-e.x,2)+Math.pow((50-e.y)*0.68,2));
     var xg=e.xg==null?null:Number(e.xg);
-    if(Number.isFinite(xg)){totalXg+=xg;xgKnown++;}distTotal+=dist;
-    var r=xg==null?6:Math.max(4,Math.min(15,3+15*Math.sqrt(xg)));
-    var k=kindOf(e),col=C[k];
-    if(k==='goal'){goals++;star(p.cx,p.cy,r+3,hexAlpha(col,0.9),col);}
-    else if(k==='saved'){saved++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.fillStyle=hexAlpha(col,0.72);ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.stroke();}
-    else if(k==='post'){post++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.fillStyle=hexAlpha(col,0.5);ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);}
-    else if(k==='blocked'){blocked++;
-      ctx.strokeStyle=col;ctx.lineWidth=1.8;
-      ctx.beginPath();ctx.moveTo(p.cx-r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx+r*0.7,p.cy+r*0.7);
-      ctx.moveTo(p.cx+r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx-r*0.7,p.cy+r*0.7);ctx.stroke();}
-    else{off++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.strokeStyle=hexAlpha(col,0.85);ctx.lineWidth=1.5;ctx.stroke();}
+    if(Number.isFinite(xg)){totalXg+=xg;xgKnown++;}else{xgMissing++;}distTotal+=dist;
+    var r=Number.isFinite(xg)?Math.max(4,Math.min(15,3+15*Math.sqrt(xg))):6;
+    var k=kindOf(e);
+    if(k==='goal')goals++;else if(k==='saved')saved++;else if(k==='post')post++;else if(k==='blocked')blocked++;else off++;
+    drawShotMark(ctx,p.cx,p.cy,r,C[k],k);
     stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,
-      outcome:(e.is_goal?'Goal':(e.outcome_type||k))+(xg==null?'':' · xG '+xg.toFixed(2)),type:'Shot',dist:dist.toFixed(0)});
+      outcome:(e.is_goal?'Goal':(e.outcome_type||k))+(Number.isFinite(xg)?' · xG '+xg.toFixed(2):''),type:'Shot',dist:dist.toFixed(0)});
   });
   const sr=shotPitchRect(c),summaryY=sr.y+sr.h+22,summary=[['SHOTS',evts.length],['GOALS',goals],['TOTAL xG',xgKnown?totalXg.toFixed(2):'—'],['AVG DIST',evts.length?(distTotal/evts.length).toFixed(1)+'m':'—']];
   if(summaryY+44<c.height){const cellW=(c.width-2*PM)/summary.length;summary.forEach((s,i)=>{const x=PM+i*cellW;if(i){ctx.strokeStyle=CT().line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,summaryY);ctx.lineTo(x,summaryY+38);ctx.stroke();}ctx.fillStyle=CT().text;ctx.font='700 14px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(String(s[1]),x+cellW/2,summaryY+16);ctx.fillStyle=CT().textSoft;ctx.font='700 7px JetBrains Mono,monospace';ctx.fillText(s[0],x+cellW/2,summaryY+31);});}
   S.canvasEvents.set(c,stored);
   titleEl.textContent='Attacking-Half Shot Map';
+  const sizeNote=xgKnown
+    ? 'marker area = fitted xG · hover for value'+(xgMissing?' · '+xgMissing+' without xG at fixed size':'')
+    : 'no xG for these shots · fixed marker size';
   legendEl.innerHTML=
-    leg(C.goal,'Goal ('+goals+')')+leg(C.saved,'On target ('+saved+')')+
-    (post?leg(C.post,'Woodwork ('+post+')'):'')+
-    (blocked?leg(C.blocked,'Blocked ('+blocked+')'):'')+
-    leg(C.off,'Off target ('+off+')')+
-    '<span class="leg" style="opacity:.7">marker area = fitted xG · hover for value</span>';
+    shotOutcomeLegend({goal:goals,saved:saved,blocked:blocked,post:post,off:off},C)+
+    '<span class="leg leg-note">'+sizeNote+'</span>';
 }
 
 function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
