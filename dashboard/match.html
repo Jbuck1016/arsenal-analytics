@@ -9,19 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Canvas, surfaces, lines, text and the font tokens are in theme.css. The two
+   light blocks this file used to carry are gone; what is left here is the
+   accent family, which html.dark does not redeclare, so it has to stay
+   available to both modes, and the light pitch fill. */
 :root{
   --accent:#EF0107;--accent-dim:rgba(239,1,7,0.07);--accent-glow:rgba(239,1,7,0.18);
-  --bg:#f5f4f1;--bg2:#ffffff;--bg3:#fafaf8;
-  --surface:rgba(0,0,0,0.025);--surface2:rgba(0,0,0,0.05);
-  --border:#e8e5e0;--border2:#d5d2cc;
-  --text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
-  --gold:#d4a017;--green:#16a34a;--blue:#2563eb;--red-bright:#dc2626;
   --pitch:#f0ead6;
-  --f-display:'Archivo','Inter',system-ui,sans-serif;
-  --f-body:'Inter',system-ui,sans-serif;
-  --f-data:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow2:0 2px 8px rgba(0,0,0,0.05);
 }
 html.dark{
   --bg:#101319;--bg2:#1a1d24;--bg3:#22252e;
@@ -528,11 +524,7 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 /* 2026 visual system: the match workspace now shares the homepage's
    restrained football-intelligence terminal language. */
 :root{
-  --bg:#f4f2ec;--bg2:#fbfaf6;--bg3:#efece4;
-  --surface:rgba(25,28,34,.035);--surface2:#efece4;
-  --border:#e4e0d6;--border2:#d3ccbf;
-  --text:#191c22;--text2:#5a6270;--text3:#8b93a0;
-  --gold:#9a6f2a;--green:#12855a;--blue:#2f6fd0;--red-bright:#cc4038;
+  --gold:#9a6f2a;--blue:#2f6fd0;
   --shadow:0 10px 26px rgba(23,27,34,.07);--shadow2:0 18px 46px rgba(23,27,34,.13);
 }
 html.dark{
@@ -554,7 +546,7 @@ body{
   background-size:auto,32px 32px,32px 32px;
 }
 .hdr{height:58px;background:rgba(22,27,36,.94);border-color:var(--border);box-shadow:none;backdrop-filter:blur(18px);padding:0 20px}
-html:not(.dark) .hdr{background:rgba(251,250,246,.94)}
+html:not(.dark) .hdr{background:color-mix(in srgb,var(--bg2) 94%,transparent)}
 .hdr-logo{background:var(--gold);color:var(--bg);border-radius:4px;box-shadow:0 0 0 1px rgba(226,184,119,.28),0 0 22px rgba(226,184,119,.12)}
 .hdr-sub,.s-hd,.viz-group-label,.panel-orient,.vt-label{font-family:var(--f-data)}
 .team-pick{border-radius:4px;background:var(--bg3);border-color:var(--border2)}
@@ -565,7 +557,7 @@ html:not(.dark) .hdr{background:rgba(251,250,246,.94)}
 .btn-fp,.btn-exp{background:rgba(226,184,119,.08);border-color:rgba(226,184,119,.24);color:var(--gold)}
 .main{background:transparent}
 .side{width:292px;padding:14px;background:rgba(22,27,36,.9);border-color:var(--border);backdrop-filter:blur(16px)}
-html:not(.dark) .side{background:rgba(251,250,246,.92)}
+html:not(.dark) .side{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .s-sec{margin-bottom:12px;padding-bottom:12px}
 .s-hd{letter-spacing:.13em;color:var(--text3);margin-bottom:8px}
 .s-sel,.ps-search{min-height:36px;border-radius:4px;background:var(--bg);border-color:var(--border2)}
@@ -575,21 +567,21 @@ html:not(.dark) .side{background:rgba(251,250,246,.92)}
 .viz-btn.on{border-left-width:1px}
 .p-item{border-radius:3px;min-height:30px}.p-item.sel{background:rgba(226,184,119,.08);border-color:rgba(226,184,119,.25);box-shadow:inset 2px 0 var(--gold)}
 .view-team-bar{background:rgba(22,27,36,.86);padding:7px 14px;backdrop-filter:blur(14px)}
-html:not(.dark) .view-team-bar{background:rgba(251,250,246,.9)}
+html:not(.dark) .view-team-bar{background:color-mix(in srgb,var(--bg2) 90%,transparent)}
 .vt-pill,.vt-cmp-btn,.compare-indicator{border-radius:3px}.vt-pill{background:var(--bg)}
 .vt-pill-btn{border-radius:2px;font-family:var(--f-data)}
 .vt-pill-btn.on{background:rgba(226,184,119,.14);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(226,184,119,.28)}
 .vt-pill-btn.on.opp{background:rgba(90,169,255,.12);color:var(--blue);box-shadow:inset 0 0 0 1px rgba(90,169,255,.28)}
 .vt-cmp-btn.on{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .compare-name{font:700 10px/1 var(--f-data);padding:5px 8px;border-radius:3px}.compare-name.a{color:var(--gold);background:rgba(226,184,119,.08)}.compare-name.b{color:var(--blue);background:rgba(90,169,255,.08)}.compare-vs{font:600 8px/1 var(--f-data);color:var(--text3)}.compare-note{font:500 8px/1 var(--f-data);color:var(--text3);margin-right:auto}
-.timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:rgba(251,250,246,.82)}
-.tw-panel{background:rgba(22,27,36,.72)}html:not(.dark) .tw-panel{background:rgba(251,250,246,.86)}
+.timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:color-mix(in srgb,var(--bg2) 82%,transparent)}
+.tw-panel{background:rgba(22,27,36,.72)}html:not(.dark) .tw-panel{background:color-mix(in srgb,var(--bg2) 86%,transparent)}
 .pitch-area{padding:12px;gap:12px;background:transparent}
 .pitch-area.single-viz[data-count="1"] .panel{width:min(100%,1040px);flex-basis:min(100%,1040px)}
 .pitch-area.single-viz[data-count="1"] .panel-viz-defensive{width:min(100%,880px);flex-basis:min(100%,880px)}
 .pitch-area[data-count="2"] .panel{width:calc(50% - 6px);flex-basis:calc(50% - 6px)}
 .panel{background:rgba(22,27,36,.78);border:1px solid var(--border);border-radius:5px;padding:12px;box-shadow:var(--shadow);overflow:hidden;max-height:none}
-html:not(.dark) .panel{background:rgba(251,250,246,.9)}
+html:not(.dark) .panel{background:color-mix(in srgb,var(--bg2) 90%,transparent)}
 .panel.compare-panel{border-top:2px solid var(--panel-team,var(--gold))}
 .panel-head{padding:0 0 10px;border-bottom:1px solid var(--border);margin-bottom:10px;min-height:42px}
 .panel-title{font-size:14px;white-space:normal;overflow-wrap:anywhere}
@@ -602,11 +594,11 @@ html:not(.dark) .panel{background:rgba(251,250,246,.9)}
 .leg-note{white-space:normal;line-height:1.35;flex:1 1 100%;opacity:.7}
 .jdp-btn,.dl-btn{border-radius:3px;font-family:var(--f-data);padding:5px 8px}
 .concept-info-bar{background:rgba(22,27,36,.9);border-color:var(--border);font-family:var(--f-data);max-height:none;padding:8px 14px}
-html:not(.dark) .concept-info-bar{background:rgba(251,250,246,.92)}
+html:not(.dark) .concept-info-bar{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .team-only-banner,.opp-warn-banner{border-radius:3px;font-family:var(--f-data)}
-.ps-side{width:272px;background:rgba(22,27,36,.9)}html:not(.dark) .ps-side{background:rgba(251,250,246,.92)}
+.ps-side{width:272px;background:rgba(22,27,36,.9)}html:not(.dark) .ps-side{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .ps-main{background:transparent}.ps-hl-card,.sb-group,.mom-chart-wrap,.mom-heat-panel,.mom-moments{border-radius:4px;background:rgba(22,27,36,.82)}
-html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart-wrap,html:not(.dark) .mom-heat-panel,html:not(.dark) .mom-moments{background:rgba(251,250,246,.92)}
+html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart-wrap,html:not(.dark) .mom-heat-panel,html:not(.dark) .mom-moments{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 
 @media(min-width:1400px){
   .pitch-area[data-count="4"]{flex-wrap:nowrap;overflow:hidden;align-content:stretch}
@@ -834,11 +826,11 @@ async function loadTeams(){
   TEAMS={};
   TEAMS['__ALL__']={name:'__ALL__',display:'\u2014 All teams \u2014',color:'#8b95b5',
     colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
-    bg:'#f5f4f1',bg2:'#ffffff',comps:LEAGUES};
+    comps:LEAGUES};
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
-      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',league:LEAGUE_OF[n]||null,comps:LEAGUES};
+      colorBright:c,league:LEAGUE_OF[n]||null,comps:LEAGUES};
     TEAMS[n].display=dispName(n);
   });
   if(!TEAMS[S.team]||!inComps(S.team)){
@@ -2998,7 +2990,13 @@ function exportPlayerPDF(){
 }
 
 /* THEME & UI */
-function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);const isDark=document.documentElement.classList.contains('dark');if(!isDark){s.setProperty('--bg',t.bg);s.setProperty('--bg2',t.bg2);}else{s.removeProperty('--bg');s.removeProperty('--bg2');}}
+/* The accent follows the selected team; the canvas does not. This used to write
+   --bg and --bg2 onto the root element in light mode, and an inline custom
+   property beats every stylesheet, so the page kept a light canvas of its own no
+   matter what the theme said. Canvas comes from theme.css in both modes now.
+   The removeProperty calls stay, so a tab still holding values from an older
+   build drops them. */
+function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);s.removeProperty('--bg');s.removeProperty('--bg2');}
 function initThemeToggle(){const saved=localStorage.getItem('theme');if(saved!=='light')document.documentElement.classList.add('dark');syncCanvasTheme();const btn=document.getElementById('themeToggle');const update=()=>{const d=document.documentElement.classList.contains('dark');btn.innerHTML=d?'&#9728;&#65039;':'&#127769;';};update();btn.onclick=()=>{document.documentElement.classList.toggle('dark');const d=document.documentElement.classList.contains('dark');localStorage.setItem('theme',d?'dark':'light');applyTheme();update();if(typeof renderAll==='function'&&S.selMatch)renderAll();};}
 function initTeamSwitcher(){
   const el=document.getElementById('teamSw');

@@ -1,0 +1,71 @@
+/* ---------------------------------------------------------------------------
+   Design tokens: one light palette and one set of font tokens for the whole
+   dashboard.
+
+   BEFORE THIS FILE there were four light palettes. players/teams/match ran a
+   neutral white (--bg:#f5f4f1), sequences/insights/search/glossary a warm paper
+   (#f4f2ea), index a third warm variant (#f4f2ec), and match.html carried a
+   SECOND light block of its own (#f4f2ec with a different --text3) plus a
+   runtime override that wrote --bg and --bg2 straight onto the root element.
+   That is why light mode felt like a different product on every page.
+
+   Linked BEFORE each page's inline <style>, like shell.css.
+
+   WHY html:not(.dark) AND NOT :root
+   The pages declare their light values on :root and their dark values on
+   html.dark. A light palette on :root here would lose to each page's own :root
+   (same specificity, later in source) and would also leak into dark mode for
+   any token a page's dark block happens not to redeclare. html:not(.dark)
+   (0,2,0) outranks a page :root (0,1,0) in light and cannot match at all in
+   dark, so a page's :root value survives as its dark value where it was already
+   serving as one. Dark mode is therefore untouched by this file.
+   A page that genuinely needs to differ in light overrides at html:not(.dark)
+   or higher.
+
+   FONT TOKENS are theme independent, so they sit at root scope and apply to
+   both modes. teams.html declared none of them while using them in ten font:
+   shorthands; an unresolved var() invalidates the whole declaration, so weight,
+   size and line-height were being dropped along with the family and those rules
+   rendered as inherited body type. They resolve now.
+--------------------------------------------------------------------------- */
+
+:root{
+  --f-display:'Archivo','Inter',system-ui,sans-serif;
+  --f-body:'Inter',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+
+  /* Spelling aliases. The pages were written with two other names for the same
+     two stacks; they alias here rather than being renamed across several
+     hundred rules, so there is still one source of truth for the values. */
+  --f-disp:var(--f-display);
+  --f-data:var(--f-mono);
+}
+
+html:not(.dark){
+  --bg:#faf8f3;          /* page canvas */
+  --bg2:#f4f1e9;         /* raised surface: header, cards */
+  --bg3:#eceadf;         /* recessed surface: pitch fill */
+  --surface:rgba(25,28,34,.03);
+  --surface2:#e8e4d8;
+  --border:#ded9cd;
+  --border2:#b9b2a1;
+  --text:#16191f;        /* primary */
+  --text2:#4a5262;       /* secondary, body */
+  --text3:#6b7280;       /* labels, legible at 10px */
+  --text4:#9aa0aa;       /* captions and decorative only */
+  --green:#0f7a52;
+  --red-bright:#c23b34;
+  --accent:#EF0107;
+
+  /* Same palette under the names the terminal-styled pages (index, insights,
+     search, glossary, sequences) use. Aliases, not new values, so those pages
+     share the canvas, surfaces, lines and text colours rather than keeping a
+     warm paper set of their own. */
+  --panel:var(--bg2);
+  --panel2:var(--bg3);
+  --line:var(--border);
+  --line2:var(--border2);
+  --dim:var(--text2);
+  --dim2:var(--text3);
+  --red:var(--red-bright);
+}

@@ -10,10 +10,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="theme.css">
 <style>
-:root{--accent:#C39E6D;--accent-dim:rgba(195,158,109,.10);--accent-glow:rgba(195,158,109,.22);
- --bg:#f5f4f1;--bg2:#fff;--bg3:#fafaf8;--surface:rgba(0,0,0,.025);--surface2:rgba(0,0,0,.05);
- --border:#e8e5e0;--border2:#d5d2cc;--text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
+/* Light canvas, surfaces, lines, text and the font tokens are in theme.css.
+   This page declared no font tokens at all, so ten font: shorthands that used
+   them were invalid and rendered as inherited body type; they resolve now.
+   Light accent is the shared brand accent, so the tints below match it. */
+:root{--accent-dim:rgba(239,1,7,.07);--accent-glow:rgba(239,1,7,.18);
  --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;
  --style-hi:#2563eb;--style-low:#d97706;--shadow:0 1px 3px rgba(0,0,0,.07)}
 html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
@@ -42,17 +45,16 @@ select option,.sel option{background:var(--bg2);color:var(--text)}
 .side.hide{display:none}
 .plist{flex:1;overflow-y:auto;padding:6px}
 /* Team rail. The name is the row; the match count is a footnote to it, so it
-   drops a type step, loses weight and sits on the muted colour. Both fonts are
-   literal: this page never declares --f-body or --f-data, so the old var()
-   shorthands were invalid and both spans fell back to inherited 16px, which is
-   why the count read as loud as the name. */
+   drops a type step, loses weight and sits on the muted colour. These were
+   written with literal font stacks while this page declared no font tokens;
+   theme.css declares them for every page now, so they are tokens again. */
 .pitem{padding:8px 11px;border-radius:6px;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .pitem:hover{background:var(--surface)}
 .pitem.on{background:var(--accent-dim);box-shadow:inset 2px 0 0 var(--accent)}
-.pitem-nm{font:600 13px/1.3 'Inter',system-ui,sans-serif;letter-spacing:-.01em;color:var(--text);
+.pitem-nm{font:600 13px/1.3 var(--f-body);letter-spacing:-.01em;color:var(--text);
   flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pitem.on .pitem-nm{font-weight:800}
-.pitem-meta{font:500 9.5px/1.3 'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+.pitem-meta{font:500 9.5px/1.3 var(--f-mono);
   color:var(--text3);font-variant-numeric:tabular-nums;letter-spacing:-.01em;flex-shrink:0}
 .pitem:hover .pitem-meta,.pitem.on .pitem-meta{color:var(--text2)}
 .main{flex:1;overflow-y:auto;padding:13px 18px}

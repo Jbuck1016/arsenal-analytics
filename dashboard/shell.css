@@ -13,9 +13,9 @@
    hdr-mark / hdr-t / hdr-s and it defines none of the custom properties below.
 
    Relies on the host page defining: --bg2, --bg3, --border, --border2,
-   --surface, --accent, --text, --text3, --shadow. The font properties
-   --f-display and --f-body are used with literal fallbacks, because teams.html
-   and sequences.html declare neither.
+   --surface, --accent, --text, --text3, --shadow. The font tokens --f-display,
+   --f-body and --f-mono come from theme.css, which every page linking this file
+   also links.
 --------------------------------------------------------------------------- */
 
 /* Header bar.
@@ -29,11 +29,11 @@
 
 /* Title block. match.html has no .hdr-title element; it uses .hdr-info.
 
-   The font custom properties carry literal fallbacks now: teams.html and
-   sequences.html never declare --f-display, so a bare var() made the whole font
-   shorthand invalid and the page title quietly inherited body type instead of
-   rendering at 800 15px. Pages that do declare it are unaffected. */
-.hdr-title{font:800 15px/1 var(--f-display,'Archivo','Inter',system-ui,sans-serif);letter-spacing:-.015em}
+   These carried literal font fallbacks for a while, because teams.html and
+   sequences.html declared no --f-display and a bare var() made the whole font
+   shorthand invalid. theme.css defines the font tokens for every page now, so
+   the token is the single source of truth again. */
+.hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
 .hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
 .hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
 
@@ -52,14 +52,14 @@
    desktop, because the old three-line wrap is what forced the header taller
    than its 52px. */
 .hdr-id .hdr-row .hdr-sub{margin-top:0;white-space:nowrap;color:var(--text3);
-  font:600 10.5px/1.35 var(--f-body,'Inter',system-ui,sans-serif);letter-spacing:.005em}
+  font:600 10.5px/1.35 var(--f-body);letter-spacing:.005em}
 
 /* Inside the chip the select drops its own box: one border around the group
    reads as one control, nested borders read as two. Hover and keyboard focus
    still give it an edge, and the native menu marker keeps it obviously a
    control. Border width is kept, only the colour goes, so hover shifts nothing. */
 .hdr-id .hdr-row .lgpick select{background:transparent;border-color:transparent;color:var(--text);
-  padding:1px 2px;font:700 10.5px/1.35 var(--f-body,'Inter',system-ui,sans-serif)}
+  padding:1px 2px;font:700 10.5px/1.35 var(--f-body)}
 .hdr-id .hdr-row .lgpick select:hover{background:var(--bg2);border-color:var(--border2)}
 
 /* Right-hand action cluster. match.html runs a wider gap, set inline. */

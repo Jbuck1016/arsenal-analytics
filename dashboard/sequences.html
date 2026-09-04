@@ -7,20 +7,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Light palette and font tokens are in theme.css, under both name sets. What
+   is left is this page's own accent tints, its amber family, and the hues
+   theme.css does not carry. The light accent itself is now the shared brand
+   accent, so the tints move with it. */
 :root{
-  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-  --f-disp:'Archivo','Inter',system-ui,sans-serif;
-  --f-body:'Inter',system-ui,sans-serif;
-  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
-  --line:#dcd6c8;--line2:#c9c2b0;
-  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
   --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
-  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
-  --accent:#9c6b1e;--accent-dim:rgba(156,107,30,.10);--accent-glow:rgba(156,107,30,.28);
-  --bg2:#efece2;--bg3:#e7e3d6;--surface:rgba(38,39,43,.035);--surface2:rgba(38,39,43,.07);
-  --border:#dcd6c8;--border2:#a9a18e;--text2:#4b4b47;--text3:#6c6a61;--shadow:0 1px 3px rgba(42,37,28,.12);--nb:#2f6aa8;
+  --blue:#2f6aa8;
+  --accent-dim:rgba(156,107,30,.10);--accent-glow:rgba(156,107,30,.28);
+  --shadow:0 1px 3px rgba(42,37,28,.12);--nb:#2f6aa8;
 }
+/* The one token this page has to hold back from theme.css. Here --accent is
+   data ink, not chrome: seqTrace() paints every pass arrow with it. Taking the
+   shared brand accent turned all 12 sequence plots red, and it would have read
+   as a signal rather than as the neutral trace colour it is. Canvas, surfaces,
+   lines and text still come from theme.css. */
+html:not(.dark){--accent:#9c6b1e}
 html.dark{
   --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
   --line:#272e3a;--line2:#3a4351;
