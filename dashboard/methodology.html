@@ -16,7 +16,10 @@
    carries this page's token names as aliases onto the shared palette. What is
    left is this page's own accent family and its blue. */
 :root{
-  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  /* Light amber a step darker, so the tier headings and badges clear AA on the
+     shared surfaces. #9c6b1e was 4.10:1 on a card; #8a5e1a is 5.03:1. Same hue
+     family, tints rebased, dark mode untouched. */
+  --amber:#8a5e1a;--amber-dim:rgba(138,94,26,.10);--amber-line:rgba(138,94,26,.32);
   --blue:#2f6aa8;
 }
 html.dark{

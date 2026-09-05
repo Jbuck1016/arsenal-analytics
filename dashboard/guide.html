@@ -15,7 +15,14 @@
    left is this page's own accent family, its blue, and the reading serif. */
 :root{
   --f-read:'Newsreader',Georgia,serif;
-  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
+  /* Light amber is a step darker than the hue this page shipped with:
+     #9c6b1e sat at 4.36:1 on the canvas and 3.84:1 on the recessed surface,
+     so the small headings and labels set in it were under AA on the page that
+     states the limitations. #8a5e1a clears 4.5:1 on every shared surface, and
+     at 36 degrees it is still the same amber, nowhere near the brand red.
+     The tints keep their alphas and move to the new base. Dark mode amber is
+     unchanged: it is already light on a dark ground. */
+  --amber:#8a5e1a;--amber-dim:rgba(138,94,26,.10);--amber-line:rgba(138,94,26,.32);
   --blue:#2f6aa8;
 }
 html.dark{

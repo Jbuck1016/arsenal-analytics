@@ -13,7 +13,10 @@
    carries this page's token names as aliases onto the shared palette, --f-disp
    included. What is left is this page's own accent family and its blue. */
 :root{
-  --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
+  /* Light amber a step darker, so the section headings and the inline key
+     figures clear AA on the shared surfaces. #9a6f2a was 3.97:1 on a card;
+     #8a5e1a is 5.03:1. Same hue family, tints rebased, dark mode untouched. */
+  --amber:#8a5e1a;--amber-dim:rgba(138,94,26,.09);--amber-line:rgba(138,94,26,.34);
   --blue:#2f6fd0;
 }
 html.dark{
