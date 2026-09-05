@@ -448,9 +448,14 @@ function renderLeagueMap(){
   });
   s+='<line x1="'+ML+'" y1="'+(H-MB)+'" x2="'+(W-MR)+'" y2="'+(H-MB)+'" stroke="var(--border2)"/>';
   s+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(H-MB)+'" stroke="var(--border2)"/>';
-  s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
-  s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--accent)" stroke-opacity="0.45" stroke-dasharray="5 4"/>';
-  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--accent)" font-size="9" font-weight="700" font-family="Inter" opacity="0.8">display median</text>';
+  /* The median guides are reference furniture, so they sit on the neutral label
+     colour rather than the brand accent. They used to share --accent with the
+     selected team's dot, which made a reference line and a selection read as the
+     same thing. They stay dashed, and stronger than the gridlines behind them,
+     so the hierarchy is grid, then reference, then data. */
+  s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--text3)" stroke-opacity="0.8" stroke-dasharray="5 4"/>';
+  s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--text3)" stroke-opacity="0.8" stroke-dasharray="5 4"/>';
+  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--text3)" font-size="9" font-weight="700" font-family="Inter">display median</text>';
   if(LM.x==='ppda'&&LM.y==='field_tilt'){
     const q=function(x,y,t,a){s+='<text x="'+x+'" y="'+y+'" text-anchor="'+a+'" fill="var(--text3)" font-size="9" font-weight="700" opacity=".72">'+t+'</text>'};
     q(ML+8,MT+14,'HIGH PRESS + TERRITORY','start'); q(W-MR-8,MT+14,'TERRITORY, LOWER PRESS','end');
@@ -661,8 +666,10 @@ function zoneShade(){
   const x1=MP.third==='def'?33.3:(MP.third==='mid'?66.7:(MP.third==='att'?100:100));
   const y0=MP.lane==='R'?0:(MP.lane==='C'?33.3:(MP.lane==='L'?66.7:0));
   const y1=MP.lane==='R'?33.3:(MP.lane==='C'?66.7:(MP.lane==='L'?100:100));
+  /* Neutral ink: this marks which zone the filter is on, it does not encode a
+     value, and it is not selection state either. */
   return '<rect x="'+PX(x0)+'" y="'+PY0(y0,y1)+'" width="'+PX(x1-x0)+'" height="'+PYH(y0,y1)+
-         '" fill="var(--accent)" fill-opacity="0.055"/>';
+         '" fill="var(--text3)" fill-opacity="0.09"/>';
 }
 function zoneNote(){
   if(!MP.third&&!MP.lane)return'';
@@ -945,8 +952,10 @@ function laneViz(t){
   let inner='';
   bands.forEach(function(b){
     const t2=b.v/mx;
+    /* Share of involvement is a magnitude, so it reads as one ink getting
+       stronger, not as the brand colour. Same ramp, neutral hue. */
     inner+='<rect x="'+PX(50)+'" y="'+PY0(b.y0,b.y1)+'" width="'+PX(50)+'" height="'+PYH(b.y0,b.y1)+
-           '" fill="var(--accent)" fill-opacity="'+(0.06+0.42*t2).toFixed(3)+'"/>';
+           '" fill="var(--text2)" fill-opacity="'+(0.06+0.42*t2).toFixed(3)+'"/>';
     inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+1.2)+'" fill="var(--text)" font-size="4.6" font-weight="800" '+
            'text-anchor="middle" font-family="JetBrains Mono,monospace">'+b.v.toFixed(1)+'%</text>';
     inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+6.2)+'" fill="var(--text3)" font-size="2.6" font-weight="700" '+
@@ -957,7 +966,11 @@ function laneViz(t){
     'Share of involvement in the <b>final third only</b>, split by channel. This team works '+domi+'. '+
     'Attack runs left to right, so the top band is their right and the bottom band their left.',
     inner,
-    '<span><i style="background:var(--accent)"></i>Darker band = more of their final-third play</span>');
+    /* The swatch is the top of the ramp: same ink, same alpha as a full band,
+       over the same surface. "Stronger" rather than "darker" because a neutral
+       ink over the dark theme's surface gets lighter as it gets denser. */
+    '<span><i style="background:color-mix(in srgb,var(--text2) 48%,transparent)"></i>'+
+    'Stronger band = more of their final-third play</span>');
 }
 /* ---------- RANKINGS ---------- */
 function renderRankings(){
