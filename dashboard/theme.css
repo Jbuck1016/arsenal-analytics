@@ -57,10 +57,16 @@ html:not(.dark){
   --red-bright:#c23b34;
   --accent:#EF0107;
 
-  /* Same palette under the names the terminal-styled pages (index, insights,
-     search, glossary, sequences) use. Aliases, not new values, so those pages
+  /* Same palette under the names the terminal-styled pages use: index,
+     insights, search, glossary, sequences, and the three gated documents
+     guide, methodology and validation. Aliases, not new values, so those pages
      share the canvas, surfaces, lines and text colours rather than keeping a
-     warm paper set of their own. */
+     warm paper set of their own. The three gated pages needed no new aliases:
+     their vocabulary is the same one this block already covered, and --f-disp
+     is aliased at root scope above.
+     What stays on those pages is what this file does not carry: --amber and its
+     tints, which are their own accent and deliberately not the brand red, plus
+     --blue, and guide.html's reading serif --f-read. */
   --panel:var(--bg2);
   --panel2:var(--bg3);
   --line:var(--border);

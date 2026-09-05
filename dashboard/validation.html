@@ -7,12 +7,14 @@
 <title>Metrics Validation — MLS 2026 Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Canvas, surfaces, lines, text, green and red come from theme.css, which
+   carries this page's token names as aliases onto the shared palette, --f-disp
+   included. What is left is this page's own accent family and its blue. */
 :root{
-  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;--f-disp:'Archivo','Inter',system-ui,sans-serif;--f-body:'Inter',system-ui,sans-serif;
-  --bg:#f4f2ec;--panel:#fbfaf6;--panel2:#efece4;--line:#e4e0d6;--line2:#d3ccbf;
-  --text:#191c22;--dim:#5a6270;--dim2:#8b93a0;
-  --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);--green:#12855a;--red:#cc4038;--blue:#2f6fd0;
+  --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
+  --blue:#2f6fd0;
 }
 html.dark{
   --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;--line:#272e3a;--line2:#3a4351;

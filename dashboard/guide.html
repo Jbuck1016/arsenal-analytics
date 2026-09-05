@@ -8,16 +8,15 @@
 <script>
 (function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
 </script>
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Canvas, surfaces, lines, text, green and red come from theme.css, which
+   carries this page's token names as aliases onto the shared palette. What is
+   left is this page's own accent family, its blue, and the reading serif. */
 :root{
-  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-  --f-body:'Inter',system-ui,sans-serif;
   --f-read:'Newsreader',Georgia,serif;
-  --bg:#f4f2ea;--panel:#efece2;--panel2:#e7e3d6;
-  --line:#dcd6c8;--line2:#c9c2b0;
-  --text:#26272b;--dim:#5f5e57;--dim2:#8c8a7d;
   --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
-  --green:#2a8560;--red:#c0392b;--blue:#2f6aa8;
+  --blue:#2f6aa8;
 }
 html.dark{
   --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
