@@ -772,6 +772,14 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
 </div>
 
 <script>
+/* The match-report edge function is not deployed on the Supabase project this
+   page talks to. The endpoint answers 404, so the report panel could only ever
+   render "Unable to generate report". A disabled button would still advertise a
+   feature that does not exist, so the control is not rendered at all.
+   Nothing else is removed: callReportAPI, collectMatchReportStats, the system
+   prompt and the whole report panel are untouched and ready. Set this to true
+   once the function is live and the button comes back on its own. */
+const REPORT_ENABLED=false;
 let TEAMS={};
 /* Teams are built from whatever is in the database rather than hardcoded, so any
    side in the league can be analysed. Colour is derived deterministically from the
@@ -907,7 +915,7 @@ async function loadMatch(gid){const area=document.getElementById('pitchArea');ar
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
-  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';document.getElementById('btnGenReport').style.display='block';}
+  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';const bgr=document.getElementById('btnGenReport');if(bgr)bgr.style.display='block';}
 
 function getFiltered(vizType){
   const vt=VT();let evts=S.events.filter(e=>e.team===vt);
@@ -3212,7 +3220,7 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();await openDeepLink();}
+async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;const bGen=document.getElementById('btnGenReport');if(REPORT_ENABLED){bGen.onclick=generateMatchReport;}else if(bGen){bGen.remove();}document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();await openDeepLink();}
 
 /* Arriving from the command bar with ?game=<id>: pick the right team so the
    fixture is in the list, then open it. */
