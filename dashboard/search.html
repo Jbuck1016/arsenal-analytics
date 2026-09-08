@@ -64,11 +64,24 @@ a{color:inherit;text-decoration:none}
 .pn.link:hover{color:var(--amber);border-bottom-color:var(--amber-line)}
 .pill{display:inline-block;font:600 9px/1 var(--f-mono);border:1px solid var(--line2);
   border-radius:3px;padding:4px 7px;margin-right:4px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
-.ans .close{margin-left:auto;cursor:pointer;color:var(--dim);font:600 10px var(--f-mono)}
+/* Clearing the answer is an action, so the control is a button. Reset back to
+   the plain "clear" text it was as a span. */
+.ans .close{margin-left:auto;cursor:pointer;color:var(--dim);font:600 10px var(--f-mono);
+  background:none;border:0;padding:0;margin-top:0;margin-bottom:0;margin-right:0}
 .ans .close:hover{color:var(--amber)}
+.ans .close:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .ex{font:500 10.5px/1.7 var(--f-mono);color:var(--dim2);margin:-6px 0 14px}
-.ex span{cursor:pointer;border-bottom:1px dotted var(--line2)}
-.ex span:hover{color:var(--amber)}
+/* Each example loads itself into the box and runs, so each is a button. A
+   button is an atomic inline box, and inheriting the row's 1.7 line-height
+   would make it taller than the line it sits on and push the row 1px per line.
+   line-height:normal puts the dotted underline back on the same baseline the
+   span had. */
+.ex button{cursor:pointer;border-bottom:1px dotted var(--line2);
+  background:none;border-top:0;border-left:0;border-right:0;padding:0;margin:0;
+  font-family:inherit;font-size:inherit;font-weight:inherit;line-height:normal;
+  color:inherit;text-align:left;vertical-align:baseline;max-width:100%;white-space:normal}
+.ex button:hover{color:var(--amber)}
+.ex button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .layout{display:grid;grid-template-columns:270px 1fr;gap:14px;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr}}
 
@@ -288,14 +301,14 @@ function renderAsk(d){
   const host=document.getElementById('askOut');
   if(d.error){
     host.innerHTML='<div class="ans"><div class="ans-h"><span class="ans-t">No answer</span>'
-      +'<span class="close" onclick="clearAsk()">clear ✕</span></div>'
+      +'<button type="button" class="close" aria-label="Clear this answer and go back to the filters" onclick="clearAsk()">clear ✕</button></div>'
       +'<div class="parse">'+esc(d.error)+'</div></div>';
     return;
   }
   const rows=d.results||[];
   let h='<div class="ans"><div class="ans-h"><span class="ans-t">'
     +(d.intent==='similar'?'Similarity':'Ranking')+'</span>'
-    +'<span class="close" onclick="clearAsk()">clear ✕</span></div>'
+    +'<button type="button" class="close" aria-label="Clear this answer and go back to the filters" onclick="clearAsk()">clear ✕</button></div>'
     +'<div class="parse">'+parseLine(d)+'</div>'
     +(d.explain?'<div class="how">'+esc(d.explain)+'</div>':'');
   if(!rows.length){ h+='<div class="empty">nothing matched that</div></div>'; host.innerHTML=h; return; }
@@ -565,8 +578,9 @@ async function init(){
   });
   document.getElementById('askOut').insertAdjacentHTML('beforebegin',
     '<div class="ex" id="exRow">try: '+EXAMPLES.map(function(x){
-      return '<span onclick="document.getElementById(\'askInput\').value=this.textContent;runAsk()">'
-        +esc(x)+'</span>'}).join(' · ')+'</div>');
+      return '<button type="button" aria-label="Run the example search: '+esc(x)+'"'
+        +' onclick="document.getElementById(\'askInput\').value=this.textContent;runAsk()">'
+        +esc(x)+'</button>'}).join(' · ')+'</div>');
   try{
     ROWS=await sbAll('player_search',{select:'*'});
     PCT=buildPct(ROWS);

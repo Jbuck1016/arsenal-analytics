@@ -79,9 +79,15 @@ def main() -> int:
     require("function shotOutcomeLegend(live,off)" in players and
             "outcomeKey:true" in players and "cfg.outcomeKey?shotOutcomeLegend" in players,
             "players.html: shot outcome legend demonstrates each plotted glyph")
-    require("role=\"button\" tabindex=\"0\" aria-label=\"Plot '+esc(d.label)" in players and
-            "event.preventDefault();drill(" in players and
-            "event.preventDefault();drillFor(" in players,
+    # The drill-downs were a div carrying role="button" tabindex="0" and its own
+    # Enter/Space onkeydown. They are real buttons now, so Enter and Space come
+    # from the element rather than from a hand-rolled handler, and each says
+    # which dialog it opens and whether that dialog is open.
+    require("<button type=\"button\" class=\"row drill\"" in players and
+            "<button type=\"button\" class=\"val-link\"" in players and
+            "aria-label=\"Plot '+esc(d.label)" in players and
+            "aria-haspopup=\"dialog\" aria-controls=\"drillWrap\" aria-expanded=\"false\"" in players and
+            "role=\"button\" tabindex=\"0\"" not in players,
             "players.html: metric pitch drill-downs are keyboard operable")
     require("role=\"dialog\" aria-modal=\"true\"" in players and
             "aria-label=\"Close pitch evidence\"" in players and

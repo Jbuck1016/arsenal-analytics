@@ -70,9 +70,14 @@ select option{background:var(--bg2);color:var(--text)}
 .seg button{background:none;border:none;color:var(--text3);font:600 11px/1 Inter;padding:7px 13px;border-radius:5px;cursor:pointer}
 .seg button.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow)}
 .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
-.scard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 10px 7px;cursor:pointer;box-shadow:var(--shadow)}
+/* Every card is a control: one picks a sequence to compare against, the other
+   overlays a comparison on the picked one. Real buttons, reset so the card is
+   drawn exactly as it was as a div. */
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 10px 7px;cursor:pointer;box-shadow:var(--shadow);
+  display:block;width:100%;font:inherit;color:inherit;text-align:left}
 .scard:hover{border-color:var(--accent-glow);background:var(--surface)}
 .scard.pick{border-left:3px solid var(--accent)}
+.scard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .scard-t{font:700 12px/1.15 Inter;color:var(--accent);letter-spacing:-.01em}
 .scard-m{font:500 9.5px/1.35 Inter;color:var(--text3);margin:2px 0 6px}
 .scard-s{display:flex;justify-content:space-between;gap:6px;margin-top:5px;font:500 9.5px/1 Inter;color:var(--text3)}
@@ -375,11 +380,20 @@ function cardHtml(s,opts){
   const shot=s.ended_shot;
   const inner=seqTrace(s.path,opts.color||'var(--accent)',shot,0.5,0.85);
   const dist=(s.dist!=null)?'<span>dist <b>'+(+s.dist).toFixed(2)+'</b></span>':'<span>'+(s.ended_goal?'goal':(shot?'shot':'open play'))+'</span>';
-  return '<div class="scard'+(opts.pick?' pick':'')+'" onclick="'+opts.onclick+'">'+
+  /* The card shows a team, a match, a minute and a pitch trace. Read out, that
+     is a pile of numbers with no verb, so the label says what activating it
+     does and which sequence it is. */
+  const ml=matchLabel(s.game_id,s.team);
+  const who=esc(tname(s.team))+(ml?' versus '+ml:'')+
+    (s.start_min!=null?', minute '+s.start_min:'');
+  return '<button type="button" class="scard'+(opts.pick?' pick':'')+'"'+
+    (opts.pick?' aria-current="true"':'')+
+    ' aria-label="'+esc(opts.action||'Open')+' the '+who+' sequence"'+
+    ' onclick="'+opts.onclick+'">'+
     '<div class="scard-t">'+esc(tname(s.team))+'</div>'+
     '<div class="scard-m">'+matchLabel(s.game_id,s.team)+(s.start_min!=null?' \u00B7 '+s.start_min+"'":'')+'</div>'+
     pitchSVG(inner)+
-    '<div class="scard-s"><span>xT <b>'+(+s.xt_sum).toFixed(3)+'</b></span><span>'+s.n_pass+' passes</span>'+dist+'</div></div>';
+    '<div class="scard-s"><span>xT <b>'+(+s.xt_sum).toFixed(3)+'</b></span><span>'+s.n_pass+' passes</span>'+dist+'</div></button>';
 }
 
 function renderBrowse(){
@@ -390,7 +404,7 @@ function renderBrowse(){
     '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">ranked by xT \u00B7 click one to find its nearest matches</span></div>'+
     '<div class="sgrid">';
   CANDS.forEach(function(s,i){
-    h+=cardHtml(s,{onclick:'choosePick('+i+')'});
+    h+=cardHtml(s,{action:'Find sequences similar to',onclick:'choosePick('+i+')'});
   });
   h+='</div></div><div class="foot">Each card is one open-play possession, drawn start (hollow ring) to finish, attacking left to right. '+
      'A star marks the shot. Dotted segments are movement the feed does not record as an event, such as a carry or a flick. Pick one and the tool finds the most similar sequences elsewhere in the league.</div>';
@@ -438,7 +452,7 @@ function renderPick(){
       '<span>\u2605 ended in a shot</span></div></div></div>';
   h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span>'+
      '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">across other matches &amp; teams</span></div><div class="sgrid">';
-  NB.forEach(function(s,i){h+=cardHtml(s,{color:'var(--nb)',onclick:'openOverlay('+i+')'})});
+  NB.forEach(function(s,i){h+=cardHtml(s,{action:'Overlay',color:'var(--nb)',onclick:'openOverlay('+i+')'})});
   h+='</div></div>';
   main.innerHTML=h;
 }
@@ -465,7 +479,7 @@ function openOverlay(i){
       ovStat('Passes',PICK.n_pass+' / '+OVERLAY.n_pass)+ovStat('Distance',(+OVERLAY.dist).toFixed(2))+
     '</div></div>'+
     '<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span></div><div class="sgrid">';
-  NB.forEach(function(s,i){h+=cardHtml(s,{color:'var(--nb)',pick:(s.seq_uid===OVERLAY.seq_uid),onclick:'openOverlay('+i+')'})});
+  NB.forEach(function(s,i){h+=cardHtml(s,{action:'Overlay',color:'var(--nb)',pick:(s.seq_uid===OVERLAY.seq_uid),onclick:'openOverlay('+i+')'})});
   h+='</div></div>';
   main.innerHTML=h;
   window.scrollTo(0,0);

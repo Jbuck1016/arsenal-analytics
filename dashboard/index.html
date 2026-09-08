@@ -59,9 +59,14 @@ a{color:inherit;text-decoration:none}
 .res.on{display:block}
 .rgroup{font:600 9px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);
   padding:9px 13px 6px;border-bottom:1px solid var(--line)}
-.ritem{display:flex;align-items:center;gap:11px;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--line)}
+/* A result goes to another page, so it is a real link: it carries the URL, it
+   opens in a new tab on middle click, and Enter activates it. The reset keeps
+   the row looking exactly as it did as a div. */
+.ritem{display:flex;align-items:center;gap:11px;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--line);
+  color:inherit;text-decoration:none}
 .ritem:last-child{border-bottom:none}
 .ritem.sel,.ritem:hover{background:var(--amber-dim)}
+.ritem:focus-visible{outline:2px solid var(--amber);outline-offset:-2px;background:var(--amber-dim)}
 .ritem-k{font:600 9px/1 var(--f-mono);color:var(--amber);border:1px solid var(--amber-line);
   padding:3px 5px;border-radius:2px;min-width:34px;text-align:center}
 .ritem-n{font:600 12.5px/1.2 var(--f-body);flex:1}
@@ -391,10 +396,17 @@ function search(v){
   if(m.length){h+='<div class="rgroup">matches</div>'+m.map(function(x,i){return row(x,p.length+t.length+i)}).join('')}
   resEl.innerHTML=h;resEl.classList.add('on');
 }
+/* The tag on the left of a result is a role pool for players, and TEAM or MTCH
+   for the other two groups. Read out as-is, "CB Miles Robinson" says nothing
+   about where the row goes, so the label spells the tag out. */
+const KIND={TEAM:'team page for',MTCH:'match report for',
+  GK:'goalkeeper',CB:'centre-back',FB:'full-back',CM:'central midfielder',
+  AM:'attacking midfielder',W:'wide forward',ST:'striker'};
 function row(x,i){
-  return '<div class="ritem'+(i===SEL?' sel':'')+'" data-i="'+i+'" onclick="go('+i+')">'+
+  return '<a class="ritem'+(i===SEL?' sel':'')+'" data-i="'+i+'" href="'+esc(x.href)+'"'+
+    ' aria-label="Open '+esc(KIND[x.k]||'player')+' '+esc(x.n)+'">'+
     '<span class="ritem-k">'+esc(x.k)+'</span><span class="ritem-n">'+esc(x.n)+'</span>'+
-    '<span class="ritem-m">'+esc(x.m)+'</span></div>';
+    '<span class="ritem-m">'+esc(x.m)+'</span></a>';
 }
 function go(i){if(HITS[i])location.href=HITS[i].href}
 function moveSel(d){

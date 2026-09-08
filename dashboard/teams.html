@@ -48,9 +48,13 @@ select option,.sel option{background:var(--bg2);color:var(--text)}
    drops a type step, loses weight and sits on the muted colour. These were
    written with literal font stacks while this page declared no font tokens;
    theme.css declares them for every page now, so they are tokens again. */
-.pitem{padding:8px 11px;border-radius:6px;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+/* Picking a team from the sidebar is an action on this page, so it is a real
+   button, reset back to how the row looked as a div. */
+.pitem{padding:8px 11px;border-radius:6px;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left}
 .pitem:hover{background:var(--surface)}
 .pitem.on{background:var(--accent-dim);box-shadow:inset 2px 0 0 var(--accent)}
+.pitem:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .pitem-nm{font:600 13px/1.3 var(--f-body);letter-spacing:-.01em;color:var(--text);
   flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pitem.on .pitem-nm{font-weight:800}
@@ -110,6 +114,14 @@ table{width:100%;border-collapse:collapse;font:500 11px/1.4 'Inter'}
 th{text-align:left;font:700 9px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--text3);padding:8px 9px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);cursor:pointer;white-space:nowrap}
 th:hover{color:var(--text)}
 td{padding:7px 9px;border-bottom:1px solid var(--border)}
+/* A team name in the rankings table opens that team's profile, so it is a real
+   button. The cell gives up its padding to the button so the button fills the
+   whole cell: the click target stays the size it was when the handler sat on
+   the td, and the text lands in the same place. */
+.tname-cell{padding:0}
+.tname-go{display:block;width:100%;border:0;background:none;padding:7px 9px;font:inherit;color:inherit;
+  font-weight:700;text-align:left;cursor:pointer}
+.tname-go:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 tr:hover td{background:var(--surface)}
 .num{text-align:right;font-family:var(--f-data);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .legend{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
@@ -327,14 +339,20 @@ function renderList(){
   var rows=scopedTeams().filter(function(t){return !q||tname(t.team).toLowerCase().indexOf(q)>=0}).sort(function(a,b){
     return tname(a.team).localeCompare(tname(b.team))});
   document.getElementById('tlist').innerHTML=rows.length?rows.map(function(t){
-    return '<div class="pitem'+(SEL===t.team?' on':'')+'" onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
+    return '<button type="button" class="pitem'+(SEL===t.team?' on':'')+'"'+
+      (SEL===t.team?' aria-current="true"':'')+
+      ' aria-label="Show '+esc(tname(t.team))+' profile"'+
+      ' onclick="pick(\''+esc(t.team).replace(/'/g,"\\'")+'\')">'+
       '<span class="pitem-nm">'+esc(tname(t.team))+'</span>'+
-      '<span class="pitem-meta">'+mcount(t.matches)+'</span></div>'}).join(''):'<div class="empty" style="height:90px">No teams found</div>';
+      '<span class="pitem-meta">'+mcount(t.matches)+'</span></button>'}).join(''):'<div class="empty" style="height:90px">No teams found</div>';
 }
 /* One match is not "1 matches". Both forms of the count read from here. */
 function mcount(n){n=+n||0;return n+' match'+(n===1?'':'es')}
 function acrossMatches(n){n=+n||0;return n===1?'across the single match':('across all '+n+' matches')}
 function pick(t){SEL=t;renderList();draw()}
+/* Select a team and land on its Profile tab. The rankings table uses this; it
+   is the same four calls that were inlined on the cell. */
+function openProfile(t){SEL=t;TAB='Profile';renderTabs();renderList();draw()}
 
 async function draw(){
   const main=document.getElementById('main');
@@ -1005,8 +1023,8 @@ function renderRankings(){
   rows.forEach(function(r,i){
     tb+='<tr'+(r.team===SEL?' style="background:var(--accent-dim)"':'')+'>'+
       '<td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
-      '<td style="font-weight:700;cursor:pointer" onclick="SEL=\''+esc(r.team).replace(/'/g,"\\'")+
-      '\';TAB=\'Profile\';renderTabs();renderList();draw()">'+esc(tname(r.team))+'</td>'+
+      '<td class="tname-cell"><button type="button" class="tname-go" aria-label="Show '+esc(tname(r.team))+' profile"'+
+      ' onclick="openProfile(\''+esc(r.team).replace(/'/g,"\\'")+'\')">'+esc(tname(r.team))+'</button></td>'+
       '<td class="num" style="font-weight:700">'+fmt(r.value,d.unit)+'</td>'+
       '<td class="num" style="color:'+tier(r.pct).c+';font-weight:700">'+(r.pct==null?'\u2014':r.pct)+'</td></tr>';
   });
