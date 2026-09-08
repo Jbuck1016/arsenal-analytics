@@ -589,7 +589,14 @@ function renderList(){
         (+(p.starts||0))+' start'+(+(p.starts||0)===1?'':'s')+'</div></div>'+
       '<div class="badge">'+esc(p.pool||'SUB')+'</div></button>'}).join('');
 }
-let PACT=null,PCAR=null,PREC=null;
+/* PMCACHE holds the selected player's percentile rows, keyed by metric. It sits
+   with PACT and PCAR because pick() fills all three together and drillFor()
+   saves and restores all three around a drill-down for another player.
+   It is declared rather than left to the implicit global that pick() used to
+   create, so that reading it before any player has been picked returns an empty
+   object instead of throwing: on the Rank tab, clicking a value called
+   drillFor() and threw ReferenceError before it could load anything. */
+let PACT=null,PCAR=null,PREC=null,PMCACHE={};
 async function pick(pid){
   if(TAB==='Chain roles'){SEL=pid;renderTabs();document.getElementById('side').classList.remove('hide');renderList();return renderChainRoles(pid);}
   SEL=pid;TAB='Player';renderTabs();
