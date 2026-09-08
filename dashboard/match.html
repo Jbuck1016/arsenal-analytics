@@ -824,7 +824,7 @@ async function loadTeams(){
   }catch(e){ names=['Los Angeles FC']; }
   if(!names.length)names=['Los Angeles FC'];
   TEAMS={};
-  TEAMS['__ALL__']={name:'__ALL__',display:'\u2014 All teams \u2014',color:'#8b95b5',
+  TEAMS['__ALL__']={name:'__ALL__',display:'\u00B7 All teams \u00B7',color:'#8b95b5',
     colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
     comps:LEAGUES};
   names.forEach(n=>{
@@ -872,7 +872,7 @@ const PM=20; // pitch margin - MUST match drawPitch
 function setupHiDpiCanvas(can,logicalW,logicalH){const dpr=window.devicePixelRatio||1;can.width=Math.round(logicalW*dpr);can.height=Math.round(logicalH*dpr);Object.defineProperty(can,'width',{get:()=>logicalW,set:()=>{},configurable:true});Object.defineProperty(can,'height',{get:()=>logicalH,set:()=>{},configurable:true});const ctx=can.getContext('2d');ctx.scale(dpr,dpr);return ctx;}
 /* Dynamic panel title: player scope wins for individual views; team-level
    concepts keep the team subject. The same subject is used by exports. */
-function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;const subject=(S.selPlayer&&!TEAM_VIZ.has(viz))?S.selPlayer:team;if(!S.selMatch)return subject+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return subject+' '+vizLabel;const isTeamHome=m.home_team===team;const oppName=isTeamHome?m.away_team:m.home_team;const ha=isTeamHome?'H':'A';return subject+' '+vizLabel+' \u2014 vs '+oppName+' \u00B7 '+ha;}
+function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;const subject=(S.selPlayer&&!TEAM_VIZ.has(viz))?S.selPlayer:team;if(!S.selMatch)return subject+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return subject+' '+vizLabel;const isTeamHome=m.home_team===team;const oppName=isTeamHome?m.away_team:m.home_team;const ha=isTeamHome?'H':'A';return subject+' '+vizLabel+' \u00B7 vs '+oppName+' \u00B7 '+ha;}
 
 let S={team:'LAFC',matches:[],events:[],sequences:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['progressive'],plotSlots:2,shapeMode:'shift',periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
 function T(){return TEAMS[S.team]||TEAMS.LAFC}
@@ -1208,7 +1208,7 @@ function pressureColor(v,a){let r,g,b;if(v<0.45){const t=v/0.45;r=Math.round(240
 function renderFormation(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const vt=VT();const pos={},cnt={};const startersOnly=evts.filter(e=>S.starters.has(e.player));(startersOnly.length?startersOnly:evts).forEach(e=>{if(e.x==null||e.y==null||e.team!==vt)return;if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p];});const players=Object.entries(pos).sort((a,b)=>cnt[b[0]]-cnt[a[0]]).slice(0,11);if(!players.length){titleEl.textContent='Average-position formation estimate (no data)';legendEl.innerHTML='';return;}// Identify GK as player with lowest avg x
   const gkEntry=[...players].sort((a,b)=>a[1].x-b[1].x)[0];const outfield=players.filter(p=>p[0]!==gkEntry[0]);// Cluster outfield players into lines by avg x
   const outSorted=[...outfield].sort((a,b)=>a[1].x-b[1].x);// Simple k-means style: try to split into lines
-  const xs=outSorted.map(p=>p[1].x);const xMin=Math.min(...xs),xMax=Math.max(...xs);const lineBands=[];// Greedy split — if 10 outfield, decide line counts by gaps
+  const xs=outSorted.map(p=>p[1].x);const xMin=Math.min(...xs),xMax=Math.max(...xs);const lineBands=[];// Greedy split, if 10 outfield, decide line counts by gaps
   const gaps=[];for(let i=1;i<xs.length;i++)gaps.push({idx:i,gap:xs[i]-xs[i-1]});gaps.sort((a,b)=>b.gap-a.gap);const splitPoints=gaps.slice(0,3).map(g=>g.idx).sort((a,b)=>a-b);const lines=[];let prev=0;splitPoints.forEach(sp=>{lines.push(outSorted.slice(prev,sp));prev=sp;});lines.push(outSorted.slice(prev));const formString=lines.map(l=>l.length).join('-');// Draw lines (position-line connectors)
   const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444'};const inferCol=(avgX)=>avgX<25?'#d4a017':avgX<45?'#2563eb':avgX<68?'#16a34a':'#ef4444';
   ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;lines.forEach(line=>{if(line.length<2)return;const sorted=[...line].sort((a,b)=>a[1].y-b[1].y);for(let i=0;i<sorted.length-1;i++){const a=toXY(sorted[i][1].x,sorted[i][1].y,c),b=toXY(sorted[i+1][1].x,sorted[i+1][1].y,c);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();}});
@@ -1224,7 +1224,7 @@ function renderDominance(ctx,c,allEvts,titleEl,legendEl){drawPitch(ctx,c);if(S.s
     ctx.fillStyle='rgba(0,0,0,0.55)';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(Math.round(aShare*100)+'%',x+zw/2,y+zh/2+3);}
   // Gridlines
   ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=0.5;for(let i=1;i<cols;i++){ctx.beginPath();ctx.moveTo(PM+i*zw,PM);ctx.lineTo(PM+i*zw,PM+ph);ctx.stroke();}for(let i=1;i<rows;i++){ctx.beginPath();ctx.moveTo(PM,PM+i*zh);ctx.lineTo(PM+pw,PM+i*zh);ctx.stroke();}
-  titleEl.textContent='Zone Dominance — '+vt+(oppName?' vs '+oppName:'');legendEl.innerHTML='';}
+  titleEl.textContent='Zone Dominance · '+vt+(oppName?' vs '+oppName:'');legendEl.innerHTML='';}
 
 /* Pass Combos */
 function renderCombos(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const sorted=[...evts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);const combos={};for(let i=0;i<sorted.length-1;i++){const p=sorted[i];if(p.type!=='Pass'||p.outcome_type!=='Successful')continue;for(let j=i+1;j<Math.min(i+3,sorted.length);j++){const n=sorted[j];if(n.team!==vt||n.player===p.player)continue;const key=p.player+'|||'+n.player;if(!combos[key])combos[key]={passer:p.player,receiver:n.player,count:0,ox:0,oy:0,dx:0,dy:0};combos[key].count++;combos[key].ox+=p.x;combos[key].oy+=p.y;combos[key].dx+=(p.end_x!=null?p.end_x:n.x);combos[key].dy+=(p.end_y!=null?p.end_y:n.y);break;}}
@@ -1348,7 +1348,7 @@ function positionDlMenu(btn, menu) {
   // Match Analysis panels live inside .pitch-area whose .panel descendants
   // have an animation that creates a containing block trapping position:fixed.
   // Move the menu to document.body so position:fixed resolves to the viewport.
-  // Player Stats export buttons are NOT inside .pitch-area — leave those untouched.
+  // Player Stats export buttons are NOT inside .pitch-area, leave those untouched.
   if (btn.closest('.pitch-area') && menu.parentNode !== document.body) {
     if (!menu.dataset.origParent) {
       menu.dataset.origParent = '1';
@@ -1398,7 +1398,7 @@ function buildPanel(area,viz,sz,teamOverride){
   btns.append(jdpBtn,dlWrap);head.append(titleWrap,btns);
   const body=document.createElement('div');body.className='panel-body';
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:0;flex:1';
-  if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
+  if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data. This view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
   const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;can.dataset.team=panelTeam;can.dataset.teamColor=panelColor;if(S.selPlayer&&!TEAM_VIZ.has(viz))can.dataset.subject=S.selPlayer;can.setAttribute('role','img');canWrap.appendChild(can);
   const canvasSz=viz==='shots'?{w:Math.max(420,Math.round(sz.w*1.45)),h:Math.max(330,Math.round(sz.w*0.92))}:sz;
@@ -1572,8 +1572,8 @@ function renderMomentumTab(){
   html+='<div class="mom-explain'+(expanded?' open':'')+'" id="momExplain"><div class="mom-explain-hdr"><span class="concept-icon">\u24D8</span><span class="mom-explain-title">How the attacking-event index is calculated</span><button class="mom-explain-toggle" id="momExplainToggle">'+(expanded?'\u2212':'+')+'</button></div><div class="mom-explain-body">The same simple score is applied independently to both teams: progressive pass (+1), shot (+2), and goal (+5). The lines accumulate attacking events over the match. This is a descriptive event count, not possession, win probability, or a validated measure of momentum or control. Team color shows '+esc(tn)+'; grey shows '+esc(oppName)+'.</div></div>';
   html+='<div class="mom-chart-wrap">'+svg+'<div class="mom-legend"><span><span class="mom-legend-dot" style="background:'+t.color+'"></span>'+esc(tn)+'</span><span><span class="mom-legend-dot" style="background:#6b7280"></span>'+esc(oppName)+'</span><span style="color:var(--text3)">\u2605 goals</span></div><div class="mom-tooltip" id="momTip"></div></div>';
   html+='<div class="mom-bottom">';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(oppName)+' touch heatmap" class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u00B7 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u00B7 Touch Heatmap</div><canvas role="img" aria-label="'+esc(oppName)+' touch heatmap" class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
   html+='<div class="mom-moments"><div class="mom-moments-title">Key Moments</div>';
   posMoments.forEach(mm=>{html+='<div class="mom-moment-row pos"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">+'+mm.d+'</span></div>';});
   negMoments.forEach(mm=>{html+='<div class="mom-moment-row neg"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">'+mm.d+'</span></div>';});
@@ -1802,7 +1802,7 @@ function renderSeasonTrend(colKey){
     +dots
     +xTicks
     +'</svg>';
-  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u2014 '+esc(colDef.label)+' by match</div><button class="season-trend-close" id="stClose" aria-label="Close trend chart">\u2715</button></div>'+svg+
+  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u00B7 '+esc(colDef.label)+' by match</div><button class="season-trend-close" id="stClose" aria-label="Close trend chart">\u2715</button></div>'+svg+
     '<div class="trend-legend"><span><i class="trend-line"></i>Match value</span><span><i class="trend-line roll"></i>Rolling 5-match average</span><span><i class="trend-line avg"></i>Selected-match average</span><span>Dots: <b style="color:#16a34a">win</b> \u00B7 <b style="color:#ca8a04">draw</b> \u00B7 <b style="color:#dc2626">loss</b></span></div><div class="season-trend-tip" id="stTip"></div></div>';
   document.getElementById('stClose').onclick=()=>{S.seasonTrend=null;wrap.innerHTML='';};
   const tip=document.getElementById('stTip');const trendEl=wrap.querySelector('.season-trend');
@@ -1833,7 +1833,7 @@ function renderSeasonTable(){
       '<span class="tot-rank-of">of '+rk.of_teams+'</span></div>':'';
     return'<div class="tot-card"><div class="tot-val">'+avg+'</div><div class="tot-lbl">'+c.label+' / game</div>'+
       '<div class="tot-sub">'+sum+' total</div>'+rankHtml+'</div>';}).join('');
-  document.getElementById('seasonTitle').textContent=T().display+' \u2014 Season Stats';
+  document.getElementById('seasonTitle').textContent=T().display+' \u00B7 Season Stats';
   // Populate trend dropdown
   const trendSel=document.getElementById('trendSel');if(trendSel){const cur=trendSel.value;trendSel.innerHTML='<option value="">Select stat to chart \u2192</option>'+SEASON_COLS.filter(c=>c.type==='num').map(c=>'<option value="'+c.key+'"'+(cur===c.key?' selected':'')+'>'+c.label+'</option>').join('');trendSel.onchange=()=>{if(trendSel.value){S.seasonTrend=trendSel.value;renderSeasonTrend(trendSel.value);}else{S.seasonTrend=null;document.getElementById('seasonTrendWrap').innerHTML='';}};if(cur&&S.seasonTrend)renderSeasonTrend(S.seasonTrend);}
 }
@@ -1935,7 +1935,7 @@ function renderPsPitches(){
   const t=T(),name=S.psPlayer;
   let evts=S.psAllEvents.filter(e=>e.team===t.name&&e.player===name);
   const banner=document.getElementById('psFilterBanner');
-  if(S.psMatchFilter){evts=evts.filter(e=>e.game_id==S.psMatchFilter);const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(banner){if(m){const isH=m.home_team===t.name;const opp=isH?m.away_team:m.home_team;const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});banner.innerHTML='<div class="ps-filter-banner">\uD83D\uDCC5 <b>'+esc(opp)+'</b> \u00B7 '+d+' \u2014 click row again to show full season</div>';}else{banner.innerHTML='<div class="ps-filter-banner">Showing match '+S.psMatchFilter+'</div>';}}}else if(banner){banner.innerHTML='';}
+  if(S.psMatchFilter){evts=evts.filter(e=>e.game_id==S.psMatchFilter);const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(banner){if(m){const isH=m.home_team===t.name;const opp=isH?m.away_team:m.home_team;const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});banner.innerHTML='<div class="ps-filter-banner">\uD83D\uDCC5 <b>'+esc(opp)+'</b> \u00B7 '+d+' \u00B7 click row again to show full season</div>';}else{banner.innerHTML='<div class="ps-filter-banner">Showing match '+S.psMatchFilter+'</div>';}}}else if(banner){banner.innerHTML='';}
   const toShow=['heatmap',...[...S.psVizs].filter(v=>v!=='heatmap')];
   const unique=[...new Set(toShow)];
   unique.forEach(viz=>{
@@ -1964,7 +1964,7 @@ function renderPsPitches(){
     // Dynamic title: prefix with team+viz and match info when a match filter is active
     const tn=T().name;const vLabelFull=VIZ_LABELS[viz]||viz;
     const pTitle=S.psPlayer||tn;
-    if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=pTitle+' '+vLabelFull+' \u2014 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=pTitle+' '+vLabelFull;}
+    if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=pTitle+' '+vLabelFull+' \u00B7 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=pTitle+' '+vLabelFull;}
     can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top.');
     // Export menu
     const vLabel=VIZ_LABELS[viz]||viz;const suffix=psFilenameSuffix();
@@ -1999,7 +1999,7 @@ function downloadAllPsViews(){
   const cans=document.querySelectorAll('.ps-pitch-canvas');if(!cans.length)return;
   const panels=Array.from(cans).map(c=>({canvas:c,label:VIZ_LABELS[c.dataset?.viz]||c.dataset?.viz||''}));
   const origPlayer=S.selPlayer;S.selPlayer=S.psPlayer||S.selPlayer;
-  const cfg=buildExportConfig(cans[0],(S.psPlayer||'Player')+' \u2014 All Views',{matchDesc:_psContextLine(),competition:'',ha:'',opponent:''});
+  const cfg=buildExportConfig(cans[0],(S.psPlayer||'Player')+' \u00B7 All Views',{matchDesc:_psContextLine(),competition:'',ha:'',opponent:''});
   const off=renderAllPanelsCanvas(panels,cfg);S.selPlayer=origPlayer;
   const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   pdf.addImage(off.toDataURL('image/png'),'PNG',0,0,297,210);
@@ -2046,7 +2046,7 @@ async function openCellMatchModal(gid,oppName,colKey){
   overlay.classList.add('show');
   const t=T();const m=S.matches.find(mm=>mm.game_id==gid);let matchLabel='';if(m)matchLabel=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   const colDef=SEASON_COLS.find(c=>c.key===colKey);
-  title.textContent=(colDef?colDef.label:colKey)+' \u2014 '+oppName;
+  title.textContent=(colDef?colDef.label:colKey)+' \u00B7 '+oppName;
   sub.textContent=matchLabel||'Match view';
   body.innerHTML='<div class="loading"><div class="spinner"></div> Loading match events...</div>';
   try{
@@ -2087,7 +2087,7 @@ async function openCellMatchModal(gid,oppName,colKey){
     // Hover tooltips
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
     can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
-    // Export buttons — use isolated cell context (no S.selPlayer/S.selMatch leakage)
+    // Export buttons use isolated cell context (no S.selPlayer/S.selMatch leakage)
     const exportWrap=document.getElementById('cellExportWrap');if(exportWrap){exportWrap.innerHTML='';const vLabel=(colDef?colDef.label:colKey);
       const isHomeRow=m?(m.home_team===t.name):null;
       const rowData={opponent:oppName,ha:isHomeRow==null?'':(isHomeRow?'H':'A'),viewLabel:vLabel,teamEvts:teamAllEvts};
@@ -2116,7 +2116,7 @@ function collectMatchReportStats(){const tn=T().name;const m=S.matches.find(mm=>
 }
 async function callReportAPI(statsPayload){
   const prompt='Match data:\n'+JSON.stringify(statsPayload,null,2)+'\n\nWrite the match report now.';
-  const system="You are a professional football analyst writing a concise tactical match report. Write in a professional, analytical tone. Be specific \u2014 use the exact numbers provided. Do not invent statistics. Write 3-4 paragraphs covering: 1) overall match pattern and territorial dominance, 2) "+T().name+"'s attacking patterns and key creative players, 3) defensive performance and pressing, 4) one tactical observation or area for improvement. Keep each paragraph to 3-4 sentences.";
+  const system="You are a professional football analyst writing a concise tactical match report. Write in a professional, analytical tone. Be specific and use the exact numbers provided. Do not invent statistics. Write 3-4 paragraphs covering: 1) overall match pattern and territorial dominance, 2) "+T().name+"'s attacking patterns and key creative players, 3) defensive performance and pressing, 4) one tactical observation or area for improvement. Keep each paragraph to 3-4 sentences.";
   const r=await fetch(SB+'/functions/v1/match-report',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AK},body:JSON.stringify({messages:[{role:'user',content:prompt}],system})});
   if(!r.ok){let msg='API error '+r.status;try{const e=await r.json();if(e.error)msg+=': '+(typeof e.error==='string'?e.error:JSON.stringify(e.error));}catch(_){}throw new Error(msg);}
   const d=await r.json();
@@ -2710,7 +2710,7 @@ function _drawFooterBand(ctx,x,y,w,h,cfg,T){
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
 }
 
-/* Master — portrait A4 @ 300 DPI (2480 x 3508 px). We draw in a logical
+/* Master, portrait A4 @ 300 DPI (2480 x 3508 px). We draw in a logical
    1240x1754 coordinate system and scale the context 2x for sharp output. */
 function renderExportCanvas(pitchCanvas,config){
   const LW=1240,LH=1754,PW=2480,PH=3508,SC=PW/LW,T=_expScale(1);
@@ -2734,7 +2734,7 @@ function renderExportCanvas(pitchCanvas,config){
   return off;
 }
 
-/* Story card — 1080x1080 exact, same system at card scale */
+/* Story card, 1080x1080 exact, same system at card scale */
 function renderStoryCanvas(pitchCanvas,config){
   const W=1080,H=1080,T=_expScale(0.52);
   const off=document.createElement('canvas');off.width=W;off.height=H;
@@ -2754,7 +2754,7 @@ function renderStoryCanvas(pitchCanvas,config){
   return off;
 }
 
-/* Landscape multi-panel — A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
+/* Landscape multi-panel, A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
 function renderAllPanelsCanvas(panels,config){
   const LW=1754,LH=1240,PW=3508,PH=2480,SC=PW/LW;
   const T=_expScale(0.72),CT_=_expScale(0.55);
@@ -2794,7 +2794,7 @@ function renderAllPanelsCanvas(panels,config){
   return off;
 }
 
-/* Scout report — portrait A4 @ 300 DPI, dark theme, 2x logical scale */
+/* Scout report, portrait A4 @ 300 DPI, dark theme, 2x logical scale */
 function renderScoutCanvas(){
   const t=T();const tc=t.color;const LW=1240,LH=1754,PW=2480,PH=3508;const W=LW,H=LH;
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
@@ -2900,7 +2900,7 @@ function renderScoutCanvas(){
   return off;
 }
 
-/* Match report canvas — portrait A4 @ 300 DPI, dark theme */
+/* Match report canvas, portrait A4 @ 300 DPI, dark theme */
 function renderReportCanvas(reportText,stats){
   const t=T();const tc=t.color;const LW=1240,LH=1754,PW=2480,PH=3508;const W=LW,H=LH;
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
@@ -3143,7 +3143,7 @@ function initCompFilters(){
     };
   });
 }
-function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select played match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
+function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u00B7 select played match \u00B7</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
 function syncVizSelectionUi(){
   document.querySelectorAll('.viz-btn').forEach(btn=>{const on=S.activeVizs.includes(btn.dataset.viz);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');});
   document.querySelectorAll('.plot-count-btn').forEach(btn=>{const on=+btn.dataset.count===S.plotSlots;btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');});

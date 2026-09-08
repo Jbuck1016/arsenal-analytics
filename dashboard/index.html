@@ -149,7 +149,7 @@ tbody tr:hover td{background:var(--panel2)}
   <div class="sys">
     <div class="sys-top">
       <span class="sys-mark">▐</span>
-      <span class="sys-title">MLS 2026 — Analytics</span>
+      <span class="sys-title">MLS 2026 · Analytics</span>
       <button id="themeBtn" onclick="toggleTheme(this)" title="Toggle light / dark" style="margin-left:auto;align-self:center;background:none;border:1px solid var(--line2);color:var(--dim);font:600 13px/1 var(--f-mono);width:30px;height:24px;border-radius:5px;cursor:pointer">&#9728;</button>
     </div>
     <div class="sys-line" id="sysLine">
@@ -173,43 +173,43 @@ tbody tr:hover td{background:var(--panel2)}
       <div class="mod-i">01 · match</div>
       <div class="mod-t">Match analysis</div>
       <div class="mod-d">Any fixture in the league, event by event. Pass maps, networks, pressure, momentum, shape.</div>
-      <div class="mod-n"><span id="nMatch">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMatch">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="players.html">
       <div class="mod-i">02 · players</div>
       <div class="mod-t">Player fingerprints</div>
       <div class="mod-d">Percentile profiles against role, DNA pillars, pitch maps, scatter, scout ranking.</div>
-      <div class="mod-n"><span id="nPlayer">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nPlayer">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="teams.html">
       <div class="mod-i">03 · teams</div>
       <div class="mod-t">Team profiles</div>
       <div class="mod-d">Style against the league, build-up and pressing, season maps, rankings, squads.</div>
-      <div class="mod-n"><span id="nTeam">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nTeam">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod mod-sm" href="glossary.html">
       <div class="mod-i">04 · reference</div>
       <div class="mod-t">Metric reference</div>
       <div class="mod-d">Every metric defined, how it is calculated, where it sits in the league, and a worked example at each end.</div>
-      <div class="mod-n"><span id="nMetric">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMetric">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="insights.html">
       <div class="mod-i">05 · insights</div>
       <div class="mod-t">Scouting insights</div>
       <div class="mod-d">Recruitment reads generated from the data: standout profiles by pool, key-man risk, and how each side actually plays.</div>
-      <div class="mod-n"><span id="nInsight">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nInsight">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="sequences.html">
       <div class="mod-i">06 · sequences</div>
       <div class="mod-t">Possession sequences</div>
       <div class="mod-d">Every possession chain in the league, searchable by shape and pattern, with similarity across teams.</div>
-      <div class="mod-n"><span id="nSeq">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nSeq">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="search.html">
       <div class="mod-i">07 · search</div>
       <div class="mod-t">Player search</div>
       <div class="mod-d">Build a shortlist from behavioural traits: position, side, age, foot, and role percentiles within pool.</div>
-      <div class="mod-n"><span id="nSearch">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nSearch">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod mod-sm" href="guide.html">
       <div class="mod-i">08 · guide</div>
@@ -440,7 +440,7 @@ const COL={
   shots_pg:        {l:'SH/G',  d:'Shots taken per game',                       dp:1},
   shots_against_pg:{l:'SHA/G', d:'Shots faced per game',                       dp:1, low:1},
   possession_pct:  {l:'POSS',  d:'Share of all passes in the match',           dp:1, suf:'%'},
-  field_tilt:      {l:'TILT',  d:'Share of final-third touches \u2014 territorial control rather than raw possession', dp:1, suf:'%'},
+  field_tilt:      {l:'TILT',  d:'Share of final-third touches, territorial control rather than raw possession', dp:1, suf:'%'},
   ppda:            {l:'PPDA',  d:'Opponent passes allowed per defensive action in their own 60%. Lower means a more aggressive press', dp:2, low:1},
   def_height:      {l:'LINE',  d:'Average pitch position of defensive actions. Higher means a higher line', dp:1},
   passes_per_seq:  {l:'P/POSS',d:'Passes strung together per possession. High means patient',  dp:2},
@@ -450,7 +450,7 @@ const TBLS=[
   {k:'xg',   l:'Attack',  sort:'goals_pg',         cols:['goals_pg','shots_pg','field_tilt'],
    cap:'Ranked by goals per game. Shots and territorial tilt alongside.'},
   {k:'ctrl', l:'Control', sort:'field_tilt',       cols:['field_tilt','possession_pct','passes_per_seq'],
-   cap:'Ranked by field tilt \u2014 where play actually happens, which separates real control from sterile possession.'},
+   cap:'Ranked by field tilt, where play actually happens, which separates real control from sterile possession.'},
   {k:'press',l:'Press',   sort:'ppda',             cols:['ppda','def_height'],
    cap:'Ranked by PPDA, lowest first: fewest opponent passes allowed per defensive action means the most aggressive press.'},
   {k:'def',  l:'Defence', sort:'goals_against_pg', cols:['goals_against_pg','shots_against_pg','ppda'],

@@ -4,7 +4,7 @@
 <script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metrics Validation — MLS 2026 Analytics</title>
+<title>Metrics Validation · MLS 2026 Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
@@ -95,7 +95,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
   <div class="m"><b>Tier 4 · Defined, not validated</b><span>Quantities with no ground truth to check against. Stated precisely, never claimed as verified.</span></div>
 </div>
 
-<h2><span class="n">01</span> xG &mdash; calibrated against outcomes <span class="tierbadge t2">Tier 2</span></h2>
+<h2><span class="n">01</span> xG &middot; calibrated against outcomes <span class="tierbadge t2">Tier 2</span></h2>
 
 <p>Expected goals is the platform's one fitted model. It is an empirical binned model built on
 this season's shots, using distance, angle, whether the shot was a header, whether it was a big
@@ -139,7 +139,7 @@ mistake it for validation. What follows describes the support behind the model i
   not a completed validation programme.
 </div>
 
-<h2><span class="n">02</span> xT &mdash; a borrowed grid <span class="tierbadge t4">Tier 4</span></h2>
+<h2><span class="n">02</span> xT &middot; a borrowed grid <span class="tierbadge t4">Tier 4</span></h2>
 
 <p>Expected threat is <b>not a fitted model on this platform</b>, and it is important not to
 present it as one. The pitch is divided into a 12 by 8 grid, and each cell carries a value
@@ -165,7 +165,7 @@ how the game is generally understood, but it has not been validated for these co
 either. Both the ordering and the absolute values are borrowed. Treat xT as a well-founded heuristic for
 comparing actions within this platform, not as a calibrated probability.</p>
 
-<h2><span class="n">03</span> Reference benchmark — the sequence engine</h2>
+<h2><span class="n">03</span> Reference benchmark &middot; the sequence engine</h2>
 <p>The possession-sequence engine was built from raw event data, so its segmentation rules could have been cut anywhere. To check they were cut in the right places, its output was compared to Julio Costa's published sequence numbers for Benfica. Passes-per-sequence and duration are structural quantities that depend partly on how a league plays, so a close match is suggestive rather than conclusive.</p>
 <table>
 <thead><tr><th>Sequence metric</th><th class="num">Ours (MLS)</th><th class="num">Reference (Benfica)</th><th>Read</th></tr></thead>
@@ -185,7 +185,7 @@ the chains are cut in the right places, and no explanation is offered here for t
 in shot rate: several league and stylistic factors could account for it and none has been
 tested.</p>
 
-<h2><span class="n">04</span> Face validity — team metrics</h2>
+<h2><span class="n">04</span> Face validity &middot; team metrics</h2>
 <div class="snap">
 <b>Fixed validation snapshot, not a current leaderboard.</b> Unlike the sequence benchmark in 03,
 which is pinned to a known dataset and date, this review is <b>undated</b>. Sections 04 to 07
@@ -208,9 +208,9 @@ workflow that logs who checked refreshed outputs and when.
 <tr><td>Goals conceded per game</td><td>Nashville</td><td class="num">0.73</td><td>Orlando City</td><td class="num">2.87</td></tr>
 </tbody>
 </table>
-<p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots — one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
+<p><b>Cross-consistency is the stronger signal.</b> Vancouver tops field tilt, pressing, progression and shots, one coherent front-foot identity across four metrics computed independently. San Diego tops possession and is the <i>least</i> direct side, a matched pair. Orlando has the lowest field tilt and the worst defence: a dominated team, consistently. Unrelated metrics agreeing on the same story is harder to fake than any single leaderboard.</p>
 
-<h2><span class="n">05</span> Face validity — player chain-roles</h2>
+<h2><span class="n">05</span> Face validity &middot; player chain-roles</h2>
 <p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>Player roles are assigned purely from what a player does inside possessions, with no knowledge of their position. So if the roles are real, position should fall out on its own. It does, cleanly, for all eleven.</p>
 <table>
@@ -225,12 +225,12 @@ workflow that logs who checked refreshed outputs and when.
 <tr><td>Initiator</td><td>Jones, Larsen, Harriel (defenders)</td><td class="tick">✓ build from back</td></tr>
 <tr><td>Bridge</td><td>Maher, Miller, Long (centre-backs)</td><td class="tick">✓ ball-playing CBs</td></tr>
 <tr><td>Progressor</td><td>Kamal Miller (ball-playing CB)</td><td class="tick">✓ deep progressor</td></tr>
-<tr><td>Controller — quick release</td><td>Piette (holding mid, 2.1s)</td><td class="tick">✓ one-touch</td></tr>
+<tr><td>Controller &middot; quick release</td><td>Piette (holding mid, 2.1s)</td><td class="tick">✓ one-touch</td></tr>
 </tbody>
 </table>
-<p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements — a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
+<p>The system also distinguishes types <i>within</i> a position. Lionel Messi returns as a forward who progresses (15%) with 559 involvements. That is a deep, ball-dominant forward, not a penalty-box poacher like Preston Judd (166 involvements, 33% box threat). Same position, correctly different roles.</p>
 
-<h2><span class="n">06</span> Face validity &mdash; the impact composite</h2>
+<h2><span class="n">06</span> Face validity &middot; the impact composite</h2>
 <p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>The DNA layer condenses every pillar into two numbers per player: <b>impact</b>, weighted towards the pillars that matter for his position, and <b>completeness</b>, a penalised average that punishes a glaring weakness. The test is whether the top of that list reads like a list of the league's best players.</p>
 <table>
@@ -245,17 +245,17 @@ workflow that logs who checked refreshed outputs and when.
 </tbody>
 </table>
 <p><b>Two things are worth noting.</b> First, the list is not dominated by forwards: full-backs, a centre-back and midfielders lead it, because impact is weighted by what matters for each position rather than by attacking output. That is the intended behaviour, and it is the opposite of what a naive composite produces.</p>
-<p>Second, <b>impact and completeness genuinely diverge</b>. Milan Iloski also scores 100 for impact but only 71 for completeness &mdash; elite at what his position demands, with a clear hole elsewhere. Berhalter is the inverse, 98 impact but a perfect 100 completeness. A single rating would collapse those two very different players into the same number, which is exactly why there are two.</p>
+<p>Second, <b>impact and completeness genuinely diverge</b>. Milan Iloski also scores 100 for impact but only 71 for completeness, elite at what his position demands, with a clear hole elsewhere. Berhalter is the inverse, 98 impact but a perfect 100 completeness. A single rating would collapse those two very different players into the same number, which is exactly why there are two.</p>
 
-<h2><span class="n">07</span> Similarity — does "similar" mean similar</h2>
+<h2><span class="n">07</span> Similarity &middot; does "similar" mean similar</h2>
 <p class="snap">Part of the fixed validation snapshot described in 04. MLS only, not recomputed on rebuild.</p>
 <p>The similarity engines find nearest neighbours by cosine on z-scored profiles. The test is whether the matches are ones a scout would nod at.</p>
 <div class="card">
-<p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players — Fernández, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
-<p style="margin:6px 0 0"><b>Team.</b> Inter Miami's closest stylistic peers are Real Salt Lake and LAFC — the league's possession-and-penetrate cluster.</p>
+<p style="margin:0 0 6px"><b>Player.</b> Lionel Messi's nearest chain-role match in MLS is <span class="kfig">Son Heung-Min (79%)</span>, followed by the league's creative designated players: Fernández, Hartel, Ojeda, Miranchuk, Mukhtar. Every comp is a playmaking, ball-involved forward, found without any position input. Messi tops out at 79% rather than 95%+ because he is a genuine outlier; homogeneous positions like centre-back match far tighter.</p>
+<p style="margin:6px 0 0"><b>Team.</b> Inter Miami's closest stylistic peers are Real Salt Lake and LAFC, the league's possession-and-penetrate cluster.</p>
 </div>
 
-<h2><span class="n">08</span> What we found wrong — and fixed</h2>
+<h2><span class="n">08</span> What we found wrong, and fixed</h2>
 <p>Validation only means something if it can fail. It did, repeatedly, and each catch is documented here because a process that never finds anything isn't testing anything.</p>
 <ul>
 <li><b>xT grid mis-indexed.</b> The lookup assumed a 16×6 grid; the real grid is 12×8. Every advanced-third action was silently reading an empty cell. Caught when box-edge lookups returned null, fixed, re-validated against a sane season total.</li>
@@ -269,7 +269,7 @@ workflow that logs who checked refreshed outputs and when.
 <ul>
 <li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15–30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
 <li><b>Tempo resolution.</b> Event timestamps are whole-second, so a single player's hold time is coarse. Averaged over 1,000+ involvements it separates holders from quick-releasers reliably, but it is not sub-second precise.</li>
-<li><b>Proxy definitions.</b> A few metrics — hold-up, support angle, wide triangles — are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
+<li><b>Proxy definitions.</b> A few metrics (hold-up, support angle, wide triangles) are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
 <li><b>Face validity is not ground truth.</b> Only xG is checked against outcomes, and only
 in-sample. <b>xT is not validated at all</b>: it uses a borrowed grid that was never fitted or
 externally checked on these competitions, so it sits alongside everything else that rests on face
@@ -279,7 +279,7 @@ verified truth.</li>
 </ul>
 
 <div class="foot">
-data · whoscored · xg calibrated against outcomes · xt grid borrowed, not fitted here · sequences benchmarked vs published reference · <span id="footAsOf">as of —</span><br>
+data · whoscored · xg calibrated against outcomes · xt grid borrowed, not fitted here · sequences benchmarked vs published reference · <span id="footAsOf">as of …</span><br>
 generated from the live database · figures reproducible from the platform
 </div>
 
