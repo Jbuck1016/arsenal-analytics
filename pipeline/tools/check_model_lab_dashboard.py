@@ -13,6 +13,8 @@ assert "gate.js" in page and "model-lab-data.js" in page
 assert "can_promote\": False" in builder and "can_activate\": False" in builder
 assert "SUPABASE_SERVICE_KEY" not in page
 assert "Coefficient explorer" in page and "Forecast dissection" in page
+assert "Model tournament" in page and "textSize" in page
+assert "weights are not a league table" in page
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():
@@ -27,4 +29,9 @@ if payload_path.is_file():
         "read_only": True,
     }
     assert payload["validation_folds"] and payload["candidate_ranking"]
+    tournament = payload["model_tournament"]
+    assert tournament["winner"] == "shooting_led"
+    assert len(tournament["summary"]) >= 8
+    assert "train_2324_2425_test_2526" in tournament["folds"]
+    assert tournament["unavailable_families"]["expected_threat"]
 print("Model lab dashboard checks passed")

@@ -60,6 +60,7 @@ def main() -> int:
     parser.add_argument("--artifact", type=Path, default=DEFAULT_ARTIFACT)
     parser.add_argument("--validation-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_field_tilt_box_entries_validation.json")
     parser.add_argument("--candidate-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_feature_candidate_audit.json")
+    parser.add_argument("--tournament-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "model_philosophy_tournament.json")
     parser.add_argument("--drift-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_feature_drift_2627.json")
     parser.add_argument("--shadow-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_history_2627.json")
     parser.add_argument("--predictions-file", type=Path, required=True)
@@ -70,6 +71,7 @@ def main() -> int:
     sidecar = load_json(args.artifact.with_suffix(".json"))
     validation = load_json(args.validation_report)
     candidates = load_json(args.candidate_report)
+    tournament = load_json(args.tournament_report)
     schema_catalog = load_json(ROOT / "pipeline" / "model_feature_schema_v2.json")
     drift = load_json(args.drift_report)
     shadow = load_json(args.shadow_report, required=False)
@@ -142,6 +144,32 @@ def main() -> int:
         "coefficients": coefficients(artifact),
         "validation_folds": folds,
         "candidate_ranking": candidate_rows,
+        "model_tournament": {
+            "purpose": tournament["purpose"],
+            "winner": tournament["winner"],
+            "interpretation_rule": tournament["interpretation_rule"],
+            "summary": tournament["summary"],
+            "unavailable_families": tournament.get("unavailable_families", {}),
+            "folds": {
+                name: {
+                    "train_seasons": fold["train_seasons"],
+                    "test_season": fold["test_season"],
+                    "models": {
+                        model_name: {
+                            key: model[key]
+                            for key in (
+                                "label", "idea", "families", "column_count",
+                                "matches", "log_loss", "brier", "accuracy",
+                                "calibration_error", "home_goals_mae",
+                                "away_goals_mae", "by_league",
+                            )
+                        }
+                        for model_name, model in fold["models"].items()
+                    },
+                }
+                for name, fold in tournament["folds"].items()
+            },
+        },
         "research_queue": {
             "eligible_families": candidates.get("eligible_families_all_seasons", []),
             "blocked_candidates": candidates.get("skipped_candidates", {}),
