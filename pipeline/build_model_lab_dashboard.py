@@ -62,6 +62,7 @@ def main() -> int:
     parser.add_argument("--candidate-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_feature_candidate_audit.json")
     parser.add_argument("--tournament-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "model_philosophy_tournament.json")
     parser.add_argument("--legitimacy-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "model_legitimacy_suite.json")
+    parser.add_argument("--stability-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "cross_season_feature_stability.json")
     parser.add_argument("--drift-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_feature_drift_2627.json")
     parser.add_argument("--shadow-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_history_2627.json")
     parser.add_argument("--predictions-file", type=Path, required=True)
@@ -74,6 +75,7 @@ def main() -> int:
     candidates = load_json(args.candidate_report)
     tournament = load_json(args.tournament_report)
     legitimacy = load_json(args.legitimacy_report)
+    stability = load_json(args.stability_report)
     bookmaker_path = ROOT / "artifacts" / "model_reports" / "bookmaker_benchmark.json"
     if bookmaker_path.is_file():
         legitimacy["external_and_live"]["bookmaker_benchmark"] = {
@@ -180,6 +182,7 @@ def main() -> int:
             },
         },
         "legitimacy": legitimacy,
+        "feature_stability": stability,
         "research_queue": {
             "eligible_families": candidates.get("eligible_families_all_seasons", []),
             "blocked_candidates": candidates.get("skipped_candidates", {}),

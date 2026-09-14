@@ -48,6 +48,17 @@ PHILOSOPHIES: dict[str, dict[str, Any]] = {
         "families": ("territory", "pressing_defense"),
         "idea": "Control of territory and defensive disruption, with no shooting inputs.",
     },
+    "shooting_territory": {
+        "label": "Shooting + territory",
+        "families": ("shooting", "territory"),
+        "idea": "A focused hybrid joining shot production to field tilt and completed box access.",
+    },
+    "territory_pressing_no_elo": {
+        "label": "Territory + pressing, no Elo",
+        "families": ("territory", "pressing_defense"),
+        "include_elo": False,
+        "idea": "A tactical-only strength challenger that cannot lean on previous-result Elo.",
+    },
     "territory_progression": {
         "label": "Territory + progression",
         "families": ("territory", "progression"),
@@ -83,12 +94,15 @@ def selected_columns(
     core: list[str],
 ) -> list[str]:
     requested = PHILOSOPHIES[name]["families"]
+    selected_core = core if PHILOSOPHIES[name].get("include_elo", True) else [
+        column for column in core if not column.startswith("elo_")
+    ]
     if requested == ("__all__",):
         return numeric
     if requested == ("__all_without_shots__",):
         shooting = set(grouped.get("shooting", []))
         return sorted(set(numeric) - shooting)
-    return sorted(set(core) | {
+    return sorted(set(selected_core) | {
         column
         for family in requested
         for column in grouped.get(family, [])

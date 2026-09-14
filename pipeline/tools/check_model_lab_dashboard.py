@@ -16,6 +16,7 @@ assert "Coefficient explorer" in page and "Forecast dissection" in page
 assert "Model tournament" in page and "textSize" in page
 assert "weights are not a league table" in page
 assert "Out-of-sample family reliance" in page and "Historical table backtests" in page
+assert "Cross-season feature gate" in page and "What team strength currently means" in page
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():
@@ -39,4 +40,8 @@ if payload_path.is_file():
     assert legitimacy["confidence"]["shooting_vs_territory_2526"]
     assert legitimacy["family_permutation"]["rows"]
     assert legitimacy["table_backtests"]["summary"]
+    stability = payload["feature_stability"]
+    assert "territory" in stability["gate"]["passed_families"]
+    assert "progression" in stability["gate"]["research_only_families"]
+    assert stability["elo_dependency"]["decision"] == "retain_as_benchmark_and_test_residual_tactical_lift"
 print("Model lab dashboard checks passed")
