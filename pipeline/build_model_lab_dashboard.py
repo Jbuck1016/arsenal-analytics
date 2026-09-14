@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Build a key-free, read-only model investigation payload from reviewed artifacts."""
+from __future__ import annotations
+
+import argparse
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import model_artifact
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ARTIFACT = ROOT / "artifacts" / "models" / "v2-field-tilt-box-entries-poisson-2324-2425-2526-20260914t205131z.pkl"
+
+
+def load_json(path: Path, required: bool = True) -> dict[str, Any]:
+    if not path.is_file():
+        if required:
+            raise RuntimeError(f"missing model-lab source: {path}")
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def feature_family(name: str) -> str:
+    if name.startswith("context."):
+        return "schedule"
+    if name.startswith("elo_"):
+        return "team strength"
+    if "field_tilt" in name or "box_entries" in name:
+        return "territory"
+    if "shots_against" in name:
+        return "shot suppression"
+    if "shots" in name:
+        return "shot creation"
+    return "other"
+
+
+def coefficients(artifact: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for side in ("home", "away"):
+        pipeline = artifact[f"{side}_model"]
+        names = pipeline.named_steps["prepare"].get_feature_names_out()
+        values = pipeline.named_steps["model"].coef_
+        for raw_name, value in zip(names, values, strict=True):
+            name = str(raw_name).split("__", 1)[-1]
+            row = rows.setdefault(name, {"feature": name, "family": feature_family(name)})
+            row[f"{side}_goal_coefficient"] = float(value)
+    for row in rows.values():
+        row["magnitude"] = max(
+            abs(float(row.get("home_goal_coefficient", 0))),
+            abs(float(row.get("away_goal_coefficient", 0))),
+        )
+    return sorted(rows.values(), key=lambda row: row["magnitude"], reverse=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--artifact", type=Path, default=DEFAULT_ARTIFACT)
+    parser.add_argument("--validation-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_field_tilt_box_entries_validation.json")
+    parser.add_argument("--candidate-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_feature_candidate_audit.json")
+    parser.add_argument("--drift-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_feature_drift_2627.json")
+    parser.add_argument("--shadow-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_history_2627.json")
+    parser.add_argument("--predictions-file", type=Path, required=True)
+    parser.add_argument("--output", type=Path, default=ROOT / "dashboard" / "model-lab-data.js")
+    args = parser.parse_args()
+
+    artifact = model_artifact.load_artifact(args.artifact)
+    sidecar = load_json(args.artifact.with_suffix(".json"))
+    validation = load_json(args.validation_report)
+    candidates = load_json(args.candidate_report)
+    schema_catalog = load_json(ROOT / "pipeline" / "model_feature_schema_v2.json")
+    drift = load_json(args.drift_report)
+    shadow = load_json(args.shadow_report, required=False)
+    prediction_payload = load_json(args.predictions_file)
+    prediction_model = prediction_payload.get("model_version")
+    if prediction_model and prediction_model != sidecar["model_version"]:
+        raise RuntimeError(
+            f"prediction model {prediction_model} does not match lab artifact {sidecar['model_version']}"
+        )
+
+    folds = []
+    for name, fold in validation["folds"].items():
+        folds.append({
+            "name": name,
+            "candidate": {key: fold["candidate"][key] for key in ("log_loss", "brier", "calibration_error", "home_goals_mae", "away_goals_mae")},
+            "control": {key: fold["control"][key] for key in ("log_loss", "brier", "calibration_error", "home_goals_mae", "away_goals_mae")},
+            "by_league": fold["candidate"]["by_league"],
+            "log_loss_improvement": fold["log_loss_improvement"],
+        })
+
+    candidate_rows = []
+    for rank, name in enumerate(candidates["ranking"], start=1):
+        summary = candidates["summary"][name]
+        candidate_rows.append({"rank": rank, "name": name, **summary})
+
+    drift_rows = []
+    for name, metric in drift.get("features", {}).items():
+        drift_rows.append({"feature": name, **metric})
+    drift_rows.sort(key=lambda row: (0 if row["severity"] == "severe" else 1 if row["severity"] == "moderate" else 2, row["feature"]))
+
+    as_of = datetime.fromisoformat(str(prediction_payload["as_of"]).replace("Z", "+00:00"))
+    evaluation_through = datetime.fromisoformat(
+        str(prediction_payload.get("evaluation_through") or (as_of + timedelta(days=7)).isoformat()).replace("Z", "+00:00")
+    )
+    predictions = []
+    for row in prediction_payload.get("predictions", []):
+        if not row.get("explanation"):
+            continue
+        kickoff = datetime.fromisoformat(str(row["date"]).replace("Z", "+00:00"))
+        if not as_of < kickoff <= evaluation_through:
+            continue
+        predictions.append({key: row[key] for key in (
+            "game_id", "date", "league", "home_team", "away_team",
+            "home_expected_goals", "away_expected_goals", "home_win_probability",
+            "draw_probability", "away_win_probability", "explanation",
+        )})
+
+    payload = {
+        "generated_from": str(args.predictions_file),
+        "as_of": prediction_payload["as_of"],
+        "model": {
+            "model_version": artifact["model_key"] + " · " + str(sidecar["model_version"]),
+            "display_version": sidecar["model_version"],
+            "status": "shadow",
+            "algorithm": artifact["algorithm"],
+            "feature_schema_version": artifact["feature_schema_version"],
+            "training_seasons": artifact["training_seasons"],
+            "training_match_count": artifact["training_match_count"],
+            "trained_through": artifact["trained_through"],
+            "feature_count": len(artifact["numeric_columns"]),
+            "decision": validation["shadow_review_decision"],
+            "decision_basis": validation["decision_basis"],
+            "mean_log_loss": sidecar["holdout_mean_log_loss"],
+            "control_mean_log_loss": sidecar["control_mean_log_loss"],
+        },
+        "features": [
+            {"feature": name, "family": feature_family(name)}
+            for name in artifact["numeric_columns"]
+        ],
+        "coefficients": coefficients(artifact),
+        "validation_folds": folds,
+        "candidate_ranking": candidate_rows,
+        "research_queue": {
+            "eligible_families": candidates.get("eligible_families_all_seasons", []),
+            "blocked_candidates": candidates.get("skipped_candidates", {}),
+            "catalog": schema_catalog.get("families", {}),
+        },
+        "drift": {
+            "decision": drift.get("decision", "unavailable"),
+            "sample_ready": drift.get("sample_ready", False),
+            "current_matches": drift.get("current_matches", 0),
+            "current_matches_by_league": drift.get("current_matches_by_league", {}),
+            "features": drift_rows,
+        },
+        "shadow": shadow or {
+            "resolved": 0,
+            "pending": 0,
+            "overall": {"status": "waiting_for_first_frozen_slate"},
+            "by_league": {},
+            "sample_gate": {"decision": "collect_more_results", "ready": False},
+        },
+        "predictions": predictions,
+        "guardrails": {
+            "read_only": True,
+            "can_promote": False,
+            "can_activate": False,
+            "note": "The lab visualizes immutable artifacts. Lifecycle changes remain separate reviewed commands.",
+        },
+    }
+    encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True).replace("<", "\\u003c")
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    # Keep the generated one-line bundle LF-terminated on Windows so Git's
+    # whitespace checks do not interpret the carriage return as trailing data.
+    with args.output.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(f"window.MODEL_LAB_DATA={encoded};\n")
+    print(f"Model lab bundle: predictions={len(predictions)} features={len(payload['features'])} output={args.output}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

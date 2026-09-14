@@ -81,6 +81,25 @@ def persistence_horizon(
     ]
 
 
+def persist_predictions(db, args, artifact: dict, rows: list[dict], as_of: datetime,
+                        evaluation_through: datetime) -> None:
+    model_rows = db.table("ml_model_runs").select("id,status,artifact_sha256").eq("id", args.model_run_id).execute().data or []
+    if len(model_rows) != 1 or model_rows[0]["status"] not in {"validated", "shadow", "active"}:
+        raise RuntimeError("prediction persistence requires one validated, shadow, or active model run")
+    digest = hashlib.sha256(args.artifact.read_bytes()).hexdigest()
+    if model_rows[0].get("artifact_sha256") != digest:
+        raise RuntimeError("local artifact digest does not match registered model")
+    scored_slate = persistence_horizon(rows, as_of, evaluation_through)
+    if not scored_slate:
+        raise RuntimeError("no fixtures fall inside the private scoring horizon")
+    db_rows = [{k: value for k, value in row.items() if k not in {
+                   "league", "date", "home_team", "away_team", "explanation"
+               }} |
+               {"model_run_id": args.model_run_id, "forecast_kind": args.forecast_kind, "as_of": as_of.isoformat()} for row in scored_slate]
+    db.table("ml_match_predictions").upsert(db_rows, on_conflict="model_run_id,game_id,forecast_kind,as_of").execute()
+    print(f"Persisted {len(db_rows)} idempotent predictions inside the {args.evaluation_days}-day scoring horizon")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifact", type=Path, required=True)
@@ -93,6 +112,8 @@ def main() -> int:
     parser.add_argument("--league", action="append", choices=baseline.TOP_FIVE)
     parser.add_argument("--fixtures-file", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--reuse-output", action="store_true",
+                        help="persist an already-frozen output without recomputing or rewriting it")
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     if args.execute and args.model_run_id is None:
@@ -103,6 +124,26 @@ def main() -> int:
     leagues = args.league or list(baseline.TOP_FIVE)
     db = baseline.db_client()
     artifact = model_artifact.load_artifact(args.artifact)
+    if args.reuse_output:
+        if args.output is None or not args.output.is_file():
+            raise RuntimeError("--reuse-output requires an existing --output snapshot")
+        payload = json.loads(args.output.read_text(encoding="utf-8"))
+        expected_version = args.artifact.stem
+        if (payload.get("model_version") != expected_version or
+            payload.get("season") != args.season or
+            payload.get("forecast_kind") != args.forecast_kind or
+            parse_instant(str(payload.get("as_of"))) != as_of):
+            raise RuntimeError("existing immutable output identity does not match requested persistence")
+        evaluation_through = parse_instant(str(payload["evaluation_through"]))
+        rows = list(payload.get("predictions", []))
+        if not rows:
+            raise RuntimeError("existing immutable output is empty")
+        print(f"Reusing {len(rows)} immutable predictions: {args.output}")
+        if args.execute:
+            persist_predictions(db, args, artifact, rows, as_of, evaluation_through)
+        else:
+            print("Dry run only; no Supabase rows written")
+        return 0
     active_provider_ids: set[str] | None = None
     completed_provider: list[dict] = []
     fixture_manifest_digest: str | None = None
@@ -187,21 +228,7 @@ def main() -> int:
     if not args.execute:
         print("Dry run only; no Supabase rows written")
         return 0
-    model_rows = db.table("ml_model_runs").select("id,status,artifact_sha256").eq("id", args.model_run_id).execute().data or []
-    if len(model_rows) != 1 or model_rows[0]["status"] not in {"validated", "shadow", "active"}:
-        raise RuntimeError("prediction persistence requires one validated, shadow, or active model run")
-    digest = hashlib.sha256(args.artifact.read_bytes()).hexdigest()
-    if model_rows[0].get("artifact_sha256") != digest:
-        raise RuntimeError("local artifact digest does not match registered model")
-    scored_slate = persistence_horizon(rows, as_of, evaluation_through)
-    if not scored_slate:
-        raise RuntimeError("no fixtures fall inside the private scoring horizon")
-    db_rows = [{k: value for k, value in row.items() if k not in {
-                   "league", "date", "home_team", "away_team", "explanation"
-               }} |
-               {"model_run_id": args.model_run_id, "forecast_kind": args.forecast_kind, "as_of": as_of.isoformat()} for row in scored_slate]
-    db.table("ml_match_predictions").upsert(db_rows, on_conflict="model_run_id,game_id,forecast_kind,as_of").execute()
-    print(f"Persisted {len(db_rows)} idempotent predictions inside the {args.evaluation_days}-day scoring horizon")
+    persist_predictions(db, args, artifact, rows, as_of, evaluation_through)
     return 0
 
 

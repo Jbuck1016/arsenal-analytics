@@ -64,13 +64,6 @@ def fetch_pages(query: Any, page_size: int = 1000) -> list[dict]:
 
 
 def load_matches(db: Client, season: str, schema_version: int) -> pd.DataFrame:
-    features = fetch_pages(
-        db.table("ml_team_match_features")
-        .select("game_id,team,target_match_date,source_match_count,features")
-        .eq("feature_schema_version", schema_version)
-        .order("target_match_date")
-        .order("game_id")
-    )
     outcomes = fetch_pages(
         db.table("v_ml_team_match_outcomes")
         .select("game_id,season,league,match_date,team,opponent,is_home,goals_for,goals_against,result")
@@ -80,6 +73,18 @@ def load_matches(db: Client, season: str, schema_version: int) -> pd.DataFrame:
         .order("match_date")
         .order("game_id")
     )
+    game_ids = sorted({str(row["game_id"]) for row in outcomes})
+    features: list[dict] = []
+    for offset in range(0, len(game_ids), 100):
+        features.extend(fetch_pages(
+            db.table("ml_team_match_features")
+            .select("game_id,team,target_match_date,source_match_count,features")
+            .eq("feature_schema_version", schema_version)
+            .in_("game_id", game_ids[offset:offset + 100])
+            .order("target_match_date")
+            .order("game_id"),
+            page_size=200,
+        ))
     feature_by_key = {
         (str(row["game_id"]), row["team"]): row
         for row in features

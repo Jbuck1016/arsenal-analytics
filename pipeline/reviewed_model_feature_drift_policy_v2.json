@@ -1,0 +1,25 @@
+{
+  "policy_schema_version": 1,
+  "reviewed_at": "2026-09-14T22:00:00Z",
+  "review_decision": "approved_for_shadow_with_monitoring",
+  "scope": "private_shadow_only",
+  "activation_approved": false,
+  "allowed_severe_features": [
+    "context.opponent_rest_days",
+    "context.team_rest_days",
+    "elo_away",
+    "elo_diff",
+    "elo_home"
+  ],
+  "maximum_absolute_standardized_mean_shift": {
+    "calendar": 1.0,
+    "elo": 0.5
+  },
+  "maximum_absolute_missing_rate_change": 0.2,
+  "rationale": "Early-season phase matching creates discrete rest-day PSI and inherited Elo-distribution PSI. Private shadow runs may continue only while mean shifts and missingness remain bounded. Any severe football-performance feature, including field tilt, box entries, shots, xG, or xT, blocks automatically.",
+  "monitoring": [
+    "Rerun the artifact-specific drift audit for every Thursday snapshot.",
+    "Block any severe feature not explicitly allowlisted here.",
+    "Never use this policy to activate or publish a model."
+  ]
+}
