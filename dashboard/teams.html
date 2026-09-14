@@ -318,8 +318,10 @@ async function init(){
       SEL=qt;
       if(LG!=='ALL'&&!inScope(SEL))LG=lgOf(SEL)||'ALL';
     }else{
-      const preferred=teamOf('Los Angeles FC');
-      SEL=(preferred&&inScope(preferred.team))?preferred.team:((scopedTeams()[0]||{}).team||null);
+      // This page always shows one team, so it needs a selection. Take the
+      // first in the current scope rather than a hardcoded club. SEL is also
+      // the Rankings highlight, so both stop defaulting to one club.
+      SEL=(scopedTeams()[0]||{}).team||null;
     }
     renderLeaguePicker();renderTabs();renderList();wireTips();updateHdr();draw();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}

@@ -569,7 +569,10 @@ function fillTeamSel(){
   teams.sort(function(a,b){return tname(a).localeCompare(tname(b))});
   ts.innerHTML='<option value="">All teams</option>';
   teams.forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=tname(t);ts.appendChild(o)});
-  ts.value=(teams.indexOf('Los Angeles FC')>=0)?'Los Angeles FC':(teams[0]||'');
+  // No default club. A preselected team filter makes the search box look
+  // broken: it ANDs with the query, so "Saka" returns nothing while the
+  // header still reads the full population.
+  ts.value='';
 }
 function updateHdrSub(){
   const n=PLAYERS.filter(function(p){return teamInLeague(p.team)}).length;
