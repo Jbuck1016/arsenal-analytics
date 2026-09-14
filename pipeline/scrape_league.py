@@ -518,6 +518,24 @@ def main() -> int:
     p.add_argument("--min-gap", type=float, default=60.0, help="min seconds between matches")
     p.add_argument("--max-gap", type=float, default=120.0, help="max seconds between matches")
     p.add_argument("--limit", type=int, default=0, help="only scrape the next N per league (0 = all)")
+    # Windows Task Scheduler kills "MLS-Euro Analytics Scrape" at its
+    # ExecutionTimeLimit of PT8H. The 13 September run took 7h28m for 131
+    # fixtures, which is inside that limit by half an hour. A hard kill lands
+    # mid-fixture, and because events are upserted in chunks of about 1,500 a
+    # killed fixture keeps whatever prefix already landed. Events are ordered by
+    # minute, so the prefix ends at a minute boundary, which is exactly the
+    # signature of the truncated fixtures: 1952894 at 31 events, Como and Torino
+    # stopping around minute 50. A truncated upstream feed would not truncate so
+    # tidily.
+    #
+    # scrape_history.py already had a budget and the live path had none. This
+    # stops cleanly between fixtures with room to spare, so the kill is never
+    # reached. Task Scheduler settings belong to Jack; this does not need them
+    # changed.
+    p.add_argument("--time-budget-mins", type=float, default=360.0,
+                   help="stop cleanly between fixtures after this many minutes "
+                        "(0 = unbounded). Default 360 leaves two hours of head "
+                        "room under the scheduled task's 8 hour kill limit.")
     p.add_argument("--max-consecutive-failures", type=int, default=5,
                    help="give up on a league after this many failures in a row")
     p.add_argument("--list", action="store_true", help="print the plan and exit without scraping")
@@ -541,6 +559,14 @@ def main() -> int:
 
     if args.min_gap > args.max_gap:
         args.min_gap, args.max_gap = args.max_gap, args.min_gap
+
+    budget = getattr(args, "time_budget_mins", 0) or 0
+    if budget > 0:
+        args.stop_at_monotonic = time.monotonic() + budget * 60.0
+        print(f"  time budget        : {budget:.0f} min, stopping cleanly between "
+              f"fixtures after that", flush=True)
+    else:
+        args.stop_at_monotonic = None
 
     sb = get_supabase()
     targets = choose_leagues(sb, args)
