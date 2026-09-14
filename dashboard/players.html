@@ -286,7 +286,11 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const MIN90=6;
+// Matches the mv_player_percentiles population gate (l.nineties >= 3). The two
+// must move together: the view decides who has percentile rows, this decides
+// who the page offers them for, and a mismatch either hides real rows or
+// promises ones that do not exist.
+const MIN90=3;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
 const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
@@ -456,42 +460,22 @@ async function init(){
       sbAll('role_pillar_weights',{select:'pool,pillar,weight'}),
       // appended, not inserted: the four above are read positionally as res[0..3]
       sbAll('v_team_directory',{select:'team,league,league_name'}),
-      sbAll('v_league_summary',{select:'league,display_name,matches'}),
-      // mv_player_season.minutes credits a full 90 for every lineup row, unused
-      // substitutes included, and its starts come from lineups.is_starter, which
-      // the scrape writes true for nearly everyone. Neither is usable.
-      // mv_player_stints holds derived on-pitch intervals and carries no row at
-      // all for a player who never came on. Starts come from the listed position,
-      // since an unused sub is listed 'Sub' whatever is_starter claims.
-      sbAll('mv_player_stints',{select:'player_id,minutes'}),
-      sbAll('mv_player_minutes',{select:'player_id',position:'neq.Sub'})
+      sbAll('v_league_summary',{select:'league,display_name,matches'})
     ]);
     const season=res[0],role=res[1];DEFS=res[2];
     WEIGHTS={};res[3].forEach(function(r){if(!WEIGHTS[r.pool])WEIGHTS[r.pool]={};WEIGHTS[r.pool][r.pillar]=+r.weight});
     const rmap={};role.forEach(function(r){rmap[r.player_id]=r});
     // The directory is an appearance list, not a percentile list. Substitute-only
     // players may not yet have a role row, but must still remain selectable.
-    const onPitch={};(res[6]||[]).forEach(function(r){
-      onPitch[r.player_id]=(onPitch[r.player_id]||0)+(+r.minutes||0)});
-    const startCount={};(res[7]||[]).forEach(function(r){
-      startCount[r.player_id]=(startCount[r.player_id]||0)+1});
-    PLAYERS=season.map(function(s){
-      const p=Object.assign({},s,rmap[s.player_id]||{});
-      const mins=onPitch[s.player_id]||0;
-      // rankNineties is mv_player_season.nineties, kept only for the MIN90 gate.
-      // mv_player_percentiles admits players on that same figure, so gating on
-      // anything else would hide percentile rows that the view actually holds,
-      // or claim ones it does not. The figures below are the real ones, shown.
-      // p.apps stays untouched: it is the lineup-row count, and it is what keeps
-      // an unused substitute in the directory.
-      p.rankNineties=+s.nineties||0;
-      p.minutes=mins;
-      p.nineties=Math.round(mins/90*100)/100;
-      p.starts=startCount[s.player_id]||0;
-      return p;
-    }).filter(function(p){return +(p.apps||0)>0||+(p.minutes||0)>0});
+    // minutes, nineties and starts are correct at source now: mv_player_minutes
+    // derives participation from the listed position rather than the untrustworthy
+    // lineups.is_starter, and scales each spell to 90 by match length. Read them
+    // back rather than re-deriving here, so the page cannot drift from the views
+    // its percentiles come from.
+    PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})})
+      .filter(function(p){return +(p.apps||0)>0||+(p.minutes||0)>0});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
-    POOLC={};PLAYERS.filter(function(p){return p.rankNineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
+    POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
     PLEAGUES=(res[5]||[]).filter(function(l){return l.matches>0});
     if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
@@ -652,7 +636,7 @@ async function pick(pid){
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
-  const n=POOLC[p.pool]||0,low=p.rankNineties<MIN90||!p.pool;
+  const n=POOLC[p.pool]||0,low=p.nineties<MIN90||!p.pool;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
@@ -762,7 +746,7 @@ function metricOptions(sel){
   return out+'</optgroup>';
 }
 function scatterCtrls(){
-  const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.rankNineties>=MIN90&&teamInLeague(p.team)})
+  const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
   let h='<div class="ctrls"><div class="crow">'+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];renderScatter()">'+
@@ -1004,7 +988,7 @@ function scoutChart(rows){
 /* ---------- COMPARE ---------- */
 async function renderCompare(){
   const main=document.getElementById('main');
-  const pool=PLAYERS.filter(function(p){return p.pool===CMP.pool&&p.rankNineties>=MIN90&&teamInLeague(p.team)})
+  const pool=PLAYERS.filter(function(p){return p.pool===CMP.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
   if(!CMP.a&&pool[0])CMP.a=pool[0].player_id;
   if(!CMP.b&&pool[1])CMP.b=pool[1].player_id;
