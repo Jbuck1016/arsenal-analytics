@@ -42,13 +42,18 @@ class _Heartbeat:
         self.matches_attempted = 0
         self.matches_written = 0
         self.events_written = 0
+        self.matches_failed = 0
+        self.matches_remaining = 0
 
     def record(self, *, matches_attempted: int = 0, matches_written: int = 0,
-               events_written: int = 0) -> None:
+               events_written: int = 0, matches_failed: int = 0,
+               matches_remaining: int = 0) -> None:
         """Accumulate counters. Safe to call repeatedly, per league or per match."""
         self.matches_attempted += int(matches_attempted or 0)
         self.matches_written += int(matches_written or 0)
         self.events_written += int(events_written or 0)
+        self.matches_failed += int(matches_failed or 0)
+        self.matches_remaining += int(matches_remaining or 0)
 
     def _settle(self, status: str, error: str | None) -> None:
         if self._id is None:
@@ -58,6 +63,8 @@ class _Heartbeat:
             "matches_attempted": self.matches_attempted,
             "matches_written": self.matches_written,
             "events_written": self.events_written,
+            "matches_failed": self.matches_failed,
+            "matches_remaining": self.matches_remaining,
             "error": (error or "")[:2000] or None,
         }
         # finished_at is stamped server side by trg_scraper_run_finished, so a
@@ -95,9 +102,20 @@ def heartbeat(leagues: Sequence[str] | None = None) -> Iterator[_Heartbeat]:
         hb._settle("failed", traceback.format_exc())
         raise
     else:
-        # Attempted matches but wrote none is not success. It is the signature of
-        # an anti-bot block, which otherwise looks identical to a quiet week.
+        # 'partial' is the whole point of this table, so it has to cover the
+        # common case and not just the total shutout. A run that fetched 126 of
+        # 131 fixtures is not a success, and the five that failed are the only
+        # part anyone needs to look at.
+        #
+        # The run on 13 September was exactly this: 126 succeeded, 5 failed on
+        # WhoScored anti-bot, and the only trace was exit code 1 on one PC.
         if hb.matches_attempted > 0 and hb.matches_written == 0:
-            hb._settle("partial", "attempted matches but wrote none")
+            hb._settle("partial", "attempted matches but wrote none; looks blocked")
+        elif hb.matches_failed > 0 or hb.matches_remaining > 0:
+            hb._settle(
+                "partial",
+                f"{hb.matches_written} written, {hb.matches_failed} failed, "
+                f"{hb.matches_remaining} still missing",
+            )
         else:
             hb._settle("success", None)

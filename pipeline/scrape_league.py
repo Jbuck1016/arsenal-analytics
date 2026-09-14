@@ -207,6 +207,40 @@ def upsert_full_schedule(sb, sched: pd.DataFrame, league: str, season: str) -> i
     return len(rows)
 
 
+def enqueue_failed_fixture(sb, game_id: str, league: str, reason: str) -> None:
+    """Record a scrape failure in the re-scrape queue.
+
+    Never raises. A fixture failing to scrape is already the bad path; the
+    bookkeeping about it must not be able to make the run worse.
+    """
+    try:
+        sb.rpc("enqueue_rescrape", {
+            "p_game_id": game_id, "p_league": league, "p_reason": reason[:500],
+        }).execute()
+        print(f"  -> queued {game_id} for re-scrape", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"  !! could not queue {game_id} for re-scrape: {e}",
+              file=sys.stderr, flush=True)
+
+
+def exhausted_game_ids(sb) -> set[str]:
+    """Fixtures that have failed three times and already alerted.
+
+    These are excluded from live scope by v_match_season_scope, so they
+    contribute to no metric. They must also stop counting as missing, or a
+    fixture WhoScored will never serve blocks the analytics rebuild forever.
+    That is the shape of the failure that left the site on 1 September data for
+    thirteen days, and it should not be reachable a second time by a different
+    route.
+    """
+    try:
+        rows = sb.table("v_rescrape_exhausted").select("game_id").execute().data or []
+        return {str(r["game_id"]) for r in rows}
+    except Exception as e:  # noqa: BLE001
+        print(f"  !! could not read exhausted fixtures: {e}", file=sys.stderr, flush=True)
+        return set()
+
+
 def scrape_targets(sb, args, targets, scrape_fn=None) -> tuple[int, int, int]:
     """Run every target even if one league raises an unexpected exception."""
     if scrape_fn is None:
@@ -388,6 +422,15 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
         axis=1,
     )
     todo = played[~already_loaded].copy()
+    # Exhausted fixtures are known-bad and already alerted. Counting them as
+    # missing would keep every run "incomplete" forever and keep the analytics
+    # rebuild permanently skipped.
+    exhausted = exhausted_game_ids(sb) if not getattr(args, "historical", False) else set()
+    if exhausted:
+        before = len(todo)
+        todo = todo[~todo.apply(lambda r: str(r.get("game_id")) in exhausted, axis=1)].copy()
+        if before != len(todo):
+            print(f"  exhausted, skipped : {before - len(todo)}", flush=True)
     missing_total = len(todo)
     if args.limit and args.limit > 0:
         todo = todo.head(args.limit)
@@ -438,6 +481,12 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
             consecutive = 0
         except Exception as e:  # noqa: BLE001
             print(f"  !! failed: {e}", file=sys.stderr, flush=True)
+            # Put it somewhere the database can see. Until now a failed fixture
+            # existed only as a line in a log file on one PC: counted in the run
+            # summary, then forgotten. The re-scrape queue was already built and
+            # already drained at the start of every run, and nothing was feeding
+            # it scrape failures.
+            enqueue_failed_fixture(sb, gid, league, f"{type(e).__name__}: {e}")
             failed += 1
             consecutive += 1
             if consecutive >= args.max_consecutive_failures:
@@ -516,7 +565,8 @@ def main() -> int:
             traceback.print_exc()
 
         total_ok, total_failed, total_remaining = scrape_targets(sb, args, targets)
-        hb.record(matches_attempted=total_ok + total_failed, matches_written=total_ok)
+        hb.record(matches_attempted=total_ok + total_failed, matches_written=total_ok,
+                  matches_failed=total_failed, matches_remaining=total_remaining)
 
     print("\n=== Summary ===", flush=True)
     print(f"  leagues:   {len(targets)}", flush=True)
@@ -529,17 +579,33 @@ def main() -> int:
     if args.list:
         return 0
 
-    # A partial load is not publishable.  In particular, do not refresh the
-    # materialized analytics from a mixture of old and new league coverage and
-    # do not let Task Scheduler record a false success.  The next idempotent
-    # run will resume only the missing games.
+    # A partial load is not publishable. Do not refresh the materialized
+    # analytics from a mixture of old and new league coverage; the next
+    # idempotent run resumes only the missing games.
+    #
+    # The exit code is a separate question from that, and conflating the two was
+    # a real defect. "Is the data complete enough to publish?" gates the rebuild.
+    # "Did this process run?" is what Task Scheduler records, and it was
+    # returning 1 for a run that fetched 126 of 131 fixtures correctly, which is
+    # the same red LastTaskResult it returns for a run that died on startup.
+    # Two very different situations reported identically is how a real failure
+    # stays invisible.
+    #
+    # So: exit 0 when the run completed and made progress, exit 1 only when it
+    # made none. Completeness is carried by the heartbeat's 'partial' status and
+    # by the re-scrape queue, both of which live in the database where something
+    # can actually alert on them.
     if total_failed > 0 or total_remaining > 0:
         print(
             "\n  analytics rebuild skipped: live-ingestion gaps remain; re-run to resume.",
             file=sys.stderr,
             flush=True,
         )
-        return 1
+        if total_ok == 0:
+            print("  no fixtures loaded this run; exiting nonzero.",
+                  file=sys.stderr, flush=True)
+            return 1
+        return 0
 
     # One rebuild after ALL leagues, not per league: the analytics layers span leagues,
     # so rebuilding per league would repeat the same expensive work N times.
