@@ -8,8 +8,8 @@ Design notes (why it's built this way):
   * The block is rate-based, not volume-based. One schedule read up front, then
     a randomised 60-120s gap between per-match event reads, keeps us under it.
   * Idempotent + resumable. "Done" is defined by rows existing in the events
-    table (via the v_loaded_games view), NOT by the local JSON cache. Re-running
-    only scrapes what's still missing, so an interrupted run just resumes.
+    table inside the requested league and season, NOT by the local JSON cache.
+    Re-running only scrapes what's still missing, so an interrupted run resumes.
   * Null cache files (written when a read is blocked) are purged before each
     match so a prior failure re-fetches instead of re-reading an empty file.
   * A consecutive-failure circuit breaker stops the run if we look blocked,
@@ -30,20 +30,50 @@ import shutil
 import sys
 import time
 
+import traceback
+
 import pandas as pd
 
 # Reuse the battle-tested single-match machinery. Importing is safe: that module
 # is guarded by `if __name__ == "__main__"`, so nothing runs on import.
+from rescrape_queue import drain_rescrape_queue
+from scraper_heartbeat import heartbeat
 from scrape_and_load import (
     cached_event_json_path,
     get_scraper,
     get_supabase,
+    league_club_count,
+    league_expected_clubs,
+    league_whitelist,
+    match_payload,
     process_match,
 )
 
 DEFAULT_LEAGUE = "USA-MLS"
 DEFAULT_SEASON = "2627"
 NULL_CACHE_MAX_BYTES = 50  # a real event json is >100KB; anything tiny is a null/blocked write
+
+
+def is_history_command(cmdline: list[str]) -> bool:
+    return any(pathlib.Path(arg).name.lower() == "scrape_history.py" for arg in cmdline[1:])
+
+
+def active_history_processes() -> list[int]:
+    """Return same-user historical Python scrapers; inaccessible processes are ignored."""
+    try:
+        import psutil
+    except ImportError as exc:  # a missing overlap guard is unsafe for unattended use
+        raise RuntimeError("psutil is required for the historical/live scraper overlap guard") from exc
+    found = []
+    for process in psutil.process_iter(["pid", "name", "cmdline"]):
+        try:
+            name = str(process.info.get("name") or "").lower()
+            command = list(process.info.get("cmdline") or [])
+            if name.startswith("python") and is_history_command(command):
+                found.append(int(process.info["pid"]))
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            continue
+    return sorted(found)
 
 
 def install_league_dict() -> None:
@@ -63,6 +93,20 @@ def read_full_schedule(ws) -> pd.DataFrame:
     return sched
 
 
+def purge_schedule_cache(ws, league: str, season: str) -> list[pathlib.Path]:
+    """Remove only the selected league-season schedule cache, never event JSON."""
+    matches_dir = pathlib.Path(ws.data_dir) / "matches"
+    removed: list[pathlib.Path] = []
+    if not matches_dir.is_dir():
+        return removed
+    prefix = f"{league}_{season}"
+    for path in matches_dir.iterdir():
+        if path.is_file() and (path.name == f"{prefix}.html" or path.name.startswith(f"{prefix}_")):
+            path.unlink()
+            removed.append(path)
+    return removed
+
+
 def played_matches(sched: pd.DataFrame) -> pd.DataFrame:
     """Fixtures that have actually been played (a real home_score)."""
     df = sched[sched["home_score"].notna()].copy()
@@ -78,31 +122,107 @@ def loaded_game_ids(
     season: str | None = None,
 ) -> set[str]:
     """game_ids that already have events in the requested publication scope."""
-    if historical:
-        if not league or not season:
-            raise ValueError("historical resume detection requires league and season")
-        resp = sb.rpc(
-            "historical_loaded_game_ids",
-            {"p_league": league, "p_season": season},
-        ).execute()
-        return {str(r["game_id"]) for r in (resp.data or [])}
+    if not league or not season:
+        mode = "historical" if historical else "live"
+        raise ValueError(f"{mode} resume detection requires league and season")
+    # Despite its older name, this service-only RPC is safe for live ingestion:
+    # it filters matches by league and season before checking event existence.
+    # Avoid v_loaded_games here; its global DISTINCT scan grows with the entire
+    # event archive and can hit the Data API statement timeout.
+    resp = sb.rpc(
+        "historical_loaded_game_ids",
+        {"p_league": league, "p_season": season},
+    ).execute()
+    return {str(r["game_id"]) for r in (resp.data or [])}
 
-    loaded: set[str] = set()
-    page = 1000
-    offset = 0
-    while True:
-        resp = (
-            sb.table("v_loaded_games")
-            .select("game_id")
-            .range(offset, offset + page - 1)
-            .execute()
+
+def _fixture_key(row) -> tuple[str, str, str]:
+    date_value = row.get("date")
+    try:
+        date_text = pd.to_datetime(date_value).date().isoformat()
+    except Exception:  # noqa: BLE001 - malformed values should simply not match
+        date_text = str(date_value or "")
+    return (
+        date_text,
+        str(row.get("home_team") or "").strip(),
+        str(row.get("away_team") or "").strip(),
+    )
+
+
+def schedule_payloads(
+    sched: pd.DataFrame,
+    existing: list[dict],
+    league: str,
+    season: str,
+) -> list[dict]:
+    """Return canonical rows for a full provider schedule without losing known scores."""
+    by_id = {str(row["game_id"]): row for row in existing}
+    reserved = {
+        _fixture_key(row): str(row["game_id"])
+        for row in existing
+        if str(row.get("game_id", "")).startswith("fd-")
+    }
+    payloads: list[dict] = []
+    for _, row in sched.iterrows():
+        source_id = str(row.get("game_id") or "").strip()
+        if not source_id:
+            raise RuntimeError(f"{league} schedule contains a fixture without a game_id")
+        canonical_id = reserved.get(_fixture_key(row), source_id)
+        payload = match_payload(row, league, season, game_id=canonical_id)
+        prior = by_id.get(canonical_id, {})
+        # A transient partial provider response must never erase a published result.
+        for field in ("home_score", "away_score", "matchday", "venue"):
+            if payload.get(field) is None and prior.get(field) is not None:
+                payload[field] = prior[field]
+        payloads.append(payload)
+    return payloads
+
+
+def upsert_full_schedule(sb, sched: pd.DataFrame, league: str, season: str) -> int:
+    """Persist the complete live schedule so the database is not one-club scoped."""
+    whitelist = league_whitelist(sb, league)
+    expected = league_expected_clubs(sb, league)
+    if whitelist and league_club_count(sb, league) >= expected > 0:
+        clubs = set(sched["home_team"].dropna().astype(str)) | set(
+            sched["away_team"].dropna().astype(str)
         )
-        rows = resp.data or []
-        loaded.update(str(r["game_id"]) for r in rows)
-        if len(rows) < page:
-            break
-        offset += page
-    return loaded
+        foreign = sorted(clubs - whitelist)
+        if foreign:
+            raise RuntimeError(
+                f"{league} schedule contains clubs outside its complete whitelist: "
+                + ", ".join(foreign)
+            )
+    existing = (
+        sb.table("matches")
+        .select("game_id,date,home_team,away_team,home_score,away_score,matchday,venue")
+        .eq("league", league)
+        .eq("season", season)
+        .execute()
+        .data
+        or []
+    )
+    rows = schedule_payloads(sched, existing, league, season)
+    for i in range(0, len(rows), 500):
+        sb.table("matches").upsert(rows[i : i + 500], on_conflict="game_id").execute()
+    return len(rows)
+
+
+def scrape_targets(sb, args, targets, scrape_fn=None) -> tuple[int, int, int]:
+    """Run every target even if one league raises an unexpected exception."""
+    if scrape_fn is None:
+        scrape_fn = scrape_one_league
+    total_ok = total_failed = total_remaining = 0
+    for league, season in targets:
+        try:
+            ok, failed, remaining = scrape_fn(sb, args, league, season)
+        except Exception as e:  # noqa: BLE001 - isolate leagues in scheduled runs
+            msg = str(e).strip().splitlines()[0] if str(e).strip() else repr(e)
+            print(f"  !! {league} {season} aborted: {msg}", file=sys.stderr, flush=True)
+            ok, failed, remaining = 0, 1, 1
+        total_ok += ok
+        total_failed += failed
+        total_remaining += remaining
+    return total_ok, total_failed, total_remaining
 
 
 def purge_null_cache(ws, game_id: str, league: str, season: str) -> None:
@@ -214,6 +334,10 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
             raise RuntimeError(f"could not open historical target {league} {season}") from e
         return 0, 0, 0
 
+    if getattr(args, "refresh_schedule", False):
+        removed = purge_schedule_cache(ws, league, season)
+        print(f"  refreshed schedule cache: removed {len(removed)} file(s)", flush=True)
+
     print(f"Reading full schedule for {league} {season}...", flush=True)
     try:
         sched = read_full_schedule(ws)
@@ -225,16 +349,45 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
             raise RuntimeError(f"could not read historical schedule {league} {season}") from e
         return 0, 0, 0
 
+    if not getattr(args, "historical", False):
+        written = upsert_full_schedule(sb, sched, league, season)
+        print(f"  schedule fixtures : {written} synced", flush=True)
+
     played = played_matches(sched)
     if getattr(args, "historical", False) and played.empty:
         raise RuntimeError(f"historical schedule has no played fixtures: {league} {season}")
+    expected_matches = getattr(args, "expected_matches", None)
+    if expected_matches and len(played) != expected_matches:
+        raise RuntimeError(
+            f"historical schedule incomplete: {league} {season} has {len(played)} "
+            f"played fixtures; expected {expected_matches}. Re-run with --refresh-schedule."
+        )
     loaded = loaded_game_ids(
         sb,
         historical=getattr(args, "historical", False),
         league=league,
         season=season,
     )
-    todo = played[~played["game_id"].astype(str).isin(loaded)].copy()
+    loaded_fixture_keys: set[tuple[str, str, str]] = set()
+    if not getattr(args, "historical", False):
+        reservations = (
+            sb.table("matches")
+            .select("game_id,date,home_team,away_team")
+            .eq("league", league)
+            .eq("season", season)
+            .like("game_id", "fd-%")
+            .execute()
+            .data
+            or []
+        )
+        loaded_fixture_keys = {
+            _fixture_key(row) for row in reservations if str(row["game_id"]) in loaded
+        }
+    already_loaded = played.apply(
+        lambda row: str(row.get("game_id")) in loaded or _fixture_key(row) in loaded_fixture_keys,
+        axis=1,
+    )
+    todo = played[~already_loaded].copy()
     missing_total = len(todo)
     if args.limit and args.limit > 0:
         todo = todo.head(args.limit)
@@ -311,6 +464,8 @@ def main() -> int:
                    help="override the season code (default: whatever the registry says)")
     p.add_argument("--headless", action="store_true",
                    help="run browser headless (default: headful, needed to get past the anti-bot)")
+    p.add_argument("--refresh-schedule", action="store_true",
+                   help="discard only the selected schedule cache before reading fixtures")
     p.add_argument("--min-gap", type=float, default=60.0, help="min seconds between matches")
     p.add_argument("--max-gap", type=float, default=120.0, help="max seconds between matches")
     p.add_argument("--limit", type=int, default=0, help="only scrape the next N per league (0 = all)")
@@ -324,6 +479,16 @@ def main() -> int:
 
     if args.historical:
         args.no_rebuild = True
+    else:
+        history_pids = active_history_processes()
+        if history_pids:
+            print(
+                "REFUSED: historical scrape is active "
+                f"(PID(s) {', '.join(map(str, history_pids))}); live scrape must not overlap.",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 75
 
     if args.min_gap > args.max_gap:
         args.min_gap, args.max_gap = args.max_gap, args.min_gap
@@ -334,12 +499,24 @@ def main() -> int:
     print(f"\nScraping {len(targets)} league(s): "
           f"{', '.join(l for l, _ in targets)}", flush=True)
 
-    total_ok = total_failed = total_remaining = 0
-    for league, season in targets:
-        ok, failed, remaining = scrape_one_league(sb, args, league, season)
-        total_ok += ok
-        total_failed += failed
-        total_remaining += remaining
+    # Two pipeline obligations, both before the normal backfill.
+    #
+    # The heartbeat records that this run happened at all, including if it
+    # fails or returns nothing. Every freshness check the database can run is
+    # derived from events and all of them are blind to the laptop never waking
+    # up, because no new events looks exactly like no matches played.
+    #
+    # The re-scrape queue holds fixtures whose event feed was truncated. Those
+    # are excluded from the metrics layer while queued, so they contaminate
+    # nothing, but they stay wrong until they are fetched again.
+    with heartbeat(leagues=[l for l, _ in targets]) as hb:
+        try:
+            drain_rescrape_queue(limit=10)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+
+        total_ok, total_failed, total_remaining = scrape_targets(sb, args, targets)
+        hb.record(matches_attempted=total_ok + total_failed, matches_written=total_ok)
 
     print("\n=== Summary ===", flush=True)
     print(f"  leagues:   {len(targets)}", flush=True)
@@ -351,6 +528,18 @@ def main() -> int:
 
     if args.list:
         return 0
+
+    # A partial load is not publishable.  In particular, do not refresh the
+    # materialized analytics from a mixture of old and new league coverage and
+    # do not let Task Scheduler record a false success.  The next idempotent
+    # run will resume only the missing games.
+    if total_failed > 0 or total_remaining > 0:
+        print(
+            "\n  analytics rebuild skipped: live-ingestion gaps remain; re-run to resume.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
 
     # One rebuild after ALL leagues, not per league: the analytics layers span leagues,
     # so rebuilding per league would repeat the same expensive work N times.
