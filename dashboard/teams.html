@@ -201,6 +201,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 @media(max-width:900px){.dev-groups{grid-template-columns:1fr}.dev-row{grid-template-columns:minmax(100px,1fr) minmax(110px,1.25fr) 52px}}
 .mobile-rank-note{display:none}
 @media(max-width:640px){.ranking-chart{display:none}.mobile-rank-note{display:block}}
+.as-of{font:500 9.5px/1.2 var(--f-data,monospace);color:var(--text3);white-space:nowrap}
+.as-of.warn{color:var(--gold,#d4a017)}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -208,7 +210,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 <body>
 <div class="hdr">
   <div class="hdr-logo">T</div>
-  <div class="hdr-id"><div class="hdr-title">Team Profiles</div><div class="hdr-row"><div id="lgPick" class="lgpick"></div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div></div>
+  <div class="hdr-id"><div class="hdr-title">Team Profiles</div><div class="hdr-row"><div id="lgPick" class="lgpick"></div><div class="hdr-sub" id="hdrSub">loading&hellip;</div><span class="as-of" id="asOf"></span></div></div>
   <div class="tabs" id="tabs" aria-label="Team profile sections"></div>
   <div class="hdr-right">
     <div class="navmenu" id="navMenu"></div>
@@ -276,6 +278,7 @@ function updateHdr(){
   var label=(LG==='ALL')?(LEAGUES.length+' leagues'):lgName(LG);
   document.getElementById('hdrSub').textContent=
     label+' \u00B7 '+n+' teams \u00B7 ranked within league';
+  renderAsOf();
 }
 function renderLeaguePicker(){
   var host=document.getElementById('lgPick');
@@ -1293,6 +1296,29 @@ window.addEventListener('resize',function(){if(NAVOPEN)placeNavMenu()});
 
 renderNavMenu();
 init();
+
+/* Published as-of date. Derived from the last analytics rebuild that actually
+   completed, not from when a summary table was last touched.
+   mv_site_summary.refreshed_at reports when refresh_site_summaries last ran,
+   which is independent of whether the analytics layer rebuilt: on 14 September
+   it read 17:41 while every metric matview was from 1 September. A failed gate
+   deliberately leaves this stamp where it was, so fresher but unverified data
+   sits behind an honest stale date rather than a confident wrong one. */
+var ASOF=null;
+function renderAsOf(){
+  var el=document.getElementById('asOf'); if(!el) return;
+  if(!ASOF||!ASOF.as_of){ el.textContent='as of unavailable'; el.className='as-of warn'; return; }
+  var d=new Date(ASOF.as_of);
+  var txt='data as of '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+
+          ' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(ASOF.is_stale) txt+=' \u00B7 '+Math.round(ASOF.hours_old)+'h old';
+  el.textContent=txt;
+  el.className='as-of'+(ASOF.is_stale?' warn':'');
+}
+fetch(SB+'/rest/v1/v_analytics_as_of?select=*',{headers:HD})
+  .then(function(r){return r.ok?r.json():null})
+  .then(function(rows){ ASOF=rows&&rows[0]||null; renderAsOf(); })
+  .catch(function(){ renderAsOf(); });
 </script>
 </body>
 </html>

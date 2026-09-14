@@ -239,6 +239,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 
 .simhelp{font:400 12px/1.6 var(--f-body,inherit);color:var(--text2);padding:2px 0 12px;max-width:860px}
 .simhelp b{color:var(--text);font-weight:700}
+.as-of{font:500 9.5px/1.2 var(--f-data,monospace);color:var(--text3);white-space:nowrap}
+.as-of.warn{color:var(--gold,#d4a017)}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -250,7 +252,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="hdr-id">
     <div class="hdr-title">Player Fingerprints</div>
     <div class="hdr-row"><div id="lgPick" class="lgpick"></div>
-      <div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
+      <div class="hdr-sub" id="hdrSub">loading&hellip;</div><span class="as-of" id="asOf"></span></div>
   </div>
   <div class="tabs" id="tabs" aria-label="Player analysis sections"></div>
   <div class="hdr-right">
@@ -565,6 +567,7 @@ function updateHdrSub(){
     : (function(){for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===PLGSCOPE)return PLEAGUES[i].display_name;return PLGSCOPE})();
   document.getElementById('hdrSub').textContent=
     lbl+' \u00B7 '+n+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
+  renderAsOf();
 }
 function renderLeaguePick(){
   const host=document.getElementById('lgPick');
@@ -1842,6 +1845,29 @@ window.addEventListener('resize',function(){if(NAVOPEN)placeNavMenu()});
 
 renderNavMenu();
 init();
+
+/* Published as-of date. Derived from the last analytics rebuild that actually
+   completed, not from when a summary table was last touched.
+   mv_site_summary.refreshed_at reports when refresh_site_summaries last ran,
+   which is independent of whether the analytics layer rebuilt: on 14 September
+   it read 17:41 while every metric matview was from 1 September. A failed gate
+   deliberately leaves this stamp where it was, so fresher but unverified data
+   sits behind an honest stale date rather than a confident wrong one. */
+var ASOF=null;
+function renderAsOf(){
+  var el=document.getElementById('asOf'); if(!el) return;
+  if(!ASOF||!ASOF.as_of){ el.textContent='as of unavailable'; el.className='as-of warn'; return; }
+  var d=new Date(ASOF.as_of);
+  var txt='data as of '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+
+          ' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(ASOF.is_stale) txt+=' \u00B7 '+Math.round(ASOF.hours_old)+'h old';
+  el.textContent=txt;
+  el.className='as-of'+(ASOF.is_stale?' warn':'');
+}
+fetch(SB+'/rest/v1/v_analytics_as_of?select=*',{headers:HD})
+  .then(function(r){return r.ok?r.json():null})
+  .then(function(rows){ ASOF=rows&&rows[0]||null; renderAsOf(); })
+  .catch(function(){ renderAsOf(); });
 </script>
 </body>
 </html>
