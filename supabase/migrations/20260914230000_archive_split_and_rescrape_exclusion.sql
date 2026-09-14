@@ -15,7 +15,7 @@ grant select on public.events_archive to anon, authenticated;
 -- Moved in resumable batches. A single move cannot fit any connector window on
 -- this instance, and a half-finished move that rolls back after twenty minutes
 -- is worse than no move at all.
-create or replace function public.archive_events_batch(p_games int default 120)
+create or replace function public.archive_events_batch(p_games int default 500)
 returns jsonb
 language plpgsql security definer set search_path to 'public','pg_temp'
 set statement_timeout to '0'
@@ -34,7 +34,7 @@ begin
   return jsonb_build_object('done', false, 'games', array_length(v_games,1), 'moved', v_moved);
 end $fn$;
 
-create or replace function public.archive_events_run(p_seconds int default 45)
+create or replace function public.archive_events_run(p_seconds int default 120)
 returns jsonb
 language plpgsql security definer set search_path to 'public','extensions','pg_temp'
 set statement_timeout to '0'
@@ -45,7 +45,7 @@ begin
     return jsonb_build_object('status','busy');
   end if;
   loop
-    r := public.archive_events_batch(120);
+    r := public.archive_events_batch(500);
     batches := batches + 1;
     total := total + coalesce((r->>'moved')::bigint,0);
     exit when (r->>'done')::boolean;
