@@ -7,17 +7,14 @@
 <title>MLS 2026 · Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Canvas, surfaces, lines, text, green and red live in theme.css now, as do
+   the font tokens. What is left is this page's own accent family and the one
+   hue theme.css does not carry. */
 :root{
-  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-  --f-disp:'Archivo','Inter',system-ui,sans-serif;
-  --f-body:'Inter',system-ui,sans-serif;
-  /* light — warm paper terminal */
-  --bg:#f4f2ec;--panel:#fbfaf6;--panel2:#efece4;
-  --line:#e4e0d6;--line2:#d3ccbf;
-  --text:#191c22;--dim:#5a6270;--dim2:#8b93a0;
   --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
-  --green:#12855a;--red:#cc4038;--blue:#2f6fd0;
+  --blue:#2f6fd0;
 }
 html.dark{
   --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
@@ -62,9 +59,14 @@ a{color:inherit;text-decoration:none}
 .res.on{display:block}
 .rgroup{font:600 9px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);
   padding:9px 13px 6px;border-bottom:1px solid var(--line)}
-.ritem{display:flex;align-items:center;gap:11px;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--line)}
+/* A result goes to another page, so it is a real link: it carries the URL, it
+   opens in a new tab on middle click, and Enter activates it. The reset keeps
+   the row looking exactly as it did as a div. */
+.ritem{display:flex;align-items:center;gap:11px;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--line);
+  color:inherit;text-decoration:none}
 .ritem:last-child{border-bottom:none}
 .ritem.sel,.ritem:hover{background:var(--amber-dim)}
+.ritem:focus-visible{outline:2px solid var(--amber);outline-offset:-2px;background:var(--amber-dim)}
 .ritem-k{font:600 9px/1 var(--f-mono);color:var(--amber);border:1px solid var(--amber-line);
   padding:3px 5px;border-radius:2px;min-width:34px;text-align:center}
 .ritem-n{font:600 12.5px/1.2 var(--f-body);flex:1}
@@ -147,7 +149,7 @@ tbody tr:hover td{background:var(--panel2)}
   <div class="sys">
     <div class="sys-top">
       <span class="sys-mark">▐</span>
-      <span class="sys-title">MLS 2026 — Analytics</span>
+      <span class="sys-title">MLS 2026 · Analytics</span>
       <button id="themeBtn" onclick="toggleTheme(this)" title="Toggle light / dark" style="margin-left:auto;align-self:center;background:none;border:1px solid var(--line2);color:var(--dim);font:600 13px/1 var(--f-mono);width:30px;height:24px;border-radius:5px;cursor:pointer">&#9728;</button>
     </div>
     <div class="sys-line" id="sysLine">
@@ -171,43 +173,43 @@ tbody tr:hover td{background:var(--panel2)}
       <div class="mod-i">01 · match</div>
       <div class="mod-t">Match analysis</div>
       <div class="mod-d">Any fixture in the league, event by event. Pass maps, networks, pressure, momentum, shape.</div>
-      <div class="mod-n"><span id="nMatch">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMatch">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="players.html">
       <div class="mod-i">02 · players</div>
       <div class="mod-t">Player fingerprints</div>
       <div class="mod-d">Percentile profiles against role, DNA pillars, pitch maps, scatter, scout ranking.</div>
-      <div class="mod-n"><span id="nPlayer">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nPlayer">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="teams.html">
       <div class="mod-i">03 · teams</div>
       <div class="mod-t">Team profiles</div>
       <div class="mod-d">Style against the league, build-up and pressing, season maps, rankings, squads.</div>
-      <div class="mod-n"><span id="nTeam">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nTeam">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod mod-sm" href="glossary.html">
       <div class="mod-i">04 · reference</div>
       <div class="mod-t">Metric reference</div>
       <div class="mod-d">Every metric defined, how it is calculated, where it sits in the league, and a worked example at each end.</div>
-      <div class="mod-n"><span id="nMetric">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nMetric">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="insights.html">
       <div class="mod-i">05 · insights</div>
       <div class="mod-t">Scouting insights</div>
       <div class="mod-d">Recruitment reads generated from the data: standout profiles by pool, key-man risk, and how each side actually plays.</div>
-      <div class="mod-n"><span id="nInsight">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nInsight">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="sequences.html">
       <div class="mod-i">06 · sequences</div>
       <div class="mod-t">Possession sequences</div>
       <div class="mod-d">Every possession chain in the league, searchable by shape and pattern, with similarity across teams.</div>
-      <div class="mod-n"><span id="nSeq">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nSeq">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod" href="search.html">
       <div class="mod-i">07 · search</div>
       <div class="mod-t">Player search</div>
       <div class="mod-d">Build a shortlist from behavioural traits: position, side, age, foot, and role percentiles within pool.</div>
-      <div class="mod-n"><span id="nSearch">—</span><span class="mod-arrow">→</span></div>
+      <div class="mod-n"><span id="nSearch">…</span><span class="mod-arrow">→</span></div>
     </a>
     <a class="mod mod-sm" href="guide.html">
       <div class="mod-i">08 · guide</div>
@@ -394,10 +396,17 @@ function search(v){
   if(m.length){h+='<div class="rgroup">matches</div>'+m.map(function(x,i){return row(x,p.length+t.length+i)}).join('')}
   resEl.innerHTML=h;resEl.classList.add('on');
 }
+/* The tag on the left of a result is a role pool for players, and TEAM or MTCH
+   for the other two groups. Read out as-is, "CB Miles Robinson" says nothing
+   about where the row goes, so the label spells the tag out. */
+const KIND={TEAM:'team page for',MTCH:'match report for',
+  GK:'goalkeeper',CB:'centre-back',FB:'full-back',CM:'central midfielder',
+  AM:'attacking midfielder',W:'wide forward',ST:'striker'};
 function row(x,i){
-  return '<div class="ritem'+(i===SEL?' sel':'')+'" data-i="'+i+'" onclick="go('+i+')">'+
+  return '<a class="ritem'+(i===SEL?' sel':'')+'" data-i="'+i+'" href="'+esc(x.href)+'"'+
+    ' aria-label="Open '+esc(KIND[x.k]||'player')+' '+esc(x.n)+'">'+
     '<span class="ritem-k">'+esc(x.k)+'</span><span class="ritem-n">'+esc(x.n)+'</span>'+
-    '<span class="ritem-m">'+esc(x.m)+'</span></div>';
+    '<span class="ritem-m">'+esc(x.m)+'</span></a>';
 }
 function go(i){if(HITS[i])location.href=HITS[i].href}
 function moveSel(d){
@@ -431,7 +440,7 @@ const COL={
   shots_pg:        {l:'SH/G',  d:'Shots taken per game',                       dp:1},
   shots_against_pg:{l:'SHA/G', d:'Shots faced per game',                       dp:1, low:1},
   possession_pct:  {l:'POSS',  d:'Share of all passes in the match',           dp:1, suf:'%'},
-  field_tilt:      {l:'TILT',  d:'Share of final-third touches \u2014 territorial control rather than raw possession', dp:1, suf:'%'},
+  field_tilt:      {l:'TILT',  d:'Share of final-third touches, territorial control rather than raw possession', dp:1, suf:'%'},
   ppda:            {l:'PPDA',  d:'Opponent passes allowed per defensive action in their own 60%. Lower means a more aggressive press', dp:2, low:1},
   def_height:      {l:'LINE',  d:'Average pitch position of defensive actions. Higher means a higher line', dp:1},
   passes_per_seq:  {l:'P/POSS',d:'Passes strung together per possession. High means patient',  dp:2},
@@ -441,7 +450,7 @@ const TBLS=[
   {k:'xg',   l:'Attack',  sort:'goals_pg',         cols:['goals_pg','shots_pg','field_tilt'],
    cap:'Ranked by goals per game. Shots and territorial tilt alongside.'},
   {k:'ctrl', l:'Control', sort:'field_tilt',       cols:['field_tilt','possession_pct','passes_per_seq'],
-   cap:'Ranked by field tilt \u2014 where play actually happens, which separates real control from sterile possession.'},
+   cap:'Ranked by field tilt, where play actually happens, which separates real control from sterile possession.'},
   {k:'press',l:'Press',   sort:'ppda',             cols:['ppda','def_height'],
    cap:'Ranked by PPDA, lowest first: fewest opponent passes allowed per defensive action means the most aggressive press.'},
   {k:'def',  l:'Defence', sort:'goals_against_pg', cols:['goals_against_pg','shots_against_pg','ppda'],

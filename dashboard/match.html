@@ -9,19 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="theme.css">
 <style>
+/* Canvas, surfaces, lines, text and the font tokens are in theme.css. The two
+   light blocks this file used to carry are gone; what is left here is the
+   accent family, which html.dark does not redeclare, so it has to stay
+   available to both modes, and the light pitch fill. */
 :root{
   --accent:#EF0107;--accent-dim:rgba(239,1,7,0.07);--accent-glow:rgba(239,1,7,0.18);
-  --bg:#f5f4f1;--bg2:#ffffff;--bg3:#fafaf8;
-  --surface:rgba(0,0,0,0.025);--surface2:rgba(0,0,0,0.05);
-  --border:#e8e5e0;--border2:#d5d2cc;
-  --text:#1a1a18;--text2:#5a5856;--text3:#9a9894;
-  --gold:#d4a017;--green:#16a34a;--blue:#2563eb;--red-bright:#dc2626;
   --pitch:#f0ead6;
-  --f-display:'Archivo','Inter',system-ui,sans-serif;
-  --f-body:'Inter',system-ui,sans-serif;
-  --f-data:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow2:0 2px 8px rgba(0,0,0,0.05);
 }
 html.dark{
   --bg:#101319;--bg2:#1a1d24;--bg3:#22252e;
@@ -528,11 +524,7 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 /* 2026 visual system: the match workspace now shares the homepage's
    restrained football-intelligence terminal language. */
 :root{
-  --bg:#f4f2ec;--bg2:#fbfaf6;--bg3:#efece4;
-  --surface:rgba(25,28,34,.035);--surface2:#efece4;
-  --border:#e4e0d6;--border2:#d3ccbf;
-  --text:#191c22;--text2:#5a6270;--text3:#8b93a0;
-  --gold:#9a6f2a;--green:#12855a;--blue:#2f6fd0;--red-bright:#cc4038;
+  --gold:#9a6f2a;--blue:#2f6fd0;
   --shadow:0 10px 26px rgba(23,27,34,.07);--shadow2:0 18px 46px rgba(23,27,34,.13);
 }
 html.dark{
@@ -554,7 +546,7 @@ body{
   background-size:auto,32px 32px,32px 32px;
 }
 .hdr{height:58px;background:rgba(22,27,36,.94);border-color:var(--border);box-shadow:none;backdrop-filter:blur(18px);padding:0 20px}
-html:not(.dark) .hdr{background:rgba(251,250,246,.94)}
+html:not(.dark) .hdr{background:color-mix(in srgb,var(--bg2) 94%,transparent)}
 .hdr-logo{background:var(--gold);color:var(--bg);border-radius:4px;box-shadow:0 0 0 1px rgba(226,184,119,.28),0 0 22px rgba(226,184,119,.12)}
 .hdr-sub,.s-hd,.viz-group-label,.panel-orient,.vt-label{font-family:var(--f-data)}
 .team-pick{border-radius:4px;background:var(--bg3);border-color:var(--border2)}
@@ -565,7 +557,7 @@ html:not(.dark) .hdr{background:rgba(251,250,246,.94)}
 .btn-fp,.btn-exp{background:rgba(226,184,119,.08);border-color:rgba(226,184,119,.24);color:var(--gold)}
 .main{background:transparent}
 .side{width:292px;padding:14px;background:rgba(22,27,36,.9);border-color:var(--border);backdrop-filter:blur(16px)}
-html:not(.dark) .side{background:rgba(251,250,246,.92)}
+html:not(.dark) .side{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .s-sec{margin-bottom:12px;padding-bottom:12px}
 .s-hd{letter-spacing:.13em;color:var(--text3);margin-bottom:8px}
 .s-sel,.ps-search{min-height:36px;border-radius:4px;background:var(--bg);border-color:var(--border2)}
@@ -575,21 +567,21 @@ html:not(.dark) .side{background:rgba(251,250,246,.92)}
 .viz-btn.on{border-left-width:1px}
 .p-item{border-radius:3px;min-height:30px}.p-item.sel{background:rgba(226,184,119,.08);border-color:rgba(226,184,119,.25);box-shadow:inset 2px 0 var(--gold)}
 .view-team-bar{background:rgba(22,27,36,.86);padding:7px 14px;backdrop-filter:blur(14px)}
-html:not(.dark) .view-team-bar{background:rgba(251,250,246,.9)}
+html:not(.dark) .view-team-bar{background:color-mix(in srgb,var(--bg2) 90%,transparent)}
 .vt-pill,.vt-cmp-btn,.compare-indicator{border-radius:3px}.vt-pill{background:var(--bg)}
 .vt-pill-btn{border-radius:2px;font-family:var(--f-data)}
 .vt-pill-btn.on{background:rgba(226,184,119,.14);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(226,184,119,.28)}
 .vt-pill-btn.on.opp{background:rgba(90,169,255,.12);color:var(--blue);box-shadow:inset 0 0 0 1px rgba(90,169,255,.28)}
 .vt-cmp-btn.on{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .compare-name{font:700 10px/1 var(--f-data);padding:5px 8px;border-radius:3px}.compare-name.a{color:var(--gold);background:rgba(226,184,119,.08)}.compare-name.b{color:var(--blue);background:rgba(90,169,255,.08)}.compare-vs{font:600 8px/1 var(--f-data);color:var(--text3)}.compare-note{font:500 8px/1 var(--f-data);color:var(--text3);margin-right:auto}
-.timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:rgba(251,250,246,.82)}
-.tw-panel{background:rgba(22,27,36,.72)}html:not(.dark) .tw-panel{background:rgba(251,250,246,.86)}
+.timeline{background:rgba(22,27,36,.72)}html:not(.dark) .timeline{background:color-mix(in srgb,var(--bg2) 82%,transparent)}
+.tw-panel{background:rgba(22,27,36,.72)}html:not(.dark) .tw-panel{background:color-mix(in srgb,var(--bg2) 86%,transparent)}
 .pitch-area{padding:12px;gap:12px;background:transparent}
 .pitch-area.single-viz[data-count="1"] .panel{width:min(100%,1040px);flex-basis:min(100%,1040px)}
 .pitch-area.single-viz[data-count="1"] .panel-viz-defensive{width:min(100%,880px);flex-basis:min(100%,880px)}
 .pitch-area[data-count="2"] .panel{width:calc(50% - 6px);flex-basis:calc(50% - 6px)}
 .panel{background:rgba(22,27,36,.78);border:1px solid var(--border);border-radius:5px;padding:12px;box-shadow:var(--shadow);overflow:hidden;max-height:none}
-html:not(.dark) .panel{background:rgba(251,250,246,.9)}
+html:not(.dark) .panel{background:color-mix(in srgb,var(--bg2) 90%,transparent)}
 .panel.compare-panel{border-top:2px solid var(--panel-team,var(--gold))}
 .panel-head{padding:0 0 10px;border-bottom:1px solid var(--border);margin-bottom:10px;min-height:42px}
 .panel-title{font-size:14px;white-space:normal;overflow-wrap:anywhere}
@@ -598,13 +590,15 @@ html:not(.dark) .panel{background:rgba(251,250,246,.9)}
 .panel-legend{min-height:28px;max-height:none;padding:9px 1px 0;gap:7px 14px;border-top:1px solid var(--border);margin-top:10px}
 .leg{font-family:var(--f-data);font-size:8.5px}.leg-dot{width:7px;height:7px}
 .leg-mark{width:11px;height:11px;display:inline-grid;place-items:center;flex:0 0 11px;font:800 11px/1 var(--f-data)}
+.shot-key{gap:5px}.shot-key svg{width:13px;height:13px;overflow:visible;flex:none}.shot-key b{font-weight:700;color:var(--text)}
+.leg-note{white-space:normal;line-height:1.35;flex:1 1 100%;opacity:.7}
 .jdp-btn,.dl-btn{border-radius:3px;font-family:var(--f-data);padding:5px 8px}
 .concept-info-bar{background:rgba(22,27,36,.9);border-color:var(--border);font-family:var(--f-data);max-height:none;padding:8px 14px}
-html:not(.dark) .concept-info-bar{background:rgba(251,250,246,.92)}
+html:not(.dark) .concept-info-bar{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .team-only-banner,.opp-warn-banner{border-radius:3px;font-family:var(--f-data)}
-.ps-side{width:272px;background:rgba(22,27,36,.9)}html:not(.dark) .ps-side{background:rgba(251,250,246,.92)}
+.ps-side{width:272px;background:rgba(22,27,36,.9)}html:not(.dark) .ps-side{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 .ps-main{background:transparent}.ps-hl-card,.sb-group,.mom-chart-wrap,.mom-heat-panel,.mom-moments{border-radius:4px;background:rgba(22,27,36,.82)}
-html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart-wrap,html:not(.dark) .mom-heat-panel,html:not(.dark) .mom-moments{background:rgba(251,250,246,.92)}
+html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart-wrap,html:not(.dark) .mom-heat-panel,html:not(.dark) .mom-moments{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
 
 @media(min-width:1400px){
   .pitch-area[data-count="4"]{flex-wrap:nowrap;overflow:hidden;align-content:stretch}
@@ -778,6 +772,14 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
 </div>
 
 <script>
+/* The match-report edge function is not deployed on the Supabase project this
+   page talks to. The endpoint answers 404, so the report panel could only ever
+   render "Unable to generate report". A disabled button would still advertise a
+   feature that does not exist, so the control is not rendered at all.
+   Nothing else is removed: callReportAPI, collectMatchReportStats, the system
+   prompt and the whole report panel are untouched and ready. Set this to true
+   once the function is live and the button comes back on its own. */
+const REPORT_ENABLED=false;
 let TEAMS={};
 /* Teams are built from whatever is in the database rather than hardcoded, so any
    side in the league can be analysed. Colour is derived deterministically from the
@@ -830,13 +832,13 @@ async function loadTeams(){
   }catch(e){ names=['Los Angeles FC']; }
   if(!names.length)names=['Los Angeles FC'];
   TEAMS={};
-  TEAMS['__ALL__']={name:'__ALL__',display:'\u2014 All teams \u2014',color:'#8b95b5',
+  TEAMS['__ALL__']={name:'__ALL__',display:'\u00B7 All teams \u00B7',color:'#8b95b5',
     colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
-    bg:'#f5f4f1',bg2:'#ffffff',comps:LEAGUES};
+    comps:LEAGUES};
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
-      colorBright:c,bg:'#f5f4f1',bg2:'#ffffff',league:LEAGUE_OF[n]||null,comps:LEAGUES};
+      colorBright:c,league:LEAGUE_OF[n]||null,comps:LEAGUES};
     TEAMS[n].display=dispName(n);
   });
   if(!TEAMS[S.team]||!inComps(S.team)){
@@ -858,8 +860,13 @@ function getXT(x,y){return XT[Math.min(11,Math.floor(x/100*12))][Math.min(7,Math
 let PASS_OK='#1a6b3a',PASS_FAIL='#c0392b';
 /* Canvas can't read CSS variables, so the palette is mirrored here and swapped
    whenever the theme changes. */
+/* Set while an export is being drawn. Exports are always light, so the pitch,
+   pass colours and in-plot type have to resolve light even when the workspace
+   is dark. Without this the same plot exported from the two themes came out as
+   two different pictures. */
+let EXP_LIGHT=false;
 function CT(){
-  const d=document.documentElement.classList.contains('dark');
+  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
   return d?{pitch:'#111722',line:'rgba(182,194,212,0.22)',lineStrong:'rgba(226,184,119,0.52)',
             band:'rgba(90,169,255,0.018)',text:'rgba(242,245,250,0.90)',textSoft:'rgba(182,194,212,0.48)',
             chipBg:'rgba(14,18,25,0.92)',chipText:'#f2f5fa',passOk:'#3ddc97',passFail:'#ff6b63'}
@@ -873,7 +880,7 @@ const PM=20; // pitch margin - MUST match drawPitch
 function setupHiDpiCanvas(can,logicalW,logicalH){const dpr=window.devicePixelRatio||1;can.width=Math.round(logicalW*dpr);can.height=Math.round(logicalH*dpr);Object.defineProperty(can,'width',{get:()=>logicalW,set:()=>{},configurable:true});Object.defineProperty(can,'height',{get:()=>logicalH,set:()=>{},configurable:true});const ctx=can.getContext('2d');ctx.scale(dpr,dpr);return ctx;}
 /* Dynamic panel title: player scope wins for individual views; team-level
    concepts keep the team subject. The same subject is used by exports. */
-function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;const subject=(S.selPlayer&&!TEAM_VIZ.has(viz))?S.selPlayer:team;if(!S.selMatch)return subject+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return subject+' '+vizLabel;const isTeamHome=m.home_team===team;const oppName=isTeamHome?m.away_team:m.home_team;const ha=isTeamHome?'H':'A';return subject+' '+vizLabel+' \u2014 vs '+oppName+' \u00B7 '+ha;}
+function buildPanelTitle(viz,teamOverride){const vizLabel=VIZ_LABELS[viz]||viz;const tn=T().name;const team=teamOverride||S.viewTeam||tn;const subject=(S.selPlayer&&!TEAM_VIZ.has(viz))?S.selPlayer:team;if(!S.selMatch)return subject+' '+vizLabel;const m=S.matches.find(mm=>mm.game_id==S.selMatch);if(!m)return subject+' '+vizLabel;const isTeamHome=m.home_team===team;const oppName=isTeamHome?m.away_team:m.home_team;const ha=isTeamHome?'H':'A';return subject+' '+vizLabel+' \u00B7 vs '+oppName+' \u00B7 '+ha;}
 
 let S={team:'LAFC',matches:[],events:[],sequences:[],starters:new Set(),playerPos:{},selMatch:null,selPlayer:null,cmpPlayer:null,activeVizs:['progressive'],plotSlots:2,shapeMode:'shift',periods:new Set(),outcomes:new Set(),timeFilter:null,showJdP:false,seasonData:[],seasonComps:new Set(),seasonSort:{col:null,dir:1},seasonTrend:null,seasonCols:new Set(['final_third_passes','zone14_passes','progressive_passes','passes_into_box','defensive_actions','defensive_actions_won','shots','shots_on_target','fwd_passes','lat_passes','bwd_passes']),psPlayer:null,psAllEvents:[],psAllMatches:[],psVizs:new Set(['passes']),psMatchFilter:null,psMode:'pg',psPlayersLoaded:false,viewTeam:null,oppTeam:null,compareMode:false,posGroups:new Set(),psMatchSort:{col:'date',dir:-1},_sqStatsCache:null,_pmCache:null,canvasEvents:new Map()};
 function T(){return TEAMS[S.team]||TEAMS.LAFC}
@@ -908,7 +915,7 @@ async function loadMatch(gid){const area=document.getElementById('pitchArea');ar
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
-  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';document.getElementById('btnGenReport').style.display='block';}
+  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';const bgr=document.getElementById('btnGenReport');if(bgr)bgr.style.display='block';}
 
 function getFiltered(vizType){
   const vt=VT();let evts=S.events.filter(e=>e.team===vt);
@@ -1077,12 +1084,63 @@ function drawAttackingHalfPitch(ctx,c){
   ctx.fillStyle=th.textSoft;ctx.font='700 10px Inter,sans-serif';ctx.textAlign='center';ctx.fillText('ATTACKING \u2191',c.width/2,r.y-8);
 }
 
+/* Canonical shot outcome grammar, shared with the Team Profiles shot map so a
+   marker means the same thing on both pages. Shape carries the outcome, colour
+   only reinforces it. Dark theme uses the Team Profiles values verbatim; light
+   theme keeps the same hues at a lower lightness so they stay readable on the
+   cream pitch. */
+function shotPalette(forTeam){
+  /* EXP_LIGHT for the same reason CT() honours it: an export is always the light
+     document, so the marker colours cannot depend on the workspace theme. */
+  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
+  const ok=d?'#22e39a':'#0f7a52',fail=d?'#ff5a5a':'#bf3535';
+  return {goal:d?'#f0a5ff':'#a1279b',saved:forTeam?ok:fail,blocked:d?'#a78bfa':'#6641cf',
+          post:d?'#ffc93c':'#9a6b00',off:forTeam?ok:fail};
+}
+/* Same five shapes as teams.html shotMark(): goal is a filled disc inside a
+   thin ring, saved a filled disc, blocked a diamond, post and off target are
+   hollow rings separated by stroke weight rather than by colour alone. */
+function drawShotMark(ctx,cx,cy,r,col,oc){
+  if(oc==='goal'){
+    ctx.beginPath();ctx.arc(cx,cy,r*1.7,0,Math.PI*2);
+    ctx.strokeStyle=hexAlpha(col,0.55);ctx.lineWidth=Math.max(1,r*0.2);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();return;
+  }
+  if(oc==='blocked'){const d=r*1.25;
+    ctx.beginPath();ctx.moveTo(cx,cy-d);ctx.lineTo(cx+d,cy);ctx.lineTo(cx,cy+d);ctx.lineTo(cx-d,cy);ctx.closePath();
+    ctx.fillStyle=hexAlpha(col,0.75);ctx.fill();return;
+  }
+  if(oc==='post'||oc==='off'){
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=hexAlpha(col,0.9);
+    ctx.lineWidth=oc==='post'?Math.max(2.2,r*0.42):Math.max(1.2,r*0.22);
+    ctx.stroke();return;
+  }
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=hexAlpha(col,0.8);ctx.fill();
+}
+/* Legend glyphs mirror the canvas shapes one for one, and match the SVG keys
+   used by shotOutcomeLegend() on Team Profiles. Rendered into the panel legend
+   strip below the canvas, so it can never sit over pitch markings or markers. */
+function shotOutcomeLegend(counts,pal){
+  const labels={goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'};
+  const glyph={
+    goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
+    saved:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="'+c+'" fill-opacity=".8"/></svg>'},
+    blocked:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 1.5L14.5 8L8 14.5L1.5 8Z" fill="'+c+'" fill-opacity=".75"/></svg>'},
+    post:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="2"/></svg>'},
+    off:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.6"/></svg>'}
+  };
+  return ['goal','saved','blocked','post','off'].filter(function(k){return counts[k]}).map(function(k){
+    return '<span class="leg shot-key" data-shot-key="'+k+'" data-color="'+pal[k]+'">'+glyph[k](pal[k])+'<span>'+labels[k]+' <b>'+counts[k]+'</b></span></span>';
+  }).join('');
+}
 function renderShotMap(ctx,c,evts,titleEl,legendEl){
   drawAttackingHalfPitch(ctx,c);
   // Area, rather than radius, scales with fitted xG so a 0.40 chance is
-  // visually twice a 0.20 chance. Outcome remains encoded by shape and color.
-  const C={goal:'#f5b800',saved:'#2563eb',post:'#a855f7',blocked:'#f97316',off:'#9ca3af'};
-  let goals=0,saved=0,blocked=0,post=0,off=0,totalXg=0,xgKnown=0,distTotal=0;const stored=[];
+  // visually twice a 0.20 chance. Shots the view returns without an xG fall
+  // back to one fixed size and claim no value.
+  const C=shotPalette(!isOppView());
+  let goals=0,saved=0,blocked=0,post=0,off=0,totalXg=0,xgKnown=0,xgMissing=0,distTotal=0;const stored=[];
   function kindOf(e){
     if(e.is_goal)return 'goal';
     var o=(e.outcome_type||'')+' '+(e.type||'');
@@ -1091,53 +1149,29 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     if(/Saved/i.test(o))return 'saved';
     return 'off';
   }
-  function star(cx,cy,r,fill,stroke){
-    ctx.beginPath();
-    for(var i=0;i<10;i++){
-      var ang=Math.PI/5*i-Math.PI/2,rad=(i%2===0)?r:r*0.46;
-      var x=cx+Math.cos(ang)*rad,y=cy+Math.sin(ang)*rad;
-      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-    }
-    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
-    ctx.strokeStyle=stroke;ctx.lineWidth=1.6;ctx.stroke();
-  }
   evts.forEach(function(e){
     if(e.x==null||e.y==null)return;
     var p=toShotXY(e.x,e.y,c);
     var dist=e.shot_dist_m!=null?Number(e.shot_dist_m):Math.sqrt(Math.pow(100-e.x,2)+Math.pow((50-e.y)*0.68,2));
     var xg=e.xg==null?null:Number(e.xg);
-    if(Number.isFinite(xg)){totalXg+=xg;xgKnown++;}distTotal+=dist;
-    var r=xg==null?6:Math.max(4,Math.min(15,3+15*Math.sqrt(xg)));
-    var k=kindOf(e),col=C[k];
-    if(k==='goal'){goals++;star(p.cx,p.cy,r+3,hexAlpha(col,0.9),col);}
-    else if(k==='saved'){saved++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.fillStyle=hexAlpha(col,0.72);ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=1.4;ctx.stroke();}
-    else if(k==='post'){post++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.fillStyle=hexAlpha(col,0.5);ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);}
-    else if(k==='blocked'){blocked++;
-      ctx.strokeStyle=col;ctx.lineWidth=1.8;
-      ctx.beginPath();ctx.moveTo(p.cx-r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx+r*0.7,p.cy+r*0.7);
-      ctx.moveTo(p.cx+r*0.7,p.cy-r*0.7);ctx.lineTo(p.cx-r*0.7,p.cy+r*0.7);ctx.stroke();}
-    else{off++;
-      ctx.beginPath();ctx.arc(p.cx,p.cy,r,0,Math.PI*2);
-      ctx.strokeStyle=hexAlpha(col,0.85);ctx.lineWidth=1.5;ctx.stroke();}
+    if(Number.isFinite(xg)){totalXg+=xg;xgKnown++;}else{xgMissing++;}distTotal+=dist;
+    var r=Number.isFinite(xg)?Math.max(4,Math.min(15,3+15*Math.sqrt(xg))):6;
+    var k=kindOf(e);
+    if(k==='goal')goals++;else if(k==='saved')saved++;else if(k==='post')post++;else if(k==='blocked')blocked++;else off++;
+    drawShotMark(ctx,p.cx,p.cy,r,C[k],k);
     stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,
-      outcome:(e.is_goal?'Goal':(e.outcome_type||k))+(xg==null?'':' · xG '+xg.toFixed(2)),type:'Shot',dist:dist.toFixed(0)});
+      outcome:(e.is_goal?'Goal':(e.outcome_type||k))+(Number.isFinite(xg)?' · xG '+xg.toFixed(2):''),type:'Shot',dist:dist.toFixed(0)});
   });
-  const sr=shotPitchRect(c),summaryY=sr.y+sr.h+22,summary=[['SHOTS',evts.length],['GOALS',goals],['TOTAL xG',xgKnown?totalXg.toFixed(2):'—'],['AVG DIST',evts.length?(distTotal/evts.length).toFixed(1)+'m':'—']];
+  const sr=shotPitchRect(c),summaryY=sr.y+sr.h+22,summary=[['SHOTS',evts.length],['GOALS',goals],['TOTAL xG',xgKnown?totalXg.toFixed(2):'n/a'],['AVG DIST',evts.length?(distTotal/evts.length).toFixed(1)+'m':'n/a']];
   if(summaryY+44<c.height){const cellW=(c.width-2*PM)/summary.length;summary.forEach((s,i)=>{const x=PM+i*cellW;if(i){ctx.strokeStyle=CT().line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,summaryY);ctx.lineTo(x,summaryY+38);ctx.stroke();}ctx.fillStyle=CT().text;ctx.font='700 14px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(String(s[1]),x+cellW/2,summaryY+16);ctx.fillStyle=CT().textSoft;ctx.font='700 7px JetBrains Mono,monospace';ctx.fillText(s[0],x+cellW/2,summaryY+31);});}
   S.canvasEvents.set(c,stored);
   titleEl.textContent='Attacking-Half Shot Map';
+  const sizeNote=xgKnown
+    ? 'marker area = fitted xG · hover for value'+(xgMissing?' · '+xgMissing+' without xG at fixed size':'')
+    : 'no xG for these shots · fixed marker size';
   legendEl.innerHTML=
-    leg(C.goal,'Goal ('+goals+')')+leg(C.saved,'On target ('+saved+')')+
-    (post?leg(C.post,'Woodwork ('+post+')'):'')+
-    (blocked?leg(C.blocked,'Blocked ('+blocked+')'):'')+
-    leg(C.off,'Off target ('+off+')')+
-    '<span class="leg" style="opacity:.7">marker area = fitted xG · hover for value</span>';
+    shotOutcomeLegend({goal:goals,saved:saved,blocked:blocked,post:post,off:off},C)+
+    '<span class="leg leg-note">'+sizeNote+'</span>';
 }
 
 function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
@@ -1182,7 +1216,7 @@ function pressureColor(v,a){let r,g,b;if(v<0.45){const t=v/0.45;r=Math.round(240
 function renderFormation(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const vt=VT();const pos={},cnt={};const startersOnly=evts.filter(e=>S.starters.has(e.player));(startersOnly.length?startersOnly:evts).forEach(e=>{if(e.x==null||e.y==null||e.team!==vt)return;if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p];});const players=Object.entries(pos).sort((a,b)=>cnt[b[0]]-cnt[a[0]]).slice(0,11);if(!players.length){titleEl.textContent='Average-position formation estimate (no data)';legendEl.innerHTML='';return;}// Identify GK as player with lowest avg x
   const gkEntry=[...players].sort((a,b)=>a[1].x-b[1].x)[0];const outfield=players.filter(p=>p[0]!==gkEntry[0]);// Cluster outfield players into lines by avg x
   const outSorted=[...outfield].sort((a,b)=>a[1].x-b[1].x);// Simple k-means style: try to split into lines
-  const xs=outSorted.map(p=>p[1].x);const xMin=Math.min(...xs),xMax=Math.max(...xs);const lineBands=[];// Greedy split — if 10 outfield, decide line counts by gaps
+  const xs=outSorted.map(p=>p[1].x);const xMin=Math.min(...xs),xMax=Math.max(...xs);const lineBands=[];// Greedy split, if 10 outfield, decide line counts by gaps
   const gaps=[];for(let i=1;i<xs.length;i++)gaps.push({idx:i,gap:xs[i]-xs[i-1]});gaps.sort((a,b)=>b.gap-a.gap);const splitPoints=gaps.slice(0,3).map(g=>g.idx).sort((a,b)=>a-b);const lines=[];let prev=0;splitPoints.forEach(sp=>{lines.push(outSorted.slice(prev,sp));prev=sp;});lines.push(outSorted.slice(prev));const formString=lines.map(l=>l.length).join('-');// Draw lines (position-line connectors)
   const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444'};const inferCol=(avgX)=>avgX<25?'#d4a017':avgX<45?'#2563eb':avgX<68?'#16a34a':'#ef4444';
   ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;lines.forEach(line=>{if(line.length<2)return;const sorted=[...line].sort((a,b)=>a[1].y-b[1].y);for(let i=0;i<sorted.length-1;i++){const a=toXY(sorted[i][1].x,sorted[i][1].y,c),b=toXY(sorted[i+1][1].x,sorted[i+1][1].y,c);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();}});
@@ -1198,7 +1232,7 @@ function renderDominance(ctx,c,allEvts,titleEl,legendEl){drawPitch(ctx,c);if(S.s
     ctx.fillStyle='rgba(0,0,0,0.55)';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(Math.round(aShare*100)+'%',x+zw/2,y+zh/2+3);}
   // Gridlines
   ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=0.5;for(let i=1;i<cols;i++){ctx.beginPath();ctx.moveTo(PM+i*zw,PM);ctx.lineTo(PM+i*zw,PM+ph);ctx.stroke();}for(let i=1;i<rows;i++){ctx.beginPath();ctx.moveTo(PM,PM+i*zh);ctx.lineTo(PM+pw,PM+i*zh);ctx.stroke();}
-  titleEl.textContent='Zone Dominance — '+vt+(oppName?' vs '+oppName:'');legendEl.innerHTML='';}
+  titleEl.textContent='Zone Dominance · '+vt+(oppName?' vs '+oppName:'');legendEl.innerHTML='';}
 
 /* Pass Combos */
 function renderCombos(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const sorted=[...evts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);const combos={};for(let i=0;i<sorted.length-1;i++){const p=sorted[i];if(p.type!=='Pass'||p.outcome_type!=='Successful')continue;for(let j=i+1;j<Math.min(i+3,sorted.length);j++){const n=sorted[j];if(n.team!==vt||n.player===p.player)continue;const key=p.player+'|||'+n.player;if(!combos[key])combos[key]={passer:p.player,receiver:n.player,count:0,ox:0,oy:0,dx:0,dy:0};combos[key].count++;combos[key].ox+=p.x;combos[key].oy+=p.y;combos[key].dx+=(p.end_x!=null?p.end_x:n.x);combos[key].dy+=(p.end_y!=null?p.end_y:n.y);break;}}
@@ -1322,7 +1356,7 @@ function positionDlMenu(btn, menu) {
   // Match Analysis panels live inside .pitch-area whose .panel descendants
   // have an animation that creates a containing block trapping position:fixed.
   // Move the menu to document.body so position:fixed resolves to the viewport.
-  // Player Stats export buttons are NOT inside .pitch-area — leave those untouched.
+  // Player Stats export buttons are NOT inside .pitch-area, leave those untouched.
   if (btn.closest('.pitch-area') && menu.parentNode !== document.body) {
     if (!menu.dataset.origParent) {
       menu.dataset.origParent = '1';
@@ -1372,7 +1406,7 @@ function buildPanel(area,viz,sz,teamOverride){
   btns.append(jdpBtn,dlWrap);head.append(titleWrap,btns);
   const body=document.createElement('div');body.className='panel-body';
   const canWrap=document.createElement('div');canWrap.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:0;flex:1';
-  if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data \u2014 this view is not player-specific';canWrap.appendChild(tb);}
+  if(TEAM_VIZ.has(viz)&&S.selPlayer){const tb=document.createElement('div');tb.className='team-only-banner';tb.textContent='Showing team data. This view is not player-specific';canWrap.appendChild(tb);}
   if(teamOverride&&teamOverride!==T().name){const m=S.matches.find(mm=>mm.game_id==S.selMatch);const oppEvts=S.events.filter(e=>e.team===teamOverride).length;if(m&&m.competition&&m.competition.indexOf('Premier League')===-1){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Opposition data may be incomplete for this competition.';canWrap.appendChild(w);}else if(oppEvts<100){const w=document.createElement('div');w.className='opp-warn-banner';w.textContent='Limited opposition data available for this match ('+oppEvts+' events).';canWrap.appendChild(w);}}
   const can=document.createElement('canvas');can.className='pitch-canvas';can.dataset.viz=viz;can.dataset.team=panelTeam;can.dataset.teamColor=panelColor;if(S.selPlayer&&!TEAM_VIZ.has(viz))can.dataset.subject=S.selPlayer;can.setAttribute('role','img');canWrap.appendChild(can);
   const canvasSz=viz==='shots'?{w:Math.max(420,Math.round(sz.w*1.45)),h:Math.max(330,Math.round(sz.w*0.92))}:sz;
@@ -1387,6 +1421,9 @@ function buildPanel(area,viz,sz,teamOverride){
   if(teamOverride)S.viewTeam=teamOverride;
   const evts=getFiltered(viz);
   callRenderer(viz,ctx,can,evts,title,legend,pairEl);
+  // Remember the render inputs so exports can redraw this plot at print
+  // resolution rather than upscaling the screen bitmap.
+  can._exp={viz:viz,evts:evts,team:teamOverride||null,w:canvasSz.w,h:canvasSz.h};
   if(viz!=='network'&&viz!=='combos')body.appendChild(buildPanelContext(viz));
   S.viewTeam=origVT;
   // Title with team prefix in compare mode
@@ -1543,8 +1580,8 @@ function renderMomentumTab(){
   html+='<div class="mom-explain'+(expanded?' open':'')+'" id="momExplain"><div class="mom-explain-hdr"><span class="concept-icon">\u24D8</span><span class="mom-explain-title">How the attacking-event index is calculated</span><button class="mom-explain-toggle" id="momExplainToggle">'+(expanded?'\u2212':'+')+'</button></div><div class="mom-explain-body">The same simple score is applied independently to both teams: progressive pass (+1), shot (+2), and goal (+5). The lines accumulate attacking events over the match. This is a descriptive event count, not possession, win probability, or a validated measure of momentum or control. Team color shows '+esc(tn)+'; grey shows '+esc(oppName)+'.</div></div>';
   html+='<div class="mom-chart-wrap">'+svg+'<div class="mom-legend"><span><span class="mom-legend-dot" style="background:'+t.color+'"></span>'+esc(tn)+'</span><span><span class="mom-legend-dot" style="background:#6b7280"></span>'+esc(oppName)+'</span><span style="color:var(--text3)">\u2605 goals</span></div><div class="mom-tooltip" id="momTip"></div></div>';
   html+='<div class="mom-bottom">';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
-  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u2014 Touch Heatmap</div><canvas role="img" aria-label="'+esc(oppName)+' touch heatmap" class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(tn)+' \u00B7 Touch Heatmap</div><canvas role="img" aria-label="'+esc(tn)+' touch heatmap" class="mom-heat-canvas" id="momHeatA" width="360" height="580"></canvas></div>';
+  html+='<div class="mom-heat-panel"><div class="mom-heat-title">'+esc(oppName)+' \u00B7 Touch Heatmap</div><canvas role="img" aria-label="'+esc(oppName)+' touch heatmap" class="mom-heat-canvas" id="momHeatB" width="360" height="580"></canvas></div>';
   html+='<div class="mom-moments"><div class="mom-moments-title">Key Moments</div>';
   posMoments.forEach(mm=>{html+='<div class="mom-moment-row pos"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">+'+mm.d+'</span></div>';});
   negMoments.forEach(mm=>{html+='<div class="mom-moment-row neg"><span class="mom-moment-min">'+mm.m+"'</span><span>"+esc(lastName(mm.player||''))+' \u00B7 '+mm.type+'</span><span class="mom-moment-delta">'+mm.d+'</span></div>';});
@@ -1773,7 +1810,7 @@ function renderSeasonTrend(colKey){
     +dots
     +xTicks
     +'</svg>';
-  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u2014 '+esc(colDef.label)+' by match</div><button class="season-trend-close" id="stClose" aria-label="Close trend chart">\u2715</button></div>'+svg+
+  wrap.innerHTML='<div class="season-trend"><div class="season-trend-hdr"><div class="season-trend-title">'+esc(T().display)+' \u00B7 '+esc(colDef.label)+' by match</div><button class="season-trend-close" id="stClose" aria-label="Close trend chart">\u2715</button></div>'+svg+
     '<div class="trend-legend"><span><i class="trend-line"></i>Match value</span><span><i class="trend-line roll"></i>Rolling 5-match average</span><span><i class="trend-line avg"></i>Selected-match average</span><span>Dots: <b style="color:#16a34a">win</b> \u00B7 <b style="color:#ca8a04">draw</b> \u00B7 <b style="color:#dc2626">loss</b></span></div><div class="season-trend-tip" id="stTip"></div></div>';
   document.getElementById('stClose').onclick=()=>{S.seasonTrend=null;wrap.innerHTML='';};
   const tip=document.getElementById('stTip');const trendEl=wrap.querySelector('.season-trend');
@@ -1804,7 +1841,7 @@ function renderSeasonTable(){
       '<span class="tot-rank-of">of '+rk.of_teams+'</span></div>':'';
     return'<div class="tot-card"><div class="tot-val">'+avg+'</div><div class="tot-lbl">'+c.label+' / game</div>'+
       '<div class="tot-sub">'+sum+' total</div>'+rankHtml+'</div>';}).join('');
-  document.getElementById('seasonTitle').textContent=T().display+' \u2014 Season Stats';
+  document.getElementById('seasonTitle').textContent=T().display+' \u00B7 Season Stats';
   // Populate trend dropdown
   const trendSel=document.getElementById('trendSel');if(trendSel){const cur=trendSel.value;trendSel.innerHTML='<option value="">Select stat to chart \u2192</option>'+SEASON_COLS.filter(c=>c.type==='num').map(c=>'<option value="'+c.key+'"'+(cur===c.key?' selected':'')+'>'+c.label+'</option>').join('');trendSel.onchange=()=>{if(trendSel.value){S.seasonTrend=trendSel.value;renderSeasonTrend(trendSel.value);}else{S.seasonTrend=null;document.getElementById('seasonTrendWrap').innerHTML='';}};if(cur&&S.seasonTrend)renderSeasonTrend(S.seasonTrend);}
 }
@@ -1906,7 +1943,7 @@ function renderPsPitches(){
   const t=T(),name=S.psPlayer;
   let evts=S.psAllEvents.filter(e=>e.team===t.name&&e.player===name);
   const banner=document.getElementById('psFilterBanner');
-  if(S.psMatchFilter){evts=evts.filter(e=>e.game_id==S.psMatchFilter);const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(banner){if(m){const isH=m.home_team===t.name;const opp=isH?m.away_team:m.home_team;const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});banner.innerHTML='<div class="ps-filter-banner">\uD83D\uDCC5 <b>'+esc(opp)+'</b> \u00B7 '+d+' \u2014 click row again to show full season</div>';}else{banner.innerHTML='<div class="ps-filter-banner">Showing match '+S.psMatchFilter+'</div>';}}}else if(banner){banner.innerHTML='';}
+  if(S.psMatchFilter){evts=evts.filter(e=>e.game_id==S.psMatchFilter);const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(banner){if(m){const isH=m.home_team===t.name;const opp=isH?m.away_team:m.home_team;const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});banner.innerHTML='<div class="ps-filter-banner">\uD83D\uDCC5 <b>'+esc(opp)+'</b> \u00B7 '+d+' \u00B7 click row again to show full season</div>';}else{banner.innerHTML='<div class="ps-filter-banner">Showing match '+S.psMatchFilter+'</div>';}}}else if(banner){banner.innerHTML='';}
   const toShow=['heatmap',...[...S.psVizs].filter(v=>v!=='heatmap')];
   const unique=[...new Set(toShow)];
   unique.forEach(viz=>{
@@ -1935,7 +1972,7 @@ function renderPsPitches(){
     // Dynamic title: prefix with team+viz and match info when a match filter is active
     const tn=T().name;const vLabelFull=VIZ_LABELS[viz]||viz;
     const pTitle=S.psPlayer||tn;
-    if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=pTitle+' '+vLabelFull+' \u2014 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=pTitle+' '+vLabelFull;}
+    if(S.psMatchFilter){const m=S.matches.find(mm=>mm.game_id==S.psMatchFilter);if(m){const isH=m.home_team===tn;const opp=isH?m.away_team:m.home_team;const ha=isH?'H':'A';const d=calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});title.textContent=pTitle+' '+vLabelFull+' \u00B7 vs '+opp+' \u00B7 '+ha+' \u00B7 '+d;}}else{title.textContent=pTitle+' '+vLabelFull;}
     can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top.');
     // Export menu
     const vLabel=VIZ_LABELS[viz]||viz;const suffix=psFilenameSuffix();
@@ -1970,7 +2007,7 @@ function downloadAllPsViews(){
   const cans=document.querySelectorAll('.ps-pitch-canvas');if(!cans.length)return;
   const panels=Array.from(cans).map(c=>({canvas:c,label:VIZ_LABELS[c.dataset?.viz]||c.dataset?.viz||''}));
   const origPlayer=S.selPlayer;S.selPlayer=S.psPlayer||S.selPlayer;
-  const cfg=buildExportConfig(cans[0],(S.psPlayer||'Player')+' \u2014 All Views',{matchDesc:_psContextLine(),competition:'',ha:'',opponent:''});
+  const cfg=buildExportConfig(cans[0],(S.psPlayer||'Player')+' \u00B7 All Views',{matchDesc:_psContextLine(),competition:'',ha:'',opponent:''});
   const off=renderAllPanelsCanvas(panels,cfg);S.selPlayer=origPlayer;
   const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   pdf.addImage(off.toDataURL('image/png'),'PNG',0,0,297,210);
@@ -2017,7 +2054,7 @@ async function openCellMatchModal(gid,oppName,colKey){
   overlay.classList.add('show');
   const t=T();const m=S.matches.find(mm=>mm.game_id==gid);let matchLabel='';if(m)matchLabel=m.home_team+' '+m.home_score+'\u2013'+m.away_score+' '+m.away_team+' \u00B7 '+calendarDate(m.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   const colDef=SEASON_COLS.find(c=>c.key===colKey);
-  title.textContent=(colDef?colDef.label:colKey)+' \u2014 '+oppName;
+  title.textContent=(colDef?colDef.label:colKey)+' \u00B7 '+oppName;
   sub.textContent=matchLabel||'Match view';
   body.innerHTML='<div class="loading"><div class="spinner"></div> Loading match events...</div>';
   try{
@@ -2048,12 +2085,17 @@ async function openCellMatchModal(gid,oppName,colKey){
     const can=document.createElement('canvas');can.setAttribute('role','img');can.setAttribute('aria-label',(colDef?colDef.label:colKey)+' pitch visualization. Attack is bottom to top.');
     body.appendChild(can);
     const legend=document.createElement('div');legend.className='panel-legend';body.appendChild(legend);
-    const ctx=setupHiDpiCanvas(can,560,Math.round(560/PITCH_RATIO));const noopT={textContent:''};
+    const cellH=Math.round(560/PITCH_RATIO);
+    const ctx=setupHiDpiCanvas(can,560,cellH);const noopT={textContent:''};
     callRenderer(vizType,ctx,can,teamEvts,noopT,legend,null);
+    // Season cells draw from row-scoped events, so only tag views that depend on
+    // nothing but those events; anything reading live match state stays on the
+    // screen bitmap rather than redrawing against the wrong match.
+    if(EXP_PURE_VIZ.has(vizType))can._exp={viz:vizType,evts:teamEvts,team:null,w:560,h:cellH};
     // Hover tooltips
     can.addEventListener('mousemove',e=>{handleTooltip(e,can);});
     can.addEventListener('mouseleave',()=>{document.getElementById('tip').style.display='none';});
-    // Export buttons — use isolated cell context (no S.selPlayer/S.selMatch leakage)
+    // Export buttons use isolated cell context (no S.selPlayer/S.selMatch leakage)
     const exportWrap=document.getElementById('cellExportWrap');if(exportWrap){exportWrap.innerHTML='';const vLabel=(colDef?colDef.label:colKey);
       const isHomeRow=m?(m.home_team===t.name):null;
       const rowData={opponent:oppName,ha:isHomeRow==null?'':(isHomeRow?'H':'A'),viewLabel:vLabel,teamEvts:teamAllEvts};
@@ -2082,7 +2124,11 @@ function collectMatchReportStats(){const tn=T().name;const m=S.matches.find(mm=>
 }
 async function callReportAPI(statsPayload){
   const prompt='Match data:\n'+JSON.stringify(statsPayload,null,2)+'\n\nWrite the match report now.';
-  const system="You are a professional football analyst writing a concise tactical match report. Write in a professional, analytical tone. Be specific \u2014 use the exact numbers provided. Do not invent statistics. Write 3-4 paragraphs covering: 1) overall match pattern and territorial dominance, 2) "+T().name+"'s attacking patterns and key creative players, 3) defensive performance and pressing, 4) one tactical observation or area for improvement. Keep each paragraph to 3-4 sentences.";
+  /* This is the one surface on the site where prose is generated rather than
+     measured, so the constraints are the tightest here. The structure below is
+     the original brief; the numbered rules are what keep the model inside the
+     payload, and they are declared to win whenever the two pull apart. */
+  const system="You are a professional football analyst writing a concise tactical match report. Write in a professional, analytical tone. Write 3-4 paragraphs covering: 1) overall match pattern and territorial dominance, 2) "+T().name+"'s attacking patterns and key creative players, 3) defensive performance and pressing, 4) one tactical observation or area for improvement. Keep each paragraph to 3-4 sentences.\n\nThe following rules override the structure and the tone above whenever they conflict.\n1. Use only the numbers present in the supplied data, and use those figures exactly as given. Never estimate, never round differently, never derive a new figure, and never state a number that is not in the payload.\n2. Do not invent statistics, player names, minutes, scorelines or events. Every name, number and event you mention must appear in the data.\n3. Report values, do not interpret them as proof. If the data gives a metric value, state that value. Never describe a definition as if it were a measurement, and never assert what a metric proves.\n4. Do not claim causation. The data shows what happened, not why. Describe the pattern, not the reason for it.\n5. If the data is insufficient to support a point, say so plainly rather than filling the gap. An acknowledged gap is better than a confident guess.\n6. Do not use em dashes or en dashes in prose. Use commas, full stops or a middot. An en dash is permitted only inside a numeric range or a scoreline, for example 62–89 or 2–1.";
   const r=await fetch(SB+'/functions/v1/match-report',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AK},body:JSON.stringify({messages:[{role:'user',content:prompt}],system})});
   if(!r.ok){let msg='API error '+r.status;try{const e=await r.json();if(e.error)msg+=': '+(typeof e.error==='string'?e.error:JSON.stringify(e.error));}catch(_){}throw new Error(msg);}
   const d=await r.json();
@@ -2172,7 +2218,7 @@ function computeVizStats(viz){
     const zoneCounts={};const zoneLabels=['Def L','Def C','Def R','Mid L','Mid C','Mid R','Att L','Att C','Att R'];
     evts.forEach(e=>{if(e.x==null||e.y==null)return;const xi=e.x<33?0:e.x<66?1:2;const yi=e.y<33?2:e.y<66?1:0;const idx=xi*3+yi;zoneCounts[idx]=(zoneCounts[idx]||0)+1;});
     let peakIdx=0,peakVal=-1;Object.entries(zoneCounts).forEach(([k,v])=>{if(v>peakVal){peakVal=v;peakIdx=+k;}});
-    const peakLabel=touches?zoneLabels[peakIdx]:'\u2014';
+    const peakLabel=touches?zoneLabels[peakIdx]:'n/a';
     return[['Touches',touches],['In Final Third',touchesFT],['In Own Half',touchesOwn],['Peak Zone',peakLabel]];
   }
   if(viz==='shape'){
@@ -2187,7 +2233,7 @@ function computeVizStats(viz){
     const pairs={};for(let i=0;i<sortedN.length-1;i++){const p=sortedN[i];for(let j=i+1;j<Math.min(i+3,sortedN.length);j++){const n=sortedN[j];if(n.player===p.player)continue;const key=[p.player,n.player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}
     const entries=Object.entries(pairs).sort((a,b)=>b[1]-a[1]);
     const topEntry=entries[0];
-    const topName=topEntry?(lastName(topEntry[0].split('|||')[0])+'\u2194'+lastName(topEntry[0].split('|||')[1])):'\u2014';
+    const topName=topEntry?(lastName(topEntry[0].split('|||')[0])+'\u2194'+lastName(topEntry[0].split('|||')[1])):'n/a';
     return[['Connections',entries.length],['Top Combo',topName],['Total Passes',passes.length],['Accuracy',acc+'%']];
   }
   if(viz==='xt'){
@@ -2256,226 +2302,511 @@ function buildExportConfig(pitchCanvas,viewLabel,opts){
 function _expTeamInitials(name){const caps=(name||'').match(/[A-Z]/g);if(caps&&caps.length>=2)return caps.join('').slice(0,4);return (name||'FC').substring(0,3).toUpperCase();}
 function _expPill(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 
-/* ---- DARK THEME PALETTE ---- */
-const EXP_BG='#101319';
-const EXP_PANEL='#1a1d24';
-const EXP_TEXT='#f0f2f8';
-const EXP_MUTED='#8a94b0';
-const EXP_BORDER='rgba(255,255,255,0.10)';
+/* ---- EXPORT PALETTE ----
+   An export is a document, not a screenshot of the app, so it renders light
+   whichever theme the workspace is in. It is the same light palette the rest of
+   the site now shares from theme.css, hard coded here because the canvas cannot
+   read a custom property and because the output must not change when the reader
+   flips the theme. It also ends the mismatch the dark card had: dark chrome
+   wrapped around a cream pitch that the renderer draws light regardless. */
+const EXP_BG='#faf8f3';                    /* card canvas   (--bg)  */
+const EXP_PANEL='#f4f1e9';                 /* raised band   (--bg2) */
+const EXP_TEXT='#16191f';                  /* primary       (--text) */
+const EXP_MUTED='#4a5262';                 /* secondary     (--text2) */
+const EXP_LABEL='#6b7280';                 /* small labels  (--text3) */
+const EXP_BORDER='rgba(22,25,31,0.16)';
+const EXP_RULE='rgba(22,25,31,0.09)';
+const EXP_DIM='#4a5262';
 
-function _drawHeaderBand(ctx,W,topH,cfg){
-  const tc=cfg.teamColor;
-  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,topH);
-  // Left 6px accent bar full header height
-  ctx.fillStyle=tc;ctx.fillRect(0,0,6,topH);
-  const padX=48;
+/* One type and spacing scale, shared by portrait, landscape and the square card
+   so the three formats read as the same document at different sizes. */
+function _expScale(k){
+  const r=function(v){return Math.max(1,Math.round(v*k))};
+  return {k:k,pad:r(40),gap:r(20),rule:r(1),
+    eyebrow:r(19),title:r(74),accent:r(31),meta:r(24),body:r(22),
+    note:r(19),legend:r(21),statV:r(60),statL:r(18),foot:r(20)};
+}
+/* Exported copy avoids em dashes, including any inherited from screen strings. */
+function _expCopy(s){return String(s==null?'':s).replace(/\u2014/g,'\u00B7').replace(/\s+/g,' ').trim();}
+function _expWrap(ctx,text,maxW){
+  const words=_expCopy(text).split(' ').filter(Boolean),lines=[];let line='';
+  words.forEach(function(wd){
+    const t=line?line+' '+wd:wd;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=wd;}else line=t;
+  });
+  if(line)lines.push(line);
+  return lines;
+}
+/* Canvas has no letter-spacing, so eyebrows and stat labels are set glyph by
+   glyph. Assumes textAlign left. */
+function _expTrackedW(ctx,text,sp){
+  const s=String(text||'');let w=0;
+  for(let i=0;i<s.length;i++)w+=ctx.measureText(s[i]).width+sp;
+  return Math.max(0,w-sp);
+}
+function _expTracked(ctx,text,x,y,sp){
+  const s=String(text||'');let cx=x;
+  for(let i=0;i<s.length;i++){ctx.fillText(s[i],cx,y);cx+=ctx.measureText(s[i]).width+sp;}
+  return Math.max(0,cx-x-sp);
+}
+function _expTrackedCentre(ctx,text,cx,y,sp){
+  const w=_expTrackedW(ctx,text,sp);_expTracked(ctx,text,cx-w/2,y,sp);return w;
+}
+function _expRule(ctx,x,y,w,col){ctx.fillStyle=col||EXP_RULE;ctx.fillRect(x,Math.round(y),w,1);}
+
+/* ---- what the export carries over from the panel the user is looking at ---- */
+const EXP_PURE_VIZ=new Set(['passes','progressive','final_third','zone14','box_passes','shots','defensive','heatmap','pressure','xt']);
+function _expPanelOf(srcCanvas){return srcCanvas&&srcCanvas.closest?srcCanvas.closest('.panel'):null;}
+function _expOrientation(srcCanvas){
+  const panel=_expPanelOf(srcCanvas),el=panel?panel.querySelector('.panel-orient'):null;
+  const t=el?_expCopy(el.textContent):'';
+  return t||'Orientation · attack bottom → top · team right = screen right';
+}
+/* Plain statements of what each plot draws. CONCEPT_LEGENDS wins wherever the
+   page defines one, because that is the wording already shown on screen. */
+const EXP_PLOT_DESC={
+  passes:'Every observed pass, drawn from where it was played to where it arrived.',
+  final_third:'Passes whose endpoint falls in the attacking third.',
+  zone14:'Passes whose endpoint falls in Zone 14, the central area just outside the box.',
+  box_passes:'Passes whose endpoint falls inside the opposition box.',
+  shots:'Every recorded shot, placed where it was struck.',
+  defensive:'Recorded defensive actions, placed where each was registered.',
+  heatmap:'Smoothed density of the recorded event locations.',
+  keypasses:'Passes that directly preceded a shot.',
+  network:'Average touch positions of the starting XI, linked by repeated pass combinations.',
+  combos:'Repeated passer to receiver combinations, drawn between average positions.'
+};
+function _expDescription(viz){
+  const raw=CONCEPT_LEGENDS[viz];
+  return _expCopy(raw?raw.replace(/<[^>]*>/g,''):(EXP_PLOT_DESC[viz]||''));
+}
+/* Read the legend straight off the panel so the export shows the same keys,
+   counts and caveats. Text-only entries become notes, set under the keys: these
+   are the sampling and data-availability disclosures. */
+function _expCollectLegend(srcCanvas,drawnLegend){
+  const keys=[],notes=[],panel=_expPanelOf(srcCanvas);
+  /* drawnLegend is the strip the export redraw wrote, so its colours were
+     resolved under the export theme. The panel strip is the fallback, and is
+     still the source of the banners below. */
+  const legEl=(drawnLegend&&drawnLegend.querySelector('.leg'))?drawnLegend
+    :(panel?panel.querySelector('.panel-legend'):null);
+  const isHex=function(c){return /^#[0-9a-f]{6}$/i.test(String(c||'').trim())};
+  if(legEl)Array.prototype.forEach.call(legEl.querySelectorAll('.leg'),function(sp){
+    const txt=_expCopy(sp.textContent);
+    if(!txt)return;
+    const oc=sp.getAttribute('data-shot-key'),oCol=sp.getAttribute('data-color');
+    if(oc&&isHex(oCol)){keys.push({kind:'shot',oc:oc,color:oCol,text:txt});return;}
+    const dot=sp.querySelector('.leg-dot');
+    if(dot){keys.push({kind:'dot',color:dot.style.background||dot.style.backgroundColor||EXP_TEXT,text:txt});return;}
+    const mark=sp.querySelector('.leg-mark');
+    if(mark){
+      const g=_expCopy(mark.textContent);
+      keys.push({kind:'mark',glyph:g||'●',color:mark.style.color||EXP_TEXT,text:_expCopy(txt.replace(g,''))});return;
+    }
+    notes.push(txt);
+  });
+  if(panel)Array.prototype.forEach.call(panel.querySelectorAll('.team-only-banner,.opp-warn-banner'),function(b){
+    const t=_expCopy(b.textContent);if(t)notes.push(t);
+  });
+  return {keys:keys,notes:notes};
+}
+/* Shot keys reuse drawShotMark, the same routine the on-screen map uses, so the
+   exported grammar cannot drift from what the user saw. */
+function _expLegendGlyph(ctx,k,cx,cy,r){
+  if(k.kind==='shot'){drawShotMark(ctx,cx,cy,r,k.color,k.oc);return;}
+  if(k.kind==='mark'){
+    ctx.fillStyle=k.color;ctx.font='800 '+Math.round(r*2.3)+'px JetBrains Mono,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(k.glyph,cx,cy);ctx.textAlign='left';return;
+  }
+  ctx.fillStyle=k.color;ctx.beginPath();ctx.arc(cx,cy,r*0.8,0,Math.PI*2);ctx.fill();
+}
+/* Lays keys out in rows, then the notes as wrapped muted copy. Returns the block
+   height; pass measureOnly to size it before committing to a layout. */
+function _expLegend(ctx,x,y,w,legend,T,measureOnly){
+  const keys=(legend&&legend.keys)||[],notes=(legend&&legend.notes)||[];
+  const glyphW=Math.round(T.legend*1.6),gapIn=Math.round(T.legend*0.42),gapOut=Math.round(T.legend*1.15);
+  const rowH=Math.round(T.legend*1.9),keyFont='600 '+T.legend+'px Inter,system-ui,sans-serif';
+  ctx.font=keyFont;
+  const rows=[];let row=[],rw=0;
+  keys.forEach(function(k){
+    const itemW=glyphW+gapIn+ctx.measureText(k.text).width;
+    if(rw+itemW>w&&row.length){rows.push(row);row=[];rw=0;}
+    row.push({k:k,w:itemW});rw+=itemW+gapOut;
+  });
+  if(row.length)rows.push(row);
+  let cy=y;
+  rows.forEach(function(r){
+    if(!measureOnly){
+      let cx=x;
+      r.forEach(function(it){
+        _expLegendGlyph(ctx,it.k,cx+glyphW/2,cy+rowH/2,Math.round(T.legend*0.6));
+        ctx.fillStyle=EXP_TEXT;ctx.font=keyFont;ctx.textAlign='left';ctx.textBaseline='middle';
+        ctx.fillText(it.k.text,cx+glyphW+gapIn,cy+rowH/2);
+        cx+=it.w+gapOut;
+      });
+    }
+    cy+=rowH;
+  });
+  if(notes.length){
+    ctx.font='400 '+T.note+'px Inter,system-ui,sans-serif';
+    const lh=Math.round(T.note*1.5);
+    if(rows.length)cy+=Math.round(T.note*0.45);
+    notes.forEach(function(n){
+      _expWrap(ctx,n,w).forEach(function(ln){
+        if(!measureOnly){ctx.fillStyle=EXP_MUTED;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(ln,x,cy+lh/2);}
+        cy+=lh;
+      });
+    });
+  }
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
-  if(cfg.playerName){
-    ctx.fillStyle=EXP_TEXT;ctx.font='800 68px Archivo,Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.playerName,padX,116);
-    ctx.fillStyle=tc;ctx.font='500 28px Inter,system-ui,sans-serif';
-    ctx.fillText((cfg.teamName||'')+(cfg.viewLabel?(' \u00B7 '+cfg.viewLabel):''),padX,156);
-  }else{
-    ctx.fillStyle=EXP_TEXT;ctx.font='bold 96px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.teamName,padX,128);
-    ctx.fillStyle=tc;ctx.font='500 40px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.viewLabel,padX,172);
-  }
-  ctx.fillStyle=EXP_MUTED;ctx.font='28px Inter,system-ui,sans-serif';
-  if(cfg.matchDesc)ctx.fillText(cfg.matchDesc,padX,208);
-  ctx.fillStyle=EXP_MUTED;ctx.font='24px Inter,system-ui,sans-serif';
-  const compLine=[cfg.competition,cfg.ha?('\u00B7 '+cfg.ha):''].filter(Boolean).join(' ');
-  if(compLine)ctx.fillText(compLine,padX,238);
-  if(cfg.timeFilter){
-    ctx.font='bold 22px Inter,system-ui,sans-serif';
-    const txt='\u23F1 '+cfg.timeFilter;
-    const tw=ctx.measureText(txt).width,pw=tw+28,ph=34,px=padX,py=topH-56;
-    ctx.fillStyle=tc;_expPill(ctx,px,py,pw,ph,17);ctx.fill();
-    ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(txt,px+14,py+ph/2+1);
-    ctx.textBaseline='alphabetic';
-  }
+  return cy-y;
 }
 
-function _drawPitchBand(ctx,x,y,w,h,pitchCanvas){
-  ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
-  if(!pitchCanvas)return;
-  const pad=24;const availW=w-pad*2,availH=h-pad*2;
-  const r=pitchCanvas.width/pitchCanvas.height;
-  let iw,ih;if(r>availW/availH){iw=availW;ih=iw/r;}else{ih=availH;iw=ih*r;}
-  const ix=Math.round(x+(w-iw)/2),iy=Math.round(y+(h-ih)/2);
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  ctx.drawImage(pitchCanvas,ix,iy,iw,ih);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;
-  ctx.strokeRect(ix+0.5,iy+0.5,iw-1,ih-1);
+/* ---- plot fidelity ---- */
+/* The on-screen canvas is only a few hundred pixels wide. Blowing that bitmap up
+   to print size is what made exports look coarse, so redraw the plot through the
+   same renderer at export resolution instead. */
+/* The attacking-half pitch derives its height from its width, so at the panel
+   widths the board actually uses it overruns the screen canvas: the lower half
+   is cut off and the in-plot summary row is suppressed. The export is not bound
+   by the panel box, so it is drawn at the height that view asks for. Same
+   renderer, same events, nothing clipped. */
+function _expLogicalSize(src){
+  if(src.viz!=='shots')return {w:src.w,h:src.h};
+  const needed=Math.round((src.w-2*PM)/(68/52.5)+150);
+  return {w:src.w,h:Math.max(src.h,needed)};
 }
-
-function _drawStatsBand(ctx,x,y,w,h,cfg){
+function _expRenderPitch(srcCanvas,devW,devH,legendSink){
+  const src=srcCanvas&&srcCanvas._exp;
+  if(!src||!src.viz||!src.w||!src.h||!devW||!devH)return null;
+  const L=_expLogicalSize(src);
+  const ss=Math.max(1,Math.min(6,Math.min(devW/L.w,devH/L.h)));
+  let off=null;
+  const prevVT=S.viewTeam,prevLight=EXP_LIGHT;
+  try{
+    EXP_LIGHT=true;syncCanvasTheme();
+    off=document.createElement('canvas');
+    off.width=Math.round(L.w*ss);off.height=Math.round(L.h*ss);
+    const ctx=off.getContext('2d');
+    ctx.scale(ss,ss);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    const shim={width:L.w,height:L.h};
+    if(src.team)S.viewTeam=src.team;
+    /* A real element for the legend, so the keys are the ones this redraw
+       generated rather than the ones the screen drew under the screen theme. */
+    callRenderer(src.viz,ctx,shim,src.evts,{textContent:''},legendSink||{innerHTML:''},{innerHTML:''});
+    S.canvasEvents.delete(shim);
+  }catch(e){console.warn('export: high-resolution redraw failed, using screen bitmap',e);off=null;}
+  finally{S.viewTeam=prevVT;EXP_LIGHT=prevLight;syncCanvasTheme();}
+  return off;
+}
+function _expAspect(c){
+  if(!c)return 1;
+  if(c._exp&&c._exp.w&&c._exp.h){const L=_expLogicalSize(c._exp);return L.w/L.h;}
+  return (c.width||1)/(c.height||1);
+}
+function _expFit(asp,w,h){
+  if(!(asp>0))asp=1;
+  let iw=w,ih=w/asp;
+  if(ih>h){ih=h;iw=h*asp;}
+  return {w:Math.max(1,iw),h:Math.max(1,ih)};
+}
+function _expDrawPitch(ctx,x,y,w,h,pitchCanvas,SC,legendSink){
   ctx.fillStyle=EXP_PANEL;ctx.fillRect(x,y,w,h);
-  const stats=(cfg.stats||[]).slice(0,4);const n=Math.max(1,stats.length);const colW=w/n;
-  ctx.textAlign='center';
-  stats.forEach((s,i)=>{
+  if(!pitchCanvas)return;
+  const hi=_expRenderPitch(pitchCanvas,Math.round(w*SC),Math.round(h*SC),legendSink);
+  ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(hi||pitchCanvas,Math.round(x),Math.round(y),Math.round(w),Math.round(h));
+  ctx.restore();
+  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
+}
+/* Places plot and legend inside one box. A tall plot leaves the sides of a page
+   empty, so its legend goes in a rail beside it; a wide plot keeps the legend
+   underneath. Whichever arrangement yields the larger plot wins. */
+/* Plot then legend, always in that order: the pitch takes the whole width it
+   can and its keys sit underneath it, left aligned, the way the fingerprint card
+   reads. The old layout could move the legend into a rail beside a tall plot,
+   which bought a little plot area at the cost of two different documents
+   depending on the plot's shape. */
+function _expPlotBlock(ctx,x,y,w,h,pitchCanvas,legend,T,SC){
+  const gap=Math.round(T.gap*1.1),asp=_expAspect(pitchCanvas);
+  /* The panel's own legend sizes the space to reserve. The redraw then hands
+     back the legend it generated, which is the one actually drawn: same keys,
+     but the colours resolved under the export theme rather than the screen's.
+     Both come from the same renderer, so the height does not move. */
+  const legH=_expLegend(ctx,0,0,w,legend,T,true);
+  const fit=_expFit(asp,w,Math.max(40,h-legH-gap));
+  const px=Math.round(x+(w-fit.w)/2),py=Math.round(y);
+  const sink=document.createElement('div');
+  _expDrawPitch(ctx,px,py,fit.w,fit.h,pitchCanvas,SC,sink);
+  const drawn=_expCollectLegend(pitchCanvas,sink);
+  _expLegend(ctx,x,py+fit.h+gap,w,(drawn&&drawn.keys.length?drawn:legend),T,false);
+}
+
+/* ---- page furniture ---- */
+function _expVenue(ha){return ha==='H'?'Home':ha==='A'?'Away':'';}
+/* Right hand block of the header: the small tracked eyebrow over the plot
+   title, both right aligned, sized down and wrapped if the subject name leaves
+   it little room. Returns its width so the name knows where to stop. */
+/* The panel title is written for the board, where it has to say who and which
+   fixture: "Los Angeles FC Progressive Passes . vs Portland Timbers . H". On the
+   card the subject is already the headline and the fixture is already the line
+   under it, so the title keeps only the part that is not said twice. */
+function _expPlotTitle(cfg){
+  let t=_expCopy(cfg.viewLabel);
+  if(!t)return '';
+  t=t.split(' \u00B7 vs ')[0].trim();
+  const subject=_expCopy(cfg.playerName||'')||_expCopy(cfg.teamName||'');
+  if(subject&&t.indexOf(subject)===0)t=t.slice(subject.length).trim();
+  return t||_expCopy(cfg.viewLabel);
+}
+function _expTitleBlock(ctx,rx,baseY,maxW,cfg,T,draw){
+  const eyebrow=_expCopy(cfg.competition).toUpperCase(),title=_expPlotTitle(cfg);
+  let fs=T.accent,lines=[title];
+  if(title){
+    for(;;){
+      ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+      if(ctx.measureText(title).width<=maxW||fs<=Math.round(T.accent*0.72))break;
+      fs=Math.round(fs*0.94);
+    }
+    lines=_expWrap(ctx,title,maxW).slice(0,2);
+  }
+  const lh=Math.round(fs*1.22);
+  if(draw){
+    ctx.textAlign='right';ctx.textBaseline='alphabetic';
+    if(eyebrow){
+      ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';ctx.fillStyle=EXP_LABEL;
+      const sp=Math.max(1,T.eyebrow*0.18),ew=_expTrackedW(ctx,eyebrow,sp);
+      ctx.textAlign='left';
+      _expTracked(ctx,eyebrow,rx-ew,baseY-lh*lines.length-Math.round(T.gap*0.55),sp);
+    }
+    ctx.textAlign='right';ctx.fillStyle=EXP_TEXT;
+    ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+    lines.forEach(function(ln,i){ctx.fillText(ln,rx,baseY-lh*(lines.length-1-i));});
+    ctx.textAlign='left';
+  }
+  let w=0;
+  ctx.font='600 '+fs+'px Inter,system-ui,sans-serif';
+  lines.forEach(function(ln){w=Math.max(w,ctx.measureText(ln).width);});
+  if(eyebrow){
+    ctx.font='700 '+T.eyebrow+'px Inter,system-ui,sans-serif';
+    w=Math.max(w,_expTrackedW(ctx,eyebrow,Math.max(1,T.eyebrow*0.18)));
+  }
+  return {w:w,lines:lines.length,lh:lh};
+}
+/* Header, laid out the way the player fingerprint card reads: subject name
+   large and dark on the left, the eyebrow and plot title small and right
+   aligned, then the fixture context underneath, then a hairline rule. The team
+   colour survives as the keyline beside the name, which is where the
+   fingerprint card puts its accent; it is no longer the colour of the title or
+   of the numbers. Measured first, then drawn, so the rule lands on the bottom
+   edge of whatever the type needed. */
+function _expHeaderPass(ctx,W,cfg,T,draw){
+  const tc=cfg.teamColor||EXP_TEXT,padX=T.pad,inner=W-padX*2;
+  const keyW=Math.max(3,Math.round(4*T.k)),keyGap=Math.round(T.gap*0.7);
+  const nameX=padX+keyW+keyGap;
+  let cy=T.pad;
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  const name=_expCopy(cfg.playerName||cfg.teamName||'');
+  cy+=T.title;
+  /* Reserve the right hand block first, then let the name use the rest. */
+  const probe=_expTitleBlock(ctx,padX+inner,cy,Math.round(inner*0.42),cfg,T,false);
+  const nameMax=inner-keyW-keyGap-probe.w-Math.round(T.gap*1.6);
+  let nameFs=T.title;
+  for(;;){
+    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    if(ctx.measureText(name).width<=nameMax||nameFs<=Math.round(T.title*0.6))break;
+    nameFs=Math.round(nameFs*0.95);
+  }
+  const nameTop=cy-nameFs;
+  if(draw){
+    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.fillText(name,nameX,cy);
+    ctx.fillStyle=tc;ctx.fillRect(padX,Math.round(nameTop+nameFs*0.08),keyW,Math.round(nameFs*0.92));
+  }
+  _expTitleBlock(ctx,padX+inner,cy,Math.round(inner*0.42),cfg,T,draw);
+  /* Everything the reader needs to place the plot: team, opponent, venue, then
+     the fixture and its date. */
+  const metaBits=[];
+  if(cfg.playerName&&cfg.teamName)metaBits.push(_expCopy(cfg.teamName));
+  if(cfg.opponent)metaBits.push('vs '+_expCopy(cfg.opponent));
+  const venue=_expVenue(cfg.ha);if(venue)metaBits.push(venue);
+  if(metaBits.length){
+    cy+=Math.round(T.gap*0.8)+T.meta;
+    ctx.font='600 '+T.meta+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_MUTED;ctx.textAlign='left';ctx.fillText(metaBits.join('  \u00B7  '),nameX,cy);}
+  }
+  if(cfg.matchDesc){
+    cy+=Math.round(T.gap*0.4)+T.meta;
+    ctx.font='400 '+T.meta+'px Inter,system-ui,sans-serif';
+    if(draw){ctx.fillStyle=EXP_LABEL;ctx.textAlign='left';ctx.fillText(_expCopy(cfg.matchDesc),nameX,cy);}
+  }
+  if(cfg.timeFilter){
+    const fs=Math.round(T.meta*0.82);
+    ctx.font='700 '+fs+'px Inter,system-ui,sans-serif';
+    const txt=_expCopy('Time window '+cfg.timeFilter);
+    const pw=ctx.measureText(txt).width+Math.round(fs*1.7),ph=Math.round(fs*2.1),py=cy+Math.round(T.gap*0.75);
+    if(draw){
+      ctx.fillStyle=EXP_PANEL;_expPill(ctx,nameX,py,pw,ph,Math.round(ph/2));ctx.fill();
+      ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;_expPill(ctx,nameX+0.5,py+0.5,pw-1,ph-1,Math.round(ph/2));ctx.stroke();
+      ctx.fillStyle=EXP_TEXT;ctx.textBaseline='middle';ctx.textAlign='left';
+      ctx.fillText(txt,nameX+Math.round(fs*0.85),py+ph/2+1);
+      ctx.textBaseline='alphabetic';
+    }
+    cy=py+ph;
+  }
+  return cy+Math.round(T.pad*0.72);
+}
+function _expHeader(ctx,W,cfg,T){
+  const h=_expHeaderPass(ctx,W,cfg,T,false);
+  _expHeaderPass(ctx,W,cfg,T,true);
+  _expRule(ctx,T.pad,h-1,W-T.pad*2,EXP_BORDER);
+  return h;
+}
+/* Orientation disclosure plus, where the page defines one, what the plot shows. */
+function _expContext(ctx,x,y,w,orient,desc,T){
+  let cy=y;
+  if(orient){
+    ctx.fillStyle=EXP_LABEL;ctx.font='700 '+T.note+'px Inter,system-ui,sans-serif';
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    cy+=T.note;
+    _expTracked(ctx,orient.toUpperCase(),x,cy,Math.max(1,T.note*0.1));
+  }
+  if(desc){
+    ctx.font='400 '+T.body+'px Inter,system-ui,sans-serif';
+    const lh=Math.round(T.body*1.5),lines=_expWrap(ctx,desc,w).slice(0,3);
+    cy+=Math.round(T.gap*0.6);
+    lines.forEach(function(ln){cy+=lh;ctx.fillStyle=EXP_DIM;ctx.fillText(ln,x,cy-Math.round(lh*0.28));});
+  }
+  return cy-y;
+}
+/* Summary numbers read as numbers. They used to be set in the brand red, which
+   made four neutral counts look like four findings; red is kept for accent and
+   for negative semantics, not for every statistic. */
+function _drawStatsBand(ctx,x,y,w,h,cfg,T){
+  T=T||_expScale(1);
+  const stats=(cfg.stats||[]).slice(0,4),n=Math.max(1,stats.length),colW=w/n;
+  ctx.fillStyle=EXP_PANEL;ctx.fillRect(x,y,w,h);
+  _expRule(ctx,x,y,w,EXP_BORDER);
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  stats.forEach(function(s,i){
     const cx=x+colW*i+colW/2;
-    ctx.fillStyle=cfg.teamColor;ctx.font='bold 72px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.value),cx,y+h/2+12);
-    ctx.fillStyle=EXP_MUTED;ctx.font='bold 22px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.label).toUpperCase(),cx,y+h-32);
+    if(i){ctx.fillStyle=EXP_RULE;ctx.fillRect(Math.round(x+colW*i),y+Math.round(h*0.24),1,Math.round(h*0.52));}
+    ctx.fillStyle=EXP_TEXT;ctx.font='800 '+T.statV+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillText(_expCopy(s.value),cx,y+Math.round(h*0.6));
+    ctx.fillStyle=EXP_LABEL;ctx.font='700 '+T.statL+'px Inter,system-ui,sans-serif';
+    ctx.textAlign='left';
+    _expTrackedCentre(ctx,_expCopy(s.label).toUpperCase(),cx,y+h-Math.round(T.statL*1.4),Math.max(1,T.statL*0.14));
+    ctx.textAlign='center';
   });
   ctx.textAlign='left';
 }
-
-function _drawFooterBand(ctx,x,y,w,h,cfg){
+/* Provenance, split the way the fingerprint card splits it: what this is on the
+   left, where the numbers came from on the right. */
+function _drawFooterBand(ctx,x,y,w,h,cfg,T){
+  T=T||_expScale(1);
   ctx.fillStyle=EXP_BG;ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y+0.5);ctx.lineTo(x+w,y+0.5);ctx.stroke();
-  const cy=y+h/2;ctx.textBaseline='middle';
-  ctx.font='normal 24px Inter,system-ui,sans-serif';
-  ctx.textAlign='center';ctx.fillStyle=EXP_TEXT;
-  if(cfg.matchDesc)ctx.fillText(cfg.matchDesc,x+w/2,cy);
-  ctx.textAlign='right';ctx.fillStyle=EXP_MUTED;
-  ctx.fillText(currentDateStr(),x+w-48,cy);
+  _expRule(ctx,x+T.pad,y,w-T.pad*2,EXP_BORDER);
+  const cy=y+h/2,pad=T.pad;
+  ctx.textBaseline='middle';ctx.font='500 '+T.foot+'px Inter,system-ui,sans-serif';
+  const src='Event data WhoScored (Opta)  \u00B7  generated '+currentDateStr();
+  const room=w-pad*2-ctx.measureText(src).width-Math.round(T.gap*2);
+  /* Context on the left, source on the right. The left side gives up its least
+     load bearing part rather than running into the right side. */
+  const parts=[_expCopy(cfg.teamName||''),_expCopy(cfg.competition||''),_expCopy(cfg.matchDesc||'')].filter(Boolean);
+  let left=parts.join('  \u00B7  ');
+  while(parts.length>1&&ctx.measureText(left).width>room){parts.pop();left=parts.join('  \u00B7  ');}
+  ctx.textAlign='left';ctx.fillStyle=EXP_MUTED;
+  ctx.fillText(left,x+pad,cy);
+  ctx.textAlign='right';ctx.fillStyle=EXP_LABEL;
+  ctx.fillText(src,x+w-pad,cy);
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
 }
 
-/* Master — portrait A4 @ 300 DPI (2480 x 3508 px). We draw in a logical
+/* Master, portrait A4 @ 300 DPI (2480 x 3508 px). We draw in a logical
    1240x1754 coordinate system and scale the context 2x for sharp output. */
 function renderExportCanvas(pitchCanvas,config){
-  const LW=1240,LH=1754;const PW=2480,PH=3508;
+  const LW=1240,LH=1754,PW=2480,PH=3508,SC=PW/LW,T=_expScale(1);
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
   const ctx=off.getContext('2d');
-  ctx.scale(PW/LW,PH/LH);
+  ctx.scale(SC,SC);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
-  const headerH=Math.round(LH*0.15),pitchH=Math.round(LH*0.65),statsH=Math.round(LH*0.12),footerH=LH-headerH-pitchH-statsH;
-  _drawHeaderBand(ctx,LW,headerH,config);
-  _drawPitchBand(ctx,0,headerH,LW,pitchH,pitchCanvas);
-  _drawStatsBand(ctx,0,headerH+pitchH,LW,statsH,config);
-  _drawFooterBand(ctx,0,headerH+pitchH+statsH,LW,footerH,config);
+  const headerH=_expHeader(ctx,LW,config,T);
+  const footerH=Math.round(T.foot*3.4),statsH=Math.round(T.statV*2.7);
+  const statsY=LH-footerH-statsH;
+  const inner=LW-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.7);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(pitchCanvas),
+    _expDescription(_vizFromLabel(config.viewLabel,pitchCanvas)),T);
+  y+=Math.round(T.gap*1.4);
+  _expPlotBlock(ctx,T.pad,y,inner,Math.max(80,statsY-Math.round(T.gap*1.4)-y),
+    pitchCanvas,_expCollectLegend(pitchCanvas),T,SC);
+  _drawStatsBand(ctx,0,statsY,LW,statsH,config,T);
+  _drawFooterBand(ctx,0,LH-footerH,LW,footerH,config,T);
   return off;
 }
 
-/* Story card — 1080x1080 exact, edge-to-edge pitch */
+/* Story card, 1080x1080 exact, same system at card scale */
 function renderStoryCanvas(pitchCanvas,config){
-  const W=1080,H=1080;
+  const W=1080,H=1080,T=_expScale(0.52);
   const off=document.createElement('canvas');off.width=W;off.height=H;
   const ctx=off.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,W,H);
-  const topH=Math.round(H*0.18),midH=Math.round(H*0.62),botH=H-topH-midH;
-  // Top accent band
-  const tc=config.teamColor;
-  ctx.fillStyle=tc;ctx.fillRect(0,0,W,topH);
-  ctx.textBaseline='alphabetic';ctx.textAlign='left';
-  const title=config.playerName||(config.teamName?config.teamName+' \u2014 Team Analysis':'Team Analysis');
-  ctx.fillStyle='#fff';ctx.font='800 48px Archivo,Inter,system-ui,sans-serif';
-  ctx.fillText(title,42,86);
-  ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='bold 20px Inter,system-ui,sans-serif';
-  ctx.fillText((config.viewLabel||'').toUpperCase(),42,120);
-  ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='normal 18px Inter,system-ui,sans-serif';
-  const sub=[config.matchDesc,config.competition].filter(Boolean).join(' \u00B7 ');
-  if(sub)ctx.fillText(sub,42,150);
-  // Middle pitch — edge to edge horizontally
-  ctx.fillStyle=EXP_BG;ctx.fillRect(0,topH,W,midH);
-  if(pitchCanvas){
-    const r=pitchCanvas.width/pitchCanvas.height;
-    let iw=W,ih=iw/r;
-    if(ih>midH){ih=midH;iw=ih*r;}
-    const ix=Math.round((W-iw)/2),iy=Math.round(topH+(midH-ih)/2);
-    ctx.drawImage(pitchCanvas,ix,iy,iw,ih);
-  }
-  // Bottom — 2 stats + team name
-  const botY=topH+midH;
-  ctx.fillStyle=EXP_BG;ctx.fillRect(0,botY,W,botH);
-  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(0,botY+0.5);ctx.lineTo(W,botY+0.5);ctx.stroke();
-  const stats=(config.stats||[]).slice(0,2);const n=Math.max(1,stats.length);
-  const statsZoneW=W*0.65,colW=statsZoneW/n;
-  ctx.textAlign='center';
-  stats.forEach((s,i)=>{
-    const cx=40+colW*i+colW/2;
-    ctx.fillStyle='#fff';ctx.font='800 68px Archivo,Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.value),cx,botY+botH/2+14);
-    ctx.fillStyle=EXP_MUTED;ctx.font='bold 16px Inter,system-ui,sans-serif';
-    ctx.fillText(String(s.label).toUpperCase(),cx,botY+botH-28);
-  });
-  ctx.textAlign='right';ctx.fillStyle=tc;ctx.font='bold 22px Inter,system-ui,sans-serif';
-  ctx.fillText((config.teamName||'')+' Analytics',W-32,botY+botH/2+8);
-  ctx.textAlign='left';
+  const headerH=_expHeader(ctx,W,config,T);
+  const footerH=Math.round(T.foot*3.2),statsH=Math.round(T.statV*2.6);
+  const statsY=H-footerH-statsH;
+  const inner=W-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.6);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(pitchCanvas),'',T);
+  y+=Math.round(T.gap*1.2);
+  _expPlotBlock(ctx,T.pad,y,inner,Math.max(60,statsY-Math.round(T.gap*1.2)-y),
+    pitchCanvas,_expCollectLegend(pitchCanvas),T,1);
+  _drawStatsBand(ctx,0,statsY,W,statsH,config,T);
+  _drawFooterBand(ctx,0,H-footerH,W,footerH,config,T);
   return off;
 }
 
-/* Header for landscape multi-panel: two rows, left/right justified, compact */
-function _drawLandscapeHeader(ctx,W,topH,cfg,viewLabels){
-  const tc=cfg.teamColor;
-  ctx.fillStyle=EXP_PANEL;ctx.fillRect(0,0,W,topH);
-  ctx.fillStyle=tc;ctx.fillRect(0,0,6,topH);
-  const padL=48,padR=48,padTop=40;
-  ctx.textBaseline='alphabetic';
-  // Row 1: team name (LEFT, 52px bold white) | match info (RIGHT, 16px muted)
-  const row1Y=padTop+46;
-  ctx.textAlign='left';
-  ctx.fillStyle=EXP_TEXT;ctx.font='bold 52px Inter,system-ui,sans-serif';
-  ctx.fillText(cfg.teamName||'',padL,row1Y);
-  if(cfg.matchDesc){
-    ctx.textAlign='right';
-    ctx.fillStyle=EXP_MUTED;ctx.font='normal 16px Inter,system-ui,sans-serif';
-    ctx.fillText(cfg.matchDesc,W-padR,row1Y-6);
-  }
-  // Row 2: view labels joined (LEFT, 18px accent) | competition + H/A (RIGHT, 14px muted)
-  const row2Y=row1Y+30;
-  ctx.textAlign='left';
-  ctx.fillStyle=tc;ctx.font='500 18px Inter,system-ui,sans-serif';
-  ctx.fillText((viewLabels||cfg.viewLabel||'').toString(),padL,row2Y);
-  const compLine=[cfg.competition,cfg.ha?('\u00B7 '+cfg.ha):''].filter(Boolean).join(' ');
-  if(compLine){
-    ctx.textAlign='right';
-    ctx.fillStyle=EXP_MUTED;ctx.font='normal 14px Inter,system-ui,sans-serif';
-    ctx.fillText(compLine,W-padR,row2Y);
-  }
-  // Optional time-filter pill, bottom-left
-  if(cfg.timeFilter){
-    ctx.textAlign='left';
-    ctx.font='bold 14px Inter,system-ui,sans-serif';
-    const txt='\u23F1 '+cfg.timeFilter;
-    const tw=ctx.measureText(txt).width,pw=tw+20,ph=24,px=padL,py=topH-36;
-    ctx.fillStyle=tc;_expPill(ctx,px,py,pw,ph,12);ctx.fill();
-    ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(txt,px+10,py+ph/2+1);
-    ctx.textBaseline='alphabetic';
-  }
-  ctx.textAlign='left';
-}
-
-/* Landscape multi-panel — A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
+/* Landscape multi-panel, A4 @ 300 DPI (3508 x 2480). 1754x1240 logical, 2x scale. */
 function renderAllPanelsCanvas(panels,config){
-  const LW=1754,LH=1240;const PW=3508,PH=2480;
+  const LW=1754,LH=1240,PW=3508,PH=2480,SC=PW/LW;
+  const T=_expScale(0.72),CT_=_expScale(0.55);
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
   const ctx=off.getContext('2d');
-  ctx.scale(PW/LW,PH/LH);
+  ctx.scale(SC,SC);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.fillStyle=EXP_BG;ctx.fillRect(0,0,LW,LH);
-  const headerH=Math.round(LH*0.18),statsH=Math.round(LH*0.13),footerH=Math.round(LH*0.08);
-  const gridTop=headerH,gridH=LH-headerH-statsH-footerH;
-  const viewLabels=panels.map(p=>p.label).filter(Boolean).join(' \u00B7 ');
-  _drawLandscapeHeader(ctx,LW,headerH,config,viewLabels);
-  const n=panels.length;
+  const hdrCfg={};for(const k in config)hdrCfg[k]=config[k];
+  /* Panel labels are board titles, so they repeat the subject and the fixture.
+     On the card those are already the headline and the line under it. */
+  const panelTitle=function(lbl){return _expPlotTitle({viewLabel:lbl,playerName:config.playerName,teamName:config.teamName})};
+  hdrCfg.viewLabel=panels.map(function(p){return panelTitle(p.label)}).filter(Boolean).join('  ·  ');
+  const headerH=_expHeader(ctx,LW,hdrCfg,T);
+  const footerH=Math.round(T.foot*3.2),statsH=Math.round(T.statV*2.6);
+  const statsY=LH-footerH-statsH;
+  const inner=LW-T.pad*2;
+  let y=headerH+Math.round(T.pad*0.6);
+  y+=_expContext(ctx,T.pad,y,inner,_expOrientation(panels[0]&&panels[0].canvas),'',T);
+  y+=Math.round(T.gap*1.2);
+  const gridH=Math.max(80,statsY-Math.round(T.gap*1.2)-y),n=panels.length;
   if(n){
     const cols=n<=2?Math.max(1,n):3,rows=Math.ceil(n/cols);
-    const cellW=LW/cols,cellH=gridH/rows;
-    const titleH=36; // 28px baseline + descender, then 8px gap → pitch starts at y+44
-    panels.forEach((p,i)=>{
-      const col=i%cols,row=Math.floor(i/cols);
-      const x=col*cellW,y=gridTop+row*cellH;
-      // Title above pitch, with 8px gap
-      ctx.fillStyle=config.teamColor;ctx.font='bold 18px Inter,system-ui,sans-serif';ctx.textAlign='center';
-      ctx.fillText((p.label||'').toUpperCase(),x+cellW/2,y+26);
-      ctx.textAlign='left';
-      const pitchTop=y+titleH+8;
-      _drawPitchBand(ctx,x,pitchTop,cellW,cellH-(titleH+8),p.canvas);
+    const cellW=inner/cols,cellH=gridH/rows,pad=Math.round(CT_.gap);
+    panels.forEach(function(p,i){
+      const cx=T.pad+(i%cols)*cellW,cy=y+Math.floor(i/cols)*cellH;
+      ctx.fillStyle=EXP_TEXT;ctx.font='700 '+CT_.accent+'px Inter,system-ui,sans-serif';
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      _expTracked(ctx,panelTitle(p.label).toUpperCase(),cx,cy+CT_.accent,Math.max(1,CT_.accent*0.1));
+      const top=cy+CT_.accent+pad;
+      _expPlotBlock(ctx,cx,top,cellW-pad,Math.max(40,cellH-(top-cy)-pad),
+        p.canvas,_expCollectLegend(p.canvas),CT_,SC);
     });
   }
-  _drawStatsBand(ctx,0,gridTop+gridH,LW,statsH,config);
-  _drawFooterBand(ctx,0,gridTop+gridH+statsH,LW,footerH,config);
+  _drawStatsBand(ctx,0,statsY,LW,statsH,config,T);
+  _drawFooterBand(ctx,0,LH-footerH,LW,footerH,config,T);
   return off;
 }
 
-/* Scout report — portrait A4 @ 300 DPI, dark theme, 2x logical scale */
+/* Scout report, portrait A4 @ 300 DPI, dark theme, 2x logical scale */
 function renderScoutCanvas(){
   const t=T();const tc=t.color;const LW=1240,LH=1754,PW=2480,PH=3508;const W=LW,H=LH;
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
@@ -2497,8 +2828,9 @@ function renderScoutCanvas(){
   ctx.fillStyle=EXP_TEXT;ctx.font='bold 72px Inter,system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillText(S.psPlayer,48,122);
   ctx.font='bold 22px Inter,system-ui,sans-serif';const pbw=ctx.measureText(pos).width+32;
-  ctx.fillStyle=tc;_expPill(ctx,48,146,pbw,36,18);ctx.fill();
-  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pos,48+pbw/2,146+18);
+  ctx.fillStyle=EXP_BG;_expPill(ctx,48,146,pbw,36,18);ctx.fill();
+  ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;_expPill(ctx,48.5,146.5,pbw-1,35,18);ctx.stroke();
+  ctx.fillStyle=EXP_TEXT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pos,48+pbw/2,146+18);
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillStyle=EXP_MUTED;ctx.font='500 26px Inter,system-ui,sans-serif';
   ctx.fillText((t.display||t.name)+' \u00B7 2025\u201326 Season',48+pbw+20,172);
@@ -2510,7 +2842,7 @@ function renderScoutCanvas(){
   ctx.textAlign='center';
   headlines.forEach((h,i)=>{
     const cx=colW*i+colW/2;
-    ctx.fillStyle=tc;ctx.font='bold 44px Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.font='bold 44px Inter,system-ui,sans-serif';
     ctx.fillText(String(h[1]),cx,statsRowY+statsRowH/2+6);
     ctx.fillStyle=EXP_MUTED;ctx.font='bold 18px Inter,system-ui,sans-serif';
     ctx.fillText(h[0].toUpperCase(),cx,statsRowY+statsRowH-22);
@@ -2527,7 +2859,7 @@ function renderScoutCanvas(){
   sbGroups.forEach(g=>{
     const title=g.querySelector('.sb-group-title');
     if(title&&yC<barsY+barsH-30){
-      ctx.fillStyle=tc;ctx.font='bold 17px Inter,system-ui,sans-serif';ctx.fillText(title.textContent.toUpperCase(),48,yC);yC+=22;
+      ctx.fillStyle=EXP_TEXT;ctx.font='bold 17px Inter,system-ui,sans-serif';ctx.fillText(title.textContent.toUpperCase(),48,yC);yC+=22;
     }
     g.querySelectorAll('.sb-row').forEach(r=>{
       if(yC>barsY+barsH-18)return;
@@ -2570,7 +2902,7 @@ function renderScoutCanvas(){
     const ix=cx+(gcellW-iw)/2,iy=cy+pad;
     ctx.drawImage(mini,ix,iy,iw,ih);
     ctx.strokeStyle=EXP_BORDER;ctx.lineWidth=1;ctx.strokeRect(ix+0.5,iy+0.5,iw-1,ih-1);
-    ctx.fillStyle=tc;ctx.font='bold 15px Inter,system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillStyle=EXP_TEXT;ctx.font='bold 15px Inter,system-ui,sans-serif';ctx.textAlign='center';
     ctx.fillText(v.l.toUpperCase(),cx+gcellW/2,cy+gcellH-10);
   });
   ctx.textAlign='left';
@@ -2580,7 +2912,7 @@ function renderScoutCanvas(){
   return off;
 }
 
-/* Match report canvas — portrait A4 @ 300 DPI, dark theme */
+/* Match report canvas, portrait A4 @ 300 DPI, dark theme */
 function renderReportCanvas(reportText,stats){
   const t=T();const tc=t.color;const LW=1240,LH=1754,PW=2480,PH=3508;const W=LW,H=LH;
   const off=document.createElement('canvas');off.width=PW;off.height=PH;
@@ -2592,7 +2924,7 @@ function renderReportCanvas(reportText,stats){
   ctx.fillStyle=tc;ctx.fillRect(0,0,6,headerH);
   ctx.fillStyle=EXP_TEXT;ctx.font='bold 82px Inter,system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillText(t.name,48,128);
-  ctx.fillStyle=tc;ctx.font='500 38px Inter,system-ui,sans-serif';
+  ctx.fillStyle=EXP_MUTED;ctx.font='500 38px Inter,system-ui,sans-serif';
   ctx.fillText('Match Report',48,182);
   ctx.fillStyle=EXP_MUTED;ctx.font='26px Inter,system-ui,sans-serif';
   ctx.fillText(stats.matchLabel||'',48,224);
@@ -2623,7 +2955,7 @@ function renderReportCanvas(reportText,stats){
       pills.forEach(pl=>{
         const lbl=pl[0]+': '+pl[1];const pw=ctx.measureText(lbl).width+28;
         ctx.fillStyle=EXP_PANEL;_expPill(ctx,px,yC,pw,36,18);ctx.fill();
-        ctx.fillStyle=tc;ctx.textBaseline='middle';ctx.fillText(lbl,px+14,yC+18);
+        ctx.fillStyle=EXP_TEXT;ctx.textBaseline='middle';ctx.fillText(lbl,px+14,yC+18);
         ctx.textBaseline='alphabetic';px+=pw+10;
       });
       yC+=54;
@@ -2761,7 +3093,13 @@ function exportPlayerPDF(){
 }
 
 /* THEME & UI */
-function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);const isDark=document.documentElement.classList.contains('dark');if(!isDark){s.setProperty('--bg',t.bg);s.setProperty('--bg2',t.bg2);}else{s.removeProperty('--bg');s.removeProperty('--bg2');}}
+/* The accent follows the selected team; the canvas does not. This used to write
+   --bg and --bg2 onto the root element in light mode, and an inline custom
+   property beats every stylesheet, so the page kept a light canvas of its own no
+   matter what the theme said. Canvas comes from theme.css in both modes now.
+   The removeProperty calls stay, so a tab still holding values from an older
+   build drops them. */
+function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);s.removeProperty('--bg');s.removeProperty('--bg2');}
 function initThemeToggle(){const saved=localStorage.getItem('theme');if(saved!=='light')document.documentElement.classList.add('dark');syncCanvasTheme();const btn=document.getElementById('themeToggle');const update=()=>{const d=document.documentElement.classList.contains('dark');btn.innerHTML=d?'&#9728;&#65039;':'&#127769;';};update();btn.onclick=()=>{document.documentElement.classList.toggle('dark');const d=document.documentElement.classList.contains('dark');localStorage.setItem('theme',d?'dark':'light');applyTheme();update();if(typeof renderAll==='function'&&S.selMatch)renderAll();};}
 function initTeamSwitcher(){
   const el=document.getElementById('teamSw');
@@ -2817,7 +3155,7 @@ function initCompFilters(){
     };
   });
 }
-function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u2014 select played match \u2014</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
+function renderMatchSelectFiltered(){const checked=new Set();document.querySelectorAll('.comp-cb:checked').forEach(cb=>checked.add(cb.value));const sel=document.getElementById('matchSel');sel.innerHTML='<option value="">\u00B7 select played match \u00B7</option>';const filtered=S.matches.filter(m=>checked.has(m.competition)&&m.home_score!=null&&m.away_score!=null);filtered.forEach(m=>{const o=document.createElement('option');o.value=m.game_id;o.textContent=fmtMatchOpt(m);sel.appendChild(o);});document.getElementById('matchCount').textContent=filtered.length+' played matches';}
 function syncVizSelectionUi(){
   document.querySelectorAll('.viz-btn').forEach(btn=>{const on=S.activeVizs.includes(btn.dataset.viz);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');});
   document.querySelectorAll('.plot-count-btn').forEach(btn=>{const on=+btn.dataset.count===S.plotSlots;btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');});
@@ -2882,7 +3220,7 @@ function lastName(name){return name?name.split(' ').pop():'';}
 function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 
 /* INIT */
-async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;document.getElementById('btnGenReport').onclick=generateMatchReport;document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();await openDeepLink();}
+async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamSwitcher();initCompFilters();initVizButtons();initFilters();initTabs();document.getElementById('matchSel').onchange=e=>{if(e.target.value)loadMatch(e.target.value);};document.getElementById('btnExpAll').onclick=()=>downloadAllPDF();const btET=document.getElementById('btnExpTable');if(btET)btET.onclick=exportSeasonTableCSV;const btES=document.getElementById('btnExpSummary');if(btES)btES.onclick=exportSeasonSummaryPDF;const bGen=document.getElementById('btnGenReport');if(REPORT_ENABLED){bGen.onclick=generateMatchReport;}else if(bGen){bGen.remove();}document.getElementById('reportClose').onclick=()=>document.getElementById('reportOverlay').classList.remove('show');document.getElementById('cellClose').onclick=()=>document.getElementById('cellOverlay').classList.remove('show');document.getElementById('cellOverlay').onclick=e=>{if(e.target.id==='cellOverlay')document.getElementById('cellOverlay').classList.remove('show');};document.getElementById('reportRegen').onclick=generateMatchReport;document.getElementById('reportExport').onclick=exportReportPDF;document.getElementById('cmpClose').onclick=()=>{document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();};document.getElementById('cmpOverlay').onclick=e=>{if(e.target===document.getElementById('cmpOverlay')){document.getElementById('cmpOverlay').classList.remove('show');S.cmpPlayer=null;renderPlayerList();}};document.getElementById('psSearch').oninput=e=>{if(S.psPlayersLoaded)renderPsPlayerList(e.target.value);};window.addEventListener('resize',()=>{if(S.selMatch)renderAll();});document.addEventListener('click',e=>{if(!e.target.closest('.dl-wrap')&&!e.target.closest('.dl-menu'))closeAllDlMenus();});await loadMatches();await openDeepLink();}
 
 /* Arriving from the command bar with ?game=<id>: pick the right team so the
    fixture is in the list, then open it. */
