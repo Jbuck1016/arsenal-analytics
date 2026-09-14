@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "status": "draft",
+  "leakage_rule": "Every rolling input must use observations with match_date strictly before the target fixture cutoff.",
+  "windows": [3, 5, 10],
+  "context_features": [
+    "team_rest_days",
+    "opponent_rest_days",
+    "team_matches_last_14_days",
+    "opponent_matches_last_14_days",
+    "team_matches_last_21_days",
+    "opponent_matches_last_21_days"
+  ],
+  "families": {
+    "results": ["points_per_match", "goals_for", "goals_against"],
+    "shooting": ["shots", "shots_against", "open_play_shot_pct"],
+    "chance_quality": ["npxg_for", "npxg_against", "npxg_difference", "set_piece_xg_for", "set_piece_xg_against"],
+    "territory": ["field_tilt_pct", "final_third_touches", "final_third_touches_against", "final_third_touch_difference", "penalty_area_touches", "penalty_area_touches_against", "penalty_area_touch_difference", "box_entries_pass"],
+    "threat": ["xt_created", "xt_conceded", "xt_difference", "open_play_xt_created", "open_play_xt_conceded", "open_play_xt_difference"],
+    "possession_sequences": ["sequence_count", "sequence_count_against", "shot_ending_sequences", "shot_ending_sequences_against", "box_entry_sequences", "box_entry_sequences_against", "progressive_sequences", "progressive_sequences_against"],
+    "progression": ["progressive_passes", "directness", "successful_takeons", "successful_takeons_against"],
+    "possession": ["pass_completion_pct", "possession_proxy_pct"],
+    "pressing_defense": ["ppda", "defensive_actions", "defensive_height"]
+  },
+  "coverage_gates": {
+    "required_observation_sides_per_match": 2,
+    "required_non_null_rate": 0.995,
+    "required_xg_shot_reconciliation_rate": 1.0,
+    "required_sequence_match_coverage": 0.995,
+    "required_leakage_violations": 0,
+    "required_duplicate_feature_rows": 0
+  },
+  "selection_policy": "Evaluate families as challengers against the registered control using chronological out-of-season holdouts and league-level calibration checks."
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "season": "2324",
+      "league": "FRA-Ligue 1",
+      "game_id": "1741059",
+      "date": "2023-08-13",
+      "home_team": "Rennes",
+      "away_team": "Metz",
+      "reason": "WhoScored repeatedly returned no event payload and reset the browser connection; canonical score and fixture identity remain available.",
+      "disposition": "retain_match_outcome_exclude_event_features",
+      "accepted_at": "2026-09-13"
+    }
+  ]
+}
