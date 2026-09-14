@@ -32,7 +32,7 @@ if payload_path.is_file():
     }
     assert payload["validation_folds"] and payload["candidate_ranking"]
     tournament = payload["model_tournament"]
-    assert tournament["winner"] == "shooting_led"
+    assert tournament["winner"] == "shooting_territory"
     assert len(tournament["summary"]) >= 8
     assert "train_2324_2425_test_2526" in tournament["folds"]
     assert tournament["unavailable_families"]["expected_threat"]
