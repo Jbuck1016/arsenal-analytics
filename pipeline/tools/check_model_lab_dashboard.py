@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 page = (ROOT / "dashboard" / "model-lab.html").read_text(encoding="utf-8")
 builder = (ROOT / "pipeline" / "build_model_lab_dashboard.py").read_text(encoding="utf-8")
-for label in ("overview", "validation", "features", "matches", "monitoring"):
+for label in ("overview", "validation", "legitimacy", "features", "matches", "monitoring"):
     assert f'id="{label}"' in page
 assert "gate.js" in page and "model-lab-data.js" in page
 assert "can_promote\": False" in builder and "can_activate\": False" in builder
@@ -15,6 +15,7 @@ assert "SUPABASE_SERVICE_KEY" not in page
 assert "Coefficient explorer" in page and "Forecast dissection" in page
 assert "Model tournament" in page and "textSize" in page
 assert "weights are not a league table" in page
+assert "Out-of-sample family reliance" in page and "Historical table backtests" in page
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():
@@ -34,4 +35,8 @@ if payload_path.is_file():
     assert len(tournament["summary"]) >= 8
     assert "train_2324_2425_test_2526" in tournament["folds"]
     assert tournament["unavailable_families"]["expected_threat"]
+    legitimacy = payload["legitimacy"]
+    assert legitimacy["confidence"]["shooting_vs_territory_2526"]
+    assert legitimacy["family_permutation"]["rows"]
+    assert legitimacy["table_backtests"]["summary"]
 print("Model lab dashboard checks passed")

@@ -61,6 +61,7 @@ def main() -> int:
     parser.add_argument("--validation-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_field_tilt_box_entries_validation.json")
     parser.add_argument("--candidate-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "v2_feature_candidate_audit.json")
     parser.add_argument("--tournament-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "model_philosophy_tournament.json")
+    parser.add_argument("--legitimacy-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "model_legitimacy_suite.json")
     parser.add_argument("--drift-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_feature_drift_2627.json")
     parser.add_argument("--shadow-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_history_2627.json")
     parser.add_argument("--predictions-file", type=Path, required=True)
@@ -72,6 +73,14 @@ def main() -> int:
     validation = load_json(args.validation_report)
     candidates = load_json(args.candidate_report)
     tournament = load_json(args.tournament_report)
+    legitimacy = load_json(args.legitimacy_report)
+    bookmaker_path = ROOT / "artifacts" / "model_reports" / "bookmaker_benchmark.json"
+    if bookmaker_path.is_file():
+        legitimacy["external_and_live"]["bookmaker_benchmark"] = {
+            "status": "available",
+            "path": str(bookmaker_path),
+            **load_json(bookmaker_path),
+        }
     schema_catalog = load_json(ROOT / "pipeline" / "model_feature_schema_v2.json")
     drift = load_json(args.drift_report)
     shadow = load_json(args.shadow_report, required=False)
@@ -170,6 +179,7 @@ def main() -> int:
                 for name, fold in tournament["folds"].items()
             },
         },
+        "legitimacy": legitimacy,
         "research_queue": {
             "eligible_families": candidates.get("eligible_families_all_seasons", []),
             "blocked_candidates": candidates.get("skipped_candidates", {}),
