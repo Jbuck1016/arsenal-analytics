@@ -160,3 +160,33 @@ on conflict (name) do update set description=excluded.description,
 alter table public.analytics_rebuild_runs drop constraint if exists analytics_rebuild_runs_status_check;
 alter table public.analytics_rebuild_runs add constraint analytics_rebuild_runs_status_check
   check (status = any (array['pending','running','complete','failed','abandoned']));
+
+-- Watchdog, independent of the drain's own restore path. If the drain
+-- unschedules itself but its alter_job calls do not land, or it dies outright,
+-- the cron jobs stay paused and the pipeline is silently dead, which is a worse
+-- outcome than never having split the table. This notices and puts them back.
+create or replace function public.archive_drain_watchdog()
+returns text
+language plpgsql security definer set search_path to 'public','extensions','pg_temp'
+as $fn$
+declare v_drain int;
+begin
+  select count(*) into v_drain from cron.job where jobname='archive-drain';
+  if v_drain > 0 then
+    return 'drain still scheduled, nothing to do';
+  end if;
+  if exists (select 1 from cron.job where jobid in (3,4,5,6) and not active) then
+    perform cron.alter_job(3, active := true);
+    perform cron.alter_job(4, active := true);
+    perform cron.alter_job(5, active := true);
+    perform cron.alter_job(6, active := true);
+    insert into public.rebuild_alerts (severity, kind, subject, detail)
+    values ('warn','cron_restored_by_watchdog','analytics',
+            jsonb_build_object('note','drain finished without restoring cron; watchdog did it'))
+    on conflict (kind, subject) where notified_at is null do nothing;
+    perform cron.unschedule('archive-watchdog');
+    return 'cron restored by watchdog';
+  end if;
+  perform cron.unschedule('archive-watchdog');
+  return 'cron already active, watchdog retiring';
+end $fn$;
