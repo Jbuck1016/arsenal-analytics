@@ -173,9 +173,55 @@ def prepare_fixtures(
                 "away_team": away,
                 "scores": [(h, a) for h, a, _ in distribution],
                 "cumulative": cumulative,
+                "outcome_scores": {
+                    outcome: [(h, a) for h, a, probability in distribution
+                              if (0 if h > a else 1 if h == a else 2) == outcome]
+                    for outcome in range(3)
+                },
+                "outcome_cumulative": {
+                    outcome: _conditional_cumulative([
+                        probability for h, a, probability in distribution
+                        if (0 if h > a else 1 if h == a else 2) == outcome
+                    ])
+                    for outcome in range(3)
+                },
+                "result_probabilities": [
+                    sum(probability for h, a, probability in distribution
+                        if (0 if h > a else 1 if h == a else 2) == outcome)
+                    for outcome in range(3)
+                ],
             }
         )
     return prepared
+
+
+def _conditional_cumulative(probabilities: list[float]) -> list[float]:
+    total = sum(probabilities)
+    if total <= 0:
+        return []
+    cumulative: list[float] = []
+    running = 0.0
+    for probability in probabilities:
+        running += probability / total
+        cumulative.append(running)
+    cumulative[-1] = 1.0
+    return cumulative
+
+
+def _sample_with_strength_uncertainty(
+    fixture: dict[str, Any], team_shocks: dict[str, float], rng: random.Random
+) -> tuple[int, int]:
+    """Sample a score after one persistent team-strength shock per season draw."""
+    delta = team_shocks[fixture["home_team"]] - team_shocks[fixture["away_team"]]
+    base = fixture["result_probabilities"]
+    weights = [base[0] * math.exp(delta), base[1], base[2] * math.exp(-delta)]
+    total = sum(weights)
+    probabilities = [weight / total for weight in weights]
+    draw = rng.random()
+    outcome = 0 if draw < probabilities[0] else 1 if draw < probabilities[0] + probabilities[1] else 2
+    conditional = fixture["outcome_cumulative"][outcome]
+    index = bisect.bisect_left(conditional, rng.random())
+    return fixture["outcome_scores"][outcome][index]
 
 
 def apply_result(table: dict[str, dict[str, Any]], home: str, away: str, home_goals: int, away_goals: int) -> None:
@@ -282,9 +328,12 @@ def simulate_league(
     completed_results: list[dict[str, Any]] | None = None,
     head_to_head: bool = False,
     serie_a_playoffs: bool = False,
+    team_strength_uncertainty_sd: float = 0.0,
 ) -> dict[str, Any]:
     if simulations < 1:
         raise ValueError("simulations must be at least 1")
+    if not math.isfinite(team_strength_uncertainty_sd) or team_strength_uncertainty_sd < 0:
+        raise ValueError("team_strength_uncertainty_sd must be finite and non-negative")
     initial = validate_standings(standings)
     prepared = prepare_fixtures(fixtures, set(initial), max_goals=max_goals)
     remaining_by_team: Counter[str] = Counter()
@@ -299,9 +348,17 @@ def simulate_league(
     for _ in range(simulations):
         table = copy.deepcopy(initial)
         results = list(completed_results or [])
+        team_shocks = {
+            team: rng.gauss(0.0, team_strength_uncertainty_sd) for team in initial
+        }
         for fixture in prepared:
-            index = bisect.bisect_left(fixture["cumulative"], rng.random())
-            home_goals, away_goals = fixture["scores"][index]
+            if team_strength_uncertainty_sd:
+                home_goals, away_goals = _sample_with_strength_uncertainty(
+                    fixture, team_shocks, rng
+                )
+            else:
+                index = bisect.bisect_left(fixture["cumulative"], rng.random())
+                home_goals, away_goals = fixture["scores"][index]
             apply_result(table, fixture["home_team"], fixture["away_team"], home_goals, away_goals)
             results.append({
                 "home_team": fixture["home_team"], "away_team": fixture["away_team"],
@@ -352,6 +409,11 @@ def simulate_league(
     return {
         "simulations": simulations,
         "seed": seed,
+        "team_strength_uncertainty_sd": team_strength_uncertainty_sd,
+        "uncertainty_policy": (
+            "persistent_team_logit_shock_per_simulated_season"
+            if team_strength_uncertainty_sd else "published_fixture_probabilities_only"
+        ),
         "remaining_fixtures": len(fixtures),
         "ranking_keys": list(ranking_keys),
         "ranking_method": "head_to_head_mini_table" if head_to_head else "overall_table_keys",
@@ -375,6 +437,7 @@ def main() -> None:
     parser.add_argument("--simulations", type=int, default=10_000)
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--max-goals", type=int, default=10)
+    parser.add_argument("--team-strength-uncertainty-sd", type=float, default=0.0)
     args = parser.parse_args()
 
     payload = json.loads(args.input.read_text(encoding="utf-8"))
@@ -390,6 +453,7 @@ def main() -> None:
         completed_results=payload.get("completed_results", []),
         head_to_head=league in HEAD_TO_HEAD_LEAGUES,
         serie_a_playoffs=league == "ITA-Serie A",
+        team_strength_uncertainty_sd=args.team_strength_uncertainty_sd,
     )
     result["league"] = league
     text = json.dumps(result, indent=2, sort_keys=True)

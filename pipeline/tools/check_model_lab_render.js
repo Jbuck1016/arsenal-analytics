@@ -28,5 +28,19 @@ const server=http.createServer((req,res)=>{
       console.log(`PASS ${name}: ${text.length} rendered characters`);
       await page.close();
     }
+    for(const tab of ['research','guide']){
+      const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+      page.on('pageerror',error=>errors.push(error.message));
+      await page.addInitScript(()=>localStorage.setItem('siteAccess','granted-v1'));
+      await page.goto(`http://127.0.0.1:${server.address().port}/model-lab.html?tab=${tab}`,{waitUntil:'networkidle'});
+      await page.locator(`#${tab} .panel`).first().waitFor({state:'visible'});
+      const text=await page.locator(`#${tab}`).innerText();
+      if(tab==='research'&&!text.includes('Hybrid versus tactical'))throw new Error('research: challenger comparison missing');
+      if(tab==='guide'&&!text.includes('five-minute route'))throw new Error('guide: walkthrough missing');
+      if(errors.length)throw new Error(`${tab}: ${errors.join('; ')}`);
+      await page.screenshot({path:path.join(OUT,`model-lab-${tab}-desktop.png`),fullPage:true,animations:'disabled'});
+      console.log(`PASS ${tab}: ${text.length} rendered characters`);
+      await page.close();
+    }
   }finally{await browser.close();await new Promise(ok=>server.close(ok))}
 })().catch(error=>{console.error(error.stack||error);process.exit(1)});

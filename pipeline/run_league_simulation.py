@@ -17,7 +17,7 @@ import train_match_baselines as baseline
 from simulate_league_table import HEAD_TO_HEAD_LEAGUES, LEAGUE_RULES, simulate_league
 
 
-RULES_VERSION = 3
+RULES_VERSION = 4
 
 
 def parse_instant(value: str) -> datetime:
@@ -110,6 +110,8 @@ def main() -> int:
     parser.add_argument("--forecast-kind", choices=("thursday_frozen", "latest", "confirmed_lineup"), default="thursday_frozen")
     parser.add_argument("--simulations", type=int, default=10_000)
     parser.add_argument("--seed", type=int, default=2026)
+    parser.add_argument("--team-strength-uncertainty-sd", type=float, default=0.0,
+                        help="persistent per-team uncertainty applied within each simulated season")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
@@ -162,12 +164,14 @@ def main() -> int:
         completed_results=completed_results,
         head_to_head=args.league in HEAD_TO_HEAD_LEAGUES,
         serie_a_playoffs=args.league == "ITA-Serie A",
+        team_strength_uncertainty_sd=args.team_strength_uncertainty_sd,
     )
     result.update({
         "league": args.league, "season": args.season, "as_of": as_of.isoformat(),
         "model_run_id": args.model_run_id, "model_version": model["model_version"],
         "forecast_kind": args.forecast_kind, "rules_version": RULES_VERSION,
-        "europe_probability_definition": "top-four finish proxy; exact UEFA/cup reallocation is outside rules version 3",
+        "team_strength_uncertainty_sd": args.team_strength_uncertainty_sd,
+        "europe_probability_definition": "top-four finish proxy; exact UEFA/cup reallocation is outside rules version 4",
         "special_playoff_modelled": args.league == "ITA-Serie A",
         "rules_note": (
             "Serie A uses head-to-head regular ordering; tied-points title and 17th/18th playoffs use a disclosed neutral 50/50 prior."

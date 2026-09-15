@@ -24,7 +24,7 @@ def expect_error(callable_, phrase: str) -> None:
 
 
 def main() -> None:
-    assert RULES_VERSION == 3, "persisted simulation rules version must match review artifacts"
+    assert RULES_VERSION == 4, "persisted simulation rules version must match review artifacts"
     standings = [
         {"team": "A", "played": 1, "wins": 1, "draws": 0, "losses": 0, "goals_for": 2, "goals_against": 0, "points": 3},
         {"team": "B", "played": 1, "wins": 0, "draws": 0, "losses": 1, "goals_for": 0, "goals_against": 2, "points": 0},
@@ -54,6 +54,17 @@ def main() -> None:
         assert abs(sum(team["position_probabilities"].values()) - 1.0) < 1e-12
     a = next(team for team in first["teams"] if team["team"] == "A")
     assert 0.70 < a["champion_probability"] < 0.80
+    uncertain_first = simulate_league(
+        standings, fixtures, simulations=2_000, seed=44,
+        team_strength_uncertainty_sd=0.15,
+    )
+    uncertain_second = simulate_league(
+        standings, fixtures, simulations=2_000, seed=44,
+        team_strength_uncertainty_sd=0.15,
+    )
+    assert uncertain_first == uncertain_second
+    assert uncertain_first["uncertainty_policy"] == "persistent_team_logit_shock_per_simulated_season"
+    assert uncertain_first["team_strength_uncertainty_sd"] == 0.15
 
     aligned = _score_distribution({
         "expected_home_goals": 1.7, "expected_away_goals": 0.9,
@@ -106,6 +117,7 @@ def main() -> None:
         lambda: simulate_league(standings, [{"home_team": "A", "away_team": "B", "expected_home_goals": 1, "expected_away_goals": 1, "home_win_probability": 0.5}]),
         "all three",
     )
+    expect_error(lambda: simulate_league(standings, fixtures, team_strength_uncertainty_sd=-0.1), "non-negative")
     print("League-table simulator checks passed")
 
 

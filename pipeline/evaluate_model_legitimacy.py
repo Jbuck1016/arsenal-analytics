@@ -309,7 +309,10 @@ def frozen_fixture_rates(completed: pd.DataFrame, remaining: pd.DataFrame) -> li
     return fixtures
 
 
-def table_backtests(frames: dict[str, pd.DataFrame], simulations: int) -> dict[str, Any]:
+def table_backtests(
+    frames: dict[str, pd.DataFrame], simulations: int,
+    team_strength_uncertainty_sd: float = 0.0,
+) -> dict[str, Any]:
     rows = []
     for season in ("2425", "2526"):
         frame = frames[season]
@@ -332,6 +335,7 @@ def table_backtests(frames: dict[str, pd.DataFrame], simulations: int) -> dict[s
                     completed_results=[{"home_team": r.home_team, "away_team": r.away_team, "home_goals": int(r.home_goals), "away_goals": int(r.away_goals)} for r in completed.itertuples(index=False)],
                     head_to_head=league in table_sim.HEAD_TO_HEAD_LEAGUES,
                     serie_a_playoffs=league == "ITA-Serie A",
+                    team_strength_uncertainty_sd=team_strength_uncertainty_sd,
                 )
                 for prediction in result["teams"]:
                     probabilities = prediction["position_probabilities"]
@@ -357,7 +361,13 @@ def table_backtests(frames: dict[str, pd.DataFrame], simulations: int) -> dict[s
             "mean_absolute_points_error": float(np.mean([row["absolute_points_error"] for row in subset])),
             "mean_actual_position_probability": float(np.mean([row["position_probability"] for row in subset])),
         })
-    return {"method": "checkpoint-safe frozen team scoring/conceding rates with five-match shrinkage", "simulations_per_league_checkpoint": simulations, "summary": by_checkpoint, "rows": rows}
+    return {
+        "method": "checkpoint-safe frozen team scoring/conceding rates with five-match shrinkage",
+        "simulations_per_league_checkpoint": simulations,
+        "team_strength_uncertainty_sd": team_strength_uncertainty_sd,
+        "summary": by_checkpoint,
+        "rows": rows,
+    }
 
 
 def external_live_status(root: Path) -> dict[str, Any]:

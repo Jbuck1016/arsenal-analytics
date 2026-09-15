@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 page = (ROOT / "dashboard" / "model-lab.html").read_text(encoding="utf-8")
 builder = (ROOT / "pipeline" / "build_model_lab_dashboard.py").read_text(encoding="utf-8")
-for label in ("overview", "validation", "legitimacy", "features", "matches", "monitoring"):
+for label in ("overview", "validation", "legitimacy", "research", "features", "matches", "monitoring", "guide"):
     assert f'id="{label}"' in page
 assert "gate.js" in page and "model-lab-data.js" in page
 assert "can_promote\": False" in builder and "can_activate\": False" in builder
@@ -17,6 +17,7 @@ assert "Model tournament" in page and "textSize" in page
 assert "weights are not a league table" in page
 assert "Out-of-sample family reliance" in page and "Historical table backtests" in page
 assert "Cross-season feature gate" in page and "What team strength currently means" in page
+assert "Hybrid versus tactical" in page and "A five-minute route through Model Lab" in page
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():
@@ -44,4 +45,7 @@ if payload_path.is_file():
     assert "territory" in stability["gate"]["passed_families"]
     assert "progression" in stability["gate"]["research_only_families"]
     assert stability["elo_dependency"]["decision"] == "retain_as_benchmark_and_test_residual_tactical_lift"
+    research = payload["challenger_research"]
+    assert research["coverage"]["decision"]["trainable_now"] == ["territory"]
+    assert research["scoring_readiness"]["ready"] is True
 print("Model lab dashboard checks passed")

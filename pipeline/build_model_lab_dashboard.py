@@ -66,6 +66,14 @@ def main() -> int:
     parser.add_argument("--drift-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_feature_drift_2627.json")
     parser.add_argument("--shadow-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_history_2627.json")
     parser.add_argument("--predictions-file", type=Path, required=True)
+    parser.add_argument("--challenger-predictions-file", type=Path)
+    parser.add_argument("--comparison-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "live_challenger_comparison.json")
+    parser.add_argument("--nonlinear-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "nonlinear_challenger_tournament.json")
+    parser.add_argument("--coverage-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "rich_feature_coverage_decision.json")
+    parser.add_argument("--league-coverage-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "rich_feature_coverage_by_league.json")
+    parser.add_argument("--table-uncertainty-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "table_uncertainty_calibration.json")
+    parser.add_argument("--scoring-readiness-report", type=Path, default=ROOT / "artifacts" / "model_reports" / "shadow_scoring_readiness.json")
+    parser.add_argument("--operations-freshness-report", type=Path, default=ROOT / "artifacts" / "data_quality" / "model_operations_freshness.json")
     parser.add_argument("--output", type=Path, default=ROOT / "dashboard" / "model-lab-data.js")
     args = parser.parse_args()
 
@@ -87,6 +95,17 @@ def main() -> int:
     drift = load_json(args.drift_report)
     shadow = load_json(args.shadow_report, required=False)
     prediction_payload = load_json(args.predictions_file)
+    comparison = load_json(args.comparison_report, required=False)
+    challenger_predictions = (
+        load_json(args.challenger_predictions_file)
+        if args.challenger_predictions_file else {}
+    )
+    nonlinear = load_json(args.nonlinear_report, required=False)
+    coverage = load_json(args.coverage_report, required=False)
+    league_coverage = load_json(args.league_coverage_report, required=False)
+    table_uncertainty = load_json(args.table_uncertainty_report, required=False)
+    scoring_readiness = load_json(args.scoring_readiness_report, required=False)
+    operations_freshness = load_json(args.operations_freshness_report, required=False)
     prediction_model = prediction_payload.get("model_version")
     if prediction_model and prediction_model != sidecar["model_version"]:
         raise RuntimeError(
@@ -203,6 +222,17 @@ def main() -> int:
             "sample_gate": {"decision": "collect_more_results", "ready": False},
         },
         "predictions": predictions,
+        "challenger_research": {
+            "comparison": comparison,
+            "nonlinear": nonlinear,
+            "coverage": coverage,
+            "league_coverage": league_coverage,
+            "table_uncertainty": table_uncertainty,
+            "scoring_readiness": scoring_readiness,
+            "operations_freshness": operations_freshness,
+            "challenger_predictions_file": str(args.challenger_predictions_file) if args.challenger_predictions_file else None,
+            "challenger_model_version": challenger_predictions.get("model_version"),
+        },
         "guardrails": {
             "read_only": True,
             "can_promote": False,
