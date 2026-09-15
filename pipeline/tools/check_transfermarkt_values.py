@@ -28,6 +28,7 @@ assert 'src="gate.js' in market_page
 assert "v_player_market_values_latest" in market_page
 assert "mv_player_season" in market_page
 assert "mv_player_role" in market_page
+assert "v_team_directory" not in market_page
 assert "The market," in market_page
 assert "not a quality score" in market_page.lower()
 assert "SUPABASE_SERVICE_KEY" not in market_page

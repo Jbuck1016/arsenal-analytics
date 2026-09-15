@@ -73,11 +73,10 @@ async function init(){
     const data=await Promise.all([
       sbAll('v_player_market_values_latest','player_id,player_name,team,league,market_value_eur,market_value_display,observed_on,confidence'),
       sbAll('mv_player_season','player_id,player_name,team,nineties,apps,minutes'),
-      sbAll('mv_player_role','player_id,pool'),
-      sbAll('v_team_directory','team,league')
+      sbAll('mv_player_role','player_id,pool')
     ]);
     VALUES=data[0];SEASON=data[1];
-    const sm={},rm={};SEASON.forEach(function(p){sm[p.player_id]=p});data[2].forEach(function(r){rm[r.player_id]=r.pool});data[3].forEach(function(d){TEAM_LEAGUE[d.team]=d.league});
+    const sm={},rm={};SEASON.forEach(function(p){sm[p.player_id]=p});data[2].forEach(function(r){rm[r.player_id]=r.pool});VALUES.forEach(function(v){if(v.team&&v.league)TEAM_LEAGUE[v.team]=v.league});
     ROWS=VALUES.map(function(v){const p=sm[v.player_id]||{};return{id:v.player_id,name:p.player_name||v.player_name,team:p.team||v.team,league:v.league||TEAM_LEAGUE[p.team],role:rm[v.player_id]||'',n90:+p.nineties||0,apps:+p.apps||0,value:+v.market_value_eur||0,date:v.observed_on,confidence:+v.confidence||0}});
     const leagues=Array.from(new Set(ROWS.map(function(r){return r.league}).filter(Boolean))).sort();
     document.getElementById('league').innerHTML='<option value="ALL">All leagues</option>'+leagues.map(function(l){return'<option value="'+esc(l)+'">'+esc(LEAGUE_NAME[l]||l)+'</option>'}).join('');
