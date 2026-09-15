@@ -51,10 +51,9 @@
 --             logged table, committed. The live remainder is durable on disk in
 --             its own right before anything is destroyed, not sitting in a temp
 --             table or a CTE inside the transaction that does the destroying.
---   verify    archive + hold must equal the baseline exactly, and no game_id may
---             appear in both. A shortfall means rows were missed, a surplus
---             means rows were copied twice, and either one stops the run at
---             'failed' with the events table still completely intact.
+--   verify    see 20260915030000_events_swap_verify_set_membership.sql, which
+--             replaced this phase before it ran. Counting proves the copy is
+--             the right size, not that it is the right rows.
 --   swap      only now: truncate, reinsert from the committed hold table.
 --
 -- events_hold is deliberately not dropped. It is roughly a gigabyte and it is
