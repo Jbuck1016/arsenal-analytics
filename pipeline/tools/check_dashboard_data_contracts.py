@@ -130,6 +130,10 @@ def main() -> int:
     require("loadingPanel" in players and "Loading player evidence" in players and
             "Building scatter plot" in players,
             "players.html: expensive views retain a labelled loading shell")
+    require("eventContextControls" in players and "Score state" in players and
+            "Through minute" in players and "filterContext" in players and
+            "eventTip" in players,
+            "players.html: event evidence supports fixture, phase, clock and score-state inspection")
     require("Completed passes" in players and "Progressive carries" in players and
             "Interceptions" in players and "PB.pattern" in players,
             "players.html: custom event maps can combine attacking and defensive evidence")
