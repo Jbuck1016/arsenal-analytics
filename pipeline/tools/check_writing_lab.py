@@ -28,10 +28,17 @@ def main() -> None:
             "notes, full draft and publication record persist together")
     require(all(term in page for term in ("passes", "touches", "heat", "shots")),
             "article-ready team and player plot families are available")
+    require(all(term in page for term in ("Premier League", "Champions League", "Europa League", "La Liga")),
+            "competition selector covers domestic and European analysis")
+    require("select option,select optgroup" in page and "#edf0e9" in page,
+            "native dropdown choices remain legible in the dark interface")
+    require("retryScrape" in page, "failed match requests can be re-queued in place")
     require("events_cup" in page and "matches_cup" in worker,
             "cup writing evidence stays outside league-only analytics")
     require("--watch" in worker and "scrape_status" in worker,
             "the local worker can process the browser queue continuously")
+    require("candidates.append((\"ENG-Premier League\", \"2526\"))" in worker,
+            "direct match-id scraping survives a stale provider season index")
     require("enable row level security" in migration.lower(),
             "workspace storage enables row-level security")
     require("anon_delete" not in migration and "grant select, insert, update" in migration.lower(),

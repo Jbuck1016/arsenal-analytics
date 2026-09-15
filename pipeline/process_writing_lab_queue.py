@@ -104,9 +104,28 @@ def process(sb, project: dict, *, headless: bool) -> None:
     competition = project.get("competition") or "ENG-League Cup"
     season = project.get("season") or "2627"
 
-    ws = get_scraper(competition, season, headless=headless)
-    purge_null_cache(ws, game_id, competition, season)
-    path = cached_event_json_path(ws, game_id, competition, season)
+    # A match centre can go live before soccerdata has indexed that new season.
+    # Direct match-id downloads do not depend on the schedule, so a known valid
+    # competition/season may safely carry the browser and cache context.
+    candidates = [(competition, season)]
+    if season != "2526":
+        candidates.append((competition, "2526"))
+    candidates.append(("ENG-Premier League", "2526"))
+    ws = None
+    cache_league = cache_season = None
+    errors: list[str] = []
+    for candidate_league, candidate_season in candidates:
+        try:
+            ws = get_scraper(candidate_league, candidate_season, headless=headless)
+            cache_league, cache_season = candidate_league, candidate_season
+            break
+        except Exception as exc:  # noqa: BLE001 - try the direct-match carrier
+            errors.append(str(exc))
+    if ws is None or cache_league is None or cache_season is None:
+        raise RuntimeError("Could not initialise a WhoScored match browser: " + errors[-1])
+
+    purge_null_cache(ws, game_id, cache_league, cache_season)
+    path = cached_event_json_path(ws, game_id, cache_league, cache_season)
     if not path.is_file():
         ws.read_events(match_id=int(game_id), output_fmt="raw")
     if not path.is_file() or path.stat().st_size <= 50:
