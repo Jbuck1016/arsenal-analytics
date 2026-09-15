@@ -112,9 +112,24 @@ def main() -> int:
             "function studioEventPlot()" in players,
             "players.html: custom player plot studio is a first-class analysis path")
     require("function pizzaSvg(keys,title)" in players and
-            "selections are automatically split into pizzas of eight" in players and
-            "openCategoryPizza" in players,
-            "players.html: category and custom percentile pizzas preserve readability")
+            "segmented percentile pizza" in players and
+            "ringSlice" in players and "openCategoryPizza" in players,
+            "players.html: category and custom pizzas use readable segmented radial wedges")
+    require("Build across categories" in players and "selectedMetricTray" in players and
+            "the selection stays in the tray" in players,
+            "players.html: pizza builder preserves cross-category metric selections")
+    require("profile-brief" in players and "Start here · relative strength" in players and
+            "Review question" in players,
+            "players.html: profile starts with an evidence-linked interpretive synopsis")
+    require("Attacking half" in players and "VZ.shotFocus" in players and
+            "Math.max(0.52" in players,
+            "players.html: shot maps support attacking-half focus and visible low-xG markers")
+    require("playerChoiceList" in players and "Search player or team" in players and
+            "chain-details" in players and "compareChainPlayer" in players,
+            "players.html: large player pickers are searchable and chain comparisons are compact")
+    require("loadingPanel" in players and "Loading player evidence" in players and
+            "Building scatter plot" in players,
+            "players.html: expensive views retain a labelled loading shell")
     require("Completed passes" in players and "Progressive carries" in players and
             "Interceptions" in players and "PB.pattern" in players,
             "players.html: custom event maps can combine attacking and defensive evidence")
