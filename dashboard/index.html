@@ -229,6 +229,12 @@ tbody tr:hover td{background:var(--panel2)}
       <div class="mod-d">Feature coefficients, candidate trials, holdout validation, match-level drivers, drift, calibration, and live shadow scoring.</div>
       <div class="mod-n"><span>investigate</span><span class="mod-arrow">→</span></div>
     </a>
+    <a class="mod" href="market-values.html">
+      <div class="mod-i">11 · market intelligence</div>
+      <div class="mod-t">Transfer values</div>
+      <div class="mod-d">Player valuations joined to role, usage, league context, squad totals, coverage, and value-distribution analysis.</div>
+      <div class="mod-n"><span id="nValue">open market desk</span><span class="mod-arrow">→</span></div>
+    </a>
   </div>
 
   <div class="cols">
@@ -358,6 +364,12 @@ async function init(){
     document.getElementById('nMetric').textContent='89 metrics';
     // insights + sequences counters (head requests, non-blocking)
     (async function(){
+      try{
+        const uv=new URL(SB+'/rest/v1/v_player_market_values_latest'); uv.searchParams.set('select','player_id');
+        const rv=await fetch(uv,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
+        const cv=rv.headers.get('content-range'); const nv=cv?cv.split('/')[1]:null;
+        if(nv) document.getElementById('nValue').textContent=(+nv).toLocaleString()+' linked values';
+      }catch(e){}
       try{
         const u=new URL(SB+'/rest/v1/insights'); u.searchParams.set('select','id');
         const r=await fetch(u,{headers:Object.assign({},HD,{'Range':'0-0','Range-Unit':'items','Prefer':'count=exact'})});
