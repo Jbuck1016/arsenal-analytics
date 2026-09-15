@@ -53,6 +53,11 @@ Invoke-PythonStep @(
 )
 Invoke-PythonStep @("pipeline\audit_model_operations_freshness.py")
 Invoke-PythonStep @(
+    "pipeline\audit_local_prediction_output_integrity.py",
+    "--predictions-file", $PrimaryPredictions,
+    "--fixture-snapshot", $FixtureSnapshot
+)
+Invoke-PythonStep @(
     "pipeline\build_model_lab_dashboard.py",
     "--predictions-file", $PrimaryPredictions,
     "--challenger-predictions-file", $tacticalPredictions,

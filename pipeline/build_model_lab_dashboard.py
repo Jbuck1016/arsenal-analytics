@@ -95,9 +95,12 @@ def main() -> int:
     drift = load_json(args.drift_report)
     shadow = load_json(args.shadow_report, required=False)
     prediction_payload = load_json(args.predictions_file)
-    comparison = load_json(args.comparison_report, required=False)
     challenger_predictions = (
         load_json(args.challenger_predictions_file)
+        if args.challenger_predictions_file else {}
+    )
+    comparison = (
+        load_json(args.comparison_report, required=False)
         if args.challenger_predictions_file else {}
     )
     nonlinear = load_json(args.nonlinear_report, required=False)
