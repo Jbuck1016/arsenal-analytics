@@ -644,21 +644,31 @@ def main() -> int:
                   f"(age {b.get('with_age',0)}, ht {b.get('with_height',0)})", flush=True)
         except Exception as e:  # noqa: BLE001 - bio is enrichment, never block the rebuild
             print(f"  bio        -> skipped ({e})", flush=True)
-        steps = ["preflight",
-                 "metrics1", "metrics2", "metrics3", "metrics4",
-                 "sequences", "players", "seqfz",
-                 "lookups", "state", "chains", "traj", "profiles", "usage",
-                 "teamstyle", "search", "percentiles", "insights", "verify"]
+        # Queue the rebuild; do not drive it from here. This used to call
+        # rebuild_step for all 19 steps over HTTP. Metrics steps now take 15 to
+        # 25 minutes, so on 14 September at 23:30 the metrics1 call hit the API
+        # gateway's upstream timeout, returned 504, and this process exited 1
+        # after a scrape that wrote every fixture. The database was never told:
+        # metrics1 kept executing for more than ten minutes with no client and no
+        # statement timeout, as service_role has none, rebuilding the same
+        # matviews as the cron worker on the same disk. Every nightly run would
+        # have done the same.
+        #
+        # The cron worker already owns rebuilds: queued runs, per-step records,
+        # the reaper, the verify gate, the published as-of date. The scraper's
+        # only job is to say new data has landed, and enqueue_rebuild_if_new_data
+        # does exactly that, skipping when a run is already pending or running.
+        # A failure here is not fatal: job analytics-enqueue-on-new-data makes
+        # the same call every ten minutes, so the rebuild is late, not lost.
         try:
-            for step in steps:
-                resp = sb.rpc("rebuild_step", {"p_step": step}).execute()
-                print(f"  {step:<11} -> {resp.data}", flush=True)
-            print("  site is live with the new games.", flush=True)
+            resp = sb.rpc("enqueue_rebuild_if_new_data", {}).execute()
+            print(f"  rebuild    -> {resp.data}", flush=True)
+            print("  the cron worker publishes the new games when its verify gate passes.",
+                  flush=True)
         except Exception as e:  # noqa: BLE001
-            print(f"\n  !! rebuild failed: {e}", file=sys.stderr, flush=True)
-            print("  data loaded fine, but the analytics layers did NOT rebuild.",
+            print(f"\n  !! could not queue the rebuild: {e}", file=sys.stderr, flush=True)
+            print("  data loaded fine; the scheduled enqueue picks it up within ten minutes.",
                   file=sys.stderr, flush=True)
-            return 1
     elif total_ok == 0:
         print("\n  no new games -- analytics already current, skipping rebuild.", flush=True)
 
