@@ -297,6 +297,7 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const MIN90=3;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
+const LEAGUE_DISPLAY={'ENG-Premier League':'Premier League','ESP-La Liga':'La Liga','GER-Bundesliga':'Bundesliga','ITA-Serie A':'Serie A','FRA-Ligue 1':'Ligue 1','USA-MLS':'MLS'};
 const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare'];
 var PLG={}, PLEAGUES=[],
     PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
@@ -471,7 +472,9 @@ async function init(){
       sbAll('role_pillar_weights',{select:'pool,pillar,weight'}),
       // appended, not inserted: the four above are read positionally as res[0..3]
       sbAll('v_team_directory',{select:'team,league,league_name'}),
-      sbAll('v_league_summary',{select:'league,display_name,matches'}),
+      // League availability is derived from the already-loaded player rows.
+      // v_league_summary scans the event corpus and can exceed the browser API timeout.
+      Promise.resolve([]),
       // Valuations enrich the page, but a provider/view outage must not take
       // the core player analysis down with it.
       sbAll('v_player_market_values_latest',{select:'player_id,market_value_eur,market_value_display,observed_on,confidence'}).catch(function(){return []})
@@ -491,7 +494,8 @@ async function init(){
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
-    PLEAGUES=(res[5]||[]).filter(function(l){return l.matches>0});
+    const presentLeagues={};PLAYERS.forEach(function(p){const league=PLG[p.team];if(league)presentLeagues[league]=true});
+    PLEAGUES=Object.keys(presentLeagues).sort().map(function(league){return{league:league,display_name:LEAGUE_DISPLAY[league]||league}});
     (res[6]||[]).forEach(function(v){MARKET_VALUES[v.player_id]=v});
     if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
     const qp=new URLSearchParams(location.search).get('player');
