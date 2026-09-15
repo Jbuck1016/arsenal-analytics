@@ -37,8 +37,10 @@ def main() -> None:
             "cup writing evidence stays outside league-only analytics")
     require("--watch" in worker and "scrape_status" in worker,
             "the local worker can process the browser queue continuously")
-    require("candidates.append((\"ENG-Premier League\", \"2526\"))" in worker,
-            "direct match-id scraping survives a stale provider season index")
+    require("(\"ENG-Premier League\", \"2526\")" in worker,
+            "a stable browser carrier survives a stale provider season index")
+    require("ws.get(" in worker and "matchCentreData" in worker,
+            "direct match-id scraping bypasses schedule membership checks")
     require("enable row level security" in migration.lower(),
             "workspace storage enables row-level security")
     require("anon_delete" not in migration and "grant select, insert, update" in migration.lower(),

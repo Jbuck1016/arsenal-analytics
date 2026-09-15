@@ -105,39 +105,45 @@ def process(sb, project: dict, *, headless: bool) -> None:
     season = project.get("season") or "2627"
 
     # A match centre can go live before soccerdata has indexed that new season.
-    # Direct match-id downloads do not depend on the schedule, so a known valid
-    # competition/season may safely carry the browser and cache context.
-    candidates = [(competition, season)]
-    if season != "2526":
-        candidates.append((competition, "2526"))
-    candidates.append(("ENG-Premier League", "2526"))
-    path = None
+    # ``read_events`` refuses IDs absent from its selected schedule, even though
+    # WhoScored's match-centre URL is already live.  Initialise any working
+    # browser context, then call the reader directly with the submitted ID.
+    candidates = [(competition, season), ("ENG-Premier League", "2526")]
+    ws = None
     errors: list[str] = []
     for candidate_league, candidate_season in candidates:
         try:
             ws = get_scraper(candidate_league, candidate_season, headless=headless)
-            purge_null_cache(ws, game_id, candidate_league, candidate_season)
-            candidate_path = cached_event_json_path(
-                ws, game_id, candidate_league, candidate_season
-            )
-            if not candidate_path.is_file():
-                ws.read_events(match_id=int(game_id), output_fmt="raw")
-            if candidate_path.is_file() and candidate_path.stat().st_size > 50:
-                path = candidate_path
-                break
-            errors.append(
-                f"{candidate_league} {candidate_season}: no usable event payload"
-            )
+            break
         except Exception as exc:  # noqa: BLE001 - try the direct-match carrier
             errors.append(f"{candidate_league} {candidate_season}: {exc}")
-    if path is None:
+    if ws is None:
         detail = errors[-1] if errors else "no compatible carrier was available"
-        raise RuntimeError("WhoScored match download failed: " + detail)
+        raise RuntimeError("Could not initialise a WhoScored browser: " + detail)
 
-    if not path.is_file() or path.stat().st_size <= 50:
-        raise RuntimeError("WhoScored did not publish a usable event payload for this match")
-    with path.open(encoding="utf-8") as handle:
-        game_data = json.load(handle)
+    purge_null_cache(ws, game_id, competition, season)
+    path = cached_event_json_path(ws, game_id, competition, season)
+    if path.is_file() and path.stat().st_size > 50:
+        with path.open(encoding="utf-8") as handle:
+            game_data = json.load(handle)
+    else:
+        url = f"https://www.whoscored.com/Matches/{game_id}/Live"
+        reader = ws.get(
+            url,
+            path,
+            var="require.config.params['args'].matchCentreData",
+            no_cache=False,
+        )
+        value = reader.read()
+        if value in (b"null", b""):
+            reader = ws.get(
+                url,
+                path,
+                var="require.config.params['args'].matchCentreData",
+                no_cache=True,
+            )
+        reader.seek(0)
+        game_data = json.load(reader)
     if not isinstance(game_data, dict) or not game_data.get("events"):
         raise RuntimeError("The downloaded match payload contains no events")
 
