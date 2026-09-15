@@ -74,6 +74,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .pool-lbl{font:700 9px/1 var(--f-body);color:var(--text3);letter-spacing:.14em;text-transform:uppercase}
 .pool-val{font:700 17px/1.1 var(--f-display);letter-spacing:-.015em;color:var(--accent);margin-top:6px}
 .pool-sub{font:500 10px/1.5 'Inter';color:var(--text3);margin-top:5px}
+.value-card .pool-val{font-variant-numeric:tabular-nums}
+.value-card .pool-sub{max-width:24ch}
 
 .dna{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px}
 .dcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-width:96px;flex:1;box-shadow:var(--shadow)}
@@ -155,7 +157,7 @@ tr:hover td{background:var(--surface)}
   .hdr-right{flex-wrap:wrap;justify-content:flex-end;row-gap:5px}
   .wrap{display:block;overflow:visible}.side{width:100%;height:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--border)}
   .side-top{display:grid;grid-template-columns:1fr 1fr}.side-top .inp{grid-column:1/-1}.plist{max-height:25vh}
-  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/74}
+  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pcard-r.value-card{display:block;min-width:0;flex:1}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/74}
   .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
   .player-overview>summary{display:flex}.player-overview:not([open]){margin-bottom:10px}.player-overview .dna{margin-top:9px}
 }
@@ -312,7 +314,7 @@ const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'
  ['Match','match.html','explore'],['Teams','teams.html','explore'],['Sequences','sequences.html','explore'],
  ['Guide','guide.html','learn'],['Method','methodology.html','learn'],['Reference','glossary.html','learn']];
 
-let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820;
+let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP='All',TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820,MARKET_VALUES={};
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
 let VZ={passMode:'prog',outcome:'',off:{},mode:{Passing:'pattern',Carrying:'pattern',Combined:'pattern'}};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
@@ -444,6 +446,13 @@ function fmt(v,unit){
   if(v==null)return'\u2014';
   return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+(unit==='%'?'%':(unit==='m'?' m':(unit==='s'?' s':'')));
 }
+function formatEuro(v){
+  if(!Number.isFinite(v))return 'Not available';
+  if(v>=1000000000)return '€'+(v/1000000000).toFixed(v>=10000000000?0:2).replace(/\.00$/,'')+'bn';
+  if(v>=1000000)return '€'+(v/1000000).toFixed(v>=100000000?0:1).replace(/\.0$/,'')+'m';
+  if(v>=1000)return '€'+Math.round(v/1000)+'k';
+  return '€'+Math.round(v).toLocaleString();
+}
 function defOf(k){for(var i=0;i<DEFS.length;i++)if(DEFS[i].key===k)return DEFS[i];return null}
 function playerOf(id){for(var i=0;i<PLAYERS.length;i++)if(PLAYERS[i].player_id===id)return PLAYERS[i];return null}
 function poolLabel(pool){return POOL_NAME[pool]||pool||'Role not yet classified'}
@@ -462,7 +471,10 @@ async function init(){
       sbAll('role_pillar_weights',{select:'pool,pillar,weight'}),
       // appended, not inserted: the four above are read positionally as res[0..3]
       sbAll('v_team_directory',{select:'team,league,league_name'}),
-      sbAll('v_league_summary',{select:'league,display_name,matches'})
+      sbAll('v_league_summary',{select:'league,display_name,matches'}),
+      // Valuations enrich the page, but a provider/view outage must not take
+      // the core player analysis down with it.
+      sbAll('v_player_market_values_latest',{select:'player_id,market_value_eur,market_value_display,observed_on,confidence'}).catch(function(){return []})
     ]);
     const season=res[0],role=res[1];DEFS=res[2];
     WEIGHTS={};res[3].forEach(function(r){if(!WEIGHTS[r.pool])WEIGHTS[r.pool]={};WEIGHTS[r.pool][r.pillar]=+r.weight});
@@ -480,6 +492,7 @@ async function init(){
     POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
     PLEAGUES=(res[5]||[]).filter(function(l){return l.matches>0});
+    (res[6]||[]).forEach(function(v){MARKET_VALUES[v.player_id]=v});
     if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
     const qp=new URLSearchParams(location.search).get('player');
     if(qp&&playerOf(qp)&&PLGSCOPE!=='ALL'&&!teamInLeague(playerOf(qp).team)){
@@ -600,13 +613,15 @@ function renderList(){
   const el=document.getElementById('plist');
   if(!rows.length){el.innerHTML='<div style="padding:16px;color:var(--text3);font:500 11px/1 Inter">No players</div>';return}
   el.innerHTML=rows.slice(0,300).map(function(p){
+    const mv=MARKET_VALUES[p.player_id];
     return '<button type="button" class="pitem'+(SEL===p.player_id?' on':'')+'"'+
       (SEL===p.player_id?' aria-current="true"':'')+
       ' aria-label="Show '+esc(p.player_name)+' profile"'+
       ' onclick="pick(\''+p.player_id+'\')">'+
       '<div style="flex:1;min-width:0"><div class="pitem-nm">'+esc(p.player_name)+'</div>'+
       '<div class="pitem-meta">'+esc(tname(p.team))+' \u00B7 '+
-        (isUnusedSub(p)?'unused sub':(+p.nineties).toFixed(1)+' \u00D7 90 \u00B7 '+startsLabel(p))+'</div></div>'+
+        (isUnusedSub(p)?'unused sub':(+p.nineties).toFixed(1)+' \u00D7 90 \u00B7 '+startsLabel(p))+
+        (mv&&mv.market_value_eur!=null?' \u00B7 '+esc(formatEuro(+mv.market_value_eur)):'')+'</div></div>'+
       '<div class="badge">'+esc(p.pool||'SUB')+'</div></button>'}).join('');
 }
 /* PMCACHE holds the selected player's percentile rows, keyed by metric. It sits
@@ -641,6 +656,9 @@ function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
   const n=POOLC[p.pool]||0,low=p.nineties<MIN90||!p.pool;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
+  const mv=MARKET_VALUES[p.player_id]||null;
+  const mvText=mv&&mv.market_value_eur!=null?formatEuro(+mv.market_value_eur):'Not available';
+  const mvDate=mv&&mv.observed_on?new Date(mv.observed_on+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'';
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
     '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+minsLabel(p)+' \u00B7 '+startsLabel(p)+
@@ -651,7 +669,10 @@ function renderPlayer(p,pcts,pillars,dna){
     '<span class="chip">Fit confidence: '+esc(p.confidence||'\u2014')+'</span></div></div>'+
     '<div class="pcard-r"><div class="pool-lbl">Ranked against</div>'+
     '<div class="pool-val">'+esc(poolLabel(p.pool))+'</div>'+
-    '<div class="pool-sub">'+esc(leagueLabel(p.team))+' \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div></div>';
+    '<div class="pool-sub">'+esc(leagueLabel(p.team))+' \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div>'+
+    '<div class="pcard-r value-card"><div class="pool-lbl">Market value</div>'+
+    '<div class="pool-val">'+esc(mvText)+'</div>'+
+    '<div class="pool-sub">'+(mv?'Transfermarkt estimate'+(mvDate?' \u00B7 observed '+esc(mvDate):''):'No linked valuation yet')+'</div></div></div>';
   if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">'+
     (!p.pool?'This player appeared from the bench but does not yet have enough evidence for a stable role classification or percentiles. Event plots remain available.':'Below the '+MIN90+'-nineties threshold, so no percentiles are computed.')+'</div></div>';
 
