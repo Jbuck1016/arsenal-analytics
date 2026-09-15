@@ -108,6 +108,18 @@ def main() -> int:
     require("SC.x==='prog_carries_90'&&SC.y==='key_pass_90'" in players and
             "quadrant names describe wide-player involvement, not overall quality" in players,
             "players.html: quadrant labels are limited to a defensible pairing")
+    require("'Plot studio'" in players and "function renderPlotStudio()" in players and
+            "function studioEventPlot()" in players,
+            "players.html: custom player plot studio is a first-class analysis path")
+    require("function pizzaSvg(keys,title)" in players and
+            "selections are automatically split into pizzas of eight" in players and
+            "openCategoryPizza" in players,
+            "players.html: category and custom percentile pizzas preserve readability")
+    require("Completed passes" in players and "Progressive carries" in players and
+            "Interceptions" in players and "PB.pattern" in players,
+            "players.html: custom event maps can combine attacking and defensive evidence")
+    require("function ordinal(n)" in players and "ordinal(r.pct)+' percentile" in players,
+            "players.html: percentile ordinals use correct English suffixes")
 
     match = pages["match.html"]
     require("activeVizs:['progressive']" in match and
