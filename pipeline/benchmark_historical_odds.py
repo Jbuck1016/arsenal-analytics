@@ -90,7 +90,10 @@ def best_match(model_row: pd.Series, candidates: pd.DataFrame) -> tuple[int | No
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     tournament = json.loads((root / "artifacts" / "model_reports" / "model_philosophy_tournament.json").read_text(encoding="utf-8"))
-    shooting = tournament["folds"]["train_2324_2425_test_2526"]["models"]["shooting_led"]
+    final_models = tournament["folds"]["train_2324_2425_test_2526"]["models"]
+    winner_name = tournament["winner"]
+    winner = final_models[winner_name]
+    shooting = final_models["shooting_led"]
     odds_frames = {league: download(league, code) for league, code in CODES.items()}
     matched = []
     for league, odds in odds_frames.items():
@@ -109,23 +112,27 @@ def main() -> int:
     odds_prob = np.asarray([row["odds_probabilities"] for row in matched])
     actual = np.asarray([baseline.CLASS_ORDER.index(value) for value in labels])
     odds_loss = float(log_loss(actual, odds_prob, labels=[0, 1, 2]))
-    model_loss = float(shooting["log_loss"])
+    model_loss = float(winner["log_loss"])
     by_league = {}
     for league in CODES:
         indexes = [i for i, row in enumerate(matched) if row["league"] == league]
         if indexes:
-            model_league = shooting["by_league"][league]
-            by_league[league] = {"matches": len(indexes), "model_matches": model_league["matches"], "same_population_count": len(indexes) == model_league["matches"], "odds_log_loss": float(log_loss(actual[indexes], odds_prob[indexes], labels=[0, 1, 2])), "model_log_loss": float(model_league["log_loss"])}
-    comparable = len(matched) == shooting["matches"] and all(row["same_population_count"] for row in by_league.values())
+            model_league = winner["by_league"][league]
+            control_league = shooting["by_league"][league]
+            by_league[league] = {"matches": len(indexes), "model_matches": model_league["matches"], "same_population_count": len(indexes) == model_league["matches"], "odds_log_loss": float(log_loss(actual[indexes], odds_prob[indexes], labels=[0, 1, 2])), "model_log_loss": float(model_league["log_loss"]), "shooting_control_log_loss": float(control_league["log_loss"])}
+    comparable = len(matched) == winner["matches"] and all(row["same_population_count"] for row in by_league.values())
     report = {
-        "report_schema_version": 1, "created_at": datetime.now(UTC).isoformat(), "season": SEASON,
+        "report_schema_version": 2, "created_at": datetime.now(UTC).isoformat(), "season": SEASON,
         "source": "Football-Data.co.uk historical league CSVs", "source_page": "https://www.football-data.co.uk/downloadm.php",
         "method": "average closing 1X2 odds when available; proportional overround removal; exact season-and-league population count reconciliation",
-        "model": "shooting_led_poisson_train_2324_2425_test_2526",
-        "model_full_holdout_log_loss": model_loss, "matched": len(matched), "holdout_matches": shooting["matches"],
-        "coverage": len(matched) / shooting["matches"], "population_counts_reconciled": comparable,
+        "model": f"{winner_name}_poisson_train_2324_2425_test_2526",
+        "model_full_holdout_log_loss": model_loss, "matched": len(matched), "holdout_matches": winner["matches"],
+        "coverage": len(matched) / winner["matches"], "population_counts_reconciled": comparable,
         "odds_log_loss": odds_loss, "model_log_loss_on_common_matches": model_loss,
-        "model_delta_vs_odds": model_loss - odds_loss, "by_league": by_league,
+        "model_delta_vs_odds": model_loss - odds_loss,
+        "shooting_control_log_loss": float(shooting["log_loss"]),
+        "winner_delta_vs_shooting_control": model_loss - float(shooting["log_loss"]),
+        "by_league": by_league,
         "interpretation": "Markets are an external benchmark, not a training target. Positive model delta means the model trails closing odds.",
         "matches": matched,
     }

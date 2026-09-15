@@ -14,6 +14,7 @@ import hashlib
 import json
 import math
 import os
+import time
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import httpx
 from dotenv import load_dotenv
 from scipy.stats import poisson
 from sklearn.compose import ColumnTransformer
@@ -30,6 +32,7 @@ from sklearn.metrics import accuracy_score, log_loss, mean_absolute_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from supabase import Client, create_client
+from postgrest.exceptions import APIError
 
 
 CLASS_ORDER = ("H", "D", "A")
@@ -49,14 +52,42 @@ def db_client() -> Client:
     key = os.environ.get("SUPABASE_SERVICE_KEY")
     if not url or not key:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY are required")
+    warm_rest_schema(url, key)
     return create_client(url, key)
+
+
+def warm_rest_schema(url: str, key: str, attempts: int = 4) -> None:
+    """Establish the PostgREST schema contract before paginated model reads."""
+    endpoint = f"{url.rstrip('/')}/rest/v1/"
+    headers = {"apikey": key, "Authorization": f"Bearer {key}"}
+    for attempt in range(attempts):
+        response = httpx.get(endpoint, headers=headers, timeout=20)
+        if response.status_code == 200:
+            return
+        if response.status_code not in (502, 503, 504) or attempt == attempts - 1:
+            response.raise_for_status()
+        time.sleep(0.75 * (2 ** attempt))
+
+
+def execute_with_retry(query: Any, attempts: int = 4) -> Any:
+    """Execute a query with bounded retries while PostgREST warms its schema cache."""
+    for attempt in range(attempts):
+        try:
+            return query.execute()
+        except APIError as exc:
+            payload = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
+            code = str(getattr(exc, "code", "") or payload.get("code", ""))
+            if code != "PGRST002" or attempt == attempts - 1:
+                raise
+            time.sleep(0.75 * (2 ** attempt))
+    raise RuntimeError("unreachable PostgREST retry state")
 
 
 def fetch_pages(query: Any, page_size: int = 1000) -> list[dict]:
     rows: list[dict] = []
     offset = 0
     while True:
-        page = query.range(offset, offset + page_size - 1).execute().data or []
+        page = execute_with_retry(query.range(offset, offset + page_size - 1)).data or []
         rows.extend(page)
         if len(page) < page_size:
             return rows
