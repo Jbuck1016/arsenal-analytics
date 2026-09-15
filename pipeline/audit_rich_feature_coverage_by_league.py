@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+import csv
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,37 +41,64 @@ def coverage(rows: list[dict[str, Any]], fields: tuple[str, ...]) -> float:
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    db = baseline.db_client()
-    fields = sorted({field for values in FAMILIES.values() for field in values})
-    rows = baseline.fetch_pages(
-        db.table("ml_team_match_observations")
-        .select("game_id,team,season,league," + ",".join(fields))
-        .eq("observation_schema_version", 2)
-        .in_("season", list(SEASONS))
-        .in_("league", list(baseline.TOP_FIVE))
-        .order("season").order("league").order("game_id").order("team")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--aggregate-csv", type=Path,
+        help="Optional direct-SQL aggregate export; bypasses the unavailable Data API.",
     )
-    groups = []
-    for season in SEASONS:
-        for league in baseline.TOP_FIVE:
-            subset = [row for row in rows if row["season"] == season and row["league"] == league]
-            groups.append({
-                "season": season,
-                "league": league,
-                "team_match_rows": len(subset),
-                "families": {
-                    family: {
-                        "non_null_rate": coverage(subset, fields_for_family),
-                        "eligible": coverage(subset, fields_for_family) >= 0.995,
-                    }
-                    for family, fields_for_family in FAMILIES.items()
-                },
-            })
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    if args.aggregate_csv:
+        with args.aggregate_csv.open(newline="", encoding="utf-8") as handle:
+            aggregate_rows = list(csv.DictReader(handle))
+        groups = [{
+            "season": row["season"],
+            "league": row["league"],
+            "team_match_rows": int(row["team_match_rows"]),
+            "families": {
+                family: {
+                    "non_null_rate": float(row[f"{family}_non_null_rate"]),
+                    "eligible": float(row[f"{family}_non_null_rate"]) >= 0.995,
+                }
+                for family in FAMILIES
+            },
+        } for row in aggregate_rows]
+        row_count = sum(group["team_match_rows"] for group in groups)
+        source = f"direct SQL aggregate: {args.aggregate_csv.resolve()}"
+    else:
+        db = baseline.db_client()
+        fields = sorted({field for values in FAMILIES.values() for field in values})
+        rows = baseline.fetch_pages(
+            db.table("ml_team_match_observations")
+            .select("game_id,team,season,league," + ",".join(fields))
+            .eq("observation_schema_version", 2)
+            .in_("season", list(SEASONS))
+            .in_("league", list(baseline.TOP_FIVE))
+            .order("season").order("league").order("game_id").order("team")
+        )
+        groups = []
+        for season in SEASONS:
+            for league in baseline.TOP_FIVE:
+                subset = [row for row in rows if row["season"] == season and row["league"] == league]
+                groups.append({
+                    "season": season,
+                    "league": league,
+                    "team_match_rows": len(subset),
+                    "families": {
+                        family: {
+                            "non_null_rate": coverage(subset, fields_for_family),
+                            "eligible": coverage(subset, fields_for_family) >= 0.995,
+                        }
+                        for family, fields_for_family in FAMILIES.items()
+                    },
+                })
+        row_count = len(rows)
+        source = "Supabase Data API team-match rows"
     report = {
         "report_schema_version": 1,
         "created_at": datetime.now(UTC).isoformat(),
         "grain": "season × league over team-match observation fields",
+        "source": source,
         "required_non_null_rate": 0.995,
         "groups": groups,
         "repair_queue": [
@@ -84,7 +113,7 @@ def main() -> int:
     }
     output = root / "artifacts" / "data_quality" / "rich_feature_coverage_by_league.json"
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"Rows audited: {len(rows)}")
+    print(f"Rows audited: {row_count}")
     print(f"Repair queue blocks: {len(report['repair_queue'])}")
     print(f"Report: {output}")
     return 0

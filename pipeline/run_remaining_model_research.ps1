@@ -49,6 +49,7 @@ Invoke-PythonStep @(
 Invoke-PythonStep @(
     "pipeline\score_prediction_snapshot.py",
     "--predictions-file", "artifacts\predictions\2627_thursday_frozen_20260910T120000Z.json",
+    "--matches-file", $FixtureSnapshot,
     "--output", "artifacts\model_reports\shadow_score_2627_thursday_frozen.json"
 )
 Invoke-PythonStep @("pipeline\audit_model_operations_freshness.py")

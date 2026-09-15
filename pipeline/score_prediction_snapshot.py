@@ -109,6 +109,10 @@ def evaluation_predictions(payload: dict[str, Any]) -> tuple[list[dict[str, Any]
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--predictions-file", type=Path, required=True)
+    parser.add_argument(
+        "--matches-file", type=Path,
+        help="Optional fixture-provider JSON containing completed_fixtures; bypasses the Data API.",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -117,15 +121,21 @@ def main() -> int:
     predictions, evaluation_through = evaluation_predictions(payload)
     if not predictions:
         raise RuntimeError("prediction snapshot is empty")
-    db = baseline.db_client()
-    leagues = sorted({row["league"] for row in predictions})
-    matches = baseline.fetch_pages(
-        db.table("matches")
-        .select("game_id,season,league,home_score,away_score")
-        .eq("season", payload["season"])
-        .in_("league", leagues)
-        .order("game_id")
-    )
+    if args.matches_file:
+        match_payload = json.loads(args.matches_file.read_text(encoding="utf-8"))
+        matches = list(match_payload.get("completed_fixtures") or [])
+        result_source = str(args.matches_file.resolve())
+    else:
+        db = baseline.db_client()
+        leagues = sorted({row["league"] for row in predictions})
+        matches = baseline.fetch_pages(
+            db.table("matches")
+            .select("game_id,season,league,home_score,away_score")
+            .eq("season", payload["season"])
+            .in_("league", leagues)
+            .order("game_id")
+        )
+        result_source = "Supabase public.matches"
     report = {
         "report_schema_version": 1,
         "generated_at": datetime.now(UTC).isoformat(),
@@ -135,6 +145,7 @@ def main() -> int:
         "simulation_predictions": simulation_prediction_count,
         "forecast_kind": payload["forecast_kind"],
         "season": payload["season"],
+        "result_source": result_source,
         **evaluate(predictions, matches),
     }
     output = args.output or Path(__file__).resolve().parents[1] / "artifacts" / "model_reports" / f"shadow_score_{payload['season']}_{payload['forecast_kind']}.json"
