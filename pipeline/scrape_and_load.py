@@ -151,7 +151,10 @@ def upsert_players_and_lineups(
     sb: Client,
     game_data: dict,
     game_id: str,
-    league: str = "USA-MLS",
+    # Required, no default. A "USA-MLS" default here is the Python half of the
+    # database default that silently wrote La Liga and Premier League rows as
+    # MLS. Omitting league must be a TypeError, not a mislabelled fixture.
+    league: str,
     write_shared_players: bool = True,
 ) -> None:
     team_names = {
@@ -262,7 +265,7 @@ def build_event_row(
     }
 
 
-def upsert_events(sb: Client, game_data: dict, game_id: str, league: str = "USA-MLS") -> int:
+def upsert_events(sb: Client, game_data: dict, game_id: str, league: str) -> int:
     team_names = {
         int(game_data["home"]["teamId"]): game_data["home"]["name"],
         int(game_data["away"]["teamId"]): game_data["away"]["name"],
