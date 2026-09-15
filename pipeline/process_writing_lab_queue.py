@@ -111,23 +111,29 @@ def process(sb, project: dict, *, headless: bool) -> None:
     if season != "2526":
         candidates.append((competition, "2526"))
     candidates.append(("ENG-Premier League", "2526"))
-    ws = None
-    cache_league = cache_season = None
+    path = None
     errors: list[str] = []
     for candidate_league, candidate_season in candidates:
         try:
             ws = get_scraper(candidate_league, candidate_season, headless=headless)
-            cache_league, cache_season = candidate_league, candidate_season
-            break
+            purge_null_cache(ws, game_id, candidate_league, candidate_season)
+            candidate_path = cached_event_json_path(
+                ws, game_id, candidate_league, candidate_season
+            )
+            if not candidate_path.is_file():
+                ws.read_events(match_id=int(game_id), output_fmt="raw")
+            if candidate_path.is_file() and candidate_path.stat().st_size > 50:
+                path = candidate_path
+                break
+            errors.append(
+                f"{candidate_league} {candidate_season}: no usable event payload"
+            )
         except Exception as exc:  # noqa: BLE001 - try the direct-match carrier
-            errors.append(str(exc))
-    if ws is None or cache_league is None or cache_season is None:
-        raise RuntimeError("Could not initialise a WhoScored match browser: " + errors[-1])
+            errors.append(f"{candidate_league} {candidate_season}: {exc}")
+    if path is None:
+        detail = errors[-1] if errors else "no compatible carrier was available"
+        raise RuntimeError("WhoScored match download failed: " + detail)
 
-    purge_null_cache(ws, game_id, cache_league, cache_season)
-    path = cached_event_json_path(ws, game_id, cache_league, cache_season)
-    if not path.is_file():
-        ws.read_events(match_id=int(game_id), output_fmt="raw")
     if not path.is_file() or path.stat().st_size <= 50:
         raise RuntimeError("WhoScored did not publish a usable event payload for this match")
     with path.open(encoding="utf-8") as handle:
