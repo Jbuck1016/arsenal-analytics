@@ -243,14 +243,6 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 .simhelp b{color:var(--text);font-weight:700}
 .as-of{font:500 9.5px/1.2 var(--f-data,monospace);color:var(--text3);white-space:nowrap}
 .as-of.warn{color:var(--gold,#d4a017)}
-.transfer-intel{margin:0 0 12px}.transfer-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:12px}
-.value-curve{width:100%;height:auto;display:block;overflow:visible}.value-grid{stroke:var(--border);stroke-dasharray:3 4}.value-line{fill:none;stroke:var(--accent);stroke-width:2.5}
-.value-area{fill:var(--accent);opacity:.08}.value-dot{fill:var(--bg2);stroke:var(--accent);stroke-width:2}.value-axis{fill:var(--text3);font:600 9px/1 var(--f-data,monospace)}
-.transfer-list{display:grid;gap:0}.transfer-row{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
-.transfer-row:last-child{border-bottom:0}.transfer-date{font:600 9px/1.3 var(--f-data,monospace);color:var(--text3);text-transform:uppercase}.transfer-route{font:700 11px/1.35 var(--f-body,inherit);color:var(--text)}
-.transfer-route span{font-weight:500;color:var(--text3)}.transfer-fee{text-align:right;font:800 11px/1 var(--f-data,monospace);color:var(--gold,#d4a017)}
-.history-state{font:500 11px/1.55 var(--f-body,inherit);color:var(--text3);padding:6px 0}.history-state b{color:var(--text2)}
-@media(max-width:980px){.transfer-grid{grid-template-columns:1fr}}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
@@ -658,15 +650,13 @@ async function pick(pid){
       sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'}),
       sbAll('v_player_actions',{player_id:'eq.'+pid,select:'type,x,y,end_x,end_y,ok,is_shot,is_goal,is_open_play,sp_phase,prog,into_box,cross_,keypass,assist,through,head,bigchance,xg,shot_outcome'}),
       sbAll('v_player_carries',{player_id:'eq.'+pid,select:'start_x,start_y,end_x,end_y,carry_m,is_progressive,into_box,ttr,release_type'}),
-      sbAll('v_player_receipts',{player_id:'eq.'+pid,select:'start_x,start_y,ttr,release_type,is_carry'}),
-      sbAll('v_player_market_value_history',{player_id:'eq.'+pid,select:'observed_on,season,market_value_eur,market_value_display',order:'observed_on.asc'}).catch(function(){return []}),
-      sbAll('v_player_transfer_history',{player_id:'eq.'+pid,select:'transfer_date,season,from_club_name,to_club_name,fee_eur,fee_display,market_value_eur,market_value_display,transfer_type,is_loan',order:'transfer_date.desc'}).catch(function(){return []})
+      sbAll('v_player_receipts',{player_id:'eq.'+pid,select:'start_x,start_y,ttr,release_type,is_carry'})
     ]);
     PACT=res[3];PCAR=res[4];PREC=res[5];
-    renderPlayer(p,res[0],res[1],res[2][0]||null,res[6],res[7]);
+    renderPlayer(p,res[0],res[1],res[2][0]||null);
   }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
-function renderPlayer(p,pcts,pillars,dna,valueHistory,transferHistory){
+function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
   const n=POOLC[p.pool]||0,low=p.nineties<MIN90||!p.pool;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
@@ -689,8 +679,6 @@ function renderPlayer(p,pcts,pillars,dna,valueHistory,transferHistory){
     '<div class="pool-sub">'+(mv?'Transfermarkt estimate'+(mvDate?' \u00B7 observed '+esc(mvDate):''):'No linked valuation yet')+'</div></div></div>';
   if(low)h+='<div class="sect" style="border-left:3px solid var(--below);margin-bottom:12px"><div style="font:500 11px/1.5 Inter;color:var(--text2)">'+
     (!p.pool?'This player appeared from the bench but does not yet have enough evidence for a stable role classification or percentiles. Event plots remain available.':'Below the '+MIN90+'-nineties threshold, so no percentiles are computed.')+'</div></div>';
-
-  h+=transferIntelHtml(p,valueHistory||[],transferHistory||[]);
 
   if(pillars&&pillars.length){
     h+='<details class="player-overview" '+(OVOPEN?'open ':'')+'ontoggle="OVOPEN=this.open"><summary>Player overview</summary><div class="dna">';
@@ -733,42 +721,6 @@ function renderPlayer(p,pcts,pillars,dna,valueHistory,transferHistory){
   h = legendHtml() + h;
   document.getElementById('main').innerHTML=h;
   wireTips();
-}
-
-function dateShort(v){if(!v)return'Unknown';return new Date(v+'T00:00:00').toLocaleDateString(undefined,{month:'short',year:'numeric'})}
-function transferIntelHtml(p,values,transfers){
-  const mv=MARKET_VALUES[p.player_id]||null;
-  let h='<details class="player-overview transfer-intel" open><summary>Market value &amp; transfer history</summary><div class="transfer-grid">';
-  h+='<div class="sect"><div class="sect-h"><span>Market-value progression</span><span>dated estimates</span></div>'+valueCurveHtml(values,mv)+'</div>';
-  h+='<div class="sect"><div class="sect-h"><span>Transfer record</span><span>'+transfers.length+' move'+(transfers.length===1?'':'s')+'</span></div>'+transferListHtml(transfers)+'</div>';
-  return h+'</div><div class="foot" style="margin:8px 0 0">Transfermarkt estimates are context, not a performance grade. Fees distinguish published amounts from loans and free moves where the provider identifies them.</div></details>';
-}
-function valueCurveHtml(values,current){
-  const by={};values.forEach(function(v){if(v.observed_on&&v.market_value_eur!=null)by[v.observed_on]=v});
-  const rows=Object.keys(by).sort().map(function(k){return by[k]});
-  if(rows.length<2){
-    const cur=current&&current.market_value_eur!=null?formatEuro(+current.market_value_eur):'not available';
-    return '<div class="history-state"><b>Current estimate: '+esc(cur)+'.</b><br>Full historical progression has not been collected for this player yet. The importer stores it once and this chart will appear automatically.</div>';
-  }
-  const W=700,H=235,p={l:54,r:18,t:20,b:34};const times=rows.map(function(r){return new Date(r.observed_on+'T00:00:00').getTime()}),vals=rows.map(function(r){return +r.market_value_eur});
-  const t0=Math.min.apply(null,times),t1=Math.max.apply(null,times),vmax=Math.max.apply(null,vals.concat([1]));
-  const X=function(t){return p.l+(W-p.l-p.r)*(t1===t0 ? .5 : (t-t0)/(t1-t0))},Y=function(v){return H-p.b-(H-p.t-p.b)*(v/vmax)};
-  const pts=rows.map(function(r,i){return X(times[i]).toFixed(1)+','+Y(vals[i]).toFixed(1)});
-  let s='<svg class="value-curve" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Dated Transfermarkt market-value estimates">';
-  [0,.25,.5,.75,1].forEach(function(k){const y=Y(vmax*k);s+='<line class="value-grid" x1="'+p.l+'" x2="'+(W-p.r)+'" y1="'+y+'" y2="'+y+'"/><text class="value-axis" x="'+(p.l-7)+'" y="'+(y+3)+'" text-anchor="end">'+esc(formatEuro(vmax*k))+'</text>'});
-  s+='<path class="value-area" d="M'+pts[0]+' L'+pts.slice(1).join(' L')+' L'+X(t1)+','+(H-p.b)+' L'+X(t0)+','+(H-p.b)+' Z"/><polyline class="value-line" points="'+pts.join(' ')+'"/>';
-  rows.forEach(function(r,i){s+='<circle class="value-dot" cx="'+X(times[i])+'" cy="'+Y(vals[i])+'" r="3.5"><title>'+esc(dateShort(r.observed_on)+' · '+formatEuro(vals[i]))+'</title></circle>'});
-  s+='<text class="value-axis" x="'+X(t0)+'" y="'+(H-10)+'" text-anchor="start">'+esc(dateShort(rows[0].observed_on))+'</text><text class="value-axis" x="'+X(t1)+'" y="'+(H-10)+'" text-anchor="end">'+esc(dateShort(rows[rows.length-1].observed_on))+'</text></svg>';
-  const high=Math.max.apply(null,vals),change=vals[vals.length-1]-vals[0];
-  return s+'<div class="foot">'+rows.length+' observations · peak '+esc(formatEuro(high))+' · change across recorded span '+(change>=0?'+':'')+esc(formatEuro(change))+'</div>';
-}
-function transferListHtml(rows){
-  if(!rows.length)return'<div class="history-state">No transfer history has been collected for this player yet. This does <b>not</b> mean the player has never moved.</div>';
-  return '<div class="transfer-list">'+rows.map(function(r){
-    const from=r.from_club_name||'Unknown club',to=r.to_club_name||'Unknown club';
-    const fee=r.fee_display||((r.fee_eur!=null)?formatEuro(+r.fee_eur):(r.is_loan?'Loan':'Undisclosed'));
-    return '<div class="transfer-row"><div class="transfer-date">'+esc(dateShort(r.transfer_date))+'</div><div class="transfer-route">'+esc(from)+' <span>→</span> '+esc(to)+(r.transfer_type?'<br><span>'+esc(r.transfer_type)+'</span>':'')+'</div><div class="transfer-fee">'+esc(fee)+'</div></div>';
-  }).join('')+'</div>';
 }
 
 /* Metrics that can be traced back to the events that produced them. Clicking

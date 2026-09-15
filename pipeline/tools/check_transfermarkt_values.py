@@ -26,9 +26,9 @@ assert "SUPABASE_SERVICE_KEY" not in page
 assert "PARSE_API_KEY" not in page
 assert "v_player_market_values_latest" in page
 assert "Market value" in page
-assert "v_player_market_value_history" in page
-assert "v_player_transfer_history" in page
-assert "Market value &amp; transfer history" in page
+assert "v_player_market_value_history" not in page
+assert "v_player_transfer_history" not in page
+assert "Market value &amp; transfer history" not in page
 assert "get_player_profile" in history_source
 assert "get_player_transfers" in history_source
 assert "--limit" in history_source
