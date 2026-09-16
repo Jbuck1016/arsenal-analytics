@@ -201,6 +201,14 @@ html:not(.dark){
      light-theme value, where a 28% black shadow reads as a smudge on cream. */
   --elevation-panel:0 12px 30px rgba(0,0,0,.28);
 
+  /* The league picker's select edge, from shell.css. It used to be written
+     var(--line2,var(--border)): the strong rule if the page had a --line2,
+     the hairline otherwise. Every page has a --line2 now that this file
+     aliases one, so the fallback stopped firing and three pages' selects
+     silently gained a lighter border in dark. It is a real per-family choice,
+     so it gets a real name. */
+  --select-edge:var(--border-strong);
+
   /* pitch and canvas paints (match.html CT(), light branch) */
   --pitch-fill:#f0ead6;
   --pitch-line:#888;
@@ -323,6 +331,10 @@ html.dark{
   --heat-low:31,91,111;
   --heat-mid:61,220,151;
   --heat-high:226,184,119;
+
+  /* Dark is where the families disagree: the app pages and match draw this
+     edge with the hairline, sequences with the strong rule. */
+  --select-edge:var(--border-hairline);
 }
 
 /* ===== DOCUMENT FAMILY ============================================= */
@@ -342,6 +354,9 @@ html:not(.dark).fam-doc{
      of an alias, to work around this block being the wrong home for one. */
 }
 html.dark.fam-doc{
+  /* sequences.html is the one shell.css consumer that draws this edge with
+     the strong rule rather than the hairline. */
+  --select-edge:var(--border-strong);
   --ground:#0e1219;
   --surface-raised:#161b24;
   --surface-recessed:#1e242e;
@@ -443,6 +458,117 @@ html:not(.dark).fam-match{
      --elevation-1. The panels on this page float over a workspace. */
   --elevation-1:0 10px 26px rgba(23,27,34,.07);
   --elevation-2:0 18px 46px rgba(23,27,34,.13);
+
+  /* --- match.html component colours ---------------------------------
+     Everything below was a literal in match.html's 600-line inline style.
+     They are here rather than there because Phase 1's whole claim is that no
+     component defines its own colour, and a token file being long is a much
+     smaller problem than 95 literals spread through a page.
+
+     MANY OF THESE ARE THE SAME VALUE UNDER DIFFERENT NAMES, deliberately.
+     rgba(22,163,74,0.12) is both the dark win-row fill and the midfielder
+     badge; #2563eb is both the opposition colour and the defender badge ink.
+     They are different things that happen to have been given one hue, and
+     Phase 3 should be able to move one without moving the other.
+
+     WHERE A VALUE IS THE SAME IN BOTH THEMES it is declared in both scopes,
+     because the rule that reads it is not theme-scoped and would otherwise
+     resolve to nothing on one side. */
+  --ink-on-accent:#fff;
+  --scrim:rgba(0,0,0,0.3);
+
+  /* elevation, one per surface that floats */
+  --elevation-drawer:-8px 0 24px rgba(0,0,0,0.12);
+  --elevation-dialog:0 8px 32px rgba(0,0,0,0.12);
+  --elevation-card:0 2px 8px rgba(0,0,0,0.06);
+  --elevation-card-hover:0 4px 12px rgba(0,0,0,0.08);
+  --elevation-table:0 2px 8px rgba(0,0,0,0.04);
+
+  /* the report drawer's failure state */
+  --error-ink:#c0392b;
+  --error-veil:rgba(220,38,38,0.08);
+  --error-edge:rgba(220,38,38,0.2);
+
+  /* the two banners above a plot: team-data-only, opposition-incomplete */
+  --banner-team-fill:rgba(212,160,23,0.15);
+  --banner-team-ink:#8a6500;
+  --banner-team-edge:rgba(212,160,23,0.3);
+  --banner-warn-fill:rgba(220,38,38,0.12);
+  --banner-warn-ink:#b91c1c;
+  --banner-warn-edge:rgba(220,38,38,0.25);
+
+  --list-group-ink:#9a9894;
+  --badge-pass-fill:rgba(37,99,235,0.1);
+  --badge-shot-fill:rgba(212,160,23,0.12);
+
+  /* The opposition. A fixed blue in both themes, because it has to stay
+     distinguishable from whichever club colour the accent is carrying. */
+  --opponent:#2563eb;
+
+  /* season table: the striped row, and the W/D/L result cells */
+  --row-stripe:#fafafa;
+  --result-win-fill:#f0fdf4;
+  --result-draw-fill:#fefce8;
+  --result-loss-fill:#fef2f2;
+  /* The inks are fixed across themes where the fills are not, which is why
+     they are separate tokens rather than one pair per result. */
+  --positive-ink:#16a34a;
+  --caution-ink:#ca8a04;
+  --negative-ink:#dc2626;
+
+  /* position badges in the player list */
+  --pos-gk-fill:rgba(212,160,23,0.15);
+  --pos-gk-ink:#b8860b;
+  --pos-def-fill:rgba(37,99,235,0.12);
+  --pos-def-ink:#2563eb;
+  --pos-mid-fill:rgba(22,163,74,0.12);
+  --pos-mid-ink:#16a34a;
+  --pos-fwd-fill:rgba(239,68,68,0.12);
+  --pos-fwd-ink:#ef4444;
+
+  /* momentum rows, and the two-player comparison */
+  --moment-pos-fill:rgba(22,163,74,0.08);
+  --moment-neg-fill:rgba(220,38,38,0.08);
+  --compare-a-bar:rgba(239,1,7,0.35);
+  --compare-b-bar:rgba(37,99,235,0.35);
+  --compare-b-fill:rgba(37,99,235,0.1);
+
+  /* Gold tint ramp. Nine steps of #e2b877, the DARK gold, and they are the
+     same in light even though this page's light gold is #9a6f2a -- so a light
+     workspace paints warm tints that do not match its own accent. Verbatim in
+     Phase 1. .08 and .09 are almost certainly one value that drifted; Phase 3
+     has the whole ramp in one place to judge that. */
+  --gold-wash:rgba(226,184,119,.07);
+  --gold-veil:rgba(226,184,119,.08);
+  --gold-veil-soft:rgba(226,184,119,.09);
+  --gold-veil-strong:rgba(226,184,119,.12);
+  --gold-fill:rgba(226,184,119,.14);
+  --gold-edge-soft:rgba(226,184,119,.24);
+  --gold-edge:rgba(226,184,119,.25);
+  --gold-edge-strong:rgba(226,184,119,.28);
+  --gold-edge-hard:rgba(226,184,119,.45);
+
+  /* the opposition's tints, same story */
+  --blue-wash:rgba(90,169,255,.08);
+  --blue-veil:rgba(90,169,255,.12);
+  --blue-edge:rgba(90,169,255,.28);
+
+  --grid-line:rgba(139,152,171,.018);
+
+  /* THE FLOATING SURFACES. Seven levels of translucency over the workspace
+     grid. In dark they are one colour at seven alphas; in light they are the
+     raised surface mixed with transparency at seven percentages, and the two
+     ladders do not correspond -- dark .72 is light 82% in the timeline and
+     light 86% in the tools panel. Each pair used to be two rules, one of them
+     scoped html:not(.dark); they are one token now, which is what made the
+     mismatch legible in the first place. */
+  --float-header:color-mix(in srgb,var(--bg2) 94%,transparent);
+  --float-rail:color-mix(in srgb,var(--bg2) 92%,transparent);
+  --float-bar:color-mix(in srgb,var(--bg2) 90%,transparent);
+  --float-panel:color-mix(in srgb,var(--bg2) 90%,transparent);
+  --float-timeline:color-mix(in srgb,var(--bg2) 82%,transparent);
+  --float-tools:color-mix(in srgb,var(--bg2) 86%,transparent);
+  --float-card:color-mix(in srgb,var(--bg2) 92%,transparent);
 }
 html.dark.fam-match{
   --ground:#0e1219;
@@ -466,6 +592,72 @@ html.dark.fam-match{
   --series-link:#5aa9ff;
   --elevation-1:0 12px 28px rgba(0,0,0,.22);
   --elevation-2:0 20px 54px rgba(0,0,0,.34);
+
+  /* --- match.html component colours; the light scope carries the notes --- */
+  --ink-on-accent:#fff;
+  --scrim:rgba(0,0,0,0.3);
+  --elevation-drawer:-8px 0 24px rgba(0,0,0,0.12);
+  --elevation-dialog:0 8px 32px rgba(0,0,0,0.12);
+  --elevation-card:0 2px 8px rgba(0,0,0,0.06);
+  --elevation-card-hover:0 4px 12px rgba(0,0,0,0.08);
+  --elevation-table:0 2px 8px rgba(0,0,0,0.04);
+  --error-ink:#c0392b;
+  --error-veil:rgba(220,38,38,0.08);
+  --error-edge:rgba(220,38,38,0.2);
+  --banner-team-fill:rgba(212,160,23,0.15);
+  --banner-team-ink:#8a6500;
+  --banner-team-edge:rgba(212,160,23,0.3);
+  --banner-warn-fill:rgba(220,38,38,0.12);
+  --banner-warn-ink:#b91c1c;
+  --banner-warn-edge:rgba(220,38,38,0.25);
+  --list-group-ink:#9a9894;
+  --badge-pass-fill:rgba(37,99,235,0.1);
+  --badge-shot-fill:rgba(212,160,23,0.12);
+  --opponent:#2563eb;
+
+  /* The four that actually differ between the themes. */
+  --row-stripe:rgba(255,255,255,0.02);
+  --result-win-fill:rgba(22,163,74,0.12);
+  --result-draw-fill:rgba(202,138,4,0.12);
+  --result-loss-fill:rgba(220,38,38,0.12);
+
+  --positive-ink:#16a34a;
+  --caution-ink:#ca8a04;
+  --negative-ink:#dc2626;
+  --pos-gk-fill:rgba(212,160,23,0.15);
+  --pos-gk-ink:#b8860b;
+  --pos-def-fill:rgba(37,99,235,0.12);
+  --pos-def-ink:#2563eb;
+  --pos-mid-fill:rgba(22,163,74,0.12);
+  --pos-mid-ink:#16a34a;
+  --pos-fwd-fill:rgba(239,68,68,0.12);
+  --pos-fwd-ink:#ef4444;
+  --moment-pos-fill:rgba(22,163,74,0.08);
+  --moment-neg-fill:rgba(220,38,38,0.08);
+  --compare-a-bar:rgba(239,1,7,0.35);
+  --compare-b-bar:rgba(37,99,235,0.35);
+  --compare-b-fill:rgba(37,99,235,0.1);
+  --gold-wash:rgba(226,184,119,.07);
+  --gold-veil:rgba(226,184,119,.08);
+  --gold-veil-soft:rgba(226,184,119,.09);
+  --gold-veil-strong:rgba(226,184,119,.12);
+  --gold-fill:rgba(226,184,119,.14);
+  --gold-edge-soft:rgba(226,184,119,.24);
+  --gold-edge:rgba(226,184,119,.25);
+  --gold-edge-strong:rgba(226,184,119,.28);
+  --gold-edge-hard:rgba(226,184,119,.45);
+  --blue-wash:rgba(90,169,255,.08);
+  --blue-veil:rgba(90,169,255,.12);
+  --blue-edge:rgba(90,169,255,.28);
+  --grid-line:rgba(139,152,171,.018);
+
+  --float-header:rgba(22,27,36,.94);
+  --float-rail:rgba(22,27,36,.9);
+  --float-bar:rgba(22,27,36,.86);
+  --float-panel:rgba(22,27,36,.78);
+  --float-timeline:rgba(22,27,36,.72);
+  --float-tools:rgba(22,27,36,.72);
+  --float-card:rgba(22,27,36,.82);
 }
 
 /* ===== THE THREE LAB PAGES ========================================= */
