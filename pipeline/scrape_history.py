@@ -65,7 +65,7 @@ def main() -> int:
 
     install_league_dict()
     sb = get_supabase()
-    total_ok = total_failed = total_remaining = 0
+    total_ok = total_failed = total_remaining = total_events = 0
 
     mode = "EXECUTE" if args.execute else "READ-ONLY MANIFEST"
     print(f"Historical training scrape · {mode}", flush=True)
@@ -100,7 +100,7 @@ def main() -> int:
                 stop_at_monotonic=None,
             )
             try:
-                ok, failed, remaining = scrape_one_league(
+                ok, failed, remaining, events = scrape_one_league(
                     sb, worker_args, league, season
                 )
             except Exception as exc:  # noqa: BLE001 - continue to the next target
@@ -110,6 +110,7 @@ def main() -> int:
             total_ok += ok
             total_failed += failed
             total_remaining += remaining
+            total_events += events
         else:
             continue
         break
@@ -118,6 +119,7 @@ def main() -> int:
     print(f"  ingested : {total_ok}", flush=True)
     print(f"  failed   : {total_failed}", flush=True)
     print(f"  remaining: {total_remaining}", flush=True)
+    print(f"  events   : {total_events}", flush=True)
     print("  live analytics rebuild: intentionally skipped", flush=True)
     return 1 if total_failed else 0
 
