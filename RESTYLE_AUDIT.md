@@ -51,10 +51,35 @@ market-values, writing-lab.
 
 ### Deployed but unreferenced, still publicly reachable
 
-`glossary_current.html`, `index_v1.html`, `line-mockups.html`, `live_dashboard.html`, `players (1).html`, `thread-board.html`.
+**CORRECTED AFTER PHASE 0.** This section originally listed six files. The real
+set is **nine**, and all nine were deleted in `bad515c` before any conversion
+work, with per-file evidence of zero inbound references recorded in that commit.
 
-These hold **352 colour literals** between them. Out of scope for the
-restyle, in scope for the Phase 6 lint rule or it fails on them forever.
+Scanned, with their literal counts:
+
+| File | Colour literals |
+| --- | ---: |
+| `index_v1.html` | 209 |
+| `players (1).html` | 50 |
+| `live_dashboard.html` | 35 |
+| `thread-board.html` | 23 |
+| `line-mockups.html` | 20 |
+| `glossary_current.html` | 15 |
+| **total** | **352** |
+
+Never scanned, and therefore absent from every count in this document:
+`index_current.html`, `players_current.html`, `teams_current.html`.
+
+Those three begin with the bytes `ff fe`, a UTF-16 LE byte order mark. Git
+classifies them as binary (`-` in `git diff --numstat`, `Bin ... -> 0 bytes` in
+the deletion commit) and the colour scanner, which reads UTF-8 with
+`errors="replace"`, saw NUL-interleaved text that matched no pattern. So they
+contributed zero to the 352 and to the 1,332 total.
+
+The same check was run against every live file: all fifteen pages start `3c 21`
+(`<!`) and the three stylesheets and `gate.js` start `2f 2a` (`/*`), all plain
+UTF-8, and git reports line counts for every one. So the live inventory of 980
+literals is not undercounting for this reason.
 
 ---
 
