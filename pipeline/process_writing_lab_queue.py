@@ -29,7 +29,12 @@ from scrape_and_load import (
     cached_event_json_path,
     get_scraper,
     get_supabase,
-    process_match as process_canonical_match,
+    league_club_count,
+    league_expected_clubs,
+    league_whitelist,
+    upsert_events,
+    upsert_match as upsert_canonical_match,
+    upsert_players_and_lineups,
 )
 from scrape_cup import (
     install_league_dict,
@@ -126,21 +131,92 @@ def canonical_schedule_row(payload: dict) -> pd.Series:
     )
 
 
+def _same_team(left: str | None, right: str | None, aliases: list[dict]) -> bool:
+    a, b = str(left or "").strip().casefold(), str(right or "").strip().casefold()
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    for row in aliases:
+        values = {
+            str(row.get(key) or "").strip().casefold()
+            for key in ("match_name", "event_name", "display_name")
+            if row.get(key)
+        }
+        if a in values and b in values:
+            return True
+    return False
+
+
+def resolve_canonical_fixture_id(sb, payload: dict, competition: str, season: str) -> str:
+    """Match a WhoScored payload to the preloaded scheduled fixture.
+
+    The schedule uses independent provider IDs (``fd-*``), while WhoScored URLs
+    use numeric IDs. Requiring a unique fixture-key match prevents a manual
+    request from creating a duplicate match at a second identifier.
+    """
+    if not payload.get("date"):
+        raise RuntimeError("The submitted match payload has no date for fixture reconciliation")
+    candidates = (
+        sb.table("matches")
+        .select("game_id,date,home_team,away_team")
+        .eq("league", competition)
+        .eq("season", season)
+        .eq("date", payload["date"])
+        .execute()
+        .data
+        or []
+    )
+    aliases = (
+        sb.table("team_names")
+        .select("match_name,event_name,display_name")
+        .eq("league", competition)
+        .execute()
+        .data
+        or []
+    )
+    matched = [
+        row
+        for row in candidates
+        if _same_team(payload["home_team"], row.get("home_team"), aliases)
+        and _same_team(payload["away_team"], row.get("away_team"), aliases)
+    ]
+    if len(matched) != 1:
+        raise RuntimeError(
+            "Quick ingest could not uniquely reconcile this match to the future-fixture "
+            f"schedule ({len(matched)} matches). Run the fixture sync before retrying."
+        )
+    return str(matched[0]["game_id"])
+
+
+def assert_canonical_teams(sb, payload: dict, competition: str) -> None:
+    allowed = league_whitelist(sb, competition)
+    expected = league_expected_clubs(sb, competition)
+    known = league_club_count(sb, competition)
+    if expected and known >= expected:
+        unknown = [
+            name
+            for name in (payload.get("home_team"), payload.get("away_team"))
+            if name and name not in allowed
+        ]
+        if unknown:
+            raise RuntimeError(
+                f"{', '.join(unknown)} are not registered to {competition}; canonical write refused"
+            )
+
+
 def ingest_match(sb, ws, game_data: dict, game_id: str, competition: str, season: str):
     """Route modeled leagues to canonical data and everything else to cup isolation."""
     payload = match_payload(game_data, game_id, competition, season)
     if competition in CANONICAL_COMPETITIONS:
-        loaded_id, event_count = process_canonical_match(
-            sb,
-            ws,
-            canonical_schedule_row(payload),
-            competition,
-            season,
-        )
-        if not loaded_id or not event_count:
-            raise RuntimeError(
-                "The match failed the canonical league guard or produced zero events"
-            )
+        assert_canonical_teams(sb, payload, competition)
+        payload["game_id"] = resolve_canonical_fixture_id(sb, payload, competition, season)
+        row = canonical_schedule_row(payload)
+        loaded_id = upsert_canonical_match(sb, row, competition, season)
+        upsert_players_and_lineups(sb, game_data, loaded_id, competition)
+        event_count = upsert_events(sb, game_data, loaded_id, competition)
+        if not event_count:
+            raise RuntimeError("The canonical event payload produced zero events")
         try:
             sb.rpc("enqueue_rebuild_if_new_data", {}).execute()
         except Exception as exc:  # noqa: BLE001 - scheduled enqueue is the fallback
@@ -222,6 +298,7 @@ def process(sb, project: dict, *, headless: bool) -> None:
     sb.table("writing_lab_projects").update(
         {
             "game_id": game_id,
+            "canonical_game_id": match["game_id"],
             "home_team": match["home_team"],
             "away_team": match["away_team"],
             "home_score": match["home_score"],
