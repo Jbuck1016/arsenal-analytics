@@ -269,3 +269,17 @@ dashboard/market-values.html,21,#efbd6f,--accent-base,dark,signal amber
 dashboard/market-values.html,22,#4cc8c4,--signal-alt,dark,second signal teal
 dashboard/market-values.html,22,"rgba(239,189,111,.09)",--accent-veil,dark,signal tint
 dashboard/market-values.html,22,"0 18px 55px rgba(0,0,0,.22)",--elevation-1,dark,card elevation
+dashboard/gate.js,71,#080a0e,--gate-ground,"light,dark",overlay ground
+dashboard/gate.js,74,#0e1116,--gate-card,"light,dark",card surface
+dashboard/gate.js,75,#1c222c,--gate-card-border,"light,dark",card edge
+dashboard/gate.js,76,"0 18px 60px rgba(0,0,0,.55)",--gate-elevation,"light,dark",card elevation
+dashboard/gate.js,78,#e2b877,--gate-mark,"light,dark",wordmark and button ink
+dashboard/gate.js,79,#e8eef6,--gate-ink,"light,dark",title and field ink
+dashboard/gate.js,80,#8794a6,--gate-ink-soft,"light,dark",subtitle and label ink
+dashboard/gate.js,81,#141821,--gate-field,"light,dark",password field fill
+dashboard/gate.js,82,#2b333f,--gate-field-border,"light,dark",password field edge
+dashboard/gate.js,83,"rgba(226,184,119,.5)",--gate-focus-ring,"light,dark",focused field edge
+dashboard/gate.js,86,"rgba(226,184,119,.12)",--gate-action-fill,"light,dark",Enter button fill
+dashboard/gate.js,87,"rgba(226,184,119,.35)",--gate-action-edge,"light,dark",Enter button edge
+dashboard/gate.js,90,"rgba(226,184,119,.2)",--gate-action-fill-hover,"light,dark",Enter button hover fill
+dashboard/gate.js,91,#ff5f56,--gate-error,"light,dark",error text

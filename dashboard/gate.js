@@ -56,28 +56,39 @@
         '<div class="gate-err" id="gateErr"></div>' +
       '</div>';
 
+    // The gate's colours are --gate-* in tokens.css. This <style> is appended
+    // to <head>, so it is later in the cascade than the tokens.css link on
+    // every page that includes it, whichever order the two tags appear in.
+    //
+    // ONE FALLBACK, AND ONLY ONE: the overlay's own background keeps #080a0e
+    // after the var(). This element is the privacy control -- if its
+    // background does not paint, the gated page is legible straight through
+    // it. That is worth a duplicated literal in a way the button's hover tint
+    // is not, and it is the single case where a missing tokens.css turns a
+    // styling failure into a disclosure. Recorded in deliberate-skips.csv.
     var css = document.createElement('style');
     css.textContent =
-      '#siteGate{position:fixed;inset:0;z-index:99999;background:#080a0e;' +
+      '#siteGate{position:fixed;inset:0;z-index:99999;background:var(--gate-ground,#080a0e);' +
       'display:flex;align-items:center;justify-content:center;padding:24px;' +
       "font-family:'Inter',system-ui,sans-serif}" +
-      '.gate-card{width:100%;max-width:360px;background:#0e1116;border:1px solid #1c222c;' +
-      'border-radius:5px;padding:26px 24px;box-shadow:0 18px 60px rgba(0,0,0,.55)}' +
+      '.gate-card{width:100%;max-width:360px;background:var(--gate-card);' +
+      'border:1px solid var(--gate-card-border);' +
+      'border-radius:5px;padding:26px 24px;box-shadow:var(--gate-elevation)}' +
       ".gate-mark{font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.18em;" +
-      'color:#e2b877;margin-bottom:9px}' +
-      '.gate-title{font:800 22px/1.1 Inter,sans-serif;color:#e8eef6;letter-spacing:-.02em}' +
-      '.gate-sub{font:400 12.5px/1.6 Inter,sans-serif;color:#8794a6;margin:9px 0 18px}' +
-      '#gatePw{width:100%;box-sizing:border-box;background:#141821;color:#e8eef6;' +
-      'border:1px solid #2b333f;border-radius:3px;padding:12px 13px;font-size:14px;outline:none}' +
-      '#gatePw:focus{border-color:rgba(226,184,119,.5)}' +
+      'color:var(--gate-mark);margin-bottom:9px}' +
+      '.gate-title{font:800 22px/1.1 Inter,sans-serif;color:var(--gate-ink);letter-spacing:-.02em}' +
+      '.gate-sub{font:400 12.5px/1.6 Inter,sans-serif;color:var(--gate-ink-soft);margin:9px 0 18px}' +
+      '#gatePw{width:100%;box-sizing:border-box;background:var(--gate-field);color:var(--gate-ink);' +
+      'border:1px solid var(--gate-field-border);border-radius:3px;padding:12px 13px;font-size:14px;outline:none}' +
+      '#gatePw:focus{border-color:var(--gate-focus-ring)}' +
       '.gate-remember{display:flex;align-items:center;gap:7px;margin:12px 0 4px;' +
-      'font:400 11.5px/1 Inter,sans-serif;color:#8794a6;cursor:pointer}' +
-      '#gateGo{width:100%;margin-top:12px;background:rgba(226,184,119,.12);color:#e2b877;' +
-      'border:1px solid rgba(226,184,119,.35);border-radius:3px;padding:11px;' +
+      'font:400 11.5px/1 Inter,sans-serif;color:var(--gate-ink-soft);cursor:pointer}' +
+      '#gateGo{width:100%;margin-top:12px;background:var(--gate-action-fill);color:var(--gate-mark);' +
+      'border:1px solid var(--gate-action-edge);border-radius:3px;padding:11px;' +
       "font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;" +
       'cursor:pointer}' +
-      '#gateGo:hover{background:rgba(226,184,119,.2)}' +
-      '.gate-err{min-height:16px;margin-top:10px;font:500 11.5px/1.4 Inter,sans-serif;color:#ff5f56}';
+      '#gateGo:hover{background:var(--gate-action-fill-hover)}' +
+      '.gate-err{min-height:16px;margin-top:10px;font:500 11.5px/1.4 Inter,sans-serif;color:var(--gate-error)}';
 
     document.head.appendChild(css);
     (document.body || document.documentElement).appendChild(wrap);

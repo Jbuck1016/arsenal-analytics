@@ -487,17 +487,27 @@ html.dark.fam-lab{
 }
 
 /* ===== GATE ======================================================== */
-/* gate.js paints a hardcoded near-black shell and reads no token at all. Its
-   values are named here so Phase 2 can bring it into the theme system and the
-   Phase 6 lint rule has a home for them. */
+/* The password shell gate.js injects. It reads these now.
+   THEME INDEPENDENT ON PURPOSE, which is why they sit on :root rather than in
+   the light and dark scopes: the gate is always dark, in both themes, because
+   it is shown before the page behind it exists and has no surface to match.
+   Phase 2 can decide whether that should change; Phase 1 only names it. */
 :root{
   --gate-ground:#080a0e;
   --gate-card:#0e1116;
   --gate-card-border:#1c222c;
+  --gate-elevation:0 18px 60px rgba(0,0,0,.55);
   --gate-mark:#e2b877;
   --gate-ink:#e8eef6;
   --gate-ink-soft:#8794a6;
   --gate-field:#141821;
   --gate-field-border:#2b333f;
+  --gate-focus-ring:rgba(226,184,119,.5);
+  /* The Enter button: a tinted fill, its edge, and the hover fill. Named for
+     the action rather than for the mark they are tints of, because Phase 2 may
+     well give the button a solid fill and keep the mark as it is. */
+  --gate-action-fill:rgba(226,184,119,.12);
+  --gate-action-edge:rgba(226,184,119,.35);
+  --gate-action-fill-hover:rgba(226,184,119,.2);
   --gate-error:#ff5f56;
 }
