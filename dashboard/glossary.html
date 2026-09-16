@@ -6,6 +6,7 @@
 <title>Metric reference · MLS 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="theme.js"></script>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
@@ -113,9 +114,6 @@ a{color:inherit;text-decoration:none}
 select{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));color:var(--text,#f4f6fb)}
 </style>
-<script>
-(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
-</script>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
 </head>
@@ -316,15 +314,10 @@ function caveat(k){
 init();
 
 function paintThemeBtn(){var b=document.getElementById('themeBtn');
-  if(b) b.textContent=document.documentElement.classList.contains('dark')?'\u2600':'\u263e';}
+  if(b) b.textContent=FutTheme.isDark()?'\u2600':'\u263e';}
 (function(){var b=document.getElementById('themeBtn');
-  if(!b) return;
-  b.addEventListener('click',function(){
-    var d=document.documentElement.classList.toggle('dark');
-    try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}
-    paintThemeBtn();
-  });
-  paintThemeBtn();
+  if(b) b.addEventListener('click',function(){FutTheme.toggle();});
+  FutTheme.onChange(paintThemeBtn);
 })();
 </script>
 </body>

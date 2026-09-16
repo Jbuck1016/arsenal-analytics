@@ -56,7 +56,15 @@
         '<div class="gate-err" id="gateErr"></div>' +
       '</div>';
 
-    // The gate's colours are --gate-* in tokens.css. This <style> is appended
+    // The gate's colours are --gate-* in tokens.css, and they are DELIBERATELY
+    // THEME-INDEPENDENT: they sit on :root, not in a light or dark scope,
+    // because the gate paints before the page behind it exists and so has no
+    // surface to match. theme.js has already settled the root class by the
+    // time this runs -- it is loaded ahead of gate.js on every page that has
+    // one -- so the gate is inside the theme system rather than outside it,
+    // and simply chooses not to vary. Phase 2 changed nothing else here.
+    //
+    // This <style> is appended
     // to <head>, so it is later in the cascade than the tokens.css link on
     // every page that includes it, whichever order the two tags appear in.
     //

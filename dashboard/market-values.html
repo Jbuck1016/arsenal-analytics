@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" class="dark fam-market">
 <head>
-<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Market Intelligence · FutScout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="theme.js"></script>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <script src="gate.js"></script>
@@ -72,7 +72,13 @@ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){retur
 function euro(v){v=+v||0;if(v>=1e9)return'€'+(v/1e9).toFixed(2).replace(/\.00$/,'')+'bn';if(v>=1e6)return'€'+(v/1e6).toFixed(v>=1e8?0:1).replace(/\.0$/,'')+'m';if(v>=1e3)return'€'+Math.round(v/1e3)+'k';return'€'+Math.round(v).toLocaleString()}
 function pct(v){return Math.round(v*100)+'%'}
 function median(a){if(!a.length)return 0;const b=a.slice().sort(function(x,y){return x-y}),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2}
-function toggleTheme(){document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light')}catch(e){}renderChart(filteredRows())}
+function toggleTheme(){FutTheme.toggle();}
+/* The chart bakes its colours into SVG attributes at build time rather
+   than reading them through var(), so it has to be rebuilt when the
+   theme changes. Registered rather than called from the toggle so a
+   change from any source -- the URL, the system setting on a first
+   visit -- rebuilds it too. */
+FutTheme.onChange(function(){if(typeof filteredRows==='function')renderChart(filteredRows());});
 async function sbAll(table,select){const page=1000,all=[];let from=0;while(true){const u=new URL(SB+'/rest/v1/'+table);u.searchParams.set('select',select);const r=await fetch(u,{headers:Object.assign({},HD,{'Range':from+'-'+(from+page-1),'Range-Unit':'items'})});if(!r.ok)throw new Error(table+' '+r.status);const rows=await r.json();all.push.apply(all,rows);if(rows.length<page)return all;from+=page}}
 
 async function init(){

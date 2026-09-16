@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Insights · MLS 2026</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>
-/* pre-paint theme so there is no flash */
-(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
-</script>
+<script src="theme.js"></script>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
@@ -338,12 +335,9 @@ function buildLeagueSelect(){
 }
 
 /* theme */
-function paintThemeBtn(){document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀':'☾';}
-document.getElementById('themeBtn').addEventListener('click',function(){
-  var dark=document.documentElement.classList.toggle('dark');
-  try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}
-  paintThemeBtn();
-});
+function paintThemeBtn(){document.getElementById('themeBtn').textContent=FutTheme.isDark()?'☀':'☾';}
+document.getElementById('themeBtn').addEventListener('click',function(){FutTheme.toggle();});
+FutTheme.onChange(paintThemeBtn);
 document.getElementById('filter').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(b) applyFilter(b.dataset.f);
 });

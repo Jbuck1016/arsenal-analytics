@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" class="dark fam-lab">
 <head>
-<script>(function(){try{if(new URLSearchParams(location.search).get('theme')==='light'||localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Model laboratory · FutScout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+<script src="theme.js"></script>
 <link rel="stylesheet" href="tokens.css">
 <script src="gate.js"></script>
 <script src="model-lab-data.js"></script>
@@ -62,7 +62,7 @@ if(!D)document.body.innerHTML='<div class="empty">Model lab data is unavailable.
 function boot(){
  const m=D.model,s=D.shadow,dr=D.drift; document.getElementById('rail').innerHTML=[['SHADOW','lifecycle','good'],[m.feature_count,'model inputs',''],[m.training_match_count.toLocaleString(),'training matches',''],[s.resolved||0,'live calls scored',s.sample_gate?.ready?'good':'warn'],[dr.current_matches||0,'current matches monitored',dr.sample_ready?'good':'warn']].map(x=>`<div class="stat"><b class="${x[2]}">${x[0]}</b><span>${x[1]}</span></div>`).join('');
  const views=[['overview','Start here'],['validation','Model tournament'],['legitimacy','Legitimacy tests'],['research','Challenger desk'],['matches','Explain a match'],['features','Feature evidence'],['monitoring','Data health'],['guide','How to use this']],requested=new URLSearchParams(location.search).get('tab'),initial=views.some(v=>v[0]===requested)?requested:'overview';document.getElementById('tabs').innerHTML=views.map(v=>`<button class="tab ${v[0]===initial?'on':''}" data-view="${v[0]}">${v[1]}</button>`).join('');document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id===initial));document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.view').forEach(e=>e.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.view).classList.add('on');const u=new URL(location);u.searchParams.set('tab',b.dataset.view);history.replaceState(null,'',u)});
- document.getElementById('theme').onclick=()=>{document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light')}catch(e){}};
+ document.getElementById('theme').onclick=()=>FutTheme.toggle();
  const sizes=['standard','large','xlarge'];let size=localStorage.getItem('labTextSize')||'standard';setSize(size);document.getElementById('textSize').onclick=()=>{size=sizes[(sizes.indexOf(size)+1)%sizes.length];setSize(size)};
  renderOverview();renderValidation();renderLegitimacy();renderFeatureStability();enhanceExternalBenchmark();renderResearch();renderFeatures();renderMatches();renderMonitoring();renderGuide();
 }

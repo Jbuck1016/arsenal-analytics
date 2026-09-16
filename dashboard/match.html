@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" class="dark fam-match">
 <head>
-<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Football Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="theme.js"></script>
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
@@ -3216,7 +3216,28 @@ function exportPlayerPDF(){
    The removeProperty calls stay, so a tab still holding values from an older
    build drops them. */
 function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);s.removeProperty('--bg');s.removeProperty('--bg2');}
-function initThemeToggle(){const saved=localStorage.getItem('theme');if(saved!=='light')document.documentElement.classList.add('dark');syncCanvasTheme();const btn=document.getElementById('themeToggle');const update=()=>{const d=document.documentElement.classList.contains('dark');btn.innerHTML=d?'&#9728;&#65039;':'&#127769;';};update();btn.onclick=()=>{document.documentElement.classList.toggle('dark');const d=document.documentElement.classList.contains('dark');localStorage.setItem('theme',d?'dark':'light');applyTheme();update();if(typeof renderAll==='function'&&S.selMatch)renderAll();};}
+function initThemeToggle(){
+  const btn=document.getElementById('themeToggle');
+  if(btn)btn.onclick=()=>FutTheme.toggle();
+  FutTheme.onChange(()=>{
+    /* RE-READ BOTH PALETTES, not just the one now in force. The bridge caches
+       light and dark together and CT() picks between them by reading the root
+       class, so a switch is already correct without this -- the cache cannot
+       go stale from a class change alone. It is re-read anyway because the
+       cost is two style recalcs on a deliberate gesture, and because the day
+       a token's value changes at runtime this is the line that would have
+       been missing. */
+    readPalette();
+    syncCanvasTheme();
+    /* onChange fires once immediately, and init() calls this before
+       loadTeams(), so TEAMS is empty on that first pass and applyTheme()
+       would read a colour off undefined. init() calls applyTheme() itself
+       once the teams are in. */
+    if(TEAMS&&TEAMS[S.team])applyTheme();
+    if(btn)btn.innerHTML=FutTheme.isDark()?'&#9728;&#65039;':'&#127769;';
+    if(typeof renderAll==='function'&&S.selMatch)renderAll();
+  });
+}
 function initTeamSwitcher(){
   const el=document.getElementById('teamSw');
   const names=Object.keys(TEAMS)

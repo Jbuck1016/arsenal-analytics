@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" class="dark fam-doc fam-doc-aa">
 <head>
-<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metrics Validation · MLS 2026 Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="theme.js"></script>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
@@ -91,7 +91,7 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
   <div class="mark"></div>
   <div><h1>Metrics Validation</h1></div>
   <div class="nav">
-    <button onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){};this.innerHTML=d?'&#9728;':'&#9789;'">&#9728;</button>
+    <button id="themeBtn" onclick="FutTheme.toggle()">&#9728;</button>
     <a href="index.html">&larr; Site</a>
   </div>
   <div class="sub" id="liveSub">loading current figures&hellip;</div>

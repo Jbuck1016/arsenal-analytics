@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-<script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Player Fingerprints</title>
@@ -9,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="theme.js"></script>
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
@@ -2043,7 +2043,7 @@ function drill(key){
   document.querySelector('#drillWrap .drill-x').focus();
 }
 
-function toggleDark(){var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}}
+function toggleDark(){FutTheme.toggle();}
 
 /* The tab strip only shows an overflow cue when it actually has more bar in
    that direction. Kept in script because CSS cannot see a scroll position. */
