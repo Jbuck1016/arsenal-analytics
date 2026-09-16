@@ -631,6 +631,80 @@ html:not(.dark).fam-match{
   --shot-goal:#a1279b;
   --shot-blocked:#6641cf;
   --shot-post:#9a6b00;
+
+  /* Plot chrome painted from JavaScript. All the same in both themes: these
+     are drawn over the pitch, which has its own theme-keyed fill, and the page
+     has always used one value for each on either ground. Verbatim in Phase 1;
+     several of them are near-black at low alpha over a dark pitch, which is
+     worth a look in Phase 3.
+
+     SEVERAL SHARE A VALUE UNDER DIFFERENT NAMES. --plot-guide and
+     --plot-shadow are both rgba(0,0,0,0.18); --plot-grid and
+     --legend-pill-edge are both rgba(0,0,0,0.08). A dashed offside guide and
+     the drop shadow under a player node are not the same thing. */
+  --plot-guide:rgba(0,0,0,0.18);
+  --plot-line:rgba(0,0,0,0.15);
+  --plot-shadow:rgba(0,0,0,0.18);
+  --plot-node-ring:rgba(255,255,255,0.75);
+  --plot-node-ring-soft:rgba(255,255,255,0.7);
+  --plot-label:#333;
+  --plot-share-label:rgba(0,0,0,0.55);
+  --plot-grid:rgba(0,0,0,0.08);
+  --plot-zone-neutral:rgba(200,200,200,0.04);
+  --plot-frame:rgba(136,136,136,0.8);
+  --plot-pill:rgba(240,234,214,0.88);
+  --plot-pill-ink:#c00;
+
+  /* the in-canvas legend pill */
+  --legend-pill:rgba(240,234,214,0.92);
+  --legend-pill-edge:rgba(0,0,0,0.08);
+  --legend-muted:#555;
+  --legend-muted-ink:#444;
+  --legend-heat-low:#1f5b6f;
+  --legend-heat-high:#e2b877;
+  --peak-ring:#e2b877;
+
+  /* the highlighted zone on the final-third, zone-14 and box-entry maps */
+  --zone-fill:rgba(26,122,58,0.06);
+  --zone-edge:rgba(26,122,58,0.25);
+
+  /* phase shape: the two envelopes, the shift arrows, and the markers */
+  --shape-node:rgba(37,99,235,0.7);
+  --shape-node-ring:rgba(37,99,235,0.9);
+  --shape-node-label:rgba(37,99,235,0.5);
+  --shape-out-fill:rgba(90,169,255,.055);
+  --shape-out-edge:rgba(90,169,255,.38);
+  --shape-in-fill:rgba(226,184,119,.055);
+  --shape-in-edge:rgba(226,184,119,.40);
+  --shape-shift-line:rgba(182,194,212,.27);
+  --shape-shift-head:rgba(226,184,119,.62);
+  --marker-in:#e2b877;
+  --marker-out:#5aa9ff;
+
+  /* pass flow */
+  --flow-arrow:#2563eb;
+  --flow-node:rgba(14,18,25,.84);
+  --band-a:rgba(90,169,255,.018);
+  --band-b:rgba(226,184,119,.018);
+
+  /* the xT ramp's two ends, and the bar track behind a player stat */
+  --xt-low:#dca014;
+  --xt-high:#e03000;
+  --bar-track:rgba(255,255,255,0.08);
+
+  /* timeline selection, and the opponent's line on the momentum chart */
+  --timeline-sel-fill:rgba(239,1,7,0.14);
+  --timeline-sel-edge:rgba(239,1,7,0.5);
+  --momentum-them:#6b7280;
+  /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
+     ramp they look like: that function returns var(--green), var(--gold) and
+     var(--red-bright) for the other three bands, which do follow the theme,
+     and these two have always been literals that did not. Pointing them at
+     --rank-high and --rank-low changed them in dark, which is how this was
+     found. Phase 3 should decide whether the band is meant to be five
+     theme-following steps or five fixed ones; today it is two and three. */
+  --pct-high:#4ade80;
+  --pct-low:#f97316;
 }
 html.dark.fam-match{
   --ground:#0e1219;
@@ -780,6 +854,80 @@ html.dark.fam-match{
   --shot-goal:#f0a5ff;
   --shot-blocked:#a78bfa;
   --shot-post:#ffc93c;
+
+  /* Plot chrome painted from JavaScript. All the same in both themes: these
+     are drawn over the pitch, which has its own theme-keyed fill, and the page
+     has always used one value for each on either ground. Verbatim in Phase 1;
+     several of them are near-black at low alpha over a dark pitch, which is
+     worth a look in Phase 3.
+
+     SEVERAL SHARE A VALUE UNDER DIFFERENT NAMES. --plot-guide and
+     --plot-shadow are both rgba(0,0,0,0.18); --plot-grid and
+     --legend-pill-edge are both rgba(0,0,0,0.08). A dashed offside guide and
+     the drop shadow under a player node are not the same thing. */
+  --plot-guide:rgba(0,0,0,0.18);
+  --plot-line:rgba(0,0,0,0.15);
+  --plot-shadow:rgba(0,0,0,0.18);
+  --plot-node-ring:rgba(255,255,255,0.75);
+  --plot-node-ring-soft:rgba(255,255,255,0.7);
+  --plot-label:#333;
+  --plot-share-label:rgba(0,0,0,0.55);
+  --plot-grid:rgba(0,0,0,0.08);
+  --plot-zone-neutral:rgba(200,200,200,0.04);
+  --plot-frame:rgba(136,136,136,0.8);
+  --plot-pill:rgba(240,234,214,0.88);
+  --plot-pill-ink:#c00;
+
+  /* the in-canvas legend pill */
+  --legend-pill:rgba(240,234,214,0.92);
+  --legend-pill-edge:rgba(0,0,0,0.08);
+  --legend-muted:#555;
+  --legend-muted-ink:#444;
+  --legend-heat-low:#1f5b6f;
+  --legend-heat-high:#e2b877;
+  --peak-ring:#e2b877;
+
+  /* the highlighted zone on the final-third, zone-14 and box-entry maps */
+  --zone-fill:rgba(26,122,58,0.06);
+  --zone-edge:rgba(26,122,58,0.25);
+
+  /* phase shape: the two envelopes, the shift arrows, and the markers */
+  --shape-node:rgba(37,99,235,0.7);
+  --shape-node-ring:rgba(37,99,235,0.9);
+  --shape-node-label:rgba(37,99,235,0.5);
+  --shape-out-fill:rgba(90,169,255,.055);
+  --shape-out-edge:rgba(90,169,255,.38);
+  --shape-in-fill:rgba(226,184,119,.055);
+  --shape-in-edge:rgba(226,184,119,.40);
+  --shape-shift-line:rgba(182,194,212,.27);
+  --shape-shift-head:rgba(226,184,119,.62);
+  --marker-in:#e2b877;
+  --marker-out:#5aa9ff;
+
+  /* pass flow */
+  --flow-arrow:#2563eb;
+  --flow-node:rgba(14,18,25,.84);
+  --band-a:rgba(90,169,255,.018);
+  --band-b:rgba(226,184,119,.018);
+
+  /* the xT ramp's two ends, and the bar track behind a player stat */
+  --xt-low:#dca014;
+  --xt-high:#e03000;
+  --bar-track:rgba(255,255,255,0.08);
+
+  /* timeline selection, and the opponent's line on the momentum chart */
+  --timeline-sel-fill:rgba(239,1,7,0.14);
+  --timeline-sel-edge:rgba(239,1,7,0.5);
+  --momentum-them:#6b7280;
+  /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
+     ramp they look like: that function returns var(--green), var(--gold) and
+     var(--red-bright) for the other three bands, which do follow the theme,
+     and these two have always been literals that did not. Pointing them at
+     --rank-high and --rank-low changed them in dark, which is how this was
+     found. Phase 3 should decide whether the band is meant to be five
+     theme-following steps or five fixed ones; today it is two and three. */
+  --pct-high:#4ade80;
+  --pct-low:#f97316;
 }
 
 /* ===== THE THREE LAB PAGES ========================================= */
