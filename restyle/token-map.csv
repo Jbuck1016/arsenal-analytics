@@ -283,3 +283,65 @@ dashboard/gate.js,86,"rgba(226,184,119,.12)",--gate-action-fill,"light,dark",Ent
 dashboard/gate.js,87,"rgba(226,184,119,.35)",--gate-action-edge,"light,dark",Enter button edge
 dashboard/gate.js,90,"rgba(226,184,119,.2)",--gate-action-fill-hover,"light,dark",Enter button hover fill
 dashboard/gate.js,91,#ff5f56,--gate-error,"light,dark",error text
+dashboard/model-lab.html,26,#e9e5dc,--ground,light,page ground
+dashboard/model-lab.html,26,#fffdf6,--surface-raised,light,paper surface
+dashboard/model-lab.html,26,#101820,--ink-primary,light,primary ink
+dashboard/model-lab.html,27,#45535e,--ink-secondary,light,muted ink
+dashboard/model-lab.html,27,#aaa394,--border-hairline,light,hairline rule
+dashboard/model-lab.html,28,#c9431d,--series-1,light,series 1
+dashboard/model-lab.html,28,#006f79,--series-2,light,series 2
+dashboard/model-lab.html,28,#086843,--series-3,light,series 3
+dashboard/model-lab.html,29,#8b5500,--series-4,light,series 4
+dashboard/model-lab.html,29,#a82424,--series-5,light,series 5
+dashboard/model-lab.html,26,#081017,--ground,dark,page ground
+dashboard/model-lab.html,26,#111d26,--surface-raised,dark,paper surface
+dashboard/model-lab.html,26,#f7f7f1,--ink-primary,dark,primary ink
+dashboard/model-lab.html,27,#bac4cb,--ink-secondary,dark,muted ink
+dashboard/model-lab.html,27,#52616d,--border-hairline,dark,hairline rule
+dashboard/model-lab.html,28,#ff754a,--series-1,dark,series 1
+dashboard/model-lab.html,28,#64d7df,--series-2,dark,series 2
+dashboard/model-lab.html,28,#5add9f,--series-3,dark,series 3
+dashboard/model-lab.html,29,#ffc566,--series-4,dark,series 4
+dashboard/model-lab.html,29,#ff7972,--series-5,dark,series 5
+dashboard/model-review.html,24,#f1efe8,--ground,light,page ground
+dashboard/model-review.html,24,#fbfaf6,--surface-raised,light,paper surface
+dashboard/model-review.html,24,#171b22,--ink-primary,light,primary ink
+dashboard/model-review.html,25,#667080,--ink-secondary,light,muted ink
+dashboard/model-review.html,25,#929aa6,--ink-tertiary,light,faint ink
+dashboard/model-review.html,25,#d8d3c8,--border-hairline,light,hairline rule
+dashboard/model-review.html,26,#96681c,--accent-base,light,gold accent
+dashboard/model-review.html,26,#d9ac62,--accent-muted,light,muted companion gold
+dashboard/model-review.html,24,#0b1017,--ground,dark,page ground
+dashboard/model-review.html,24,#141a23,--surface-raised,dark,paper surface
+dashboard/model-review.html,24,#f3f5f8,--ink-primary,dark,primary ink
+dashboard/model-review.html,25,#aeb9c8,--ink-secondary,dark,muted ink
+dashboard/model-review.html,25,#778395,--ink-tertiary,dark,faint ink
+dashboard/model-review.html,25,#2a323e,--border-hairline,dark,hairline rule
+dashboard/model-review.html,26,#edbd70,--accent-base,dark,gold accent
+dashboard/model-review.html,26,#8e6326,--accent-muted,dark,muted companion gold
+dashboard/model-review.html,23,#087854,--state-positive,light,positive state: declared and read nowhere; value kept in the family scope
+dashboard/model-review.html,23,#ba3f38,--state-negative,light,negative state: as above
+dashboard/model-review.html,23,#2766b0,--series-link,light,link blue: as above
+dashboard/model-review.html,23,#42d89c,--state-positive,dark,positive state: as above
+dashboard/model-review.html,23,#ff746b,--state-negative,dark,negative state: as above
+dashboard/model-review.html,23,#70b4ff,--series-link,dark,link blue: as above
+dashboard/writing-lab.html,19,#121820,--ink-primary,light,primary ink
+dashboard/writing-lab.html,19,#68717c,--ink-secondary,light,muted ink
+dashboard/writing-lab.html,20,#f2efe6,--ground,light,page ground
+dashboard/writing-lab.html,20,#fffdf7,--surface-raised,light,sheet surface
+dashboard/writing-lab.html,20,#d8d1c2,--border-hairline,light,hairline rule
+dashboard/writing-lab.html,21,#e14b2d,--state-negative,light,negative state
+dashboard/writing-lab.html,21,#c79843,--accent-base,light,gold accent
+dashboard/writing-lab.html,21,#176b51,--state-positive,light,positive state
+dashboard/writing-lab.html,22,#315f78,--series-link,light,link blue
+dashboard/writing-lab.html,22,"0 18px 60px rgba(13,18,25,.18)",--elevation-1,light,sheet elevation
+dashboard/writing-lab.html,19,#edf0e9,--ink-primary,dark,primary ink
+dashboard/writing-lab.html,19,#9da8ac,--ink-secondary,dark,muted ink
+dashboard/writing-lab.html,20,#10151b,--ground,dark,page ground
+dashboard/writing-lab.html,20,#171d24,--surface-raised,dark,sheet surface
+dashboard/writing-lab.html,20,#303944,--border-hairline,dark,hairline rule
+dashboard/writing-lab.html,21,#ff6848,--state-negative,dark,negative state
+dashboard/writing-lab.html,21,#e2b877,--accent-base,dark,gold accent
+dashboard/writing-lab.html,21,#4cc39b,--state-positive,dark,positive state
+dashboard/writing-lab.html,22,#72abc2,--series-link,dark,link blue
+dashboard/writing-lab.html,22,"0 22px 70px rgba(0,0,0,.38)",--elevation-1,dark,sheet elevation

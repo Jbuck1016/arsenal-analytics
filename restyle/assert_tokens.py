@@ -63,8 +63,8 @@ FAMILY = {
     "dashboard/validation.html": "doc-aa",
     "dashboard/market-values.html": "market",
     "dashboard/model-lab.html": "lab",
-    "dashboard/model-review.html": "lab",
-    "dashboard/writing-lab.html": "lab",
+    "dashboard/model-review.html": "review",
+    "dashboard/writing-lab.html": "writing",
 }
 
 # (family, theme) -> the classes actually on <html> in that state.
@@ -97,6 +97,10 @@ STATE = {
     ("market", "dark"): {"dark", "fam-market"},
     ("lab", "light"): {"fam-lab"},
     ("lab", "dark"): {"dark", "fam-lab"},
+    ("review", "light"): {"fam-review"},
+    ("review", "dark"): {"dark", "fam-review"},
+    ("writing", "light"): {"fam-writing"},
+    ("writing", "dark"): {"dark", "fam-writing"},
     ("gate", "light"): set(),
     ("gate", "dark"): {"dark"},
 }

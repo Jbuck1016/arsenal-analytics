@@ -28,8 +28,12 @@
      html:not(.dark).fam-doc.fam-doc-aa     light, the three AA-darkened docs
      html:not(.dark).fam-market             light, market-values
      html.dark.fam-market                   dark,  market-values
-     html:not(.dark).fam-lab                light, lab family
-     html.dark.fam-lab                      dark,  lab family
+     html:not(.dark).fam-lab                light, model-lab
+     html.dark.fam-lab                      dark,  model-lab
+     html:not(.dark).fam-review             light, model-review
+     html.dark.fam-review                   dark,  model-review
+     html:not(.dark).fam-writing            light, writing-lab
+     html.dark.fam-writing                  dark,  writing-lab
    A family scope declares only what it differs on; everything else falls
    through to the app scope above it, which is why fam-doc-aa needs no dark
    twin -- those pages' dark amber is the document family's.
@@ -401,10 +405,24 @@ html.dark.fam-market{
   --elevation-1:0 18px 55px rgba(0,0,0,.22);
 }
 
-/* ===== LAB FAMILY ================================================== */
-/* model-lab, model-review, writing-lab: editorial print palettes that never
-   shared the app vocabulary. Named here so the lint rule in Phase 6 has
-   somewhere legitimate for their values to live. */
+/* ===== THE THREE LAB PAGES ========================================= */
+/* These were one family in an earlier draft of this file, and they are not.
+   fam-lab's values are model-lab.html's to the byte; model-review and
+   writing-lab share neither its grounds, its inks, nor its rules. Three
+   editorial palettes that arrived independently, so three scopes. Putting
+   them under one name would have meant either recolouring two pages or
+   leaving their values as literals, and the point of this file is that no
+   page defines its own colour.
+
+   That is six families with market: app, doc (and its AA variant), market,
+   lab, review, writing. The audit found seven independent palettes, and this
+   is where they went. Phase 3 is where they get converged on purpose --
+   market, lab, review and writing are all warm print palettes and there is
+   very likely one good editorial family hiding in the four. */
+
+/* --- model-lab ----------------------------------------------------- */
+/* The series are numbered, not named for their hues: --series-1 is acid
+   orange in light and a hotter orange in dark, and Phase 3 may move both. */
 html:not(.dark).fam-lab{
   --ground:#e9e5dc;
   --surface-raised:#fffdf6;
@@ -428,6 +446,68 @@ html.dark.fam-lab{
   --series-3:#5add9f;
   --series-4:#ffc566;
   --series-5:#ff7972;
+}
+
+/* --- model-review -------------------------------------------------- */
+/* --accent-muted is the page's second gold, and it INVERTS between themes:
+   lighter than the accent in light, darker than it in dark. That is not a
+   mistake to tidy -- it is a muted companion to the accent, and "muted"
+   means a different direction on each ground. */
+html:not(.dark).fam-review{
+  --ground:#f1efe8;
+  --surface-raised:#fbfaf6;
+  --ink-primary:#171b22;
+  --ink-secondary:#667080;
+  --ink-tertiary:#929aa6;
+  --border-hairline:#d8d3c8;
+  --accent-base:#96681c;
+  --accent-muted:#d9ac62;
+  --state-positive:#087854;
+  --state-negative:#ba3f38;
+  --series-link:#2766b0;
+}
+html.dark.fam-review{
+  --ground:#0b1017;
+  --surface-raised:#141a23;
+  --ink-primary:#f3f5f8;
+  --ink-secondary:#aeb9c8;
+  --ink-tertiary:#778395;
+  --border-hairline:#2a323e;
+  --accent-base:#edbd70;
+  --accent-muted:#8e6326;
+  --state-positive:#42d89c;
+  --state-negative:#ff746b;
+  --series-link:#70b4ff;
+}
+
+/* --- writing-lab --------------------------------------------------- */
+/* NOTE THE NAMES ARE NOT THE OTHER LABS'. Here --paper is the page ground and
+   --sheet is the raised surface, where model-lab uses --bg for the ground and
+   --paper for the surface. Same word, one step apart in meaning, which is
+   precisely why the role names in this file are the ones worth trusting. */
+html:not(.dark).fam-writing{
+  --ground:#f2efe6;
+  --surface-raised:#fffdf7;
+  --ink-primary:#121820;
+  --ink-secondary:#68717c;
+  --border-hairline:#d8d1c2;
+  --accent-base:#c79843;
+  --state-positive:#176b51;
+  --state-negative:#e14b2d;
+  --series-link:#315f78;
+  --elevation-1:0 18px 60px rgba(13,18,25,.18);
+}
+html.dark.fam-writing{
+  --ground:#10151b;
+  --surface-raised:#171d24;
+  --ink-primary:#edf0e9;
+  --ink-secondary:#9da8ac;
+  --border-hairline:#303944;
+  --accent-base:#e2b877;
+  --state-positive:#4cc39b;
+  --state-negative:#ff6848;
+  --series-link:#72abc2;
+  --elevation-1:0 22px 70px rgba(0,0,0,.38);
 }
 
 /* ===== COMPATIBILITY ALIASES ======================================= */

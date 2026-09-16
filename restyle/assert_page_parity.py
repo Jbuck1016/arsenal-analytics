@@ -131,12 +131,27 @@ def _family(html: str) -> str:
     return fam
 
 
-def _cascade(page_src: str, tokens_src: str | None, theme_src: str | None):
-    """tokens.css, theme.css, then the page's inline <style>, in source order."""
+LINKED = re.compile(r'<link[^>]+href="([\w.-]+\.css)"')
+
+
+def _cascade(page_src: str, at: str | None):
+    """The stylesheets THIS page links, then its inline <style>, in order.
+
+    Which sheets a page links is read from the page rather than assumed. The
+    lab pages link tokens.css and deliberately not theme.css, whose light
+    aliases sit at html:not(.dark) and would overrule their own :root; assuming
+    theme.css applied everywhere would have modelled a cascade none of them
+    has. `at` is a revision to read the stylesheets from, or None for the
+    working tree.
+    """
     out = []
-    for css in [tokens_src, theme_src]:
-        if css:
-            out += A._blocks_from(css)
+    for name in LINKED.findall(page_src):
+        src = _at(at, f"dashboard/{name}") if at else None
+        if at is None:
+            f = A.ROOT / "dashboard" / name
+            src = f.read_text(encoding="utf-8") if f.exists() else None
+        if src:
+            out += A._blocks_from(src)
     for style in re.findall(r"<style>(.*?)</style>", page_src, re.S):
         out += A._blocks_from(style)
     return out
@@ -148,11 +163,8 @@ def check(page: str) -> list[str]:
     if was_src is None:
         return [f"{page}: did not exist at {BASE}; nothing to compare against"]
 
-    was = _cascade(was_src, _at(BASE, "dashboard/tokens.css"),
-                   _at(BASE, "dashboard/theme.css"))
-    now = _cascade(now_src,
-                   (A.ROOT / "dashboard" / "tokens.css").read_text(encoding="utf-8"),
-                   (A.ROOT / "dashboard" / "theme.css").read_text(encoding="utf-8"))
+    was = _cascade(was_src, BASE)
+    now = _cascade(now_src, None)
     fam_was, fam_now = _family(was_src), _family(now_src)
 
     # PARITY IS ASKED OF THE EXPRESSIONS THE PAGE PAINTED BEFORE. Comparing the

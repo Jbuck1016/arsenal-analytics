@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark fam-lab">
 <head>
 <script>(function(){try{if(new URLSearchParams(location.search).get('theme')==='light'||localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
@@ -8,11 +8,27 @@
 <title>Model laboratory · FutScout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
 <script src="gate.js"></script>
 <script src="model-lab-data.js"></script>
 <style>
-:root{--bg:#e9e5dc;--paper:#fffdf6;--ink:#101820;--muted:#45535e;--line:#aaa394;--acid:#c9431d;--cyan:#006f79;--green:#086843;--amber:#8b5500;--red:#a82424;--sans:'IBM Plex Sans Condensed',sans-serif;--serif:'Newsreader',serif;--mono:'IBM Plex Mono',monospace;--scale:1}
-html.dark{--bg:#081017;--paper:#111d26;--ink:#f7f7f1;--muted:#bac4cb;--line:#52616d;--acid:#ff754a;--cyan:#64d7df;--green:#5add9f;--amber:#ffc566;--red:#ff7972}html.large{--scale:1.14}html.xlarge{--scale:1.28}
+/* tokens.css is linked above and theme.css deliberately is not: theme.css
+   aliases --bg, --line and the rest at html:not(.dark), which outranks this
+   page's :root, so linking it would hand this page the app family's light
+   surfaces. Nothing here needs it -- the fonts below are this page's own.
+
+   ONE BLOCK NOW, NOT TWO. The aliases are theme independent because the role
+   tokens they point at are redefined per theme in tokens.css under fam-lab,
+   so the html.dark palette block this page carried is gone rather than
+   duplicated. The hue names are kept because a hundred rules read them; the
+   values behind them are numbered series, so Phase 3 can move the palette
+   without renaming anything here. */
+:root{--bg:var(--ground);--paper:var(--surface-raised);--ink:var(--ink-primary);
+ --muted:var(--ink-secondary);--line:var(--border-hairline);
+ --acid:var(--series-1);--cyan:var(--series-2);--green:var(--series-3);
+ --amber:var(--series-4);--red:var(--series-5);
+ --sans:'IBM Plex Sans Condensed',sans-serif;--serif:'Newsreader',serif;--mono:'IBM Plex Mono',monospace;--scale:1}
+html.large{--scale:1.14}html.xlarge{--scale:1.28}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:calc(16px * var(--scale));background-image:linear-gradient(90deg,color-mix(in srgb,var(--line) 15%,transparent) 1px,transparent 1px),linear-gradient(color-mix(in srgb,var(--line) 10%,transparent) 1px,transparent 1px);background-size:42px 42px}
 .shell{max-width:1320px;margin:auto;padding:28px 30px 90px}.mast{display:grid;grid-template-columns:1fr auto;gap:30px;border-top:6px solid var(--acid);padding-top:19px}.kicker,.micro{font:700 calc(11px * var(--scale))/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acid)}h1{font:700 clamp(46px,6vw,78px)/.84 var(--serif);letter-spacing:-.05em;margin:10px 0 0}.lede{max-width:790px;font-size:calc(17px * var(--scale));line-height:1.6;color:var(--muted);margin:18px 0 0}.actions{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}.action{background:var(--paper);border:1px solid var(--line);color:var(--ink);text-decoration:none;padding:11px 13px;font:700 calc(11px * var(--scale))/1 var(--mono);text-transform:uppercase;cursor:pointer}.action:hover,.action:focus{border-color:var(--acid);outline:2px solid color-mix(in srgb,var(--acid) 28%,transparent);outline-offset:2px}
 .rail{display:grid;grid-template-columns:repeat(5,1fr);margin:30px 0 19px;border:1px solid var(--line);background:var(--paper)}.stat{padding:18px;border-right:1px solid var(--line)}.stat:last-child{border:0}.stat b{display:block;font:700 calc(25px * var(--scale))/1 var(--mono)}.stat span{display:block;margin-top:9px;font:600 calc(11px * var(--scale))/1.4 var(--mono);color:var(--muted);text-transform:uppercase}.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
