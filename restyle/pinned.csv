@@ -10,3 +10,5 @@ dashboard/validation.html,--blue,light,#2f6fd0,page blue predates the family #2f
 dashboard/validation.html,--amber-dim,dark,"rgba(226,184,119,.10)",the light pins above also match in dark and must not leak there
 dashboard/validation.html,--amber-line,dark,"rgba(226,184,119,.32)",as above
 dashboard/validation.html,--blue,dark,#5aa9ff,as above
+dashboard/match.html,--dim,dark,#8b95b5,page muted grey; belongs to no family ink scale
+dashboard/match.html,--accent,dark,#EF0107,this page paints brand red on a dark ground where every other page goes warm

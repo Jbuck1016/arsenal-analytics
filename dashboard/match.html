@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark fam-match">
 <head>
 <script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
@@ -12,14 +12,15 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text and the font tokens are in theme.css. The two
-   light blocks this file used to carry are gone; what is left here is the
-   accent family, which html.dark does not redeclare, so it has to stay
-   available to both modes, and the light pitch fill. */
-:root{
-  --accent:#EF0107;--accent-dim:rgba(239,1,7,0.07);--accent-glow:rgba(239,1,7,0.18);
-  --pitch:#f0ead6;
-}
+/* Canvas, surfaces, lines, text and the font tokens are in theme.css. <html>
+   carries fam-match, whose scopes in tokens.css hold this page's palette --
+   see the long note there for why it has one of its own.
+
+   THIS BLOCK IS GONE RATHER THAN TOKENISED, all four declarations of it. The
+   accent trio is declared identically in both fam-match scopes, because this
+   page paints brand red in dark as well as light, so the :root alias resolves
+   it in both modes without a page declaration. --pitch is likewise already an
+   alias onto --pitch-fill, which tokens.css keys per theme. */
 /* The dark palette this file used to declare here has been deleted, not
    tokenised. All thirteen of its declarations -- --bg, --bg2, --bg3,
    --surface, --surface2, --border, --border2, --text, --text2, --text3,
@@ -526,26 +527,33 @@ html.dark .res-l{background:rgba(220,38,38,0.12)!important}
 .chk-n{color:var(--dim,#8b95b5);font-size:10px;opacity:.75}
 
 /* 2026 visual system: the match workspace now shares the homepage's
-   restrained football-intelligence terminal language. */
+   restrained football-intelligence terminal language.
+
+   Everything that was a colour here is in the fam-match scopes of tokens.css
+   now, in both themes, so this block is two aliases and the dark block below
+   is one. --gold is this page's second accent and --shadow2 its second
+   elevation level; neither name is global, because --gold means the PRIMARY
+   accent on model-review and a global alias would make the two pages
+   disagree about what the word means. */
 :root{
-  --gold:#9a6f2a;--blue:#2f6fd0;
-  --shadow:0 10px 26px rgba(23,27,34,.07);--shadow2:0 18px 46px rgba(23,27,34,.13);
+  --gold:var(--accent-muted);
+  --shadow2:var(--elevation-2);
 }
+/* One declaration left in dark, and it is a literal on purpose.
+
+   .chk-n paints with var(--dim,#8b95b5). --dim is document vocabulary that
+   this page never declared, so in dark the FALLBACK was what painted; then
+   tokens.css gained a --dim alias and silently replaced it with #c3cde2. The
+   value is this page's own muted grey -- the same #8b95b5 that TEAMS.__ALL__
+   carries as its colour -- and it belongs to no family's ink scale, so it
+   stays here and is pinned in pinned.csv. In light the fallback never fired:
+   theme.css has carried --dim since before this branch, and still does.
+
+   --pitch, --shadow and --shadow2 were here too and are gone: all three are
+   aliases that tokens.css resolves per theme through --pitch-fill,
+   --elevation-1 and --elevation-2. */
 html.dark{
-  --bg:#0e1219;--bg2:#161b24;--bg3:#1e242e;
-  --surface:rgba(255,255,255,.025);--surface2:#1e242e;
-  --border:#272e3a;--border2:#3a4351;
-  --text:#f2f5fa;--text2:#b6c2d4;--text3:#8b98ab;
-  --gold:#e2b877;--green:#3ddc97;--blue:#5aa9ff;--red-bright:#ff5f56;
-  /* .chk-n paints with var(--dim,#8b95b5). --dim is document vocabulary and
-     did not exist on this page, so that fallback was what got painted in dark;
-     tokens.css then added a --dim alias at :root and silently replaced it with
-     #c3cde2. This page is not converted yet, so the fix is to say what was
-     being painted rather than to let an alias decide. In light the fallback
-     never fired: theme.css has carried --dim since before this branch. */
   --dim:#8b95b5;
-  --pitch:#111722;
-  --shadow:0 12px 28px rgba(0,0,0,.22);--shadow2:0 20px 54px rgba(0,0,0,.34);
 }
 body{
   font-family:var(--f-body);

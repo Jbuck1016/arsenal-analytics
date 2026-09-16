@@ -345,3 +345,28 @@ dashboard/writing-lab.html,21,#e2b877,--accent-base,dark,gold accent
 dashboard/writing-lab.html,21,#4cc39b,--state-positive,dark,positive state
 dashboard/writing-lab.html,22,#72abc2,--series-link,dark,link blue
 dashboard/writing-lab.html,22,"0 22px 70px rgba(0,0,0,.38)",--elevation-1,dark,sheet elevation
+dashboard/match.html,19,#EF0107,--accent-base,"light,dark",brand accent: declaration deleted, the :root alias resolves it in both themes
+dashboard/match.html,19,"rgba(239,1,7,0.07)",--accent-veil,"light,dark",accent tint fill: deleted duplicate
+dashboard/match.html,19,"rgba(239,1,7,0.18)",--accent-edge,"light,dark",accent tint border: deleted duplicate
+dashboard/match.html,19,#f0ead6,--pitch-fill,light,light pitch fill: deleted duplicate of the alias
+dashboard/match.html,539,#9a6f2a,--accent-muted,light,second accent gold
+dashboard/match.html,539,#e2b877,--accent-muted,dark,second accent gold
+dashboard/match.html,540,"0 18px 46px rgba(23,27,34,.13)",--elevation-2,light,second elevation level
+dashboard/match.html,540,"0 20px 54px rgba(0,0,0,.34)",--elevation-2,dark,second elevation level
+dashboard/match.html,538,"0 10px 26px rgba(23,27,34,.07)",--elevation-1,light,panel elevation: declaration deleted, the :root alias resolves it
+dashboard/match.html,538,"0 12px 28px rgba(0,0,0,.22)",--elevation-1,dark,panel elevation: deleted duplicate
+dashboard/match.html,538,#2f6fd0,--series-link,light,link blue: deleted duplicate of the alias
+dashboard/match.html,538,#5aa9ff,--series-link,dark,link blue: deleted duplicate
+dashboard/match.html,542,#0e1219,--ground,dark,page canvas
+dashboard/match.html,542,#161b24,--surface-raised,dark,raised surface
+dashboard/match.html,542,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/match.html,542,"rgba(255,255,255,.025)",--surface-veil,dark,translucent veil
+dashboard/match.html,542,#1e242e,--surface-veil-strong,dark,opaque veil surface
+dashboard/match.html,542,#272e3a,--border-hairline,dark,hairline rule
+dashboard/match.html,542,#3a4351,--border-strong,dark,strong rule
+dashboard/match.html,542,#f2f5fa,--ink-primary,dark,primary text
+dashboard/match.html,542,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/match.html,542,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/match.html,542,#3ddc97,--state-positive,dark,positive state
+dashboard/match.html,542,#ff5f56,--state-negative,dark,negative state
+dashboard/match.html,542,#111722,--pitch-fill,dark,dark pitch fill: deleted duplicate of the alias

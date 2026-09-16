@@ -28,6 +28,8 @@
      html:not(.dark).fam-doc.fam-doc-aa     light, the three AA-darkened docs
      html:not(.dark).fam-market             light, market-values
      html.dark.fam-market                   dark,  market-values
+     html:not(.dark).fam-match              light, match
+     html.dark.fam-match                    dark,  match
      html:not(.dark).fam-lab                light, model-lab
      html.dark.fam-lab                      dark,  model-lab
      html:not(.dark).fam-review             light, model-review
@@ -403,6 +405,67 @@ html.dark.fam-market{
   --accent-veil:rgba(239,189,111,.09);
   --signal-alt:#4cc8c4;
   --elevation-1:0 18px 55px rgba(0,0,0,.22);
+}
+
+/* ===== MATCH ======================================================= */
+/* match.html looks like an app page -- it sits beside players and teams and
+   shares shell.css -- and its palette is not the app family's. Its dark
+   surfaces are the DOCUMENT family's to the byte (#0e1219, #161b24, #272e3a,
+   #f2f5fa), while its accent is the brand red in BOTH themes, where every
+   other page's dark accent is the warm one. It matches no existing family in
+   either direction, so it gets its own; folding it into fam-doc would have
+   left the accent, both shadows and both veils as literals in a page that has
+   quite enough of those already.
+
+   THAT IS A PHASE 3 QUESTION, NOT A PHASE 1 ANSWER. Whether match should look
+   like players and teams or like the document pages is a design decision, and
+   this scope only records which it currently is. Recording it here at least
+   makes the disagreement visible in one file instead of buried in 296KB of
+   inline style.
+
+   The accent is declared identically in both scopes on purpose, because the
+   page really does paint brand red on a dark ground. Note also that
+   applyTheme() overwrites --accent, --accent-dim and --accent-glow on the root
+   element at runtime with the selected team's colour, so what is declared here
+   is what the page paints only before the first applyTheme() call. That is a
+   setProperty blind spot no stylesheet gate can see; see
+   restyle/gate-limitations.md. */
+html:not(.dark).fam-match{
+  --accent-base:#EF0107;
+  --accent-veil:rgba(239,1,7,0.07);
+  --accent-edge:rgba(239,1,7,0.18);
+  /* A second, quieter accent beside the red. Same role name model-review uses
+     for its companion gold, and the same behaviour: warm and dark on a light
+     ground, warm and light on a dark one. */
+  --accent-muted:#9a6f2a;
+  --series-link:#2f6fd0;
+  /* Two elevation levels, both larger and softer than the app's single
+     --elevation-1. The panels on this page float over a workspace. */
+  --elevation-1:0 10px 26px rgba(23,27,34,.07);
+  --elevation-2:0 18px 46px rgba(23,27,34,.13);
+}
+html.dark.fam-match{
+  --ground:#0e1219;
+  --surface-raised:#161b24;
+  --surface-recessed:#1e242e;
+  --surface-veil:rgba(255,255,255,.025);
+  /* Not a translucent veil in dark on this page but an opaque surface, and the
+     same value as --surface-recessed. Verbatim in Phase 1. */
+  --surface-veil-strong:#1e242e;
+  --border-hairline:#272e3a;
+  --border-strong:#3a4351;
+  --ink-primary:#f2f5fa;
+  --ink-secondary:#b6c2d4;
+  --ink-tertiary:#8b98ab;
+  --accent-base:#EF0107;
+  --accent-veil:rgba(239,1,7,0.07);
+  --accent-edge:rgba(239,1,7,0.18);
+  --accent-muted:#e2b877;
+  --state-positive:#3ddc97;
+  --state-negative:#ff5f56;
+  --series-link:#5aa9ff;
+  --elevation-1:0 12px 28px rgba(0,0,0,.22);
+  --elevation-2:0 20px 54px rgba(0,0,0,.34);
 }
 
 /* ===== THE THREE LAB PAGES ========================================= */
