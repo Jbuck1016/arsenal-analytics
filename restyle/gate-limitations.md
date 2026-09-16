@@ -5,8 +5,8 @@ stylesheet cascade, is byte-equal to the literal it replaced. That is worth
 having, and it has caught real defects — aliases declared in one theme only,
 light scopes written on a bare `:root` that would have lost to every page.
 
-It is not a proof that the page renders correctly. Three holes are known.
-Two of them were found by accident while converting `match.html`, not by
+It is not a proof that the page renders correctly. Four holes are known.
+Most of them were found by accident while converting `match.html`, not by
 designing a test to look for them, which is itself worth recording.
 
 ## 1. Values written at runtime are invisible to it
@@ -128,6 +128,27 @@ both corrections were downward for this kind of reason. Any future count
 should be produced by an entity-aware, comment-stripping, dead-code-aware
 pass, not by a bare grep.
 
-For `match.html`, that pass gives: 319 raw matches, minus 18 entities, minus
+For `match.html`, that pass gave: 319 raw matches, minus 18 entities, minus
 13 occurrences inside a provably dead `html.dark` block, leaving **288** real
-conversions — 116 live CSS, 52 in JS palette objects, 120 JS inline paints.
+conversions. That estimate was close and slightly low: the file actually
+carried 95 live CSS literals and 172 in JavaScript, 267 in all, of which 252
+were converted and 15 are club colours that should stay.
+
+## 4. The resolver was a model, and is now a checked one
+
+Everything above rests on `assert_tokens.resolve()` modelling the cascade the
+way a browser does — specificity, source order, `:not()`, selector lists, the
+alias chain. Two of its bugs were found by accident during this phase: it
+scored specificity by counting dots, which got `html.dark:root` wrong against
+`html.dark.fam-doc`, and it dropped the final declaration of every block
+because the regex required a trailing semicolon.
+
+`restyle/verify_resolver.py` now compares it against Chrome directly: every
+custom property every page's cascade defines, in both themes, on all fifteen
+pages. 8,550 resolutions, no disagreements. The three exclusions are the
+properties `applyTheme()` writes at runtime on `match.html`, which is hole 1
+above rather than a resolver fault.
+
+That does not make the gates a rendering proof. It makes them a checked model
+of the cascade rather than an unchecked one, which is a different and much
+smaller claim than the screenshot harness was making.
