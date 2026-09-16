@@ -7,3 +7,5 @@ dashboard/shell.css,61,transparent,"semantic keyword: means no paint, not a colo
 dashboard/shell.css,73,transparent,semantic keyword: header action buttons sit on the header surface rather than painting their own.
 dashboard/shell.css,148,transparent,semantic keyword: three sides of the caret triangle are unpainted.
 dashboard/shell.css,148,currentColor,semantic keyword: the caret inherits the button's ink so it follows whatever colour that already resolves to.
+dashboard/players.html,323,#11015,"SCANNER FALSE POSITIVE, not a colour: the text is &#11015;, the HTML numeric entity for the downwards arrow on the PNG export button. The hex regex matched the digits inside the entity. The Phase 6 lint rule must exclude &#NNNNN; or it fails on this line forever."
+dashboard/players.html,324,#11015,"SCANNER FALSE POSITIVE, as line 323: &#11015; on the PDF export button."

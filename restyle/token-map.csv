@@ -14,3 +14,30 @@ dashboard/theme.css,65,#0f7a52,--state-positive,light,positive state
 dashboard/theme.css,66,#c23b34,--state-negative,light,negative state
 dashboard/theme.css,67,#EF0107,--accent-base,light,brand accent
 dashboard/shell.css,158,"0 12px 30px rgba(0,0,0,.28)",--elevation-panel,"light,dark",nav menu panel drop shadow; dark-tuned, Phase 3 lightens the light-theme value
+dashboard/players.html,29,"rgba(239,1,7,0.07)",--accent-veil,light,page :root accent tint
+dashboard/players.html,29,"rgba(239,1,7,0.18)",--accent-edge,light,page :root accent edge
+dashboard/players.html,30,#16a34a,--rank-top,light,percentile ramp 80+
+dashboard/players.html,30,#4ade80,--rank-high,light,percentile ramp 60+
+dashboard/players.html,30,#d4a017,--rank-mid,light,percentile ramp 40+
+dashboard/players.html,30,#f97316,--rank-low,light,percentile ramp 20+
+dashboard/players.html,30,#dc2626,--rank-bottom,light,percentile ramp below 20
+dashboard/players.html,31,"0 1px 3px rgba(0,0,0,0.07)",--elevation-1,light,card elevation
+dashboard/players.html,34,#D8B384,--accent-base,dark,accent
+dashboard/players.html,34,"rgba(216,179,132,0.12)",--accent-veil,dark,accent tint
+dashboard/players.html,34,"rgba(216,179,132,0.28)",--accent-edge,dark,accent edge
+dashboard/players.html,35,#101319,--ground,dark,page canvas
+dashboard/players.html,35,#191d25,--surface-raised,dark,raised surface
+dashboard/players.html,35,#222732,--surface-recessed,dark,recessed surface
+dashboard/players.html,36,"rgba(255,255,255,0.035)",--surface-veil,dark,translucent veil
+dashboard/players.html,36,"rgba(255,255,255,0.07)",--surface-veil-strong,dark,stronger veil
+dashboard/players.html,37,#272b35,--border-hairline,dark,default boundary
+dashboard/players.html,37,#3a3f4b,--border-strong,dark,emphasised boundary
+dashboard/players.html,38,#f4f6fb,--ink-primary,dark,primary text
+dashboard/players.html,38,#c3cde2,--ink-secondary,dark,secondary text
+dashboard/players.html,38,#9aa7c2,--ink-tertiary,dark,label text
+dashboard/players.html,39,#34d399,--rank-top,dark,percentile ramp 80+
+dashboard/players.html,39,#6ee7a8,--rank-high,dark,percentile ramp 60+
+dashboard/players.html,39,#fbbf24,--rank-mid,dark,percentile ramp 40+
+dashboard/players.html,39,#fb923c,--rank-low,dark,percentile ramp 20+
+dashboard/players.html,39,#f87171,--rank-bottom,dark,percentile ramp below 20
+dashboard/players.html,40,"0 1px 3px rgba(0,0,0,0.35)",--elevation-1,dark,card elevation
