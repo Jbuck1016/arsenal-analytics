@@ -267,9 +267,29 @@ def resolve(token: str, classes: set[str],
     return raw.strip()
 
 
+# The CSS basic colour keywords, as hex. `white` and `#fff` are one colour
+# spelled two ways, and a comparator that calls them different is wrong about
+# equivalence rather than strict about colour -- the same argument the
+# bare-decimal rule below makes. Only the sixteen basic keywords plus the two
+# greys are listed: every one is an exact, standardised equivalence, so this
+# cannot quietly accept a value that is merely close. A keyword outside this
+# list is left alone and will still fail against a hex, which is the safe
+# direction to be wrong in.
+NAMED_HEX = {
+    "black": "#000000", "silver": "#c0c0c0", "gray": "#808080", "grey": "#808080",
+    "white": "#ffffff", "maroon": "#800000", "red": "#ff0000", "purple": "#800080",
+    "fuchsia": "#ff00ff", "magenta": "#ff00ff", "green": "#008000",
+    "lime": "#00ff00", "olive": "#808000", "yellow": "#ffff00", "navy": "#000080",
+    "blue": "#0000ff", "teal": "#008080", "aqua": "#00ffff", "cyan": "#00ffff",
+}
+
+
 def norm(value: str) -> str:
-    """Normalise case, equivalent hex forms, and bare-decimal numbers. Nothing else."""
+    """Normalise case, equivalent hex forms, colour keywords, and bare-decimal
+    numbers. Nothing else."""
     v = " ".join(value.split()).strip().lower().rstrip(";")
+    if v in NAMED_HEX:
+        v = NAMED_HEX[v]
     hexm = re.fullmatch(r"#([0-9a-f]{3,8})", v)
     if hexm:
         h = hexm.group(1)
@@ -367,6 +387,16 @@ def _selftest() -> list[str]:
     last = dict(_blocks_from(":root{--a:1;--shadow:0 1px 3px rgba(0,0,0,.07)}"))
     if last.get(":root", {}).get("--shadow") != "0 1px 3px rgba(0,0,0,.07)":
         bad.append(f"unterminated last declaration mis-parsed: {last}")
+    # norm() equates a colour keyword with its hex. The NEGATIVE cases are the
+    # point: it must equate only exact spellings of the same colour, never two
+    # colours that happen to be close, and never a keyword it does not know.
+    for a, b, want in (("white", "#fff", True), ("white", "#FFFFFF", True),
+                       ("WHITE", "#ffffff", True), ("red", "#ff0000", True),
+                       ("red", "#ff0001", False), ("white", "#fffffe", False),
+                       ("gray", "grey", True), ("rebeccapurple", "#663399", False),
+                       ("black", "#000000", True), ("black", "#010101", False)):
+        if (norm(a) == norm(b)) != want:
+            bad.append(f"norm({a!r}) == norm({b!r}) is {not want}, expected {want}")
     return bad
 
 

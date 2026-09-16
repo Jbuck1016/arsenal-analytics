@@ -10,11 +10,22 @@ They answer three different questions and none of them subsumes another:
   assert_rule_parity.py   every ordinary CSS declaration, in the page and in
                           the stylesheets it links, expands to what it
                           expanded to at the branch point.
+  lint_colors.py          no raw colour literal outside tokens.css, except the
+                          ones restyle/deliberate-skips.csv accounts for.
 
 The first is a ledger and only sees what was written down. The second catches
 a token whose value moved underneath a page. The third catches a rule whose
 value moved, and is the only one that would notice a var() pointed at the
-wrong token -- which is the actual work of this refactor.
+wrong token -- which is the actual work of this refactor. The fourth stops a
+new literal being written in the first place, and found two the other three
+could not: a colour match.html built from three string fragments, and a bare
+`color:white` in writing-lab.html.
+
+Not run from here, because they generate rather than check:
+  palette_audit.py        -> restyle/contrast.md, restyle/separability.md
+  build_contact_sheet.py  -> restyle/contact-sheet.html
+Nor are the three browser checks, which need Playwright:
+  verify_resolver.py, verify_canvas_bridge.py, run_bridge_probe.py
 
     python restyle/check.py
 """
@@ -23,7 +34,8 @@ import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-GATES = ["assert_tokens.py", "assert_page_parity.py", "assert_rule_parity.py"]
+GATES = ["assert_tokens.py", "assert_page_parity.py", "assert_rule_parity.py",
+         "lint_colors.py"]
 
 
 def main() -> int:
@@ -37,7 +49,7 @@ def main() -> int:
     if bad:
         print(f"FAILED: {', '.join(bad)}")
         return 1
-    print("all three gates pass")
+    print("all four gates pass")
     return 0
 
 

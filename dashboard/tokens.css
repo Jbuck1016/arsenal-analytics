@@ -734,6 +734,13 @@ html:not(.dark).fam-match{
   --timeline-sel-fill:rgba(239,1,7,0.14);
   --timeline-sel-edge:rgba(239,1,7,0.5);
   --momentum-them:#6b7280;
+  /* Zone dominance shades the opponent's zones with a neutral grey at an
+     alpha computed from the share, so the canvas needs the CHANNELS rather
+     than a colour -- the same shape as --heat-low and for the same reason.
+     The page built 'rgba(100,100,100,'+alpha+')' inline, which is how it
+     survived the Phase 1 census: the scanner looked for a complete rgba()
+     and this one is three string fragments. */
+  --dominance-them-rgb:100,100,100;
   /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
      ramp they look like: that function returns var(--green), var(--gold) and
      var(--red-bright) for the other three bands, which do follow the theme,
@@ -957,6 +964,13 @@ html.dark.fam-match{
   --timeline-sel-fill:rgba(239,1,7,0.14);
   --timeline-sel-edge:rgba(239,1,7,0.5);
   --momentum-them:#6b7280;
+  /* Zone dominance shades the opponent's zones with a neutral grey at an
+     alpha computed from the share, so the canvas needs the CHANNELS rather
+     than a colour -- the same shape as --heat-low and for the same reason.
+     The page built 'rgba(100,100,100,'+alpha+')' inline, which is how it
+     survived the Phase 1 census: the scanner looked for a complete rgba()
+     and this one is three string fragments. */
+  --dominance-them-rgb:100,100,100;
   /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
      ramp they look like: that function returns var(--green), var(--gold) and
      var(--red-bright) for the other three bands, which do follow the theme,
@@ -1068,6 +1082,8 @@ html:not(.dark).fam-writing{
      paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
   --select-fill:#171d24;
   --select-ink:#edf0e9;
+  /* The solid button sits on --state-negative and needs light ink. */
+  --ink-on-state:#fff;
   /* the faint graph-paper grid ruled across the page background */
   --grid-line:rgba(120,110,90,.045);
 }
@@ -1087,6 +1103,8 @@ html.dark.fam-writing{
      paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
   --select-fill:#171d24;
   --select-ink:#edf0e9;
+  /* The solid button sits on --state-negative and needs light ink. */
+  --ink-on-state:#fff;
   /* the faint graph-paper grid ruled across the page background */
   --grid-line:rgba(120,110,90,.045);
 }

@@ -403,6 +403,10 @@ async function init(){
     LEAGUES=(r[6]||[]).filter(function(l){return l.teams>0});
     LGSEL=LGSEL.filter(function(c){return LEAGUES.some(function(l){return l.league===c})});
     if(LEAGUES.length===1)LGSEL=[LEAGUES[0].league];
+    /* ?tab= deep link, for restyle/contact-sheet.html and for linking someone
+       straight at a view. Unknown values are ignored. */
+    const qtab=new URLSearchParams(location.search).get('tab');
+    if(qtab&&TABS.indexOf(qtab)>=0)TAB=qtab;
     const qt=new URLSearchParams(location.search).get('team');
     if(qt&&teamOf(qt)){
       SEL=qt;

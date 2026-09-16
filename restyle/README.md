@@ -7,13 +7,16 @@ This directory is the evidence for the second half of that sentence.
 ## Run everything
 
 ```
-python restyle/check.py                    # the three static gates, no browser
+python restyle/check.py                    # the four static gates, no browser
 python restyle/verify_resolver.py          # the gates' model vs Chrome
 python restyle/verify_canvas_bridge.py     # match.html's runtime palette
 python restyle/run_bridge_probe.py         # the canvas bridge mechanism
+python restyle/palette_audit.py            # -> contrast.md, separability.md
+python restyle/build_contact_sheet.py      # -> contact-sheet.html
 ```
 
-The first is fast and belongs in CI. The other three need Playwright.
+`check.py` is fast and belongs in CI. The three verifiers need Playwright. The
+last two generate reports rather than checking anything.
 
 ## The gates, and what each one can see
 
@@ -24,6 +27,7 @@ The first is fast and belongs in CI. The other three need Playwright.
 | `assert_rule_parity.py` | does every ordinary CSS declaration, in the page and in the stylesheets it links, expand to what it expanded to at the branch point | which rule *wins* for an element |
 | `verify_resolver.py` | does the resolver all three share agree with Chrome | nothing static can see |
 | `verify_canvas_bridge.py` | does match.html's JavaScript produce the pre-conversion colours, and does a canvas accept them | renderers that build a colour some other way |
+| `lint_colors.py` | is there a raw colour literal outside `tokens.css` | a literal that `deliberate-skips.csv` accounts for |
 
 None of them subsumes another, and each was added because something got past
 the ones before it:
@@ -34,7 +38,22 @@ the ones before it:
   unverified, because a new `var()` site only had to resolve, not to resolve
   *correctly*;
 - rule parity passed on a model that had been wrong twice about specificity,
-  until it was checked against a browser.
+  until it was checked against a browser;
+- all three passed while `match.html` built a colour out of three string
+  fragments and `writing-lab.html` wrote a bare `color:white`, because none of
+  them looks for a literal that was never a token.
+
+## The reports
+
+- **`contrast.md`** — every foreground token, in every family scope and both
+  themes, against the surface it is actually painted on. Text 4.5:1, marks and
+  boundaries 3:1.
+- **`separability.md`** — CIEDE2000 between every pair within each categorical
+  palette, in the family that paints it.
+- **`contact-sheet.html`** — every view in the app, light and dark, as live
+  frames. Needs a gate session in the same browser.
+
+All three are Phase 3 input, not Phase 1 evidence.
 
 ## The ledgers
 

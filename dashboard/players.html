@@ -623,6 +623,12 @@ async function init(){
     PLEAGUES=Object.keys(presentLeagues).sort().map(function(league){return{league:league,display_name:LEAGUE_DISPLAY[league]||league}});
     (res[6]||[]).forEach(function(v){MARKET_VALUES[v.player_id]=v});
     PLGSEL=PLGSEL.filter(function(c){return PLEAGUES.some(function(l){return l.league===c})});
+    /* ?tab= deep link. Added for restyle/contact-sheet.html, which has to be
+       able to put every view on one page; it is useful on its own for linking
+       someone straight at the Rank table. Unknown values are ignored rather
+       than left to blank the page. */
+    const qtab=new URLSearchParams(location.search).get('tab');
+    if(qtab&&TABS.indexOf(qtab)>=0)TAB=qtab;
     const qp=new URLSearchParams(location.search).get('player');
     if(qp&&playerOf(qp)&&PLGSEL.length&&!teamInLeague(playerOf(qp).team)){
       const targetLeague=lgOfTeam(playerOf(qp).team);

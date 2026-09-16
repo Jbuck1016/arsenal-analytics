@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en" class="dark fam-doc">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact sheet &middot; every view, both themes</title>
+<script src="../dashboard/theme.js"></script>
+<link rel="stylesheet" href="../dashboard/tokens.css">
+<link rel="stylesheet" href="../dashboard/theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--f-body,Inter,system-ui,sans-serif)}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+  padding:14px 20px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+h1{font:800 17px/1.2 var(--f-disp,inherit);margin:0;letter-spacing:-.02em}
+.lede{font:500 11.5px/1.6 var(--f-body,inherit);color:var(--dim);max-width:70ch}
+.controls{margin-left:auto;display:flex;gap:6px}
+.controls button{font:600 10px/1 var(--f-body,inherit);padding:7px 11px;border-radius:5px;
+  background:var(--surface2,var(--panel2));border:1px solid var(--line);color:var(--dim);cursor:pointer}
+.controls button.on{background:var(--amber-dim,var(--accent-dim));border-color:var(--amber-line,var(--accent-glow));
+  color:var(--amber,var(--accent))}
+main{padding:18px 20px 60px}
+section{margin:0 0 26px}
+h2{font:700 12px/1 var(--f-mono,monospace);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim2);margin:0 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}
+@media(max-width:1100px){.pair{grid-template-columns:1fr}}
+figure{margin:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+figcaption{font:600 10px/1 var(--f-mono,monospace);letter-spacing:.06em;color:var(--dim);
+  padding:8px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+figcaption b{color:var(--text);font-weight:700}
+.shot{height:520px;overflow:hidden;position:relative;background:var(--panel2)}
+/* The app is built for a wide window. Render each frame at desktop width and
+   scale it down, rather than showing every page in its mobile layout. */
+.shot iframe{width:1440px;height:1040px;border:0;transform:scale(.5);transform-origin:0 0;
+  display:block}
+body.one .pair{grid-template-columns:1fr}
+body.hide-light figure[data-theme="light"],body.hide-dark figure[data-theme="dark"]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Contact sheet</h1>
+    <div class="lede">Every view in the app, light and dark, side by side. Live
+      frames, not captures, so this shows whatever the data says now &mdash; and
+      it needs your gate session, so unlock one page in this browser first if the
+      frames show the password overlay. Each frame is rendered at 1440px and
+      scaled to half, which is why the type looks small; open a frame in its own
+      tab to read it.</div>
+  </div>
+  <div class="controls">
+    <button type="button" class="on" onclick="setMode('both',this)">Both</button>
+    <button type="button" onclick="setMode('light',this)">Light only</button>
+    <button type="button" onclick="setMode('dark',this)">Dark only</button>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>Player Fingerprints &mdash; players.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Player</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Player light" src="../dashboard/players.html?theme=light&amp;tab=Player"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Player</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Player dark" src="../dashboard/players.html?theme=dark&amp;tab=Player"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Chain roles</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Chain roles light" src="../dashboard/players.html?theme=light&amp;tab=Chain%20roles"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Chain roles</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Chain roles dark" src="../dashboard/players.html?theme=dark&amp;tab=Chain%20roles"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Rank</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Rank light" src="../dashboard/players.html?theme=light&amp;tab=Rank"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Rank</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Rank dark" src="../dashboard/players.html?theme=dark&amp;tab=Rank"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Scatter</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Scatter light" src="../dashboard/players.html?theme=light&amp;tab=Scatter"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Scatter</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Scatter dark" src="../dashboard/players.html?theme=dark&amp;tab=Scatter"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Scout</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Scout light" src="../dashboard/players.html?theme=light&amp;tab=Scout"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Scout</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Scout dark" src="../dashboard/players.html?theme=dark&amp;tab=Scout"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Compare</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Compare light" src="../dashboard/players.html?theme=light&amp;tab=Compare"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Compare</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Compare dark" src="../dashboard/players.html?theme=dark&amp;tab=Compare"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Player Fingerprints · Plot studio</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Plot studio light" src="../dashboard/players.html?theme=light&amp;tab=Plot%20studio"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Player Fingerprints · Plot studio</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Player Fingerprints · Plot studio dark" src="../dashboard/players.html?theme=dark&amp;tab=Plot%20studio"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Team Profiles &mdash; teams.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Profile</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Profile light" src="../dashboard/teams.html?theme=light&amp;tab=Profile"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Profile</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Profile dark" src="../dashboard/teams.html?theme=dark&amp;tab=Profile"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Sequences</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Sequences light" src="../dashboard/teams.html?theme=light&amp;tab=Sequences"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Sequences</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Sequences dark" src="../dashboard/teams.html?theme=dark&amp;tab=Sequences"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Maps</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Maps light" src="../dashboard/teams.html?theme=light&amp;tab=Maps"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Maps</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Maps dark" src="../dashboard/teams.html?theme=dark&amp;tab=Maps"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Rankings</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Rankings light" src="../dashboard/teams.html?theme=light&amp;tab=Rankings"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Rankings</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Rankings dark" src="../dashboard/teams.html?theme=dark&amp;tab=Rankings"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · League Map</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · League Map light" src="../dashboard/teams.html?theme=light&amp;tab=League%20Map"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · League Map</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · League Map dark" src="../dashboard/teams.html?theme=dark&amp;tab=League%20Map"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Matches</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Matches light" src="../dashboard/teams.html?theme=light&amp;tab=Matches"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Matches</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Matches dark" src="../dashboard/teams.html?theme=dark&amp;tab=Matches"></iframe></div>
+    </figure>
+    </div>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Team Profiles · Squad</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Squad light" src="../dashboard/teams.html?theme=light&amp;tab=Squad"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Team Profiles · Squad</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Team Profiles · Squad dark" src="../dashboard/teams.html?theme=dark&amp;tab=Squad"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Match workspace &mdash; match.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Match workspace</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Match workspace light" src="../dashboard/match.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Match workspace</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Match workspace dark" src="../dashboard/match.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Home &mdash; index.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Home</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Home light" src="../dashboard/index.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Home</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Home dark" src="../dashboard/index.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Insights &mdash; insights.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Insights</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Insights light" src="../dashboard/insights.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Insights</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Insights dark" src="../dashboard/insights.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Search &mdash; search.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Search</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Search light" src="../dashboard/search.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Search</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Search dark" src="../dashboard/search.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Sequence Explorer &mdash; sequences.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Sequence Explorer</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Sequence Explorer light" src="../dashboard/sequences.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Sequence Explorer</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Sequence Explorer dark" src="../dashboard/sequences.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Metric reference &mdash; glossary.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Metric reference</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Metric reference light" src="../dashboard/glossary.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Metric reference</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Metric reference dark" src="../dashboard/glossary.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Market intelligence &mdash; market-values.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Market intelligence</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Market intelligence light" src="../dashboard/market-values.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Market intelligence</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Market intelligence dark" src="../dashboard/market-values.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Model laboratory &mdash; model-lab.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Model laboratory</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Model laboratory light" src="../dashboard/model-lab.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Model laboratory</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Model laboratory dark" src="../dashboard/model-lab.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Domestic forecast lab &mdash; model-review.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Domestic forecast lab</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Domestic forecast lab light" src="../dashboard/model-review.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Domestic forecast lab</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Domestic forecast lab dark" src="../dashboard/model-review.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Writing lab &mdash; writing-lab.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Writing lab</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Writing lab light" src="../dashboard/writing-lab.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Writing lab</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Writing lab dark" src="../dashboard/writing-lab.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Field guide &mdash; guide.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Field guide</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Field guide light" src="../dashboard/guide.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Field guide</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Field guide dark" src="../dashboard/guide.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Methodology &mdash; methodology.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Methodology</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Methodology light" src="../dashboard/methodology.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Methodology</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Methodology dark" src="../dashboard/methodology.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+  <section>
+    <h2>Metrics validation &mdash; validation.html</h2>
+    <div class="pair">
+    <figure data-theme="light">
+      <figcaption><b>Metrics validation</b><span>light</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Metrics validation light" src="../dashboard/validation.html?theme=light"></iframe></div>
+    </figure>
+    <figure data-theme="dark">
+      <figcaption><b>Metrics validation</b><span>dark</span></figcaption>
+      <div class="shot"><iframe loading="lazy" title="Metrics validation dark" src="../dashboard/validation.html?theme=dark"></iframe></div>
+    </figure>
+    </div>
+  </section>
+</main>
+<script>
+function setMode(m,btn){
+  document.body.classList.toggle('hide-light',m==='dark');
+  document.body.classList.toggle('hide-dark',m==='light');
+  document.body.classList.toggle('one',m!=='both');
+  document.querySelectorAll('.controls button').forEach(function(b){b.classList.toggle('on',b===btn)});
+}
+</script>
+</body>
+</html>
