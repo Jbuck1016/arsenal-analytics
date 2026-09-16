@@ -1,0 +1,112 @@
+<title>Canvas token bridge probe</title>
+<link rel="stylesheet" href="../dashboard/tokens.css">
+<style>
+ body{font:13px ui-monospace,Consolas,monospace;padding:16px;background:#fff;color:#111}
+ .ok{color:#0a7}.bad{color:#c22;font-weight:700}
+ h3{margin:18px 0 6px;font-size:13px}
+ pre{margin:0;white-space:pre-wrap}
+</style>
+<div id="out">running…</div>
+<!-- Hidden probe host used for test 3: resolve the LIGHT palette while the
+     document element is dark, which is what an export has to do. -->
+<div id="lightHost" class="probe-host" style="display:none"></div>
+<script>
+const L=[];
+const say=(s,cls)=>L.push(cls?'<span class="'+cls+'">'+s+'</span>':s);
+const rd=(el,n)=>getComputedStyle(el).getPropertyValue(n).trim();
+
+// The values tokens.css declares, as written in the file. If the bridge works,
+// these are what getComputedStyle must hand back.
+// NOTE: values are written EXACTLY as they appear in tokens.css, with no
+// spaces after the commas. An earlier version of this probe wrote
+// 'rgba(0, 0, 0, 0.012)' assuming getComputedStyle normalises rgba spacing.
+// It does not: custom properties are returned as authored, token for token.
+// That is the single most useful thing this probe established, because it
+// means a value read through the bridge is byte-identical to tokens.css and
+// therefore satisfies the Phase 1 assertion.
+const LIGHT={'--pitch-fill':'#f0ead6','--pitch-line':'#888','--pitch-line-strong':'#666',
+ '--pitch-band':'rgba(0,0,0,0.012)','--pitch-text':'#333','--chip-ink':'#fff',
+ '--pass-ok':'#12855a','--pass-fail':'#cc4038','--heat-low':'31,91,111'};
+const DARK={'--pitch-fill':'#111722','--chip-ink':'#f2f5fa',
+ '--pass-ok':'#3ddc97','--pass-fail':'#ff6b63','--heat-low':'31,91,111'};
+
+const root=document.documentElement;
+let fails=0, expectedFails=0;
+// expectFail: test 3 is SUPPOSED to fail. Counting its failures alongside real
+// ones produced a "10 CHECKS FAILED" headline that said nothing about whether
+// the mechanism works. Classify instead of totalling.
+let expectFail=false;
+const check=(label,got,want)=>{
+  const good=got===want;
+  if(!good){ if(expectFail) expectedFails++; else fails++; }
+  const tag = good ? 'PASS' : (expectFail ? 'FAIL (expected)' : 'FAIL');
+  say('  '+tag+'  '+label+'  got='+JSON.stringify(got)+
+      (good?'':'  want='+JSON.stringify(want)), good?'ok':(expectFail?'':'bad'));
+};
+
+// ---- TEST 1: light palette readable from the root element -------------
+say('<h3>1. read LIGHT tokens off &lt;html&gt; (no .dark)</h3>');
+root.classList.remove('dark');
+for(const k in LIGHT) check(k, rd(root,k), LIGHT[k]);
+
+// ---- TEST 2: dark palette readable after toggling --------------------
+say('<h3>2. read DARK tokens off &lt;html&gt; (.dark set)</h3>');
+root.classList.add('dark');
+for(const k in DARK) check(k, rd(root,k), DARK[k]);
+
+// ---- TEST 3: THE EXPORT CASE -----------------------------------------
+// Document stays dark; we need light values anyway. A host element carrying
+// the light scope selector cannot work, because tokens.css scopes light to
+// html:not(.dark) -- a descendant cannot undo an ancestor's class. Test what
+// actually happens rather than assume.
+say('<h3>3. EXPORT CASE: read LIGHT while &lt;html&gt; is .dark</h3>');
+say('   (document element still has .dark from test 2)');
+const host=document.getElementById('lightHost');
+host.style.display='block';
+say('   3a. plain descendant element (EVERY LINE HERE IS SUPPOSED TO FAIL):');
+expectFail=true;
+for(const k in LIGHT) check(k, rd(host,k), LIGHT[k]);
+expectFail=false;
+
+// ---- TEST 4: does a nested <html>-like scope help? --------------------
+// An iframe gets its own document element, so its root CAN be light while the
+// parent is dark. Costly but it is a real mechanism; test whether it resolves.
+say('<h3>4. iframe with its own light document element</h3>');
+const f=document.createElement('iframe');
+f.style.cssText='position:absolute;left:-9999px;width:10px;height:10px';
+document.body.appendChild(f);
+const fd=f.contentDocument;
+fd.open();
+// Resolve against this document's own URL. A document.write()-created
+// about:blank iframe cannot be relied on to inherit a base URL under file://,
+// so a bare relative href here may silently load nothing -- which would make
+// test 4 "fail" for a reason that has nothing to do with the mechanism.
+const tokensHref=new URL('../dashboard/tokens.css',location.href).href;
+fd.write('<link rel="stylesheet" href="'+tokensHref+'">');
+fd.close();
+setTimeout(()=>{
+  const froot=fd.documentElement;
+  for(const k in LIGHT) check('iframe '+k, rd(froot,k), LIGHT[k]);
+
+  say('<h3>VERDICT</h3>');
+  say('  unexpected failures : '+fails, fails?'bad':'ok');
+  say('  expected failures   : '+expectedFails+'  (test 3, by design)');
+  say('');
+  if(fails===0){
+    say('  MECHANISM PROVEN. Tests 1 and 2 show the root element returns the',"ok");
+    say('  light palette with .dark absent and the dark palette with it present,',"ok");
+    say('  and returns every value exactly as authored in tokens.css.',"ok");
+    say('  => CT() can be populated by toggling .dark once at startup, reading',"ok");
+    say('     both palettes, and caching them. The EXP_LIGHT export path reads',"ok");
+    say('     the cached LIGHT object and so works while the page is dark.',"ok");
+    say('     No iframe needed; test 4 is a fallback that also works.',"ok");
+  }
+  say('');
+  say('  Test 3 failing is the point of test 3: a descendant cannot escape an');
+  say('  ancestor html.dark, which rules out the naive approach of hanging a');
+  say('  light-scoped element inside a dark document.');
+  root.classList.remove('dark');
+  document.getElementById('out').innerHTML='<pre>'+L.join('\n')+'</pre>';
+  console.log('BRIDGE_PROBE_DONE fails='+fails);
+},150);
+</script>
