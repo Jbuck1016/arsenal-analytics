@@ -1017,7 +1017,22 @@ function renderRankings(){
     const p=(PCT[t.team]||{})[RKT.metric];
     return{team:t.team,value:+t[RKT.metric],pct:p?+p.pct:null};
   }).filter(function(r){return !isNaN(r.value)});
-  rows.sort(function(a,b){return (b.pct==null?-1:b.pct)-(a.pct==null?-1:a.pct)});
+  /* Total order, for the reason the player Rank table needed one: pct is
+     stored whole, so ties are ordinary, and percentile alone left tied teams
+     in whatever order the source produced. Percentile first, then the raw
+     value in the direction that means "better" for this metric -- so a tie on
+     an inverted metric like PPDA does not put the worst team on top -- then
+     the team name, which is unique, so no two rows compare equal.
+     higher_is_better is read defensively: team_metric_defs is fetched with
+     select:'*', so if the column is not there the value is undefined, which
+     reads as higher-is-better and gives plain descending. */
+  const hib=(d.higher_is_better!==false);
+  rows.sort(function(a,b){
+    const ap=(a.pct==null?-1:a.pct),bp=(b.pct==null?-1:b.pct);
+    if(ap!==bp)return bp-ap;
+    if(a.value!==b.value)return hib?(b.value-a.value):(a.value-b.value);
+    return a.team<b.team?-1:a.team>b.team?1:0;
+  });
   const vals=rows.map(function(r){return r.value});
   const vmin=Math.min(0,Math.min.apply(null,vals)),vmax=Math.max(0,Math.max.apply(null,vals));
   const vrange=(vmax-vmin)||1,W=1080,BH=26,MT=26,ML=190,H=MT+rows.length*BH+16,PW=W-ML-90;
@@ -1039,7 +1054,7 @@ function renderRankings(){
   let tb='<div style="max-height:560px;overflow:auto"><table><thead><tr>'+
     '<th style="cursor:default">#</th><th style="cursor:default">Team</th>'+
     '<th class="num" style="cursor:default">'+esc(d.label||'Value')+'</th>'+
-    '<th class="num" style="cursor:default">League pct</th></tr></thead><tbody>';
+    '<th class="num" style="cursor:default;color:var(--accent)" title="Sorting by this column, best to worst; ties fall to the raw value and then the team name">League pct \u2193</th></tr></thead><tbody>';
   rows.forEach(function(r,i){
     tb+='<tr'+(r.team===SEL?' style="background:var(--accent-dim)"':'')+'>'+
       '<td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+

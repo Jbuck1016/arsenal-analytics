@@ -1368,11 +1368,32 @@ async function renderRank(){
       return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
     }).filter(function(r){return r.name&&teamInLeague(r.team)})
       .sort(function(a,b){
-        const av=RK.pool?a.value:a.pct,bv=RK.pool?b.value:b.pct;
-        if(av!==bv)return (av-bv)*RK.dir;
-        return (a.pct-b.pct)*RK.dir;
+        /* THE ORDER HAS TO BE TOTAL, and it was not. pct is stored whole
+           across all 92,068 rows, so a hundred players genuinely tie at 100,
+           and the old fallback compared a.pct with b.pct -- the same two
+           numbers the line above had just found equal. It always returned 0,
+           so tied rows kept whatever order PostgREST happened to return, and
+           that order is not stable between requests: the same query could
+           put a different player on top after a reload.
+
+           Active key first, in the direction the Order control asks for.
+           Then the OTHER number, which is finer-grained and breaks most of
+           the remaining ties on its own, in the same direction so that
+           "lowest first" stays coherent all the way down. Then player_id,
+           which is unique, so no two rows can compare equal and the result
+           cannot depend on arrival order. */
+        const prim=RK.pool?'value':'pct',sec=RK.pool?'pct':'value';
+        if(a[prim]!==b[prim])return (a[prim]-b[prim])*RK.dir;
+        if(a[sec]!==b[sec])return (a[sec]-b[sec])*RK.dir;
+        return String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0;
       }).slice(0,RK.n);
     if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players</div>';return}
+    /* Which column is doing the ordering is otherwise invisible: this table
+       has no clickable headers, and the key switches silently from percentile
+       to raw value the moment a role pool is chosen. Name it in the header
+       rather than leave the reader to infer it from the numbers. */
+    const sortKey=RK.pool?'value':'pct';
+    const sortMark=function(k){return k===sortKey?(RK.dir===-1?' \u2193':' \u2191'):''};
     const vals=list.map(function(r){return r.value});
     const vmin=Math.min(0,Math.min.apply(null,vals)),vmax=Math.max(0,Math.max.apply(null,vals));
     const vrange=(vmax-vmin)||1,zeroPct=((0-vmin)/vrange)*100;
@@ -1382,10 +1403,10 @@ async function renderRank(){
       '<div style="max-height:calc(100vh - 408px);min-height:260px;overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
-      '<th class="num" style="cursor:default" title="Click any value to see the actions behind it">'+
-      esc(d.label||'Value')+(DRILL[RK.metric]?' \u25F0':'')+'</th>'+
+      '<th class="num" style="cursor:default'+(sortKey==='value'?';color:var(--accent)':'')+'" title="'+(sortKey==='value'?'Sorting by this column. ':'')+'Click any value to see the actions behind it">'+
+      esc(d.label||'Value')+(DRILL[RK.metric]?' \u25F0':'')+sortMark('value')+'</th>'+
       '<th style="cursor:default;width:200px" title="Position on the raw-value range among the players shown; the hairline marks zero">Raw value \u00B7 range shown</th>'+
-      '<th class="num" style="cursor:default">Pct</th></tr></thead><tbody>';
+      '<th class="num" style="cursor:default'+(sortKey==='pct'?';color:var(--accent)':'')+'" title="'+(sortKey==='pct'?'Sorting by this column.':'Percentile within the role pool')+'">Pct'+sortMark('pct')+'</th></tr></thead><tbody>';
     list.forEach(function(r,i){
       const t=tier(r.pct),valuePct=((r.value-vmin)/vrange)*100;
       const left=Math.min(zeroPct,valuePct),w=Math.max(1,Math.abs(valuePct-zeroPct));
