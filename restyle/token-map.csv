@@ -127,3 +127,16 @@ dashboard/teams.html,873,#f5a623,--heat-legend-high,"light,dark",heat legend gra
 dashboard/teams.html,903,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map
 dashboard/teams.html,903,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map
 dashboard/teams.html,927,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map
+dashboard/index.html,35,#0e1219,--ground,dark,page canvas
+dashboard/index.html,35,#161b24,--surface-raised,dark,raised surface: cards and header
+dashboard/index.html,35,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/index.html,36,#272e3a,--border-hairline,dark,hairline rule
+dashboard/index.html,36,#3a4351,--border-strong,dark,strong rule
+dashboard/index.html,37,#f2f5fa,--ink-primary,dark,primary text
+dashboard/index.html,37,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/index.html,37,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/index.html,38,#e2b877,--accent-base,dark,document-family amber accent
+dashboard/index.html,38,"rgba(226,184,119,.10)",--accent-veil,dark,amber tint fill
+dashboard/index.html,38,"rgba(226,184,119,.32)",--accent-edge,dark,amber tint border
+dashboard/index.html,39,#3ddc97,--state-positive,dark,positive state
+dashboard/index.html,39,#ff5f56,--state-negative,dark,negative state
