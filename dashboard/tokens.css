@@ -63,6 +63,10 @@ html:not(.dark){
   --ink-tertiary:#6b7280;
   --ink-quaternary:#9aa0aa;
   --ink-on-accent:#12141a;
+  /* Ink on a state-coloured fill: the W/D/L badge in teams.html sits on a win
+     green or loss red chip, not on the accent, and carries its own near-black.
+     Distinct from --label-on-fill, which is the white pizza-slice number. */
+  --ink-on-state:#0d0f14;
 
   /* accent, one brand voice */
   --accent-base:#EF0107;
@@ -75,6 +79,27 @@ html:not(.dark){
   --rank-mid:#d4a017;
   --rank-low:#f97316;
   --rank-bottom:#dc2626;
+
+  /* Style axis, teams.html. A team's playing style is scored on a two-ended
+     scale, so these are the two poles of one dimension rather than two
+     unrelated hues. Named for the ends of the axis, not for blue and orange.
+
+     The -axis- infix is not decoration. teams.html already declares --style-hi
+     and --style-low itself, so a token of the same name would make the page's
+     own rule read --style-hi:var(--style-hi): a self-reference, which CSS
+     treats as invalid at computed-value time and which would silently drop the
+     colour. The token has to be spelled differently from the variable it
+     feeds. */
+  --style-axis-hi:#2563eb;
+  --style-axis-low:#d97706;
+
+  /* Heat legend swatch, teams.html map panel. This is NOT the same ramp as
+     --heat-low/mid/high below: those are the RGB triplets match.html feeds to
+     densityRGB, while this pair is the two-stop gradient drawn in the legend
+     to label low-to-high density. Kept separate so Phase 3 can rebuild each
+     for its own theme instead of assuming one ramp serves both surfaces. */
+  --heat-legend-low:rgba(245,166,35,.12);
+  --heat-legend-high:#f5a623;
 
   /* Metric-group series, players.html PIZZA_COLORS. Twelve groups, each with
      its own hue so a pizza slice is identifiable without reading its label.
@@ -96,12 +121,25 @@ html:not(.dark){
 
   /* Evidence layers on the pitch plots, players.html. Each is a distinct
      action type the reader toggles on and off, so they are categorical, not a
-     ramp. Verbatim in Phase 1. */
+     ramp. Verbatim in Phase 1.
+
+     The four below share values with the five above today, and that is the
+     point. An earlier pass pointed every #a78bfa at --layer-through, which
+     made the token read "the through-balls colour, used for clearances" and
+     named by appearance one step removed. A blocked shot, a clearance, a
+     challenge and a save are four different things a reader toggles; they
+     happen to have been given three hues between them. Separate names now
+     cost nothing, keep the values verbatim, and let Phase 3 diverge or merge
+     them on purpose rather than inheriting the collision. */
   --layer-through:#a78bfa;
   --layer-receipt:#22d3ee;
   --layer-shot:#f472b6;
   --layer-neutral:#cbd5e1;
   --layer-quick:#34d399;
+  --layer-blocked:#a78bfa;
+  --layer-clearance:#a78bfa;
+  --layer-challenge:#f472b6;
+  --layer-save:#22d3ee;
 
   /* Drill modal card and tooltip elevation, players.html. Both were tuned
      against a dark ground; carried verbatim in Phase 1.
@@ -183,6 +221,7 @@ html.dark{
   --ink-tertiary:#9aa7c2;
   --ink-quaternary:#7c8699;
   --ink-on-accent:#12141a;
+  --ink-on-state:#0d0f14;
 
   --accent-base:#D8B384;
   --accent-veil:rgba(216,179,132,0.12);
@@ -193,6 +232,14 @@ html.dark{
   --rank-mid:#fbbf24;
   --rank-low:#fb923c;
   --rank-bottom:#f87171;
+
+  /* Style axis. teams.html gave this pair its own dark values. */
+  --style-axis-hi:#60a5fa;
+  --style-axis-low:#fbbf24;
+
+  /* Heat legend swatch. teams.html carried one value for both themes. */
+  --heat-legend-low:rgba(245,166,35,.12);
+  --heat-legend-high:#f5a623;
 
   --series-ok:#22e39a;
   --series-fail:#ff5a5a;
@@ -227,6 +274,10 @@ html.dark{
   --layer-shot:#f472b6;
   --layer-neutral:#cbd5e1;
   --layer-quick:#34d399;
+  --layer-blocked:#a78bfa;
+  --layer-clearance:#a78bfa;
+  --layer-challenge:#f472b6;
+  --layer-save:#22d3ee;
   --elevation-modal:0 18px 60px rgba(0,0,0,.5);
   --elevation-tip:0 4px 14px rgba(0,0,0,.35);
 

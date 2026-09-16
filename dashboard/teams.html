@@ -17,19 +17,26 @@
    This page declared no font tokens at all, so ten font: shorthands that used
    them were invalid and rendered as inherited body type; they resolve now.
    Light accent is the shared brand accent, so the tints below match it. */
-:root{--accent-dim:rgba(239,1,7,.07);--accent-glow:rgba(239,1,7,.18);
- --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;
- --style-hi:#2563eb;--style-low:#d97706;--shadow:0 1px 3px rgba(0,0,0,.07)}
-html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
- --bg:#101319;--bg2:#191d25;--bg3:#222732;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
- --border:#2c313d;--border2:#414957;--text:#f4f6fb;--text2:#c3cde2;--text3:#9aa7c2;
- --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;
- --style-hi:#60a5fa;--style-low:#fbbf24;--shadow:0 1px 3px rgba(0,0,0,.35)}
+/* --border and --border2 stay literal in the dark block below, and they are the
+   only two that do. This page declares #2c313d and #414957 where the app-family
+   tokens carry #272b35 and #3a3f4b, taken from players.html. Those are four
+   different colours, not four spellings of two, so pointing them at the token
+   would change what renders and Phase 1 forbids that. The app family is not
+   actually uniform on dark borders; both are recorded in deliberate-skips.csv
+   and Phase 3 has to pick a winner rather than have one chosen by accident. */
+:root{--accent-dim:var(--accent-veil);--accent-glow:var(--accent-edge);
+ --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);
+ --style-hi:var(--style-axis-hi);--style-low:var(--style-axis-low);--shadow:var(--elevation-1)}
+html.dark{--accent:var(--accent-base);--accent-dim:var(--accent-veil);--accent-glow:var(--accent-edge);
+ --bg:var(--ground);--bg2:var(--surface-raised);--bg3:var(--surface-recessed);--surface:var(--surface-veil);--surface2:var(--surface-veil-strong);
+ --border:#2c313d;--border2:#414957;--text:var(--ink-primary);--text2:var(--ink-secondary);--text3:var(--ink-tertiary);
+ --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);
+ --style-hi:var(--style-axis-hi);--style-low:var(--style-axis-low);--shadow:var(--elevation-1)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
 /* Header base is in shell.css. These are this page's differences from it. */
-.hdr-logo{font:800 13px/1 'Inter';color:#12141a}
+.hdr-logo{font:800 13px/1 'Inter';color:var(--ink-on-accent)}
 .tabs{min-width:0;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
@@ -131,7 +138,7 @@ tr:hover td{background:var(--surface)}
 .foot{margin-top:12px;font:500 10px/1.6 'Inter';color:var(--text3)}
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
-.tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:50;display:none;color:var(--text)}
+.tip{position:fixed;pointer-events:none;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font:600 11px/1.3 'Inter';box-shadow:var(--elevation-tip);z-index:50;display:none;color:var(--text)}
 .pitch-box{height:calc(100vh - 416px);min-height:230px;max-height:640px}
 .viz-eyebrow{font:700 8.5px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
 .viz-title{font:700 16px/1.1 var(--f-display);letter-spacing:-.02em;color:var(--text);margin-bottom:6px}
@@ -163,7 +170,7 @@ tr:hover td{background:var(--surface)}
 }
 .mrow{cursor:pointer}
 .mrow:hover td{background:var(--accent-dim)}
-.wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:#0d0f14}
+.wl{display:inline-block;width:17px;height:17px;border-radius:4px;font:700 9px/17px 'Inter';text-align:center;color:var(--ink-on-state)}
 
 .lgpick{flex-shrink:0}
 
@@ -245,7 +252,7 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
 function tname(t){return TEAM_DISPLAY[t]||t||''}
-const TPAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
+const TPAL={ok:'var(--series-ok)',fail:'var(--series-fail)',pass:'var(--series-pass)',prog:'var(--series-prog)',carry:'var(--series-carry)',box:'var(--series-box)'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
 
@@ -724,7 +731,7 @@ function shotMark(x,y,r,c,op,oc){
   return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
 function shotOutcomeLegend(counts,forTeam){
-  const colours={goal:TPAL.box,saved:forTeam?TPAL.ok:TPAL.fail,blocked:'#a78bfa',post:TPAL.carry,off:forTeam?TPAL.ok:TPAL.fail};
+  const colours={goal:TPAL.box,saved:forTeam?TPAL.ok:TPAL.fail,blocked:'var(--layer-blocked)',post:TPAL.carry,off:forTeam?TPAL.ok:TPAL.fail};
   const labels={goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'};
   const glyph={
     goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
@@ -863,7 +870,7 @@ async function renderMaps(t){
     else if(m.k==='heat'){
       const rows=ZONES.filter(function(a){return inZone(a.x,a.y)});
       inner+=heatLayer(rows);
-      leg='<span><i style="width:44px;background:linear-gradient(90deg,rgba(245,166,35,.12),#f5a623)"></i>Low \u2192 high density</span>'+
+      leg='<span><i style="width:44px;background:linear-gradient(90deg,var(--heat-legend-low),var(--heat-legend-high))"></i>Low \u2192 high density</span>'+
         '<span><b>'+rows.length.toLocaleString()+'</b> actions \u00B7 scale normalised within this team sample</span>';
     }
     else if(m.k==='touches'){
@@ -893,7 +900,7 @@ async function renderMaps(t){
           '<span><i style="background:'+Y+'"></i>Progressive carries <b>'+cc.toLocaleString()+'</b></span>'+sampleLeg;
     }
     else if(m.k==='def'){
-      const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'#a78bfa',BlockedPass:Y,Challenge:'#f472b6'};
+      const col={Tackle:R,Interception:B,BallRecovery:G,Clearance:'var(--layer-clearance)',BlockedPass:Y,Challenge:'var(--layer-challenge)'};
       const ds=ZONES.filter(function(a){
         if(!col[a.type]||!inZone(a.x,a.y))return false;
         if(MP.defMode==='wins')return (a.type==='Tackle'&&a.ok)||a.type==='Interception'||a.type==='BallRecovery';
@@ -917,7 +924,7 @@ async function renderMaps(t){
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
         const rr=0.26+Math.sqrt(xg)*0.92;
         const oc=a.outcome||(a.is_goal?'goal':'off');if(oc!=='goal')ocn[oc]=(ocn[oc]||0)+1;
-        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'#a78bfa':(oc==='post'?Y:(forTeam?G:R))));
+        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'var(--layer-blocked)':(oc==='post'?Y:(forTeam?G:R))));
         inner+=shotMark(a.x,a.y,rr,oc_c,a.is_goal?1:0.5,oc)+
                '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
                '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+

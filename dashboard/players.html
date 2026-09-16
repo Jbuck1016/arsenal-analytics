@@ -1639,7 +1639,7 @@ function vizLayers(grp,p){
       layers:[
         L('goal','Goal',AC,by('goal'),mk(AC,'goal')),
         L('saved','Saved',G,by('saved'),mk(G,'saved')),
-        L('blocked','Blocked','var(--layer-through)',by('blocked'),mk('var(--layer-through)','blocked')),
+        L('blocked','Blocked','var(--layer-blocked)',by('blocked'),mk('var(--layer-blocked)','blocked')),
         L('post','Post',Y,by('post'),mk(Y,'post')),
         L('off','Off target',R,by('off'),mk(R,'off'))
       ]};
@@ -1684,8 +1684,8 @@ function vizLayers(grp,p){
         layers:[L('won','Fouls won',G,f.filter(function(a){return a.ok}),mt(G,.85,.8,'circle'),'circle'),
                 L('com','Fouls conceded',R,f.filter(function(a){return !a.ok}),mt(R,.9,.7,'cross'),'cross')]};
     }
-    const C2={Tackle:R,Interception:B,BallRecovery:G,Clearance:'var(--layer-through)',
-              BlockedPass:Y,Challenge:'var(--layer-shot)',Save:'var(--layer-receipt)'};
+    const C2={Tackle:R,Interception:B,BallRecovery:G,Clearance:'var(--layer-clearance)',
+              BlockedPass:Y,Challenge:'var(--layer-challenge)',Save:'var(--layer-save)'};
     const LB={Tackle:'Tackles',Interception:'Interceptions',BallRecovery:'Recoveries',
               Clearance:'Clearances',BlockedPass:'Blocked passes',Challenge:'Challenges lost',Save:'Shot blocks'};
     const SH={Tackle:'triangle',Interception:'diamond',BallRecovery:'circle',Clearance:'square',BlockedPass:'ring',Challenge:'cross',Save:'ring'};
@@ -2001,10 +2001,10 @@ function drill(key){
     A.filter(f).forEach(function(a){
       const xg=+(a.xg||0.04);sx+=xg;const r=Math.max(0.52,0.26+Math.sqrt(xg)*0.92);
       const oc=a.shot_outcome||'off';
-      const c=oc==='goal'?AC:(oc==='saved'?G:(oc==='blocked'?'var(--layer-through)':R));
+      const c=oc==='goal'?AC:(oc==='saved'?G:(oc==='blocked'?'var(--layer-blocked)':R));
       inner+=eventSvg(a,shotMark(a.x,a.y,r,c,oc==='goal'?1:0.55,oc));n++;});
     sub='Sized by chance quality. '+sx.toFixed(2)+' xG across these '+n+' shots.';
-    leg=lg(AC,'Goal')+lg(G,'Saved')+lg('var(--layer-through)','Blocked')+lg(R,'Off target');
+    leg=lg(AC,'Goal')+lg(G,'Saved')+lg('var(--layer-blocked)','Blocked')+lg(R,'Off target');
   }
   else if(kind==='takeon'||kind==='tackle'||kind==='int'||kind==='recov'||kind==='clear'||kind==='aerial'||kind==='def'){
     const types={takeon:['TakeOn'],tackle:['Tackle'],int:['Interception'],recov:['BallRecovery'],

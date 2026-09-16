@@ -76,10 +76,54 @@ dashboard/players.html,961,#cbd5e1,--layer-neutral,"light,dark",neutral evidence
 dashboard/players.html,972,#a78bfa,--layer-through,"light,dark",through balls layer
 dashboard/players.html,976,#22d3ee,--layer-receipt,"light,dark",receipts layer
 dashboard/players.html,977,#f472b6,--layer-shot,"light,dark",shots layer
-dashboard/players.html,1642,#a78bfa,--layer-through,"light,dark",blocked shots layer
+dashboard/players.html,1642,#a78bfa,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through, which named the token after a different action that happens to share the hue
 dashboard/players.html,1674,#34d399,--layer-quick,"light,dark",under-1s release layer
-dashboard/players.html,1687,#a78bfa,--layer-through,"light,dark",clearance in defensive action map
-dashboard/players.html,1688,#f472b6,--layer-shot,"light,dark",challenge in defensive action map
-dashboard/players.html,1688,#22d3ee,--layer-receipt,"light,dark",save in defensive action map
-dashboard/players.html,2004,#a78bfa,--layer-through,"light,dark",blocked outcome in shot map
-dashboard/players.html,2007,#a78bfa,--layer-through,"light,dark",blocked entry in shot map legend
+dashboard/players.html,1687,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map; was --layer-through
+dashboard/players.html,1688,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot, which read as 'shot' on a challenge
+dashboard/players.html,1688,#22d3ee,--layer-save,"light,dark",save in defensive action map; was --layer-receipt, which read as 'receipt' on a shot block
+dashboard/players.html,2004,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map; was --layer-through
+dashboard/players.html,2007,#a78bfa,--layer-blocked,"light,dark",blocked entry in shot map legend; was --layer-through
+dashboard/teams.html,27,"rgba(239,1,7,.07)",--accent-veil,light,page :root accent tint
+dashboard/teams.html,27,"rgba(239,1,7,.18)",--accent-edge,light,page :root accent edge
+dashboard/teams.html,27,#16a34a,--rank-top,light,percentile ramp 80+
+dashboard/teams.html,27,#4ade80,--rank-high,light,percentile ramp 60+
+dashboard/teams.html,27,#d4a017,--rank-mid,light,percentile ramp 40+
+dashboard/teams.html,27,#f97316,--rank-low,light,percentile ramp 20+
+dashboard/teams.html,27,#dc2626,--rank-bottom,light,percentile ramp below 20
+dashboard/teams.html,27,#2563eb,--style-axis-hi,light,style axis high pole
+dashboard/teams.html,27,#d97706,--style-axis-low,light,style axis low pole
+dashboard/teams.html,27,"0 1px 3px rgba(0,0,0,.07)",--elevation-1,light,card elevation
+dashboard/teams.html,30,#D8B384,--accent-base,dark,accent
+dashboard/teams.html,30,"rgba(216,179,132,.12)",--accent-veil,dark,accent tint; bare-decimal alpha, matched via the widened norm()
+dashboard/teams.html,30,"rgba(216,179,132,.28)",--accent-edge,dark,accent edge; bare-decimal alpha
+dashboard/teams.html,30,#101319,--ground,dark,page canvas
+dashboard/teams.html,30,#191d25,--surface-raised,dark,raised surface
+dashboard/teams.html,30,#222732,--surface-recessed,dark,recessed surface
+dashboard/teams.html,30,"rgba(255,255,255,.035)",--surface-veil,dark,translucent veil; bare-decimal alpha
+dashboard/teams.html,30,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stronger veil; bare-decimal alpha
+dashboard/teams.html,30,#f4f6fb,--ink-primary,dark,primary text
+dashboard/teams.html,30,#c3cde2,--ink-secondary,dark,secondary text
+dashboard/teams.html,30,#9aa7c2,--ink-tertiary,dark,label text
+dashboard/teams.html,30,#34d399,--rank-top,dark,percentile ramp 80+
+dashboard/teams.html,30,#6ee7a8,--rank-high,dark,percentile ramp 60+
+dashboard/teams.html,30,#fbbf24,--rank-mid,dark,percentile ramp 40+
+dashboard/teams.html,30,#fb923c,--rank-low,dark,percentile ramp 20+
+dashboard/teams.html,30,#f87171,--rank-bottom,dark,percentile ramp below 20
+dashboard/teams.html,30,#60a5fa,--style-axis-hi,dark,style axis high pole
+dashboard/teams.html,30,#fbbf24,--style-axis-low,dark,style axis low pole
+dashboard/teams.html,30,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation; bare-decimal alpha
+dashboard/teams.html,39,#12141a,--ink-on-accent,"light,dark",logo glyph on the accent chip
+dashboard/teams.html,141,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; bare-decimal alpha
+dashboard/teams.html,173,#0d0f14,--ink-on-state,"light,dark",W/D/L badge ink on a result-coloured chip; new role token, distinct from --ink-on-accent and --label-on-fill
+dashboard/teams.html,255,#22e39a,--series-ok,"light,dark",TPAL.ok; TPAL duplicated players.html PAL exactly
+dashboard/teams.html,255,#ff5a5a,--series-fail,"light,dark",TPAL.fail
+dashboard/teams.html,255,#22e39a,--series-pass,"light,dark",TPAL.pass
+dashboard/teams.html,255,#4d9fff,--series-prog,"light,dark",TPAL.prog
+dashboard/teams.html,255,#ffc93c,--series-carry,"light,dark",TPAL.carry
+dashboard/teams.html,255,#f0a5ff,--series-box,"light,dark",TPAL.box
+dashboard/teams.html,734,#a78bfa,--layer-blocked,"light,dark",blocked shot in the outcome legend
+dashboard/teams.html,873,"rgba(245,166,35,.12)",--heat-legend-low,"light,dark",heat legend gradient low stop; a separate ramp from match.html densityRGB
+dashboard/teams.html,873,#f5a623,--heat-legend-high,"light,dark",heat legend gradient high stop
+dashboard/teams.html,903,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map
+dashboard/teams.html,903,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map
+dashboard/teams.html,927,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map
