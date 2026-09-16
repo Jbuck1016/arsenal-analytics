@@ -29,16 +29,30 @@
    rendered as inherited body type. They resolve now.
 --------------------------------------------------------------------------- */
 
+/* THREE FACES, ONE JOB EACH. The audit found six across the live surfaces --
+   Archivo, DM Mono, IBM Plex Mono, IBM Plex Sans Condensed, Inter, JetBrains
+   Mono and Newsreader -- which is what happens when every page picks its own.
+   All three survivors were already in the build; nothing new is loaded.
+
+   --f-display  A SERIF, for panel titles and large figures. This was Archivo,
+                a grotesque, which made a panel title look like a louder label
+                rather than a different kind of thing. Newsreader is what the
+                reading pages already set their prose in.
+   --f-body     The sans, for data and body copy.
+   --f-mono     For ALL CHROME -- nav, tabs, controls, filter labels, column
+                headers, buttons, status text -- and for tabular numerals. */
 :root{
-  --f-display:'Archivo','Inter',system-ui,sans-serif;
+  --f-display:'Newsreader',Georgia,'Times New Roman',serif;
   --f-body:'Inter',system-ui,sans-serif;
   --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
 
   /* Spelling aliases. The pages were written with two other names for the same
-     two stacks; they alias here rather than being renamed across several
-     hundred rules, so there is still one source of truth for the values. */
+     stacks; they alias here rather than being renamed across several hundred
+     rules, so there is still one source of truth for the values. --f-serif is
+     the name the reading pages use for the same face --f-display now carries. */
   --f-disp:var(--f-display);
   --f-data:var(--f-mono);
+  --f-serif:var(--f-display);
 }
 
 html:not(.dark){

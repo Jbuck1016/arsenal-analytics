@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Team Profiles</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="theme.js"></script>
@@ -119,6 +119,33 @@ select option,.sel option{background:var(--bg2);color:var(--text)}
 .kpi-go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .kpi-go .kpi-l::after{content:' \2192';font-weight:800;opacity:.45}
 .kpi-go:hover .kpi-l::after,.kpi-go:focus-visible .kpi-l::after{opacity:1}
+/* =====================================================================
+   THE DATA PANEL, AND WHERE CHROME STOPS.
+
+   A panel gets the editorial treatment: cream ground, a serif title over a
+   clean sans for the figures, generous whitespace, one accent per entity,
+   restrained labelling, and a footer legend that explains every glyph.
+   Nothing glows, nothing is bracketed, nothing has a gradient.
+
+   THE BOUNDARY IS THE PANEL EDGE, with the carve-out that decides the real
+   cases: an element inside a panel that ORIENTS rather than informs is
+   chrome. Column headers, the role badge, the result counter and the legend
+   row take the terminal treatment even though they sit inside the table,
+   because each one tells you how to read the values rather than telling you
+   anything. The values themselves are editorial. A reader who wants the
+   number should never be reading it in the same voice as the word above it.
+   ===================================================================== */
+.sect{padding:20px 22px}
+.viz-eyebrow{font:600 8px/1 var(--f-mono);letter-spacing:.2em}
+.viz-title{font:600 21px/1.2 var(--f-display);letter-spacing:-.005em;margin-bottom:7px}
+.viz-sub{font:400 12.5px/1.6 var(--f-body);margin-bottom:12px}
+/* Chrome inside the panel: the section header and the footer legend. */
+.sect-h{font:600 9.5px/1.2 var(--f-mono);letter-spacing:.16em}
+.foot{font:500 9.5px/1.7 var(--f-mono);letter-spacing:.04em;margin-top:16px;
+  padding-top:11px;border-top:1px solid var(--border)}
+.viz-leg{font:500 9.5px/1 var(--f-mono);letter-spacing:.06em;margin-top:11px;padding-top:11px}
+
+
 @media (prefers-reduced-motion:reduce){.row-go,.kpi-go{transition:none}}
 .row-val{font:500 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
@@ -570,7 +597,7 @@ function renderLeagueMap(){
      so the hierarchy is grid, then reference, then data. */
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--text3)" stroke-opacity="0.8" stroke-dasharray="5 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--text3)" stroke-opacity="0.8" stroke-dasharray="5 4"/>';
-  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--text3)" font-size="9" font-weight="700" font-family="Inter">display median</text>';
+  s+='<text x="'+(SX(mx)+5)+'" y="'+(MT+11)+'" fill="var(--text3)" font-size="9" font-weight="700" font-family="Inter, system-ui, sans-serif">display median</text>';
   if(LM.x==='ppda'&&LM.y==='field_tilt'){
     const q=function(x,y,t,a){s+='<text x="'+x+'" y="'+y+'" text-anchor="'+a+'" fill="var(--text3)" font-size="9" font-weight="700" opacity=".72">'+t+'</text>'};
     q(ML+8,MT+14,'HIGH PRESS + TERRITORY','start'); q(W-MR-8,MT+14,'TERRITORY, LOWER PRESS','end');
@@ -591,10 +618,10 @@ function renderLeagueMap(){
        '" fill-opacity="'+(on?1:.55)+'"/>';
     if(labelled[p.team])s+='<text x="'+(right?cx+11:cx-11)+'" y="'+(cy+4)+'" fill="'+(on?'var(--accent)':'var(--text3)')+
        '" font-size="'+(on?12:10)+'" font-weight="'+(on?800:500)+'" text-anchor="'+(right?'start':'end')+
-       '" font-family="Inter">'+esc(tname(p.team))+'</text>';
+       '" font-family="Inter, system-ui, sans-serif">'+esc(tname(p.team))+'</text>';
   });
-  s+='<text x="'+(W/2)+'" y="'+(H-8)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dx.label||'')+'</text>';
-  s+='<text transform="translate(14,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">'+esc(dy.label||'')+'</text>';
+  s+='<text x="'+(W/2)+'" y="'+(H-8)+'" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, sans-serif">'+esc(dx.label||'')+'</text>';
+  s+='<text transform="translate(14,'+(H/2)+') rotate(-90)" fill="var(--text2)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, sans-serif">'+esc(dy.label||'')+'</text>';
   s+='</svg>';
   document.getElementById('main').innerHTML=
     '<div class="sect" style="margin-bottom:12px"><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
@@ -1090,7 +1117,7 @@ function laneViz(t){
     inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+1.2)+'" fill="var(--text)" font-size="4.6" font-weight="800" '+
            'text-anchor="middle" font-family="JetBrains Mono,monospace">'+b.v.toFixed(1)+'%</text>';
     inner+='<text x="'+PX(76)+'" y="'+(PY((b.y0+b.y1)/2)+6.2)+'" fill="var(--text3)" font-size="2.6" font-weight="700" '+
-           'text-anchor="middle" letter-spacing="0.4" font-family="Inter">'+b.lbl.toUpperCase()+'</text>';
+           'text-anchor="middle" letter-spacing="0.4" font-family="Inter, system-ui, sans-serif">'+b.lbl.toUpperCase()+'</text>';
   });
   const domi=l>c&&l>r?'down the left':(r>c&&r>l?'down the right':'through the middle');
   return pitchWrap('Which side they attack the final third',
@@ -1139,9 +1166,9 @@ function renderRankings(){
     const y=MT+i*BH,xv=VX(r.value),x=Math.min(xzero,xv),w=Math.max(2,Math.abs(xv-xzero));
     const c=tier(r.pct).c,on=r.team===SEL;
     sv+='<text x="'+(ML-9)+'" y="'+(y+14)+'" fill="'+(on?'var(--accent)':'var(--text2)')+'" font-size="11" font-weight="'+(on?800:600)+
-        '" text-anchor="end" font-family="Inter">'+esc(tname(r.team))+'</text>';
+        '" text-anchor="end" font-family="Inter, system-ui, sans-serif">'+esc(tname(r.team))+'</text>';
     sv+='<rect x="'+x+'" y="'+(y+4)+'" width="'+w+'" height="14" rx="3" fill="'+c+'" fill-opacity="'+(on?0.98:0.7)+'"/>';
-    sv+='<text x="'+(r.value<0?x-8:x+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" text-anchor="'+(r.value<0?'end':'start')+'" font-family="Inter">'+
+    sv+='<text x="'+(r.value<0?x-8:x+w+8)+'" y="'+(y+15)+'" fill="'+c+'" font-size="10.5" font-weight="700" text-anchor="'+(r.value<0?'end':'start')+'" font-family="Inter, system-ui, sans-serif">'+
         fmt(r.value,d.unit)+'</text>';
     sv+='<text x="'+(ML-9-0)+'" y="'+(y+14)+'" opacity="0"></text>';
   });

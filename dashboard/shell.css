@@ -18,6 +18,19 @@
    also links.
 --------------------------------------------------------------------------- */
 
+/* =====================================================================
+   CHROME IS A TERMINAL. Everything in this file is chrome -- the header
+   strip, the tab bar, the nav menu, the league picker, the header actions --
+   and chrome reads as a terminal: monospace, uppercase, tight tracking,
+   bracketed tokens, SCREAMING_UNDERSCORE labels where they read naturally.
+
+   The panel edge is the boundary. Inside a data panel the values take the
+   editorial treatment and are set in the serif and the sans; what does not
+   cross that line is anything that ORIENTS rather than informs, which is why
+   a column header, a role badge, the result counter and the legend row are
+   chrome even though they sit inside the table. See PHASE3_REPORT.md.
+   ===================================================================== */
+
 /* Header bar.
    match.html runs a wider gap and sits above a higher stacking context, so it
    overrides gap and z-index inline. */
@@ -33,8 +46,9 @@
    sequences.html declared no --f-display and a bare var() made the whole font
    shorthand invalid. theme.css defines the font tokens for every page now, so
    the token is the single source of truth again. */
-.hdr-title{font:800 15px/1 var(--f-display);letter-spacing:-.015em}
-.hdr-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.hdr-title{font:700 13px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.hdr-sub{font:500 9.5px/1 var(--f-mono);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--text3);margin-top:4px}
 .hdr-row{display:flex;align-items:center;gap:8px;margin-top:3px}
 
 /* Identity group, players.html and teams.html only.
@@ -52,14 +66,14 @@
    desktop, because the old three-line wrap is what forced the header taller
    than its 52px. */
 .hdr-id .hdr-row .hdr-sub{margin-top:0;white-space:nowrap;color:var(--text3);
-  font:600 10.5px/1.35 var(--f-body);letter-spacing:.005em}
+  font:500 9.5px/1.35 var(--f-mono);letter-spacing:.11em;text-transform:uppercase}
 
 /* Inside the chip the select drops its own box: one border around the group
    reads as one control, nested borders read as two. Hover and keyboard focus
    still give it an edge, and the native menu marker keeps it obviously a
    control. Border width is kept, only the colour goes, so hover shifts nothing. */
 .hdr-id .hdr-row .lgpick select{background:transparent;border-color:transparent;color:var(--text);
-  padding:1px 2px;font:700 10.5px/1.35 var(--f-body)}
+  padding:1px 2px;font:600 10px/1.35 var(--f-mono);letter-spacing:.05em}
 .hdr-id .hdr-row .lgpick select:hover{background:var(--bg2);border-color:var(--border2)}
 
 /* Right-hand action cluster. match.html runs a wider gap, set inline. */
@@ -71,7 +85,7 @@
    match.html has no .lnk in its header, so none of this reaches it. */
 .hdr-right .lnk{display:inline-flex;align-items:center;gap:5px;
   background:transparent;border:1px solid var(--border);color:var(--text2);
-  font:600 10.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.02em;
+  font:600 9.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
   padding:7px 11px;border-radius:7px;text-decoration:none;white-space:nowrap;cursor:pointer;
   transition:color .15s,background-color .15s,border-color .15s}
 .hdr-right .lnk:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
@@ -84,7 +98,7 @@
    is always readable. The old 150px cap cut "Premier League (20 available)"
    mid-word. */
 .lgpick select{background:var(--bg);color:var(--text);border:1px solid var(--select-edge);
-  border-radius:6px;padding:3px 7px;font:700 10px/1.3 inherit;cursor:pointer;
+  border-radius:6px;padding:3px 7px;font:600 10px/1.3 var(--f-mono);letter-spacing:.04em;cursor:pointer;
   max-width:none;width:auto;min-width:0;text-overflow:clip;
   /* field-sizing tracks the option actually selected, so the control is only as
      wide as the label it is showing. Where it is not supported, width:auto falls
@@ -119,11 +133,18 @@
     linear-gradient(to right,color-mix(in srgb,var(--text3) 55%,transparent),rgba(0,0,0,0)),
     linear-gradient(to left,color-mix(in srgb,var(--text3) 55%,transparent),rgba(0,0,0,0));
   background-position:left center,right center;background-size:26px 100%,26px 100%}
-.tab{background:none;border:none;color:var(--text3);font:600 12px/1 'Inter';padding:7px 15px;border-radius:6px;cursor:pointer;
+.tab{background:none;border:none;color:var(--text3);font:500 10.5px/1 var(--f-mono);
+  letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;
   white-space:nowrap;transition:color .15s,background-color .15s}
 .tab:hover{color:var(--text);background:var(--surface2)}
 /* Active tab carries weight and a filled chip, not colour alone. */
-.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow);font-weight:800}
+/* THE ACTIVE TAB IS BRACKETED, not merely bolder. A terminal marks its
+   selection with a token rather than a weight, and a bracket survives being
+   printed, screenshotted or read by someone who cannot see the background
+   change. The brackets are generated, so they never reach the accessible name. */
+.tab.on{color:var(--text);background:var(--bg3);box-shadow:var(--shadow);font-weight:700}
+.tab.on::before{content:'[';margin-right:2px;color:var(--accent)}
+.tab.on::after{content:']';margin-left:2px;color:var(--accent)}
 .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Cross-page nav links inside the tab bar. Left in place for any page that
@@ -157,10 +178,13 @@
      what each theme rendered before. */
   box-shadow:var(--elevation-panel)}
 .navmenu-panel.open{display:block}
-.navmenu-h{font:700 8.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;
+/* A section header in the nav is prefixed // , which is the one place the
+   terminal language says "this is a heading, not an item" without a rule. */
+.navmenu-h::before{content:'// '}
+.navmenu-h{font:600 8.5px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;
   color:var(--text3);padding:8px 9px 6px}
 .navmenu-panel a{display:block;padding:7px 9px;border-radius:6px;text-decoration:none;color:var(--text2);
-  font:600 11.5px/1.2 'Inter',system-ui,sans-serif;white-space:nowrap;
+  font:500 11px/1.2 var(--f-mono);letter-spacing:.04em;white-space:nowrap;
   transition:color .15s,background-color .15s}
 .navmenu-panel a:hover{background:var(--surface2);color:var(--text)}
 .navmenu-panel a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Football Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="theme.js"></script>
 <link rel="stylesheet" href="shell.css">
@@ -2728,13 +2728,13 @@ function _expHeaderPass(ctx,W,cfg,T,draw){
   const nameMax=inner-keyW-keyGap-probe.w-Math.round(T.gap*1.6);
   let nameFs=T.title;
   for(;;){
-    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.font='800 '+nameFs+'px Inter,system-ui,sans-serif';
     if(ctx.measureText(name).width<=nameMax||nameFs<=Math.round(T.title*0.6))break;
     nameFs=Math.round(nameFs*0.95);
   }
   const nameTop=cy-nameFs;
   if(draw){
-    ctx.font='800 '+nameFs+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.font='800 '+nameFs+'px Inter,system-ui,sans-serif';
     ctx.fillStyle=EXP_TEXT;ctx.fillText(name,nameX,cy);
     ctx.fillStyle=tc;ctx.fillRect(padX,Math.round(nameTop+nameFs*0.08),keyW,Math.round(nameFs*0.92));
   }
@@ -2806,7 +2806,7 @@ function _drawStatsBand(ctx,x,y,w,h,cfg,T){
   stats.forEach(function(s,i){
     const cx=x+colW*i+colW/2;
     if(i){ctx.fillStyle=EXP_RULE;ctx.fillRect(Math.round(x+colW*i),y+Math.round(h*0.24),1,Math.round(h*0.52));}
-    ctx.fillStyle=EXP_TEXT;ctx.font='800 '+T.statV+'px Archivo,Inter,system-ui,sans-serif';
+    ctx.fillStyle=EXP_TEXT;ctx.font='800 '+T.statV+'px Inter,system-ui,sans-serif';
     ctx.fillText(_expCopy(s.value),cx,y+Math.round(h*0.6));
     ctx.fillStyle=EXP_LABEL;ctx.font='700 '+T.statL+'px Inter,system-ui,sans-serif';
     ctx.textAlign='left';
