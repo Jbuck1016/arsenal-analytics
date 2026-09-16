@@ -123,7 +123,15 @@ def _blocks_from(css: str) -> list[tuple[str, dict[str, str]]]:
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     out = []
     for m in BLOCK.finditer(css):
-        decls = {n: v.strip() for n, v in DECL.findall(m.group("body"))}
+        # The final declaration in a block is legal without a trailing
+        # semicolon, and DECL requires one, so it was being dropped -- silently,
+        # everywhere. teams.html ends both its palette blocks with --shadow, so
+        # --shadow was invisible to this gate in both themes while the ledger
+        # row naming --elevation-1 passed by reading tokens.css instead.
+        body = m.group("body").strip()
+        if body and not body.endswith(";"):
+            body += ";"
+        decls = {n: v.strip() for n, v in DECL.findall(body)}
         if not decls:
             continue
         for arm in m.group("sel").split(","):
@@ -346,6 +354,11 @@ def _selftest() -> list[str]:
         bad.append(f"selector list not split into arms: {[s for s, _ in arms]}")
     elif any(d.get("--x") != "1" for _, d in arms):
         bad.append("selector list arms lost their declarations")
+    # The last declaration in a block needs no trailing semicolon. Both forms
+    # must parse, and the value must not swallow the closing brace.
+    last = dict(_blocks_from(":root{--a:1;--shadow:0 1px 3px rgba(0,0,0,.07)}"))
+    if last.get(":root", {}).get("--shadow") != "0 1px 3px rgba(0,0,0,.07)":
+        bad.append(f"unterminated last declaration mis-parsed: {last}")
     return bad
 
 

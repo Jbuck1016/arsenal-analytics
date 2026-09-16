@@ -2,4 +2,3 @@ file,token,themes,value,why
 dashboard/index.html,--amber,light,#9a6f2a,page amber predates the family amber #9c6b1e
 dashboard/index.html,--amber-dim,light,"rgba(154,111,42,.09)",as --amber
 dashboard/index.html,--amber-line,light,"rgba(154,111,42,.34)",as --amber
-dashboard/search.html,--bg2,dark,#191d25,select background reads the app raised surface not the doc one

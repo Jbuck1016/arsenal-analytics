@@ -27,16 +27,7 @@ html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);
   --text:var(--ink-primary);--dim:var(--ink-secondary);--dim2:var(--ink-tertiary);
-  --amber:var(--accent-base);--amber-dim:var(--accent-veil);--amber-line:var(--accent-edge);
   --green:var(--state-positive);
-  /* --bg2 STAYS LITERAL. The select rule below reads var(--bg2,var(--panel,...))
-     and --bg2 is not part of this page's vocabulary: it resolves through the
-     :root alias to the APP family's raised surface, #191d25, while --panel two
-     lines up is #161b24. The page paints two different raised surfaces in dark
-     today and the fallback never fires. fam-doc would collapse them to #161b24,
-     which is what the author plainly meant and is still a visual change, so it
-     waits for Phase 3. Recorded in deliberate-skips.csv. */
-  --bg2:#191d25;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);

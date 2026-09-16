@@ -319,10 +319,12 @@ html:not(.dark).fam-doc{
   --accent-veil:rgba(156,107,30,.10);
   --accent-edge:rgba(156,107,30,.32);
   --series-link:#2f6aa8;
-  --amber:var(--accent-base);
-  --amber-dim:var(--accent-veil);
-  --amber-line:var(--accent-edge);
-  --blue:var(--series-link);
+  /* The --amber, --blue and tint aliases used to live here. They are theme
+     independent, like every other alias, so they now sit in the :root block at
+     the bottom of this file. Declared here they existed in light and simply
+     did not exist in dark, which forced each of the five document pages to
+     redeclare --amber:var(--accent-base) in its own dark block -- five copies
+     of an alias, to work around this block being the wrong home for one. */
 }
 html.dark.fam-doc{
   --ground:#0e1219;
@@ -425,6 +427,14 @@ html.dark.fam-lab{
   --dim:var(--ink-secondary);
   --dim2:var(--ink-tertiary);
   --red:var(--state-negative);
+  /* The document pages' accent vocabulary. Theme independent like the rest:
+     --accent-base is redefined per theme and per family above, so one
+     declaration serves both modes. On an app page --amber resolves to the
+     brand red and --blue to nothing, because no app page reads either. */
+  --amber:var(--accent-base);
+  --amber-dim:var(--accent-veil);
+  --amber-line:var(--accent-edge);
+  --blue:var(--series-link);
 }
 
 /* ===== GATE ======================================================== */

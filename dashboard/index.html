@@ -20,15 +20,16 @@
    spellings, so pointing them at --accent-base would change what renders and
    Phase 1 forbids that. Recorded in deliberate-skips.csv for Phase 3.
 
-   The selector is html:not(.dark).fam-doc and not :root because it has to win.
-   tokens.css declares --amber:var(--accent-base) at html:not(.dark).fam-doc
-   (0,2,1), which outranks a page :root (0,1,0); keeping these on :root would
-   have silently handed the page the family's amber. Equal specificity plus
-   later source order is what preserves them.
+   :root is enough to hold them. tokens.css declares --amber:var(--accent-base)
+   among the aliases at :root, so a page's own :root wins on later source order
+   at equal specificity: the alias layer fills gaps and does not overrule a
+   page. It was not always so -- the aliases sat in the fam-doc light scope at
+   (0,2,1) and did swallow these three, which is why pinned.csv asserts they
+   still resolve to the values below.
 
    --blue is gone rather than tokenised: this page declared #2f6fd0 and read it
    nowhere. Deleting a declaration nothing resolves cannot change a pixel. */
-html:not(.dark).fam-doc{
+:root{
   --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
 }
 html.dark{

@@ -151,7 +151,21 @@ dashboard/search.html,28,#3a4351,--border-strong,dark,strong rule
 dashboard/search.html,29,#f2f5fa,--ink-primary,dark,primary text
 dashboard/search.html,29,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/search.html,29,#8b98ab,--ink-tertiary,dark,tertiary text
-dashboard/search.html,30,#e2b877,--accent-base,dark,document-family amber accent
-dashboard/search.html,30,"rgba(226,184,119,.10)",--accent-veil,dark,amber tint fill
-dashboard/search.html,30,"rgba(226,184,119,.32)",--accent-edge,dark,amber tint border
-dashboard/search.html,31,#3ddc97,--state-positive,dark,positive state
+dashboard/search.html,26,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
+dashboard/search.html,26,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
+dashboard/search.html,26,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/search.html,30,#3ddc97,--state-positive,dark,positive state
+dashboard/glossary.html,14,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
+dashboard/glossary.html,14,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
+dashboard/glossary.html,14,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/glossary.html,19,#0e1219,--ground,dark,page canvas
+dashboard/glossary.html,19,#161b24,--surface-raised,dark,raised surface
+dashboard/glossary.html,19,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/glossary.html,20,#272e3a,--border-hairline,dark,hairline rule
+dashboard/glossary.html,20,#3a4351,--border-strong,dark,strong rule
+dashboard/glossary.html,21,#f2f5fa,--ink-primary,dark,primary text
+dashboard/glossary.html,21,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/glossary.html,21,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/glossary.html,18,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
+dashboard/glossary.html,18,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
+dashboard/glossary.html,18,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
