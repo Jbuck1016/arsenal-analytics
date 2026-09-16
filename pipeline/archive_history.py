@@ -280,6 +280,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--season", default="2526")
     parser.add_argument("--league", action="append", dest="leagues")
     parser.add_argument("--max-matches", type=int, default=0)
+    parser.add_argument(
+        "--source-game-id",
+        action="append",
+        dest="source_game_ids",
+        help=(
+            "Restrict the run to an exact cached WhoScored game id. Repeat the "
+            "option to archive a bounded set of matches."
+        ),
+    )
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--cache-root", type=Path)
     return parser
@@ -294,6 +303,15 @@ def main() -> int:
         item for item in iter_cache_files(root, args.season, leagues)
         if item[1].stem not in excluded
     ]
+    if args.source_game_ids:
+        requested = {str(value) for value in args.source_game_ids}
+        files = [item for item in files if item[1].stem in requested]
+        found = {path.stem for _, path in files}
+        missing = sorted(requested - found)
+        if missing:
+            raise RuntimeError(
+                f"requested source game ids are not present in the cache: {missing}"
+            )
     if args.max_matches > 0:
         files = files[: args.max_matches]
     print(
