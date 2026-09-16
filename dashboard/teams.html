@@ -194,6 +194,51 @@ tbody tr:nth-child(n+4) .pname-link{color:var(--text2)}
 /* The role badge is chrome: it orients, it does not inform. */
 .badge{font:600 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
 
+/* =====================================================================
+   THE EXPORT SHEET. This is what leaves the building, so it gets the most
+   care of anything in the phase.
+
+   ALWAYS LIGHT, and PANEL CONTENT ONLY -- both already true, and both still
+   true. What is new is that the sheet has a voice instead of inheriting the
+   workspace's. Chrome is a terminal because a workspace is a tool; a sheet
+   going into a report is not, and mono uppercase column headers on a printed
+   table read as a machine dump rather than as a table someone made. So the
+   terminal treatment stops at the edge of the export stage: everything
+   inside it is editorial.
+
+   GENEROUS MARGINS, because the one thing a screenshot of a panel never has
+   is room around it, and that is most of what makes it look pasted in.
+
+   The title is the serif at display size, the subtitle names the population
+   in the body sans, the legend explains every glyph, and the as-of date sits
+   under a rule at the foot -- a chart without a date is not evidence of
+   anything.
+   ===================================================================== */
+.export-stage{padding:52px 56px 40px;gap:26px}
+.export-stage .sect{box-shadow:none;border-radius:0;border:0;padding:0}
+.export-stage .viz-title{font:600 27px/1.2 var(--f-display);letter-spacing:-.01em;margin-bottom:9px}
+.export-stage .viz-sub{font:400 13.5px/1.65 var(--f-body);color:var(--text2);margin-bottom:18px}
+
+/* CHROME REVERTS TO EDITORIAL INSIDE THE SHEET. These four are the carve-out
+   from section 2 -- column headers, the role badge, the section header and
+   the legend row -- which are chrome in the workspace because they orient
+   rather than inform. On a sheet there is nothing to orient within: the
+   reader is looking at one table, not navigating a tool. */
+.export-stage th{font:600 9.5px/1 var(--f-body);letter-spacing:.1em;color:var(--text3)}
+.export-stage .badge{font:600 9px/1 var(--f-body);letter-spacing:.06em}
+.export-stage .sect-h{font:600 11px/1.2 var(--f-body);letter-spacing:.1em}
+.export-stage .viz-leg{font:500 10.5px/1.5 var(--f-body);letter-spacing:.01em}
+.export-stage .foot{font:400 10px/1.65 var(--f-body);letter-spacing:0;color:var(--text3)}
+.export-stage .viz-eyebrow{font:600 8.5px/1 var(--f-body);letter-spacing:.2em}
+
+/* No chrome reaches the sheet at all: the export buttons live in the panel
+   head, and a cloned panel brings them with it. */
+.export-stage .viz-exp{display:none}
+
+/* The as-of line, under a rule, in the sheet's own voice. */
+.export-cap{font:400 10.5px/1.6 var(--f-body);color:var(--text3);letter-spacing:.01em;
+  border-top:1px solid var(--border);padding-top:14px;margin-top:8px}
+
 @media (prefers-reduced-motion:reduce){.row-go,.kpi-go{transition:none}}
 .row-val{font:500 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bar{height:9px;background:var(--surface2);border-radius:5px;overflow:hidden}
