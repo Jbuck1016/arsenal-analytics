@@ -342,6 +342,54 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   padding-top:11px;border-top:1px solid var(--border)}
 .viz-leg{font:500 9.5px/1 var(--f-mono);letter-spacing:.06em;margin-top:11px;padding-top:11px}
 
+/* =====================================================================
+   RANK HIERARCHY. Colour was never what was wrong with this table.
+
+   1. EVERY ROW CARRIED IDENTICAL WEIGHT, so rank 1 read exactly like rank 25
+      and the eye had nothing to land on first. The top three now take a
+      heavier name, a larger value and full-strength ink; everything from
+      four down steps back one rung. The ordinal itself is set in the serif
+      at display size for the leaders, which is the one place a number on
+      this page is allowed to behave like a headline.
+
+   2. THE BAR CARRIED THE MAIN COMPARISON AT 9px AND LOW CONTRAST. It is the
+      widest column and the only thing in the row you can read at a glance
+      across twenty-five rows, so it is what the eye should land on: 16px,
+      squared off rather than pill-rounded so its length is readable against
+      its neighbours, and on a track with a real edge.
+
+   3. SPACING WAS EVEN, so there was no anchor and no grouping. IDENTITY --
+      rank, player, team, role -- is separated from MEASUREMENT -- 90s,
+      value, bar, percentile -- by a rule and a wider gutter. Four columns
+      that say who, four that say how much.
+   ===================================================================== */
+table{font:500 12px/1.45 var(--f-body)}
+th{font:600 8.5px/1 var(--f-mono);letter-spacing:.16em;padding:10px 10px}
+td{padding:10px 10px;border-bottom:1px solid var(--border)}
+
+/* The identity/measurement seam. nth-child(4) is the role column, the last of
+   the identity group; the rule hangs on its right edge in both head and body
+   so it runs the full height of the table. */
+th:nth-child(4),td:nth-child(4){border-right:1px solid var(--border);padding-right:16px}
+th:nth-child(5),td:nth-child(5){padding-left:16px}
+
+/* The leaders. :nth-child is on the row rather than a class so it survives
+   every re-sort without the renderer having to know about it. */
+tbody tr:nth-child(-n+3) td{padding-top:12px;padding-bottom:12px}
+tbody tr:nth-child(-n+3) td:first-child{font:600 17px/1 var(--f-display);color:var(--text)}
+tbody tr:nth-child(-n+3) .pname-link{font-weight:700;font-size:13.5px}
+tbody tr:nth-child(-n+3) td:nth-child(6){font-size:13.5px}
+tbody tr:nth-child(n+4) td:first-child{color:var(--text3)}
+tbody tr:nth-child(n+4) .pname-link{color:var(--text2)}
+
+/* The bar, which is the column the comparison actually lives in. */
+.rankbar{height:16px;border-radius:2px;background:var(--surface2);
+  border:1px solid var(--border)}
+.rankbar-f{border-radius:1px}
+.rankbar-zero{width:1px;background:var(--text2);opacity:1;z-index:1}
+
+/* The role badge is chrome: it orients, it does not inform. */
+.badge{font:600 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase}
 
 @media(max-width:620px){.studio-intro{grid-template-columns:1fr}.pizza-read{grid-template-columns:1fr}.grid{grid-template-columns:minmax(0,1fr)}.sect{min-width:0}.row{grid-template-columns:minmax(112px,1fr) 54px minmax(70px,1fr) 28px;gap:7px}.drill-wrap{padding:8px}.drill-card{padding:16px 12px}.profile-brief,.event-filters{grid-template-columns:1fr}.event-filters .wide{grid-column:auto}.role-glyph{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
