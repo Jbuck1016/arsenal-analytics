@@ -2,3 +2,5 @@ file,token,themes,value,why
 dashboard/index.html,--amber,light,#9a6f2a,page amber predates the family amber #9c6b1e
 dashboard/index.html,--amber-dim,light,"rgba(154,111,42,.09)",as --amber
 dashboard/index.html,--amber-line,light,"rgba(154,111,42,.34)",as --amber
+dashboard/insights.html,--amber-line,light,"rgba(156,107,30,.30)",page tint border predates the family .32
+dashboard/insights.html,--amber-line,dark,"rgba(226,184,119,.32)",the light pin above also matches in dark and must not leak there

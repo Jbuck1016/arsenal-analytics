@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark fam-doc">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,33 +10,50 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Light palette and font tokens are in theme.css, under both name sets. What
-   is left is this page's own accent tints, its amber family, and the hues
-   theme.css does not carry. The light accent itself is now the shared brand
-   accent, so the tints move with it. */
+/* THIS PAGE IS TWO PALETTES AND PHASE 1 CANNOT MERGE THEM.
+   In light it is a document page: its accent is the document amber #9c6b1e,
+   and here --accent is data ink rather than chrome -- seqTrace() paints every
+   pass arrow with it, so the brand red would read as a signal. In dark it is
+   an app page: the second html.dark block below is the app palette, ground
+   #101319 and accent #D8B384, and being later at equal specificity it beats
+   the document values in the first block outright.
+   <html> carries fam-doc, which is what the light surface is. The dark app
+   values therefore have no token to point at and stay literal; every one is
+   in deliberate-skips.csv, and reconciling the two palettes is Phase 3's.
+
+   Deleted rather than tokenised: --amber, --amber-dim and --amber-line, which
+   the :root aliases now supply in both themes from --accent-base; --blue,
+   --green, --red, --dim2, --elite and the rest of the percentile names that
+   this page declares and never reads; and html:not(.dark){--accent:#9c6b1e},
+   which is exactly what fam-doc resolves --accent to in light. */
 :root{
-  --amber:#9c6b1e;--amber-dim:rgba(156,107,30,.10);--amber-line:rgba(156,107,30,.32);
-  --blue:#2f6aa8;
-  --accent-dim:rgba(156,107,30,.10);--accent-glow:rgba(156,107,30,.28);
-  --shadow:0 1px 3px rgba(42,37,28,.12);--nb:#2f6aa8;
+  --accent-dim:var(--accent-veil);
+  /* .28 where the document family carries .32. A different colour, not a
+     different spelling; recorded for Phase 3. */
+  --accent-glow:rgba(156,107,30,.28);
+  /* Light shadow: rgba(42,37,28,.12) where --elevation-1 is rgba(0,0,0,0.07).
+     A warm shadow tuned for this page's paper. Recorded for Phase 3. */
+  --shadow:0 1px 3px rgba(42,37,28,.12);
+  --nb:var(--series-link);
 }
-/* The one token this page has to hold back from theme.css. Here --accent is
-   data ink, not chrome: seqTrace() paints every pass arrow with it. Taking the
-   shared brand accent turned all 12 sequence plots red, and it would have read
-   as a signal rather than as the neutral trace colour it is. Canvas, surfaces,
-   lines and text still come from theme.css. */
-html:not(.dark){--accent:#9c6b1e}
+/* First dark block. --bg:#0e1219 and --text:#f2f5fa used to live here and are
+   GONE, not tokenised: the second html.dark block below redeclares both at the
+   same specificity and later in source, so neither has ever been painted.
+   Writing them into tokens.css would have put values the browser discards into
+   the file whose purpose is to be the source of truth. */
 html.dark{
-  --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
-  --line:#272e3a;--line2:#3a4351;
-  --text:#f2f5fa;--dim:#b6c2d4;--dim2:#8b98ab;
-  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
-  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+  --panel:var(--surface-raised);--panel2:var(--surface-recessed);
+  --line:var(--border-hairline);--line2:var(--border-strong);
+  --dim:var(--ink-secondary);
 }
+/* Second dark block: the app palette, pasted over the document one. Under
+   fam-doc the grounds, inks and accent have no token that carries these
+   values, so they stay literal. The percentile ramp, the veils and the
+   elevation are family independent and do tokenise. */
 html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
- --bg:#101319;--bg2:#191d25;--bg3:#222732;--surface:rgba(255,255,255,.035);--surface2:rgba(255,255,255,.07);
+ --bg:#101319;--bg2:#191d25;--bg3:#222732;--surface:var(--surface-veil);--surface2:var(--surface-veil-strong);
  --border:#2c313d;--border2:#414957;--text:#f4f6fb;--text2:#c3cde2;--text3:#9aa7c2;
- --elite:#34d399;--above:#6ee7a8;--avg:#fbbf24;--below:#fb923c;--poor:#f87171;--shadow:0 1px 3px rgba(0,0,0,.35);--nb:#5aa0ff}
+ --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);--shadow:var(--elevation-1);--nb:#5aa0ff}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}

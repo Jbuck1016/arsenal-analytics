@@ -169,3 +169,36 @@ dashboard/glossary.html,21,#8b98ab,--ink-tertiary,dark,tertiary text
 dashboard/glossary.html,18,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
 dashboard/glossary.html,18,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
 dashboard/glossary.html,18,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/insights.html,15,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
+dashboard/insights.html,15,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
+dashboard/insights.html,33,#0e1219,--ground,dark,page canvas
+dashboard/insights.html,33,#161b24,--surface-raised,dark,raised surface
+dashboard/insights.html,33,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/insights.html,34,#272e3a,--border-hairline,dark,hairline rule
+dashboard/insights.html,34,#3a4351,--border-strong,dark,strong rule
+dashboard/insights.html,35,#f2f5fa,--ink-primary,dark,primary text
+dashboard/insights.html,35,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/insights.html,35,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/insights.html,32,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
+dashboard/insights.html,32,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
+dashboard/insights.html,36,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border
+dashboard/insights.html,37,#3ddc97,--state-positive,dark,positive state
+dashboard/sequences.html,30,"rgba(156,107,30,.10)",--accent-veil,light,accent tint fill
+dashboard/sequences.html,37,#2f6aa8,--series-link,light,link and node blue
+dashboard/sequences.html,16,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
+dashboard/sequences.html,16,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/sequences.html,45,#161b24,--surface-raised,dark,raised surface
+dashboard/sequences.html,45,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/sequences.html,46,#272e3a,--border-hairline,dark,hairline rule
+dashboard/sequences.html,46,#3a4351,--border-strong,dark,strong rule
+dashboard/sequences.html,47,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/sequences.html,40,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
+dashboard/sequences.html,40,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/sequences.html,54,"rgba(255,255,255,.035)",--surface-veil,dark,translucent veil
+dashboard/sequences.html,54,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stronger translucent veil
+dashboard/sequences.html,56,#34d399,--rank-top,dark,percentile ramp: top
+dashboard/sequences.html,56,#6ee7a8,--rank-high,dark,percentile ramp: high
+dashboard/sequences.html,56,#fbbf24,--rank-mid,dark,percentile ramp: mid
+dashboard/sequences.html,56,#fb923c,--rank-low,dark,percentile ramp: low
+dashboard/sequences.html,56,#f87171,--rank-bottom,dark,percentile ramp: bottom
+dashboard/sequences.html,56,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation
