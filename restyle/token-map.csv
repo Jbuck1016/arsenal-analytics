@@ -41,3 +41,45 @@ dashboard/players.html,39,#fbbf24,--rank-mid,dark,percentile ramp 40+
 dashboard/players.html,39,#fb923c,--rank-low,dark,percentile ramp 20+
 dashboard/players.html,39,#f87171,--rank-bottom,dark,percentile ramp below 20
 dashboard/players.html,40,"0 1px 3px rgba(0,0,0,0.35)",--elevation-1,dark,card elevation
+dashboard/players.html,47,#12141a,--ink-on-accent,"light,dark",logo glyph on the accent chip
+dashboard/players.html,82,"rgba(251,146,60,.15)",--state-warn-veil,"light,dark",warn chip tint
+dashboard/players.html,126,#12141a,--ink-on-accent,"light,dark",button label on the accent fill
+dashboard/players.html,238,"rgba(0,0,0,.62)",--scrim,"light,dark",drill modal scrim
+dashboard/players.html,239,"0 18px 60px rgba(0,0,0,.5)",--elevation-modal,"light,dark",drill card elevation; dark-tuned
+dashboard/players.html,242,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; dark-tuned
+dashboard/players.html,396,#22e39a,--series-ok,"light,dark",PAL.ok pitch layer palette
+dashboard/players.html,396,#ff5a5a,--series-fail,"light,dark",PAL.fail
+dashboard/players.html,396,#22e39a,--series-pass,"light,dark",PAL.pass
+dashboard/players.html,396,#4d9fff,--series-prog,"light,dark",PAL.prog
+dashboard/players.html,396,#ffc93c,--series-carry,"light,dark",PAL.carry
+dashboard/players.html,396,#f0a5ff,--series-box,"light,dark",PAL.box
+dashboard/players.html,865,#2f80ed,--group-passing,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#00a896,--group-creation,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#e63956,--group-shooting,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#f2b134,--group-carrying,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#7656d6,--group-defending,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#9b5de5,--group-aerial,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#ef8354,--group-discipline,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#00b4d8,--group-tempo,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#36b37e,--group-halfspaces,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#d97706,--group-holdup,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#b94d8c,--group-setpieces,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#3a86ff,--group-goalkeeping,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,866,#2f80ed,--group-passing,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#00a896,--group-creation,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#e63956,--group-shooting,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#f2b134,--group-carrying,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#7656d6,--group-defending,"light,dark",pizzaColor fallback array
+dashboard/players.html,879,#fff,--label-on-fill,"light,dark",pizza slice percentile label ink
+dashboard/players.html,879,"rgba(0,0,0,.28)",--label-on-fill-halo,"light,dark",pizza slice label halo; dark-dependent trick, Phase 3 revisits
+dashboard/players.html,961,#cbd5e1,--layer-neutral,"light,dark",neutral evidence layer
+dashboard/players.html,972,#a78bfa,--layer-through,"light,dark",through balls layer
+dashboard/players.html,976,#22d3ee,--layer-receipt,"light,dark",receipts layer
+dashboard/players.html,977,#f472b6,--layer-shot,"light,dark",shots layer
+dashboard/players.html,1642,#a78bfa,--layer-through,"light,dark",blocked shots layer
+dashboard/players.html,1674,#34d399,--layer-quick,"light,dark",under-1s release layer
+dashboard/players.html,1687,#a78bfa,--layer-through,"light,dark",clearance in defensive action map
+dashboard/players.html,1688,#f472b6,--layer-shot,"light,dark",challenge in defensive action map
+dashboard/players.html,1688,#22d3ee,--layer-receipt,"light,dark",save in defensive action map
+dashboard/players.html,2004,#a78bfa,--layer-through,"light,dark",blocked outcome in shot map
+dashboard/players.html,2007,#a78bfa,--layer-through,"light,dark",blocked entry in shot map legend

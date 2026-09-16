@@ -76,6 +76,40 @@ html:not(.dark){
   --rank-low:#f97316;
   --rank-bottom:#dc2626;
 
+  /* Metric-group series, players.html PIZZA_COLORS. Twelve groups, each with
+     its own hue so a pizza slice is identifiable without reading its label.
+     Named by the group they encode, not by hue, because the hues move in
+     Phase 3 and the group meanings do not. Verbatim in Phase 1; the page
+     carried one value for both themes. */
+  --group-passing:#2f80ed;
+  --group-creation:#00a896;
+  --group-shooting:#e63956;
+  --group-carrying:#f2b134;
+  --group-defending:#7656d6;
+  --group-aerial:#9b5de5;
+  --group-discipline:#ef8354;
+  --group-tempo:#00b4d8;
+  --group-halfspaces:#36b37e;
+  --group-holdup:#d97706;
+  --group-setpieces:#b94d8c;
+  --group-goalkeeping:#3a86ff;
+
+  /* Evidence layers on the pitch plots, players.html. Each is a distinct
+     action type the reader toggles on and off, so they are categorical, not a
+     ramp. Verbatim in Phase 1. */
+  --layer-through:#a78bfa;
+  --layer-receipt:#22d3ee;
+  --layer-shot:#f472b6;
+  --layer-neutral:#cbd5e1;
+  --layer-quick:#34d399;
+
+  /* Drill modal card and tooltip elevation, players.html. Both were tuned
+     against a dark ground; carried verbatim in Phase 1.
+     Values read from the untruncated declarations: an earlier draft of this
+     file guessed the offsets from a truncated line and had them wrong. */
+  --elevation-modal:0 18px 60px rgba(0,0,0,.5);
+  --elevation-tip:0 4px 14px rgba(0,0,0,.35);
+
   /* categorical series, used by the pitch layer palettes (PAL / TPAL) */
   --series-ok:#22e39a;
   --series-fail:#ff5a5a;
@@ -92,6 +126,20 @@ html:not(.dark){
   /* state */
   --state-positive:#0f7a52;
   --state-negative:#c23b34;
+  /* Warn chip tint, from players.html .chip.warn. Verbatim in Phase 1: the page
+     carried one value for both themes. */
+  --state-warn-veil:rgba(251,146,60,.15);
+
+  /* Overlay and scrim. The drill modal dims the page behind it; the value was
+     tuned against a dark ground and is carried verbatim here. */
+  --scrim:rgba(0,0,0,.62);
+
+  /* Pizza-slice percentile label, players.html. White ink with a dark halo so
+     the number reads on any slice colour. This is a dark-dependent trick: on a
+     cream ground the halo is what keeps it legible, and Phase 3 has to revisit
+     the pair rather than recolour the ink alone. */
+  --label-on-fill:#fff;
+  --label-on-fill-halo:rgba(0,0,0,.28);
 
   /* elevation */
   --elevation-1:0 1px 3px rgba(0,0,0,0.07);
@@ -158,8 +206,39 @@ html.dark{
   --series-mint:#34d399;
   --series-neutral:#cbd5e1;
 
+  /* Metric-group and evidence-layer series. players.html carried one value for
+     both themes, so both are carried verbatim. Declaring these in the light
+     block alone would leave them unresolved in dark, which is the defect the
+     assertion caught with the compatibility aliases. */
+  --group-passing:#2f80ed;
+  --group-creation:#00a896;
+  --group-shooting:#e63956;
+  --group-carrying:#f2b134;
+  --group-defending:#7656d6;
+  --group-aerial:#9b5de5;
+  --group-discipline:#ef8354;
+  --group-tempo:#00b4d8;
+  --group-halfspaces:#36b37e;
+  --group-holdup:#d97706;
+  --group-setpieces:#b94d8c;
+  --group-goalkeeping:#3a86ff;
+  --layer-through:#a78bfa;
+  --layer-receipt:#22d3ee;
+  --layer-shot:#f472b6;
+  --layer-neutral:#cbd5e1;
+  --layer-quick:#34d399;
+  --elevation-modal:0 18px 60px rgba(0,0,0,.5);
+  --elevation-tip:0 4px 14px rgba(0,0,0,.35);
+
   --state-positive:#3ddc97;
   --state-negative:#ff5f56;
+  /* players.html carried one value for both themes; carried verbatim here so
+     the token resolves in dark as well as light. Declaring these in the light
+     block alone is the defect the assertion caught with the aliases. */
+  --state-warn-veil:rgba(251,146,60,.15);
+  --scrim:rgba(0,0,0,.62);
+  --label-on-fill:#fff;
+  --label-on-fill-halo:rgba(0,0,0,.28);
 
   --elevation-1:0 1px 3px rgba(0,0,0,0.35);
   --elevation-panel:0 12px 30px rgba(0,0,0,.28);

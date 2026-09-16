@@ -9,3 +9,8 @@ dashboard/shell.css,148,transparent,semantic keyword: three sides of the caret t
 dashboard/shell.css,148,currentColor,semantic keyword: the caret inherits the button's ink so it follows whatever colour that already resolves to.
 dashboard/players.html,323,#11015,"SCANNER FALSE POSITIVE, not a colour: the text is &#11015;, the HTML numeric entity for the downwards arrow on the PNG export button. The hex regex matched the digits inside the entity. The Phase 6 lint rule must exclude &#NNNNN; or it fails on this line forever."
 dashboard/players.html,324,#11015,"SCANNER FALSE POSITIVE, as line 323: &#11015; on the PDF export button."
+dashboard/players.html,249,#1a1d24,"var() fallback, not a primary colour: background-color:var(--bg2,var(--panel,#1a1d24)). The hex is the third-level fallback for when neither token resolves. Replacing it with a token defeats the purpose of having a fallback."
+dashboard/players.html,249,#f4f6fb,"var() fallback, as above: color:var(--text,#f4f6fb)."
+dashboard/players.html,250,#1a1d24,"var() fallback on select option and optgroup, same rule as line 249."
+dashboard/players.html,250,#f4f6fb,"var() fallback on select option and optgroup, same rule as line 249."
+dashboard/players.html,255,#d4a017,"var() fallback: color:var(--gold,#d4a017). --gold is a match.html token this page does not define, so the fallback is the operative value; it is left intact rather than pointed at a token that would change which value wins."
