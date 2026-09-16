@@ -1,0 +1,309 @@
+/* ---------------------------------------------------------------------------
+   SEMANTIC COLOUR TOKENS. One name per ROLE, two complete theme scopes.
+
+   Phase 1 of the restyle brief: this file is a pure refactor. Every value below
+   is copied verbatim from the palette it replaces, so the app renders
+   pixel-identically. Nothing here is a new colour.
+
+   NAMING is by role, never by appearance: --ink-secondary, not --grey-400;
+   --series-1, not --green. The old names (--bg2, --dim, --amber, --elite) are
+   kept as aliases at the bottom of each block so several hundred existing rules
+   keep resolving while they are migrated file by file.
+
+   WHY FAMILIES EXIST
+   The audit found seven independent palettes across live surfaces, and they
+   disagree on values for the same role: the app pages (players, teams, match)
+   ground on #101319 in dark, the document pages (index, search, glossary,
+   sequences, insights, guide, methodology, validation) on #0e1219, and the lab
+   pages on something else again. Collapsing them to one value is a VISUAL
+   change, which Phase 1 forbids. So the names are shared and the values are
+   keyed by a family class on <html>. The values live here either way, so no
+   component defines its own colour. Phase 3 converges the families deliberately.
+
+   SCOPES
+     html:not(.dark)               light, app family (default)
+     html.dark                     dark,  app family
+     html:not(.dark).fam-doc       light, document family
+     html.dark.fam-doc             dark,  document family
+     html:not(.dark).fam-lab       light, lab family
+     html.dark.fam-lab             dark,  lab family
+   Every token resolves in all six.
+
+   WHY html:not(.dark) AND NOT :root, FOR THE LIGHT SCOPES
+   The same specificity problem theme.css documents. Every page declares its own
+   dark palette on html.dark (0,2,0) and its light values on :root (0,1,0), and
+   this file is linked BEFORE each page's inline <style>. Light values on a bare
+   :root here (0,1,0) would therefore lose to the page's own :root on equal
+   specificity and later source order, and lose to html.dark in dark mode. The
+   token file would be inert while still resolving correctly when read on its
+   own, so the static assertion would certify values the browser never uses.
+   html:not(.dark) (0,2,0) outranks a page :root and cannot match in dark, which
+   is exactly the behaviour theme.css relies on.
+
+   Tokens that are theme independent (the gate shell, heatmap ramp stops) stay
+   on :root, because they must resolve in both modes.
+--------------------------------------------------------------------------- */
+
+/* ===== APP FAMILY, LIGHT =========================================== */
+html:not(.dark){
+  /* grounds and surfaces */
+  --ground:#faf8f3;
+  --surface-raised:#f4f1e9;
+  --surface-recessed:#eceadf;
+  --surface-veil:rgba(25,28,34,.03);
+  --surface-veil-strong:#e8e4d8;
+
+  /* boundaries */
+  --border-hairline:#ded9cd;
+  --border-strong:#b9b2a1;
+
+  /* ink */
+  --ink-primary:#16191f;
+  --ink-secondary:#4a5262;
+  --ink-tertiary:#6b7280;
+  --ink-quaternary:#9aa0aa;
+  --ink-on-accent:#12141a;
+
+  /* accent, one brand voice */
+  --accent-base:#EF0107;
+  --accent-veil:rgba(239,1,7,0.07);
+  --accent-edge:rgba(239,1,7,0.18);
+
+  /* percentile ramp: diverging, keyed to percentile band, not to hue names */
+  --rank-top:#16a34a;
+  --rank-high:#4ade80;
+  --rank-mid:#d4a017;
+  --rank-low:#f97316;
+  --rank-bottom:#dc2626;
+
+  /* categorical series, used by the pitch layer palettes (PAL / TPAL) */
+  --series-ok:#22e39a;
+  --series-fail:#ff5a5a;
+  --series-pass:#22e39a;
+  --series-prog:#4d9fff;
+  --series-carry:#ffc93c;
+  --series-box:#f0a5ff;
+  --series-alt:#a78bfa;
+  --series-cool:#22d3ee;
+  --series-warm:#f472b6;
+  --series-mint:#34d399;
+  --series-neutral:#cbd5e1;
+
+  /* state */
+  --state-positive:#0f7a52;
+  --state-negative:#c23b34;
+
+  /* elevation */
+  --elevation-1:0 1px 3px rgba(0,0,0,0.07);
+
+  /* pitch and canvas paints (match.html CT(), light branch) */
+  --pitch-fill:#f0ead6;
+  --pitch-line:#888;
+  --pitch-line-strong:#666;
+  --pitch-band:rgba(0,0,0,0.012);
+  --pitch-text:#333;
+  --pitch-text-soft:rgba(0,0,0,0.40);
+  --chip-ground:rgba(25,28,34,0.90);
+  --chip-ink:#fff;
+  --pass-ok:#12855a;
+  --pass-fail:#cc4038;
+
+  /* heatmap ramp stops (match.html densityRGB), low to high */
+  --heat-low:31,91,111;
+  --heat-mid:61,220,151;
+  --heat-high:226,184,119;
+
+}
+
+/* ===== APP FAMILY, DARK ============================================ */
+html.dark{
+  --ground:#101319;
+  --surface-raised:#191d25;
+  --surface-recessed:#222732;
+  --surface-veil:rgba(255,255,255,0.035);
+  --surface-veil-strong:rgba(255,255,255,0.07);
+
+  --border-hairline:#272b35;
+  --border-strong:#3a3f4b;
+
+  --ink-primary:#f4f6fb;
+  --ink-secondary:#c3cde2;
+  --ink-tertiary:#9aa7c2;
+  --ink-quaternary:#7c8699;
+  --ink-on-accent:#12141a;
+
+  --accent-base:#D8B384;
+  --accent-veil:rgba(216,179,132,0.12);
+  --accent-edge:rgba(216,179,132,0.28);
+
+  --rank-top:#34d399;
+  --rank-high:#6ee7a8;
+  --rank-mid:#fbbf24;
+  --rank-low:#fb923c;
+  --rank-bottom:#f87171;
+
+  --series-ok:#22e39a;
+  --series-fail:#ff5a5a;
+  --series-pass:#22e39a;
+  --series-prog:#4d9fff;
+  --series-carry:#ffc93c;
+  --series-box:#f0a5ff;
+  --series-alt:#a78bfa;
+  --series-cool:#22d3ee;
+  --series-warm:#f472b6;
+  --series-mint:#34d399;
+  --series-neutral:#cbd5e1;
+
+  --state-positive:#3ddc97;
+  --state-negative:#ff5f56;
+
+  --elevation-1:0 1px 3px rgba(0,0,0,0.35);
+
+  --pitch-fill:#111722;
+  --pitch-line:rgba(182,194,212,0.22);
+  --pitch-line-strong:rgba(226,184,119,0.52);
+  --pitch-band:rgba(90,169,255,0.018);
+  --pitch-text:rgba(242,245,250,0.90);
+  --pitch-text-soft:rgba(182,194,212,0.48);
+  --chip-ground:rgba(14,18,25,0.92);
+  --chip-ink:#f2f5fa;
+  --pass-ok:#3ddc97;
+  --pass-fail:#ff6b63;
+
+  --heat-low:31,91,111;
+  --heat-mid:61,220,151;
+  --heat-high:226,184,119;
+}
+
+/* ===== DOCUMENT FAMILY ============================================= */
+/* index, search, glossary, sequences, insights, guide, methodology,
+   validation. Same role names, this family's own values. The amber accent is
+   deliberately not the brand red: on these pages it is chrome, not a signal. */
+html:not(.dark).fam-doc{
+  --accent-base:#9c6b1e;
+  --accent-veil:rgba(156,107,30,.10);
+  --accent-edge:rgba(156,107,30,.32);
+  --series-link:#2f6aa8;
+  --amber:var(--accent-base);
+  --amber-dim:var(--accent-veil);
+  --amber-line:var(--accent-edge);
+  --blue:var(--series-link);
+}
+html.dark.fam-doc{
+  --ground:#0e1219;
+  --surface-raised:#161b24;
+  --surface-recessed:#1e242e;
+  --border-hairline:#272e3a;
+  --border-strong:#3a4351;
+  --ink-primary:#f2f5fa;
+  --ink-secondary:#b6c2d4;
+  --ink-tertiary:#8b98ab;
+  --accent-base:#e2b877;
+  --accent-veil:rgba(226,184,119,.10);
+  --accent-edge:rgba(226,184,119,.32);
+  --state-positive:#3ddc97;
+  --state-negative:#ff5f56;
+  --series-link:#5aa9ff;
+}
+
+/* Pages whose light amber was darkened for AA on the shared surfaces: guide,
+   methodology, validation. Kept as its own scope so the contrast work done
+   there is not silently undone by the family default. */
+html:not(.dark).fam-doc.fam-doc-aa{
+  --accent-base:#8a5e1a;
+  --accent-veil:rgba(138,94,26,.10);
+  --accent-edge:rgba(138,94,26,.32);
+}
+
+/* ===== LAB FAMILY ================================================== */
+/* model-lab, model-review, writing-lab: editorial print palettes that never
+   shared the app vocabulary. Named here so the lint rule in Phase 6 has
+   somewhere legitimate for their values to live. */
+html:not(.dark).fam-lab{
+  --ground:#e9e5dc;
+  --surface-raised:#fffdf6;
+  --ink-primary:#101820;
+  --ink-secondary:#45535e;
+  --border-hairline:#aaa394;
+  --series-1:#c9431d;
+  --series-2:#006f79;
+  --series-3:#086843;
+  --series-4:#8b5500;
+  --series-5:#a82424;
+}
+html.dark.fam-lab{
+  --ground:#081017;
+  --surface-raised:#111d26;
+  --ink-primary:#f7f7f1;
+  --ink-secondary:#bac4cb;
+  --border-hairline:#52616d;
+  --series-1:#ff754a;
+  --series-2:#64d7df;
+  --series-3:#5add9f;
+  --series-4:#ffc566;
+  --series-5:#ff7972;
+}
+
+/* ===== COMPATIBILITY ALIASES ======================================= */
+/* The names several hundred existing rules already use, pointed at the role
+   tokens above.
+
+   THESE MUST BE THEME INDEPENDENT, so they live on :root and not inside a
+   light or dark block. An earlier draft declared them inside html:not(.dark);
+   the static assertion caught the consequence immediately: --bg and --accent
+   resolved to nothing in dark mode, because a declaration scoped to a selector
+   that does not match is simply absent, so every rule reading var(--bg) would
+   have fallen back to nothing on every dark page.
+
+   Declared here once, each alias resolves through var() to whichever themed
+   value is in play, because --ground, --accent-base and the rest are redefined
+   per theme and per family above. */
+:root{
+  --bg:var(--ground);
+  --bg2:var(--surface-raised);
+  --bg3:var(--surface-recessed);
+  --surface:var(--surface-veil);
+  --surface2:var(--surface-veil-strong);
+  --border:var(--border-hairline);
+  --border2:var(--border-strong);
+  --text:var(--ink-primary);
+  --text2:var(--ink-secondary);
+  --text3:var(--ink-tertiary);
+  --text4:var(--ink-quaternary);
+  --accent:var(--accent-base);
+  --accent-dim:var(--accent-veil);
+  --accent-glow:var(--accent-edge);
+  --elite:var(--rank-top);
+  --above:var(--rank-high);
+  --avg:var(--rank-mid);
+  --below:var(--rank-low);
+  --poor:var(--rank-bottom);
+  --green:var(--state-positive);
+  --red-bright:var(--state-negative);
+  --shadow:var(--elevation-1);
+  --pitch:var(--pitch-fill);
+  /* document-family names, resolved here so app pages can borrow them */
+  --panel:var(--surface-raised);
+  --panel2:var(--surface-recessed);
+  --line:var(--border-hairline);
+  --line2:var(--border-strong);
+  --dim:var(--ink-secondary);
+  --dim2:var(--ink-tertiary);
+  --red:var(--state-negative);
+}
+
+/* ===== GATE ======================================================== */
+/* gate.js paints a hardcoded near-black shell and reads no token at all. Its
+   values are named here so Phase 2 can bring it into the theme system and the
+   Phase 6 lint rule has a home for them. */
+:root{
+  --gate-ground:#080a0e;
+  --gate-card:#0e1116;
+  --gate-card-border:#1c222c;
+  --gate-mark:#e2b877;
+  --gate-ink:#e8eef6;
+  --gate-ink-soft:#8794a6;
+  --gate-field:#141821;
+  --gate-field-border:#2b333f;
+  --gate-error:#ff5f56;
+}

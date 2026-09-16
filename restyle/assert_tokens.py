@@ -62,18 +62,30 @@ FAMILY = {
     "dashboard/writing-lab.html": "lab",
 }
 
-# Selector -> (family, theme). A scope inherits from the ones before it.
+# (family, theme) -> the selectors that apply, in increasing precedence.
+#
+# The light scopes are html:not(.dark), NOT :root. Every page declares its own
+# dark palette on html.dark (0,2,0) and its light values on :root (0,1,0), and
+# tokens.css is linked before each page's inline <style>. Light values on a bare
+# :root would lose to the page's own :root on equal specificity and later source
+# order, leaving the token file inert while it still resolved correctly when read
+# in isolation. That would make this assertion certify values the browser never
+# uses. html:not(.dark) (0,2,0) outranks a page :root and cannot match in dark,
+# which is the behaviour theme.css already relies on.
+#
+# :root stays in every chain for the theme-independent tokens (gate shell,
+# heatmap ramp stops), which must resolve in both modes.
 SCOPE_CHAIN = {
-    ("app", "light"): [":root"],
+    ("app", "light"): [":root", "html:not(.dark)"],
     ("app", "dark"): [":root", "html.dark"],
-    ("doc", "light"): [":root", "html.fam-doc"],
-    ("doc", "dark"): [":root", "html.dark", "html.fam-doc", "html.fam-doc.dark"],
-    ("doc-aa", "light"): [":root", "html.fam-doc", "html.fam-doc.fam-doc-aa"],
-    ("doc-aa", "dark"): [":root", "html.dark", "html.fam-doc", "html.fam-doc.dark",
-                         "html.fam-doc.fam-doc-aa"],
-    ("lab", "light"): [":root", "html.fam-lab"],
-    ("lab", "dark"): [":root", "html.dark", "html.fam-lab", "html.fam-lab.dark"],
-    ("gate", "light"): [":root"],
+    ("doc", "light"): [":root", "html:not(.dark)", "html:not(.dark).fam-doc"],
+    ("doc", "dark"): [":root", "html.dark", "html.dark.fam-doc"],
+    ("doc-aa", "light"): [":root", "html:not(.dark)", "html:not(.dark).fam-doc",
+                          "html:not(.dark).fam-doc.fam-doc-aa"],
+    ("doc-aa", "dark"): [":root", "html.dark", "html.dark.fam-doc"],
+    ("lab", "light"): [":root", "html:not(.dark)", "html:not(.dark).fam-lab"],
+    ("lab", "dark"): [":root", "html.dark", "html.dark.fam-lab"],
+    ("gate", "light"): [":root", "html:not(.dark)"],
     ("gate", "dark"): [":root", "html.dark"],
 }
 
