@@ -3340,9 +3340,16 @@ function resetStats(){S.sequences=[];const el=document.getElementById('twPanel')
 
 /* HELPERS */
 function leg(color,text){return'<span class="leg"><span class="leg-dot" style="background:'+color+'"></span>'+text+'</span>';}
+/* FIVE BANDS FROM ONE RAMP. This drew its five steps from three unrelated
+   places: --green and --red-bright from the state palette, --gold from the
+   second accent, and --pct-high and --pct-low from two literals fixed across
+   themes while the other three followed it. Three of five moved with the theme
+   and two did not, so which band a value fell in changed meaning between light
+   and dark. It is a percentile-to-colour map and there is a percentile ramp,
+   evenly separated and built per theme. --pct-high and --pct-low are gone. */
 function rankColor(r,n){const p=1-((r-1)/Math.max(1,n-1));
-  if(p>=0.8)return'var(--green)';if(p>=0.6)return'var(--pct-high)';if(p>=0.4)return'var(--gold)';
-  if(p>=0.2)return'var(--pct-low)';return'var(--red-bright)';}
+  if(p>=0.8)return'var(--rank-top)';if(p>=0.6)return'var(--rank-high)';if(p>=0.4)return'var(--rank-mid)';
+  if(p>=0.2)return'var(--rank-low)';return'var(--rank-bottom)';}
 function cellTint(val,min,max){
   if(max===min)return'';
   const p=Math.max(0,Math.min(1,(val-min)/(max-min)));

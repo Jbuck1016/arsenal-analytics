@@ -138,12 +138,24 @@ html:not(.dark){
   --accent-veil:rgba(239,1,7,0.07);
   --accent-edge:rgba(239,1,7,0.20);
 
-  /* percentile ramp: diverging, keyed to percentile band, not to hue names */
-  --rank-top:#16a34a;
-  --rank-high:#4ade80;
-  --rank-mid:#d4a017;
-  --rank-low:#f97316;
-  --rank-bottom:#dc2626;
+  /* THE PERCENTILE RAMP, REBUILT FOR THIS GROUND.
+     Diverging, keyed to the percentile band and never to a hue name.
+
+     The old ramp was one set of values used on both grounds and tuned for the
+     dark one: on cream, --rank-high measured 1.64:1, --rank-mid 2.24:1 and
+     --rank-low 2.64:1, so three of the five steps were marks a reader could
+     not find. This ramp is built for cream and the dark one is built for
+     #0e1219; neither is the other inverted.
+
+     EVENLY SEPARATED, which is the second half of the job. Adjacent CIEDE2000
+     runs 22.4 / 22.2 / 19.6 / 15.9 -- a spread of 6.6 across the ramp, against
+     21.7 before -- and the closest pair anywhere in it is 15.9, so tier 4 and
+     tier 5 are told apart without reading the legend. Worst contrast 3.64:1. */
+  --rank-top:#0e7d5c;
+  --rank-high:#4b8a2a;
+  --rank-mid:#8d7c12;
+  --rank-low:#c56a10;
+  --rank-bottom:#b52a20;
 
   /* Style axis, teams.html. A team's playing style is scored on a two-ended
      scale, so these are the two poles of one dimension rather than two
@@ -163,8 +175,8 @@ html:not(.dark){
      densityRGB, while this pair is the two-stop gradient drawn in the legend
      to label low-to-high density. Kept separate so Phase 3 can rebuild each
      for its own theme instead of assuming one ramp serves both surfaces. */
-  --heat-legend-low:rgba(245,166,35,.12);
-  --heat-legend-high:#f5a623;
+  --heat-legend-low:rgb(150,176,168);
+  --heat-legend-high:rgb(150,26,22);
 
   /* Metric-group series, players.html PIZZA_COLORS. Twelve groups, each with
      its own hue so a pizza slice is identifiable without reading its label.
@@ -172,17 +184,17 @@ html:not(.dark){
      Phase 3 and the group meanings do not. Verbatim in Phase 1; the page
      carried one value for both themes. */
   --group-passing:#2f80ed;
-  --group-creation:#00a896;
+  --group-creation:#00918c;
   --group-shooting:#e63956;
-  --group-carrying:#f2b134;
-  --group-defending:#7656d6;
-  --group-aerial:#9b5de5;
-  --group-discipline:#ef8354;
-  --group-tempo:#00b4d8;
-  --group-halfspaces:#36b37e;
+  --group-carrying:#b28407;
+  --group-defending:#6e55ce;
+  --group-aerial:#a63fb5;
+  --group-discipline:#e1561c;
+  --group-tempo:#0d94b8;
+  --group-halfspaces:#3f9c48;
   --group-holdup:#d97706;
   --group-setpieces:#b94d8c;
-  --group-goalkeeping:#3a86ff;
+  --group-goalkeeping:#5a6b7d;
 
   /* Evidence layers on the pitch plots, players.html. Each is a distinct
      action type the reader toggles on and off, so they are categorical, not a
@@ -196,15 +208,15 @@ html:not(.dark){
      happen to have been given three hues between them. Separate names now
      cost nothing, keep the values verbatim, and let Phase 3 diverge or merge
      them on purpose rather than inheriting the collision. */
-  --layer-through:#a78bfa;
-  --layer-receipt:#22d3ee;
-  --layer-shot:#f472b6;
-  --layer-neutral:#cbd5e1;
-  --layer-quick:#34d399;
-  --layer-blocked:#a78bfa;
-  --layer-clearance:#a78bfa;
-  --layer-challenge:#f472b6;
-  --layer-save:#22d3ee;
+  --layer-through:#7c5ce0;
+  --layer-receipt:#0e8f9e;
+  --layer-shot:#d4357f;
+  --layer-neutral:#707c86;
+  --layer-quick:#1f9d5f;
+  --layer-blocked:#c2620a;
+  --layer-clearance:#2f6fd0;
+  --layer-challenge:#c0342a;
+  --layer-save:#a83fa0;
 
   /* Drill modal card and tooltip elevation, players.html. Both were tuned
      against a dark ground; carried verbatim in Phase 1.
@@ -214,17 +226,15 @@ html:not(.dark){
   --elevation-tip:0 4px 14px rgba(0,0,0,.35);
 
   /* categorical series, used by the pitch layer palettes (PAL / TPAL) */
-  --series-ok:#22e39a;
-  --series-fail:#ff5a5a;
-  --series-pass:#22e39a;
-  --series-prog:#4d9fff;
-  --series-carry:#ffc93c;
-  --series-box:#f0a5ff;
-  --series-alt:#a78bfa;
-  --series-cool:#22d3ee;
-  --series-warm:#f472b6;
-  --series-mint:#34d399;
-  --series-neutral:#cbd5e1;
+  --series-ok:#139866;
+  --series-fail:#c92c2c;
+  --series-prog:#1a6fd4;
+  --series-carry:#9a7100;
+  --series-box:#a82fbe;
+  --series-alt:#7d5ce0;
+  --series-cool:#0d8496;
+  --series-warm:#c93b86;
+  --series-neutral:#6c88aa;
 
   /* state */
   --state-positive:#0f7a52;
@@ -242,7 +252,7 @@ html:not(.dark){
      cream ground the halo is what keeps it legible, and Phase 3 has to revisit
      the pair rather than recolour the ink alone. */
   --label-on-fill:#fff;
-  --label-on-fill-halo:rgba(0,0,0,.28);
+  --label-on-fill-halo:#10131a;
 
   /* elevation */
   --elevation-1:0 1px 3px rgba(0,0,0,0.07);
@@ -265,16 +275,22 @@ html:not(.dark){
   --pitch-line-strong:#666;
   --pitch-band:rgba(0,0,0,0.012);
   --pitch-text:#333;
-  --pitch-text-soft:rgba(0,0,0,0.40);
+  --pitch-text-soft:rgba(0,0,0,0.62);
   --chip-ground:rgba(25,28,34,0.90);
   --chip-ink:#fff;
   --pass-ok:#12855a;
   --pass-fail:#cc4038;
 
   /* heatmap ramp stops (match.html densityRGB), low to high */
-  --heat-low:31,91,111;
-  --heat-mid:61,220,151;
-  --heat-high:226,184,119;
+  /* THE DENSITY RAMP, BUILT FOR THE CREAM PITCH. Three stops the canvas and
+     the SVG overlay both interpolate between. The dark ramp ends light and
+     this one ends dark, because the hottest cell has to be the furthest from
+     the ground it sits on, and the two grounds are at opposite ends. Writing
+     one ramp and flipping it is exactly what produced a cool-to-warm overlay
+     reading backwards on cream. */
+  --heat-low:150,176,168;
+  --heat-mid:222,150,40;
+  --heat-high:150,26,22;
 
 }
 
@@ -311,57 +327,60 @@ html.dark{
   --accent-edge:rgba(239,1,7,0.32);
   --accent-muted:#e2b877;
 
-  --rank-top:#34d399;
-  --rank-high:#6ee7a8;
-  --rank-mid:#fbbf24;
-  --rank-low:#fb923c;
-  --rank-bottom:#f87171;
+  /* The dark ramp, built for #0e1219 rather than derived by inverting the
+     light one. --rank-high and --rank-top used to sit 6.0 CIEDE2000 apart,
+     which is two greens a reader cannot separate at the size these are drawn;
+     they are a yellow-green and a teal-green now, 19.3 apart. Adjacent runs
+     27.2 / 20.1 / 23.6 / 19.3, spread 7.9, worst contrast 6.38:1. */
+  --rank-top:#24cfa2;
+  --rank-high:#96dd5e;
+  --rank-mid:#f5d03a;
+  --rank-low:#ffa347;
+  --rank-bottom:#ff6f6f;
 
   /* Style axis. teams.html gave this pair its own dark values. */
   --style-axis-hi:#60a5fa;
   --style-axis-low:#fbbf24;
 
   /* Heat legend swatch. teams.html carried one value for both themes. */
-  --heat-legend-low:rgba(245,166,35,.12);
-  --heat-legend-high:#f5a623;
+  --heat-legend-low:rgb(31,91,111);
+  --heat-legend-high:rgb(226,184,119);
 
-  --series-ok:#22e39a;
-  --series-fail:#ff5a5a;
-  --series-pass:#22e39a;
-  --series-prog:#4d9fff;
-  --series-carry:#ffc93c;
-  --series-box:#f0a5ff;
-  --series-alt:#a78bfa;
-  --series-cool:#22d3ee;
-  --series-warm:#f472b6;
-  --series-mint:#34d399;
-  --series-neutral:#cbd5e1;
+  --series-ok:#139866;
+  --series-fail:#c92c2c;
+  --series-prog:#1a6fd4;
+  --series-carry:#9a7100;
+  --series-box:#a82fbe;
+  --series-alt:#7d5ce0;
+  --series-cool:#0d8496;
+  --series-warm:#c93b86;
+  --series-neutral:#6c88aa;
 
   /* Metric-group and evidence-layer series. players.html carried one value for
      both themes, so both are carried verbatim. Declaring these in the light
      block alone would leave them unresolved in dark, which is the defect the
      assertion caught with the compatibility aliases. */
   --group-passing:#2f80ed;
-  --group-creation:#00a896;
+  --group-creation:#00918c;
   --group-shooting:#e63956;
-  --group-carrying:#f2b134;
-  --group-defending:#7656d6;
-  --group-aerial:#9b5de5;
-  --group-discipline:#ef8354;
-  --group-tempo:#00b4d8;
-  --group-halfspaces:#36b37e;
+  --group-carrying:#b28407;
+  --group-defending:#6e55ce;
+  --group-aerial:#a63fb5;
+  --group-discipline:#e1561c;
+  --group-tempo:#0d94b8;
+  --group-halfspaces:#3f9c48;
   --group-holdup:#d97706;
   --group-setpieces:#b94d8c;
-  --group-goalkeeping:#3a86ff;
-  --layer-through:#a78bfa;
-  --layer-receipt:#22d3ee;
-  --layer-shot:#f472b6;
-  --layer-neutral:#cbd5e1;
-  --layer-quick:#34d399;
-  --layer-blocked:#a78bfa;
-  --layer-clearance:#a78bfa;
-  --layer-challenge:#f472b6;
-  --layer-save:#22d3ee;
+  --group-goalkeeping:#5a6b7d;
+  --layer-through:#7c5ce0;
+  --layer-receipt:#0e8f9e;
+  --layer-shot:#d4357f;
+  --layer-neutral:#707c86;
+  --layer-quick:#1f9d5f;
+  --layer-blocked:#c2620a;
+  --layer-clearance:#2f6fd0;
+  --layer-challenge:#c0342a;
+  --layer-save:#a83fa0;
   --elevation-modal:0 18px 60px rgba(0,0,0,.5);
   --elevation-tip:0 4px 14px rgba(0,0,0,.35);
 
@@ -373,7 +392,7 @@ html.dark{
   --state-warn-veil:rgba(251,146,60,.15);
   --scrim:rgba(0,0,0,.62);
   --label-on-fill:#fff;
-  --label-on-fill-halo:rgba(0,0,0,.28);
+  --label-on-fill-halo:#10131a;
 
   --elevation-1:0 1px 3px rgba(0,0,0,0.35);
   --elevation-panel:0 12px 30px rgba(0,0,0,.28);
@@ -383,19 +402,21 @@ html.dark{
   --pitch-line-strong:rgba(226,184,119,0.52);
   --pitch-band:rgba(90,169,255,0.018);
   --pitch-text:rgba(242,245,250,0.90);
-  --pitch-text-soft:rgba(182,194,212,0.48);
+  --pitch-text-soft:rgba(182,194,212,0.68);
   --chip-ground:rgba(14,18,25,0.92);
   --chip-ink:#f2f5fa;
   --pass-ok:#3ddc97;
   --pass-fail:#ff6b63;
 
+  /* The dark ramp: cool teal, through mint, to warm sand. Ends light because
+     this ground is dark. */
   --heat-low:31,91,111;
   --heat-mid:61,220,151;
   --heat-high:226,184,119;
 
   /* Dark is where the families disagree: the app pages and match draw this
      edge with the hairline, sequences with the strong rule. */
-  --select-edge:var(--border-hairline);
+  --select-edge:var(--border-strong);
 }
 
 /* ===== APP: NAMES THE DOCUMENT PAGES BROUGHT ======================= */
@@ -546,13 +567,13 @@ html:not(.dark){
 
   /* the two banners above a plot: team-data-only, opposition-incomplete */
   --banner-team-fill:rgba(212,160,23,0.15);
-  --banner-team-ink:#8a6500;
+  --banner-team-ink:#836000;
   --banner-team-edge:rgba(212,160,23,0.3);
   --banner-warn-fill:rgba(220,38,38,0.12);
   --banner-warn-ink:#b91c1c;
   --banner-warn-edge:rgba(220,38,38,0.25);
 
-  --list-group-ink:#9a9894;
+  --list-group-ink:#74726d;
   --badge-pass-fill:rgba(37,99,235,0.1);
   --badge-shot-fill:rgba(212,160,23,0.12);
 
@@ -567,19 +588,19 @@ html:not(.dark){
   --result-loss-fill:#fef2f2;
   /* The inks are fixed across themes where the fills are not, which is why
      they are separate tokens rather than one pair per result. */
-  --positive-ink:#16a34a;
-  --caution-ink:#ca8a04;
+  --positive-ink:#12843c;
+  --caution-ink:#986803;
   --negative-ink:#dc2626;
 
   /* position badges in the player list */
   --pos-gk-fill:rgba(212,160,23,0.15);
-  --pos-gk-ink:#b8860b;
+  --pos-gk-ink:#886308;
   --pos-def-fill:rgba(37,99,235,0.12);
-  --pos-def-ink:#2563eb;
+  --pos-def-ink:#195bea;
   --pos-mid-fill:rgba(22,163,74,0.12);
-  --pos-mid-ink:#16a34a;
+  --pos-mid-ink:#107837;
   --pos-fwd-fill:rgba(239,68,68,0.12);
-  --pos-fwd-ink:#ef4444;
+  --pos-fwd-ink:#cd1212;
 
   /* momentum rows, and the two-player comparison */
   --moment-pos-fill:rgba(22,163,74,0.08);
@@ -641,11 +662,11 @@ html:not(.dark){
   --action-tackle:#ef4444;
   --action-interception:#2563eb;
   --action-clearance:#7c3aed;
-  --action-recovery:#16a34a;
-  --action-block:#d4a017;
+  --action-recovery:#159a46;
+  --action-block:#a87f12;
   --action-aerial:#0891b2;
   --action-challenge:#db2777;
-  --action-other:#9ca3af;
+  --action-other:#7e8797;
 
   /* Position colours for the passing network and the average-position
      formation. Named for the line a player occupies, not for the shirt
@@ -653,13 +674,13 @@ html:not(.dark){
      Distinct from --pos-*-ink above, which are the CSS badges in the
      player list and carry different values -- #d4a017 here, #b8860b
      there, for the same goalkeeper. */
-  --pos-line-gk:#d4a017;
+  --pos-line-gk:#a87f12;
   --pos-line-def:#2563eb;
   --pos-line-dm:#0d9488;
-  --pos-line-mid:#16a34a;
-  --pos-line-am:#84cc16;
+  --pos-line-mid:#159a46;
+  --pos-line-am:#609510;
   --pos-line-fw:#ef4444;
-  --pos-line-sub:#9ca3af;
+  --pos-line-sub:#7e8797;
 
   /* Result tints behind a W/D/L cell in the season table, at 8%. The
      --result-*-fill tokens above are the cell backgrounds and are not the
@@ -673,7 +694,7 @@ html:not(.dark){
      the deliberate absence of both. applyTheme() writes it onto the root
      element as --accent at runtime, which is why this page's declared
      accent is almost never what is painted. */
-  --team-all:#8b95b5;
+  --team-all:#858fb1;
   --team-all-veil:rgba(139,149,181,0.10);
   --team-all-edge:rgba(139,149,181,0.24);
 
@@ -682,41 +703,48 @@ html:not(.dark){
      darker counterparts for the light one and for exports. */
   --shot-ok:#0f7a52;
   --shot-fail:#bf3535;
-  --shot-goal:#a1279b;
-  --shot-blocked:#6641cf;
+  --shot-goal:#ad2ba6;
+  --shot-blocked:#7250d6;
   --shot-post:#9a6b00;
 
-  /* Plot chrome painted from JavaScript. All the same in both themes: these
-     are drawn over the pitch, which has its own theme-keyed fill, and the page
-     has always used one value for each on either ground. Verbatim in Phase 1;
-     several of them are near-black at low alpha over a dark pitch, which is
-     worth a look in Phase 3.
+  /* PLOT CHROME, painted from JavaScript onto the pitch. It used to carry one
+     value for each name on both grounds, all of them tuned for the light
+     pitch: on the #111722 dark pitch --plot-share-label measured 1.10:1,
+     --plot-label 1.42:1, --legend-muted-ink 1.84:1 and --legend-muted 2.41:1.
+     Near-black ink on a near-black pitch. Every one of these has a real dark
+     value now, in the dark scope below.
 
-     SEVERAL SHARE A VALUE UNDER DIFFERENT NAMES. --plot-guide and
-     --plot-shadow are both rgba(0,0,0,0.18); --plot-grid and
-     --legend-pill-edge are both rgba(0,0,0,0.08). A dashed offside guide and
-     the drop shadow under a player node are not the same thing. */
+     --plot-guide and --plot-shadow used to share rgba(0,0,0,0.18) and
+     --plot-grid and --legend-pill-edge rgba(0,0,0,0.08). A dashed offside
+     guide and the drop shadow under a player node are not the same thing, and
+     they diverge in dark: the guide lightens with the rest of the chrome, the
+     shadow stays dark, because a shadow on a dark ground is still a shadow. */
   --plot-guide:rgba(0,0,0,0.18);
   --plot-line:rgba(0,0,0,0.15);
   --plot-shadow:rgba(0,0,0,0.18);
   --plot-node-ring:rgba(255,255,255,0.75);
   --plot-node-ring-soft:rgba(255,255,255,0.7);
-  --plot-label:#333;
-  --plot-share-label:rgba(0,0,0,0.55);
+  --plot-label:#2b2a25;
+  /* was rgba(0,0,0,0.40), at 2.78:1 on its own pitch */
+  --plot-share-label:rgba(0,0,0,0.62);
   --plot-grid:rgba(0,0,0,0.08);
   --plot-zone-neutral:rgba(200,200,200,0.04);
-  --plot-frame:rgba(136,136,136,0.8);
-  --plot-pill:rgba(240,234,214,0.88);
-  --plot-pill-ink:#c00;
+  --plot-frame:rgba(96,96,96,0.85);
+  --plot-pill:rgba(250,247,238,0.92);
+  --plot-pill-ink:#a8140e;
 
   /* the in-canvas legend pill */
-  --legend-pill:rgba(240,234,214,0.92);
-  --legend-pill-edge:rgba(0,0,0,0.08);
-  --legend-muted:#555;
-  --legend-muted-ink:#444;
-  --legend-heat-low:#1f5b6f;
-  --legend-heat-high:#e2b877;
-  --peak-ring:#e2b877;
+  --legend-pill:rgba(250,247,238,0.94);
+  --legend-pill-edge:rgba(0,0,0,0.12);
+  --legend-muted:#55503f;
+  --legend-muted-ink:#454133;
+  /* THE LEGEND SWATCH IS THE RAMP'S OWN ENDS. It used to be an independent
+     pair that could drift from the ramp it claimed to label, and did: the
+     legend was a teal-to-sand gradient while teams.html painted a
+     blue-to-orange one from arithmetic. Both read the same three stops now. */
+  --legend-heat-low:rgb(150,176,168);
+  --legend-heat-high:rgb(150,26,22);
+  --peak-ring:#9a6a1f;
 
   /* the highlighted zone on the final-third, zone-14 and box-entry maps */
   --zone-fill:rgba(26,122,58,0.06);
@@ -732,8 +760,8 @@ html:not(.dark){
   --shape-in-edge:rgba(226,184,119,.40);
   --shape-shift-line:rgba(182,194,212,.27);
   --shape-shift-head:rgba(226,184,119,.62);
-  --marker-in:#e2b877;
-  --marker-out:#5aa9ff;
+  --marker-in:#b17a26;
+  --marker-out:#1384ff;
 
   /* pass flow */
   --flow-arrow:#2563eb;
@@ -742,13 +770,13 @@ html:not(.dark){
   --band-b:rgba(226,184,119,.018);
 
   /* the xT ramp's two ends, and the bar track behind a player stat */
-  --xt-low:#dca014;
+  --xt-low:#ad7e10;
   --xt-high:#e03000;
   --bar-track:rgba(255,255,255,0.08);
 
   /* timeline selection, and the opponent's line on the momentum chart */
   --timeline-sel-fill:rgba(239,1,7,0.14);
-  --timeline-sel-edge:rgba(239,1,7,0.5);
+  --timeline-sel-edge:#c10005;
   --momentum-them:#6b7280;
   /* Zone dominance shades the opponent's zones with a neutral grey at an
      alpha computed from the share, so the canvas needs the CHANNELS rather
@@ -757,15 +785,6 @@ html:not(.dark){
      survived the Phase 1 census: the scanner looked for a complete rgba()
      and this one is three string fragments. */
   --dominance-them-rgb:100,100,100;
-  /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
-     ramp they look like: that function returns var(--green), var(--gold) and
-     var(--red-bright) for the other three bands, which do follow the theme,
-     and these two have always been literals that did not. Pointing them at
-     --rank-high and --rank-low changed them in dark, which is how this was
-     found. Phase 3 should decide whether the band is meant to be five
-     theme-following steps or five fixed ones; today it is two and three. */
-  --pct-high:#4ade80;
-  --pct-low:#f97316;
 }
 html.dark{
   --elevation-2:0 20px 54px rgba(0,0,0,.34);
@@ -776,14 +795,14 @@ html.dark{
   --elevation-card:0 2px 8px rgba(0,0,0,0.06);
   --elevation-card-hover:0 4px 12px rgba(0,0,0,0.08);
   --elevation-table:0 2px 8px rgba(0,0,0,0.04);
-  --error-ink:#c0392b;
+  --error-ink:#d6574a;
   --error-veil:rgba(220,38,38,0.08);
   --error-edge:rgba(220,38,38,0.2);
   --banner-team-fill:rgba(212,160,23,0.15);
-  --banner-team-ink:#8a6500;
+  --banner-team-ink:#bd8a00;
   --banner-team-edge:rgba(212,160,23,0.3);
   --banner-warn-fill:rgba(220,38,38,0.12);
-  --banner-warn-ink:#b91c1c;
+  --banner-warn-ink:#e44d4d;
   --banner-warn-edge:rgba(220,38,38,0.25);
   --list-group-ink:#9a9894;
   --badge-pass-fill:rgba(37,99,235,0.1);
@@ -798,15 +817,15 @@ html.dark{
 
   --positive-ink:#16a34a;
   --caution-ink:#ca8a04;
-  --negative-ink:#dc2626;
+  --negative-ink:#e35050;
   --pos-gk-fill:rgba(212,160,23,0.15);
   --pos-gk-ink:#b8860b;
   --pos-def-fill:rgba(37,99,235,0.12);
-  --pos-def-ink:#2563eb;
+  --pos-def-ink:#4d7fef;
   --pos-mid-fill:rgba(22,163,74,0.12);
   --pos-mid-ink:#16a34a;
   --pos-fwd-fill:rgba(239,68,68,0.12);
-  --pos-fwd-ink:#ef4444;
+  --pos-fwd-ink:#ef4646;
   --moment-pos-fill:rgba(22,163,74,0.08);
   --moment-neg-fill:rgba(220,38,38,0.08);
   --compare-a-bar:rgba(239,1,7,0.35);
@@ -850,11 +869,11 @@ html.dark{
   --action-tackle:#ef4444;
   --action-interception:#2563eb;
   --action-clearance:#7c3aed;
-  --action-recovery:#16a34a;
-  --action-block:#d4a017;
+  --action-recovery:#159a46;
+  --action-block:#a87f12;
   --action-aerial:#0891b2;
   --action-challenge:#db2777;
-  --action-other:#9ca3af;
+  --action-other:#7e8797;
 
   /* Position colours for the passing network and the average-position
      formation. Named for the line a player occupies, not for the shirt
@@ -862,13 +881,13 @@ html.dark{
      Distinct from --pos-*-ink above, which are the CSS badges in the
      player list and carry different values -- #d4a017 here, #b8860b
      there, for the same goalkeeper. */
-  --pos-line-gk:#d4a017;
+  --pos-line-gk:#a87f12;
   --pos-line-def:#2563eb;
   --pos-line-dm:#0d9488;
-  --pos-line-mid:#16a34a;
-  --pos-line-am:#84cc16;
+  --pos-line-mid:#159a46;
+  --pos-line-am:#609510;
   --pos-line-fw:#ef4444;
-  --pos-line-sub:#9ca3af;
+  --pos-line-sub:#7e8797;
 
   /* Result tints behind a W/D/L cell in the season table, at 8%. The
      --result-*-fill tokens above are the cell backgrounds and are not the
@@ -887,42 +906,42 @@ html.dark{
   --team-all-edge:rgba(139,149,181,0.24);
 
   /* Shot markers; see the light scope. */
-  --shot-ok:#22e39a;
-  --shot-fail:#ff5a5a;
-  --shot-goal:#f0a5ff;
-  --shot-blocked:#a78bfa;
-  --shot-post:#ffc93c;
+  --shot-ok:#0f7a52;
+  --shot-fail:#bf3535;
+  --shot-goal:#ad2ba6;
+  --shot-blocked:#7250d6;
+  --shot-post:#9a6b00;
 
-  /* Plot chrome painted from JavaScript. All the same in both themes: these
-     are drawn over the pitch, which has its own theme-keyed fill, and the page
-     has always used one value for each on either ground. Verbatim in Phase 1;
-     several of them are near-black at low alpha over a dark pitch, which is
-     worth a look in Phase 3.
+  /* PLOT CHROME FOR THE DARK PITCH. These were the clearest measured failure
+     in the whole audit: near-black ink at low alpha painted onto a #111722
+     pitch, because every one of them was tuned for the light pitch and carried
+     to dark unchanged. --plot-share-label read 1.10:1 and --plot-label 1.42:1,
+     which is not "hard to read", it is invisible.
 
-     SEVERAL SHARE A VALUE UNDER DIFFERENT NAMES. --plot-guide and
-     --plot-shadow are both rgba(0,0,0,0.18); --plot-grid and
-     --legend-pill-edge are both rgba(0,0,0,0.08). A dashed offside guide and
-     the drop shadow under a player node are not the same thing. */
-  --plot-guide:rgba(0,0,0,0.18);
-  --plot-line:rgba(0,0,0,0.15);
-  --plot-shadow:rgba(0,0,0,0.18);
+     --plot-shadow does NOT lighten with the others. It is a drop shadow, and a
+     shadow on a dark ground is still dark; lightening it would turn it into a
+     glow. It deepens instead, which is why it no longer shares a value with
+     --plot-guide. */
+  --plot-guide:rgba(214,224,240,0.26);
+  --plot-line:rgba(214,224,240,0.24);
+  --plot-shadow:rgba(0,0,0,0.55);
   --plot-node-ring:rgba(255,255,255,0.75);
   --plot-node-ring-soft:rgba(255,255,255,0.7);
-  --plot-label:#333;
-  --plot-share-label:rgba(0,0,0,0.55);
-  --plot-grid:rgba(0,0,0,0.08);
-  --plot-zone-neutral:rgba(200,200,200,0.04);
-  --plot-frame:rgba(136,136,136,0.8);
-  --plot-pill:rgba(240,234,214,0.88);
-  --plot-pill-ink:#c00;
+  --plot-label:#dbe3ef;
+  --plot-share-label:rgba(226,232,245,0.78);
+  --plot-grid:rgba(214,224,240,0.10);
+  --plot-zone-neutral:rgba(200,200,200,0.05);
+  --plot-frame:rgba(170,184,206,0.75);
+  --plot-pill:rgba(20,27,40,0.90);
+  --plot-pill-ink:#ff8a80;
 
-  /* the in-canvas legend pill */
-  --legend-pill:rgba(240,234,214,0.92);
-  --legend-pill-edge:rgba(0,0,0,0.08);
-  --legend-muted:#555;
-  --legend-muted-ink:#444;
-  --legend-heat-low:#1f5b6f;
-  --legend-heat-high:#e2b877;
+  /* the in-canvas legend pill, dark on a dark pitch */
+  --legend-pill:rgba(20,27,40,0.94);
+  --legend-pill-edge:rgba(255,255,255,0.14);
+  --legend-muted:#aab6c8;
+  --legend-muted-ink:#c2ccdb;
+  --legend-heat-low:rgb(31,91,111);
+  --legend-heat-high:rgb(226,184,119);
   --peak-ring:#e2b877;
 
   /* the highlighted zone on the final-third, zone-14 and box-entry maps */
@@ -955,7 +974,7 @@ html.dark{
 
   /* timeline selection, and the opponent's line on the momentum chart */
   --timeline-sel-fill:rgba(239,1,7,0.14);
-  --timeline-sel-edge:rgba(239,1,7,0.5);
+  --timeline-sel-edge:#ff4a42;
   --momentum-them:#6b7280;
   /* Zone dominance shades the opponent's zones with a neutral grey at an
      alpha computed from the share, so the canvas needs the CHANNELS rather
@@ -964,15 +983,6 @@ html.dark{
      survived the Phase 1 census: the scanner looked for a complete rgba()
      and this one is three string fragments. */
   --dominance-them-rgb:100,100,100;
-  /* pctColor()'s two middle steps. FIXED ACROSS THEMES, unlike the --rank-*
-     ramp they look like: that function returns var(--green), var(--gold) and
-     var(--red-bright) for the other three bands, which do follow the theme,
-     and these two have always been literals that did not. Pointing them at
-     --rank-high and --rank-low changed them in dark, which is how this was
-     found. Phase 3 should decide whether the band is meant to be five
-     theme-following steps or five fixed ones; today it is two and three. */
-  --pct-high:#4ade80;
-  --pct-low:#f97316;
 }
 
 /* ===== EDITORIAL FAMILY ============================================ */

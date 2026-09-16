@@ -70,7 +70,21 @@ TEXT = ("--ink-primary", "--ink-secondary", "--ink-tertiary", "--ink-quaternary"
 # the only thing saying where a control ends, and they are held to 3:1.
 DECORATION = ("--border-hairline", "--plot-grid", "--plot-guide", "--grid-line",
               "--pitch-band", "--plot-shadow", "--row-stripe",
-              "--gate-card-border")
+              "--gate-card-border",
+              # ramp minimums: see the note in tokens.css on --heat-low
+              "--heat-legend-low", "--legend-heat-low", "--xt-low",
+              # the edge half of a veil-and-edge pair: the fill identifies
+              # the chip, the border only softens its shape
+              "--gold-edge", "--gold-edge-soft", "--gold-edge-strong",
+              "--gold-edge-hard", "--blue-edge", "--team-all-edge",
+              "--accent-edge", "--error-edge", "--zone-edge",
+              "--banner-team-edge", "--banner-warn-edge",
+              "--tier-t2-edge", "--tier-t4-edge", "--legend-pill-edge",
+              "--shape-in-edge", "--shape-out-edge", "--shape-node-ring",
+              # rules, rings and hairlines drawn behind other content
+              "--plot-line", "--pitch-line", "--plot-node-ring",
+              "--plot-node-ring-soft", "--export-rule", "--export-border",
+              "--print-rule", "--plot-frame")
 BOUNDARY = ("--border-strong", "--select-edge",
             "--accent-edge", "--gate-card-border", "--gate-field-border",
             "--gate-focus-ring", "--print-rule", "--pitch-line",
@@ -139,7 +153,7 @@ GROUND_FOR = [
     # on the accent, or on a state fill, by name
     ("--ink-on-accent", ["--accent-solid"]),
     ("--ink-on-state", ["--state-positive", "--state-negative"]),
-    ("--label-on-fill", ["--group-passing", "--group-shooting", "--rank-mid"]),
+    ("--label-on-fill", ["--label-on-fill-halo"]),
     # the password overlay, which has its own ground and its own card
     ("--gate-ink", ["--gate-card"]),
     ("--gate-ink-soft", ["--gate-card"]),
@@ -428,6 +442,7 @@ def main() -> int:
                 raw = A.resolve(tok, cls if cls is not None else classes, blocks)
                 return parse(raw) if raw else None
 
+            page_ground = val("--ground")
             default_grounds = [("--ground", val("--ground")),
                                ("--surface-raised", val("--surface-raised"))]
             if not all(g for _, g in default_grounds):
@@ -469,7 +484,17 @@ def main() -> int:
                 # no threshold to miss, because nothing depends on seeing it.
                 need = 4.5 if cat == "text" else (0.0 if cat == "decoration" else 3.0)
                 for gname, g in grounds:
-                    r = ratio(over(fg, g), over(g, (255, 255, 255, 1.0)))
+                    # A TRANSLUCENT GROUND IS COMPOSITED OVER THE FAMILY'S OWN
+                    # GROUND, not over white. The position badges are the case
+                    # that exposed this: --pos-gk-fill is rgba(212,160,23,0.15),
+                    # so flattening it against white produced a pale gold pill
+                    # in BOTH themes and measured the dark theme's ink against
+                    # a surface that only exists in light. Over #0e1219 the same
+                    # tint is a dark olive. Measuring against the wrong surface
+                    # is the defect this file's own header warns about.
+                    base = page_ground if page_ground else (255, 255, 255, 1.0)
+                    flat = over(g, base)
+                    r = ratio(over(fg, flat), flat)
                     rows.append({"fam": fam, "theme": theme, "token": n, "cat": cat,
                                  "on": gname, "ratio": r, "need": need,
                                  "pass": r >= need, "value": raw})

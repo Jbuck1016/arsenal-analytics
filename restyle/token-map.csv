@@ -16,11 +16,11 @@ dashboard/theme.css,67,#EF0107,--accent-base,light,brand accent
 dashboard/shell.css,158,"0 12px 30px rgba(0,0,0,.28)",--elevation-panel,"light,dark",nav menu panel drop shadow; dark-tuned
 dashboard/players.html,29,"rgba(239,1,7,0.07)",--accent-veil,light,page :root accent tint
 dashboard/players.html,29,"rgba(239,1,7,0.20)",--accent-edge,light,"page :root accent edge | phase 3 recoloured; phase 1 value was rgba(239,1,7,0.18)"
-dashboard/players.html,30,#16a34a,--rank-top,light,percentile ramp 80+
-dashboard/players.html,30,#4ade80,--rank-high,light,percentile ramp 60+
-dashboard/players.html,30,#d4a017,--rank-mid,light,percentile ramp 40+
-dashboard/players.html,30,#f97316,--rank-low,light,percentile ramp 20+
-dashboard/players.html,30,#dc2626,--rank-bottom,light,percentile ramp below 20
+dashboard/players.html,30,#0e7d5c,--rank-top,light,percentile ramp 80+ | phase 3 recoloured; phase 1 value was #16a34a
+dashboard/players.html,30,#4b8a2a,--rank-high,light,percentile ramp 60+ | phase 3 recoloured; phase 1 value was #4ade80
+dashboard/players.html,30,#8d7c12,--rank-mid,light,percentile ramp 40+ | phase 3 recoloured; phase 1 value was #d4a017
+dashboard/players.html,30,#c56a10,--rank-low,light,percentile ramp 20+ | phase 3 recoloured; phase 1 value was #f97316
+dashboard/players.html,30,#b52a20,--rank-bottom,light,percentile ramp below 20 | phase 3 recoloured; phase 1 value was #dc2626
 dashboard/players.html,31,"0 1px 3px rgba(0,0,0,0.07)",--elevation-1,light,card elevation
 dashboard/players.html,34,#EF0107,--accent-base,dark,accent | phase 3 recoloured; phase 1 value was #D8B384
 dashboard/players.html,34,"rgba(239,1,7,0.14)",--accent-veil,dark,"accent tint | phase 3 recoloured; phase 1 value was rgba(216,179,132,0.12)"
@@ -35,11 +35,11 @@ dashboard/players.html,37,#667486,--border-strong,dark,emphasised boundary | pha
 dashboard/players.html,38,#f2f5fa,--ink-primary,dark,primary text | phase 3 recoloured; phase 1 value was #f4f6fb
 dashboard/players.html,38,#b6c2d4,--ink-secondary,dark,secondary text | phase 3 recoloured; phase 1 value was #c3cde2
 dashboard/players.html,38,#8b98ab,--ink-tertiary,dark,label text | phase 3 recoloured; phase 1 value was #9aa7c2
-dashboard/players.html,39,#34d399,--rank-top,dark,percentile ramp 80+
-dashboard/players.html,39,#6ee7a8,--rank-high,dark,percentile ramp 60+
-dashboard/players.html,39,#fbbf24,--rank-mid,dark,percentile ramp 40+
-dashboard/players.html,39,#fb923c,--rank-low,dark,percentile ramp 20+
-dashboard/players.html,39,#f87171,--rank-bottom,dark,percentile ramp below 20
+dashboard/players.html,39,#24cfa2,--rank-top,dark,percentile ramp 80+ | phase 3 recoloured; phase 1 value was #34d399
+dashboard/players.html,39,#96dd5e,--rank-high,dark,percentile ramp 60+ | phase 3 recoloured; phase 1 value was #6ee7a8
+dashboard/players.html,39,#f5d03a,--rank-mid,dark,percentile ramp 40+ | phase 3 recoloured; phase 1 value was #fbbf24
+dashboard/players.html,39,#ffa347,--rank-low,dark,percentile ramp 20+ | phase 3 recoloured; phase 1 value was #fb923c
+dashboard/players.html,39,#ff6f6f,--rank-bottom,dark,percentile ramp below 20 | phase 3 recoloured; phase 1 value was #f87171
 dashboard/players.html,40,"0 1px 3px rgba(0,0,0,0.35)",--elevation-1,dark,card elevation
 dashboard/players.html,47,#fff,--ink-on-accent,"light,dark",logo glyph on the accent chip | phase 3 recoloured; phase 1 value was #12141a
 dashboard/players.html,82,"rgba(251,146,60,.15)",--state-warn-veil,"light,dark",warn chip tint
@@ -47,49 +47,48 @@ dashboard/players.html,126,#fff,--ink-on-accent,"light,dark",button label on the
 dashboard/players.html,238,"rgba(0,0,0,.62)",--scrim,"light,dark",drill modal scrim
 dashboard/players.html,239,"0 18px 60px rgba(0,0,0,.5)",--elevation-modal,"light,dark",drill card elevation; dark-tuned
 dashboard/players.html,242,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; dark-tuned
-dashboard/players.html,396,#22e39a,--series-ok,"light,dark",PAL.ok pitch layer palette
-dashboard/players.html,396,#ff5a5a,--series-fail,"light,dark",PAL.fail
-dashboard/players.html,396,#22e39a,--series-pass,"light,dark",PAL.pass
-dashboard/players.html,396,#4d9fff,--series-prog,"light,dark",PAL.prog
-dashboard/players.html,396,#ffc93c,--series-carry,"light,dark",PAL.carry
-dashboard/players.html,396,#f0a5ff,--series-box,"light,dark",PAL.box
+dashboard/players.html,396,#139866,--series-ok,"light,dark",PAL.ok pitch layer palette | phase 3 recoloured; phase 1 value was #22e39a
+dashboard/players.html,396,#c92c2c,--series-fail,"light,dark",PAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a
+dashboard/players.html,396,#1a6fd4,--series-prog,"light,dark",PAL.prog | phase 3 recoloured; phase 1 value was #4d9fff
+dashboard/players.html,396,#9a7100,--series-carry,"light,dark",PAL.carry | phase 3 recoloured; phase 1 value was #ffc93c
+dashboard/players.html,396,#a82fbe,--series-box,"light,dark",PAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
 dashboard/players.html,865,#2f80ed,--group-passing,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#00a896,--group-creation,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#00918c,--group-creation,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #00a896
 dashboard/players.html,865,#e63956,--group-shooting,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#f2b134,--group-carrying,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#7656d6,--group-defending,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#9b5de5,--group-aerial,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#ef8354,--group-discipline,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#00b4d8,--group-tempo,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#36b37e,--group-halfspaces,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#b28407,--group-carrying,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #f2b134
+dashboard/players.html,865,#6e55ce,--group-defending,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #7656d6
+dashboard/players.html,865,#a63fb5,--group-aerial,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #9b5de5
+dashboard/players.html,865,#e1561c,--group-discipline,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #ef8354
+dashboard/players.html,865,#0d94b8,--group-tempo,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #00b4d8
+dashboard/players.html,865,#3f9c48,--group-halfspaces,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #36b37e
 dashboard/players.html,865,#d97706,--group-holdup,"light,dark",PIZZA_COLORS metric group
 dashboard/players.html,865,#b94d8c,--group-setpieces,"light,dark",PIZZA_COLORS metric group
-dashboard/players.html,865,#3a86ff,--group-goalkeeping,"light,dark",PIZZA_COLORS metric group
+dashboard/players.html,865,#5a6b7d,--group-goalkeeping,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #3a86ff
 dashboard/players.html,866,#2f80ed,--group-passing,"light,dark",pizzaColor fallback array
-dashboard/players.html,866,#00a896,--group-creation,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#00918c,--group-creation,"light,dark",pizzaColor fallback array | phase 3 recoloured; phase 1 value was #00a896
 dashboard/players.html,866,#e63956,--group-shooting,"light,dark",pizzaColor fallback array
-dashboard/players.html,866,#f2b134,--group-carrying,"light,dark",pizzaColor fallback array
-dashboard/players.html,866,#7656d6,--group-defending,"light,dark",pizzaColor fallback array
+dashboard/players.html,866,#b28407,--group-carrying,"light,dark",pizzaColor fallback array | phase 3 recoloured; phase 1 value was #f2b134
+dashboard/players.html,866,#6e55ce,--group-defending,"light,dark",pizzaColor fallback array | phase 3 recoloured; phase 1 value was #7656d6
 dashboard/players.html,879,#fff,--label-on-fill,"light,dark",pizza slice percentile label ink
-dashboard/players.html,879,"rgba(0,0,0,.28)",--label-on-fill-halo,"light,dark",pizza slice label halo; dark-dependent trick
-dashboard/players.html,961,#cbd5e1,--layer-neutral,"light,dark",neutral evidence layer
-dashboard/players.html,972,#a78bfa,--layer-through,"light,dark",through balls layer
-dashboard/players.html,976,#22d3ee,--layer-receipt,"light,dark",receipts layer
-dashboard/players.html,977,#f472b6,--layer-shot,"light,dark",shots layer
-dashboard/players.html,1642,#a78bfa,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through
-dashboard/players.html,1674,#34d399,--layer-quick,"light,dark",under-1s release layer
-dashboard/players.html,1687,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map; was --layer-through
-dashboard/players.html,1688,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot
-dashboard/players.html,1688,#22d3ee,--layer-save,"light,dark",save in defensive action map; was --layer-receipt
-dashboard/players.html,2004,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map; was --layer-through
-dashboard/players.html,2007,#a78bfa,--layer-blocked,"light,dark",blocked entry in shot map legend; was --layer-through
+dashboard/players.html,879,#10131a,--label-on-fill-halo,"light,dark","pizza slice label halo; dark-dependent trick | phase 3 recoloured; phase 1 value was rgba(0,0,0,.28)"
+dashboard/players.html,961,#707c86,--layer-neutral,"light,dark",neutral evidence layer | phase 3 recoloured; phase 1 value was #cbd5e1
+dashboard/players.html,972,#7c5ce0,--layer-through,"light,dark",through balls layer | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/players.html,976,#0e8f9e,--layer-receipt,"light,dark",receipts layer | phase 3 recoloured; phase 1 value was #22d3ee
+dashboard/players.html,977,#d4357f,--layer-shot,"light,dark",shots layer | phase 3 recoloured; phase 1 value was #f472b6
+dashboard/players.html,1642,#c2620a,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/players.html,1674,#1f9d5f,--layer-quick,"light,dark",under-1s release layer | phase 3 recoloured; phase 1 value was #34d399
+dashboard/players.html,1687,#2f6fd0,--layer-clearance,"light,dark",clearance in defensive action map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/players.html,1688,#c0342a,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot | phase 3 recoloured; phase 1 value was #f472b6
+dashboard/players.html,1688,#a83fa0,--layer-save,"light,dark",save in defensive action map; was --layer-receipt | phase 3 recoloured; phase 1 value was #22d3ee
+dashboard/players.html,2004,#c2620a,--layer-blocked,"light,dark",blocked outcome in shot map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/players.html,2007,#c2620a,--layer-blocked,"light,dark",blocked entry in shot map legend; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
 dashboard/teams.html,27,"rgba(239,1,7,.07)",--accent-veil,light,page :root accent tint
 dashboard/teams.html,27,"rgba(239,1,7,0.20)",--accent-edge,light,"page :root accent edge | phase 3 recoloured; phase 1 value was rgba(239,1,7,.18)"
-dashboard/teams.html,27,#16a34a,--rank-top,light,percentile ramp 80+
-dashboard/teams.html,27,#4ade80,--rank-high,light,percentile ramp 60+
-dashboard/teams.html,27,#d4a017,--rank-mid,light,percentile ramp 40+
-dashboard/teams.html,27,#f97316,--rank-low,light,percentile ramp 20+
-dashboard/teams.html,27,#dc2626,--rank-bottom,light,percentile ramp below 20
+dashboard/teams.html,27,#0e7d5c,--rank-top,light,percentile ramp 80+ | phase 3 recoloured; phase 1 value was #16a34a
+dashboard/teams.html,27,#4b8a2a,--rank-high,light,percentile ramp 60+ | phase 3 recoloured; phase 1 value was #4ade80
+dashboard/teams.html,27,#8d7c12,--rank-mid,light,percentile ramp 40+ | phase 3 recoloured; phase 1 value was #d4a017
+dashboard/teams.html,27,#c56a10,--rank-low,light,percentile ramp 20+ | phase 3 recoloured; phase 1 value was #f97316
+dashboard/teams.html,27,#b52a20,--rank-bottom,light,percentile ramp below 20 | phase 3 recoloured; phase 1 value was #dc2626
 dashboard/teams.html,27,#2563eb,--style-axis-hi,light,style axis high pole
 dashboard/teams.html,27,#d97706,--style-axis-low,light,style axis low pole
 dashboard/teams.html,27,"0 1px 3px rgba(0,0,0,.07)",--elevation-1,light,card elevation
@@ -104,11 +103,11 @@ dashboard/teams.html,30,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stron
 dashboard/teams.html,30,#f2f5fa,--ink-primary,dark,primary text | phase 3 recoloured; phase 1 value was #f4f6fb
 dashboard/teams.html,30,#b6c2d4,--ink-secondary,dark,secondary text | phase 3 recoloured; phase 1 value was #c3cde2
 dashboard/teams.html,30,#8b98ab,--ink-tertiary,dark,label text | phase 3 recoloured; phase 1 value was #9aa7c2
-dashboard/teams.html,30,#34d399,--rank-top,dark,percentile ramp 80+
-dashboard/teams.html,30,#6ee7a8,--rank-high,dark,percentile ramp 60+
-dashboard/teams.html,30,#fbbf24,--rank-mid,dark,percentile ramp 40+
-dashboard/teams.html,30,#fb923c,--rank-low,dark,percentile ramp 20+
-dashboard/teams.html,30,#f87171,--rank-bottom,dark,percentile ramp below 20
+dashboard/teams.html,30,#24cfa2,--rank-top,dark,percentile ramp 80+ | phase 3 recoloured; phase 1 value was #34d399
+dashboard/teams.html,30,#96dd5e,--rank-high,dark,percentile ramp 60+ | phase 3 recoloured; phase 1 value was #6ee7a8
+dashboard/teams.html,30,#f5d03a,--rank-mid,dark,percentile ramp 40+ | phase 3 recoloured; phase 1 value was #fbbf24
+dashboard/teams.html,30,#ffa347,--rank-low,dark,percentile ramp 20+ | phase 3 recoloured; phase 1 value was #fb923c
+dashboard/teams.html,30,#ff6f6f,--rank-bottom,dark,percentile ramp below 20 | phase 3 recoloured; phase 1 value was #f87171
 dashboard/teams.html,30,#60a5fa,--style-axis-hi,dark,style axis high pole
 dashboard/teams.html,30,#fbbf24,--style-axis-low,dark,style axis low pole
 dashboard/teams.html,30,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation; bare-decimal alpha
@@ -116,18 +115,19 @@ dashboard/teams.html,39,#fff,--ink-on-accent,"light,dark",logo glyph on the acce
 dashboard/teams.html,141,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; bare-decimal alpha
 dashboard/teams.html,173,#fff,--ink-on-state,light,W/D/L badge ink on a result-coloured chip; new role token | phase 3 recoloured; phase 1 value was #0d0f14
 dashboard/teams.html,173,#0d0f14,--ink-on-state,dark,W/D/L badge ink on a result-coloured chip; new role token
-dashboard/teams.html,255,#22e39a,--series-ok,"light,dark",TPAL.ok; TPAL duplicated players.html PAL exactly
-dashboard/teams.html,255,#ff5a5a,--series-fail,"light,dark",TPAL.fail
-dashboard/teams.html,255,#22e39a,--series-pass,"light,dark",TPAL.pass
-dashboard/teams.html,255,#4d9fff,--series-prog,"light,dark",TPAL.prog
-dashboard/teams.html,255,#ffc93c,--series-carry,"light,dark",TPAL.carry
-dashboard/teams.html,255,#f0a5ff,--series-box,"light,dark",TPAL.box
-dashboard/teams.html,734,#a78bfa,--layer-blocked,"light,dark",blocked shot in the outcome legend
-dashboard/teams.html,873,"rgba(245,166,35,.12)",--heat-legend-low,"light,dark",heat legend gradient low stop; a separate ramp from match.html densityRGB
-dashboard/teams.html,873,#f5a623,--heat-legend-high,"light,dark",heat legend gradient high stop
-dashboard/teams.html,903,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map
-dashboard/teams.html,903,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map
-dashboard/teams.html,927,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map
+dashboard/teams.html,255,#139866,--series-ok,"light,dark",TPAL.ok; TPAL duplicated players.html PAL exactly | phase 3 recoloured; phase 1 value was #22e39a
+dashboard/teams.html,255,#c92c2c,--series-fail,"light,dark",TPAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a
+dashboard/teams.html,255,#1a6fd4,--series-prog,"light,dark",TPAL.prog | phase 3 recoloured; phase 1 value was #4d9fff
+dashboard/teams.html,255,#9a7100,--series-carry,"light,dark",TPAL.carry | phase 3 recoloured; phase 1 value was #ffc93c
+dashboard/teams.html,255,#a82fbe,--series-box,"light,dark",TPAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
+dashboard/teams.html,734,#c2620a,--layer-blocked,"light,dark",blocked shot in the outcome legend | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/teams.html,873,"rgb(150,176,168)",--heat-legend-low,light,"heat legend gradient low stop; a separate ramp from match.html densityRGB | phase 3 recoloured; phase 1 value was rgba(245,166,35,.12)"
+dashboard/teams.html,873,"rgb(31,91,111)",--heat-legend-low,dark,"heat legend gradient low stop; a separate ramp from match.html densityRGB | phase 3 recoloured; phase 1 value was rgba(245,166,35,.12)"
+dashboard/teams.html,873,"rgb(150,26,22)",--heat-legend-high,light,heat legend gradient high stop | phase 3 recoloured; phase 1 value was #f5a623
+dashboard/teams.html,873,"rgb(226,184,119)",--heat-legend-high,dark,heat legend gradient high stop | phase 3 recoloured; phase 1 value was #f5a623
+dashboard/teams.html,903,#2f6fd0,--layer-clearance,"light,dark",clearance in defensive action map | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/teams.html,903,#c0342a,--layer-challenge,"light,dark",challenge in defensive action map | phase 3 recoloured; phase 1 value was #f472b6
+dashboard/teams.html,927,#c2620a,--layer-blocked,"light,dark",blocked outcome in shot map | phase 3 recoloured; phase 1 value was #a78bfa
 dashboard/index.html,35,#0e1219,--ground,dark,page canvas
 dashboard/index.html,35,#161b24,--surface-raised,dark,raised surface: cards and header
 dashboard/index.html,35,#1e242e,--surface-recessed,dark,recessed surface
@@ -197,11 +197,11 @@ dashboard/sequences.html,40,#EF0107,--accent-base,dark,dark amber: declaration d
 dashboard/sequences.html,40,"rgba(239,1,7,0.32)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32) | phase 3 recoloured; phase 1 value was rgba(216,179,132,0.28)"
 dashboard/sequences.html,54,"rgba(255,255,255,.035)",--surface-veil,dark,translucent veil
 dashboard/sequences.html,54,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stronger translucent veil
-dashboard/sequences.html,56,#34d399,--rank-top,dark,percentile ramp: top
-dashboard/sequences.html,56,#6ee7a8,--rank-high,dark,percentile ramp: high
-dashboard/sequences.html,56,#fbbf24,--rank-mid,dark,percentile ramp: mid
-dashboard/sequences.html,56,#fb923c,--rank-low,dark,percentile ramp: low
-dashboard/sequences.html,56,#f87171,--rank-bottom,dark,percentile ramp: bottom
+dashboard/sequences.html,56,#24cfa2,--rank-top,dark,percentile ramp: top | phase 3 recoloured; phase 1 value was #34d399
+dashboard/sequences.html,56,#96dd5e,--rank-high,dark,percentile ramp: high | phase 3 recoloured; phase 1 value was #6ee7a8
+dashboard/sequences.html,56,#f5d03a,--rank-mid,dark,percentile ramp: mid | phase 3 recoloured; phase 1 value was #fbbf24
+dashboard/sequences.html,56,#ffa347,--rank-low,dark,percentile ramp: low | phase 3 recoloured; phase 1 value was #fb923c
+dashboard/sequences.html,56,#ff6f6f,--rank-bottom,dark,percentile ramp: bottom | phase 3 recoloured; phase 1 value was #f87171
 dashboard/sequences.html,56,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation
 dashboard/guide.html,27,#EF0107,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value | phase 3 recoloured; phase 1 value was #8a5e1a
 dashboard/guide.html,27,"rgba(239,1,7,0.07)",--accent-veil,light,"light AA amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(138,94,26,.10)"

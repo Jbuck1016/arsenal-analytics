@@ -278,7 +278,7 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
 function tname(t){return TEAM_DISPLAY[t]||t||''}
-const TPAL={ok:'var(--series-ok)',fail:'var(--series-fail)',pass:'var(--series-pass)',prog:'var(--series-prog)',carry:'var(--series-carry)',box:'var(--series-box)'};
+const TPAL={ok:'var(--series-ok)',fail:'var(--series-fail)',prog:'var(--series-prog)',carry:'var(--series-carry)',box:'var(--series-box)'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
 
@@ -1036,17 +1036,32 @@ function heatLayer(rows){
   if(!mx)mx=1;
   let s2='<defs><filter id="hblur" x="-12%" y="-12%" width="124%" height="124%">'+
          '<feGaussianBlur stdDeviation="2.1"/></filter></defs><g filter="url(#hblur)">';
+  /* THE DENSITY RAMP COMES FROM THE TOKENS, NOT FROM ARITHMETIC.
+     This used to compute its fill per cell: r=40+215t, g=90+150t, b=190-150t.
+     There was no literal for Phase 1 to tokenise and no byte-equal substitution
+     to make, which is why it is the one entry in deliberate-skips.csv that was
+     flagged forward to "ramps rebuilt per theme, not inverted" rather than
+     skipped for a reason that would hold.
+     It was also tuned cool-to-warm for a dark pitch and read backwards on
+     cream: the hottest cell came out lightest, against a light ground. It now
+     interpolates --heat-low/mid/high, which are two different ramps keyed per
+     theme -- and which match.html's densityRGB() reads too, so the same three
+     stops drive the canvas heatmap, this SVG overlay and the legend swatch. */
   for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){
     const v=g[j][i]/mx; if(v<0.04)continue;
-    // cool -> warm ramp reads as intensity without a legend
     const t=Math.pow(v,0.62);
-    const r=Math.round(40+215*Math.min(1,t*1.35));
-    const gg=Math.round(90+150*Math.min(1,Math.max(0,t*1.5-0.25)));
-    const b=Math.round(190-150*t);
+    const c=heatRGB(t);
     s2+='<rect x="'+(i*cw)+'" y="'+(j*ch)+'" width="'+(cw+0.35)+'" height="'+(ch+0.35)+
-        '" fill="rgb('+r+','+gg+','+b+')" fill-opacity="'+(0.10+0.72*t).toFixed(3)+'"/>';
+        '" fill="rgb('+c[0]+','+c[1]+','+c[2]+')" fill-opacity="'+(0.10+0.72*t).toFixed(3)+'"/>';
   }
   return s2+'</g>';
+}
+function heatRGB(t){
+  const cs=getComputedStyle(document.documentElement);
+  const stop=n=>cs.getPropertyValue(n).trim().split(',').map(x=>parseFloat(x));
+  const low=stop('--heat-low'),mid=stop('--heat-mid'),high=stop('--heat-high');
+  const a=t<0.58?low:mid,b=t<0.58?mid:high,u=t<0.58?t/0.58:(t-0.58)/0.42;
+  return a.map((n,i)=>Math.round(n+(b[i]-n)*u));
 }
 /* ---------- ATTACK PROFILE ---------- */
 function channelBlock(t){

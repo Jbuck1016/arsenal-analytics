@@ -15,31 +15,10 @@ layers: a blocked shot, a clearance, a challenge and a save were given
 three hues between them, and were named separately so Phase 3 could
 diverge them on purpose. A zero here is that, showing up as arithmetic.
 
-**21 flagged pairs out of 490 compared.**
+**0 flagged pairs out of 452 compared.**
 
 | set | scope | pair | values | ΔE00 |
 |---|---|---|---|---|
-| players.html evidence layers | `app` light | `--layer-blocked` / `--layer-clearance` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` light | `--layer-blocked` / `--layer-through` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` light | `--layer-challenge` / `--layer-shot` | `#f472b6` / `#f472b6` | **0.0** **severe** |
-| players.html evidence layers | `app` light | `--layer-clearance` / `--layer-through` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` light | `--layer-receipt` / `--layer-save` | `#22d3ee` / `#22d3ee` | **0.0** **severe** |
-| players.html evidence layers | `app` dark | `--layer-blocked` / `--layer-clearance` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` dark | `--layer-blocked` / `--layer-through` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` dark | `--layer-challenge` / `--layer-shot` | `#f472b6` / `#f472b6` | **0.0** **severe** |
-| players.html evidence layers | `app` dark | `--layer-clearance` / `--layer-through` | `#a78bfa` / `#a78bfa` | **0.0** **severe** |
-| players.html evidence layers | `app` dark | `--layer-receipt` / `--layer-save` | `#22d3ee` / `#22d3ee` | **0.0** **severe** |
-| pitch layer series (PAL / TPAL) | `app` light | `--series-ok` / `--series-pass` | `#22e39a` / `#22e39a` | **0.0** **severe** |
-| pitch layer series (PAL / TPAL) | `app` dark | `--series-ok` / `--series-pass` | `#22e39a` / `#22e39a` | **0.0** **severe** |
-| players.html metric groups | `app` light | `--group-goalkeeping` / `--group-passing` | `#3a86ff` / `#2f80ed` | **3.1** **severe** |
-| players.html metric groups | `app` dark | `--group-goalkeeping` / `--group-passing` | `#3a86ff` / `#2f80ed` | **3.1** **severe** |
-| pitch layer series (PAL / TPAL) | `app` light | `--series-mint` / `--series-ok` | `#34d399` / `#22e39a` | **4.3** **severe** |
-| pitch layer series (PAL / TPAL) | `app` light | `--series-mint` / `--series-pass` | `#34d399` / `#22e39a` | **4.3** **severe** |
-| pitch layer series (PAL / TPAL) | `app` dark | `--series-mint` / `--series-ok` | `#34d399` / `#22e39a` | **4.3** **severe** |
-| pitch layer series (PAL / TPAL) | `app` dark | `--series-mint` / `--series-pass` | `#34d399` / `#22e39a` | **4.3** **severe** |
-| percentile ramp | `app` dark | `--rank-high` / `--rank-top` | `#6ee7a8` / `#34d399` | **6.0** |
-| players.html metric groups | `app` light | `--group-aerial` / `--group-defending` | `#9b5de5` / `#7656d6` | **7.5** |
-| players.html metric groups | `app` dark | `--group-aerial` / `--group-defending` | `#9b5de5` / `#7656d6` | **7.5** |
 
 ## Closest pair in every set
 
@@ -47,21 +26,21 @@ diverge them on purpose. A zero here is that, showing up as arithmetic.
 |---|---|---|---|
 | match.html defensive actions | `app` light | `--action-clearance` / `--action-interception` | 15.1 |
 | match.html defensive actions | `app` dark | `--action-clearance` / `--action-interception` | 15.1 |
-| match.html position lines | `app` light | `--pos-line-am` / `--pos-line-mid` | 18.2 |
-| match.html position lines | `app` dark | `--pos-line-am` / `--pos-line-mid` | 18.2 |
-| match.html shot outcomes | `app` light | `--shot-blocked` / `--shot-goal` | 15.3 |
-| match.html shot outcomes | `app` dark | `--shot-blocked` / `--shot-goal` | 15.0 |
-| match.html position badges | `app` light | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
+| match.html position lines | `app` light | `--pos-line-am` / `--pos-line-mid` | 11.5 |
+| match.html position lines | `app` dark | `--pos-line-am` / `--pos-line-mid` | 11.5 |
+| match.html shot outcomes | `app` light | `--shot-blocked` / `--shot-goal` | 15.6 |
+| match.html shot outcomes | `app` dark | `--shot-blocked` / `--shot-goal` | 15.6 |
+| match.html position badges | `app` light | `--pos-fwd-ink` / `--pos-gk-ink` | 31.1 |
 | match.html position badges | `app` dark | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
-| players.html metric groups | `app` light | `--group-goalkeeping` / `--group-passing` | 3.1 |
-| players.html metric groups | `app` dark | `--group-goalkeeping` / `--group-passing` | 3.1 |
-| players.html evidence layers | `app` light | `--layer-blocked` / `--layer-clearance` | 0.0 |
-| players.html evidence layers | `app` dark | `--layer-blocked` / `--layer-clearance` | 0.0 |
-| pitch layer series (PAL / TPAL) | `app` light | `--series-ok` / `--series-pass` | 0.0 |
-| pitch layer series (PAL / TPAL) | `app` dark | `--series-ok` / `--series-pass` | 0.0 |
-| percentile ramp | `app` light | `--rank-high` / `--rank-top` | 16.0 |
-| percentile ramp | `app` dark | `--rank-high` / `--rank-top` | 6.0 |
-| W/D/L result inks | `app` light | `--caution-ink` / `--negative-ink` | 34.3 |
-| W/D/L result inks | `app` dark | `--caution-ink` / `--negative-ink` | 34.3 |
+| players.html metric groups | `app` light | `--group-aerial` / `--group-setpieces` | 11.9 |
+| players.html metric groups | `app` dark | `--group-aerial` / `--group-setpieces` | 11.9 |
+| players.html evidence layers | `app` light | `--layer-save` / `--layer-shot` | 13.3 |
+| players.html evidence layers | `app` dark | `--layer-save` / `--layer-shot` | 13.3 |
+| pitch layer series (PAL / TPAL) | `app` light | `--series-neutral` / `--series-prog` | 11.7 |
+| pitch layer series (PAL / TPAL) | `app` dark | `--series-neutral` / `--series-prog` | 11.7 |
+| percentile ramp | `app` light | `--rank-high` / `--rank-top` | 15.9 |
+| percentile ramp | `app` dark | `--rank-high` / `--rank-top` | 19.3 |
+| W/D/L result inks | `app` light | `--caution-ink` / `--negative-ink` | 30.4 |
+| W/D/L result inks | `app` dark | `--caution-ink` / `--negative-ink` | 33.8 |
 | editorial series | `editorial` light | `--series-1` / `--series-5` | 12.2 |
 | editorial series | `editorial` dark | `--series-1` / `--series-5` | 10.1 |

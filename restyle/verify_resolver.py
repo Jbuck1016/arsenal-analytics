@@ -30,8 +30,14 @@ import assert_page_parity as P  # noqa: E402
 # element with setProperty at runtime, so the browser is right and the
 # resolver is right and they disagree. That is hole 1 in gate-limitations.md,
 # not a resolver bug.
+# --accent-solid joins the list in Phase 3. The accent fills that carry a label
+# read it now, so applyTheme() writes it alongside --accent; without that, every
+# filled button would stay brand red while the rules around it followed the
+# selected team. At load the team is __ALL__, whose colour is --team-all, which
+# is what the browser reports here.
 RUNTIME_OVERRIDDEN = {"dashboard/match.html": {"--accent", "--accent-dim",
-                                               "--accent-glow", "--bg", "--bg2"}}
+                                               "--accent-glow", "--accent-solid",
+                                               "--bg", "--bg2"}}
 
 
 def main() -> int:
