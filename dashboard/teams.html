@@ -139,6 +139,12 @@ td{padding:7px 9px;border-bottom:1px solid var(--border)}
 .tname-go:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 tr:hover td{background:var(--surface)}
 .num{text-align:right;font-family:var(--f-data);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.lgtoggle{display:flex;gap:6px;flex-wrap:wrap}
+.lgtoggle button{font:600 10px/1 var(--f-body);padding:6px 10px;border-radius:5px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text2);cursor:pointer;white-space:nowrap}
+.lgtoggle button:hover{border-color:var(--border2);color:var(--text)}
+.lgtoggle button.on{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
+.export-cap{font:600 10px/1.5 var(--f-body);color:var(--text3);letter-spacing:.02em;padding:4px 18px 14px}
 .legend{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);flex-wrap:wrap}
 .lg{display:flex;align-items:center;gap:5px;font:500 10px/1 'Inter';color:var(--text3)}
 .dot{width:8px;height:8px;border-radius:50%}
@@ -225,17 +231,17 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 <body>
 <div class="hdr">
   <div class="hdr-logo">T</div>
-  <div class="hdr-id"><div class="hdr-title">Team Profiles</div><div class="hdr-row"><div id="lgPick" class="lgpick"></div><div class="hdr-sub" id="hdrSub">loading&hellip;</div><span class="as-of" id="asOf"></span></div></div>
+  <div class="hdr-id"><div class="hdr-title">Team Profiles</div><div class="hdr-row"><div class="hdr-sub" id="hdrSub">loading&hellip;</div><span class="as-of" id="asOf"></span></div></div>
   <div class="tabs" id="tabs" aria-label="Team profile sections"></div>
   <div class="hdr-right">
     <div class="navmenu" id="navMenu"></div>
-    <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
-    <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
+    <button class="lnk acc" onclick="exportPNG()" title="Panel content only, always rendered light">&#11015; PNG</button>
+    <button class="lnk acc" onclick="exportPDF()" title="Panel content only, always rendered light">&#11015; PDF</button>
     <button class="lnk" onclick="FutTheme.toggle()">Theme</button>
   </div>
 </div>
 <div class="wrap">
-  <div class="side" id="side"><input class="side-search" aria-label="Search teams" placeholder="Search team…" oninput="TEAMQ=this.value;renderList()"><div class="plist" id="tlist"></div></div>
+  <div class="side" id="side"><input class="side-search" aria-label="Search teams" placeholder="Search team…" oninput="TEAMQ=this.value;renderList()"><div id="lgPick" style="padding:0 10px 10px"></div><div class="plist" id="tlist"></div></div>
   <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
 <div class="tip" id="tip"></div>
@@ -249,7 +255,21 @@ const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'
  ['Match','match.html','explore'],['Players','players.html','explore'],['Sequences','sequences.html','explore'],
  ['Guide','guide.html','learn'],['Method','methodology.html','learn'],['Reference','glossary.html','learn']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[],TEAMQ='';
-let DIR={},LEAGUES=[],LG=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
+let DIR={},LEAGUES=[],
+/* A SET, not one code. Empty means every league. Stored comma-joined under
+   the key the single-select version used, so an existing 'ALL' or a single
+   code both still read correctly -- and players.html writes the same key, so
+   a scope chosen on one page carries to the other as it always did. */
+    LGSEL=(function(){try{
+      var raw=localStorage.getItem('leagueScope');
+      if(!raw||raw==='ALL')return [];
+      return raw.split(',').filter(Boolean);
+    }catch(e){return []}})();
+function activeLeagues(){
+  var all=LEAGUES.map(function(l){return l.league});
+  var sel=LGSEL.filter(function(c){return all.indexOf(c)>=0});
+  return sel.length?sel:all;
+}
 let LM={x:'ppda',y:'field_tilt'};
 let MP={kind:'passes',third:'',lane:'',outcome:'ok',mode:'pattern',defMode:'wins'};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
@@ -282,34 +302,86 @@ function lgName(code){
   for(var i=0;i<LEAGUES.length;i++)if(LEAGUES[i].league===code)return LEAGUES[i].display_name;
   return code||'League unavailable';
 }
-function lgScopeLabel(){return LG==='ALL'?'All leagues':lgName(LG)}
-/* Every list, ranking and map is scoped to the chosen league. Percentiles and ranks
-   are already computed within league in the database, so mixing them on screen would
-   misrepresent numbers that were never comparable. */
-function inScope(t){return LG==='ALL'||lgOf(t)===LG}
+function lgScopeLabel(){
+  var a=activeLeagues();
+  if(!a.length)return 'No leagues';
+  if(a.length===LEAGUES.length&&LEAGUES.length>1)return 'All '+a.length+' leagues';
+  if(a.length<=3)return a.map(lgName).join(' + ');
+  return a.length+' leagues';
+}
+function isPooled(){return activeLeagues().length>1}
+/* NAMES THE POPULATION ON EVERY RENDER. The percentiles in the database are
+   computed within one league, so pooling two of them makes the stored number
+   answer a question nobody asked. When more than one league is in play the
+   percentile is recomputed across the pooled teams, and the reader is told
+   so -- pooling treats the leagues as one population of equal standard, and
+   a team can drop without having changed anything. */
+function populationNote(n){
+  var a=activeLeagues();
+  var who=lgScopeLabel()+(n==null?'':' '+String.fromCharCode(183)+' '+n+' team'+(n===1?'':'s'));
+  return who+' '+String.fromCharCode(183)+' '+(a.length>1
+    ? 'pooled as one population, percentiles recomputed across the pool'
+    : 'percentiles within this league');
+}
+function inScope(t){return activeLeagues().indexOf(lgOf(t))>=0}
 function scopedTeams(){return TEAMS.filter(function(t){return inScope(t.team)})}
 function updateHdr(){
-  var n=scopedTeams().length;
-  var label=(LG==='ALL')?(LEAGUES.length+' leagues'):lgName(LG);
-  document.getElementById('hdrSub').textContent=
-    label+' \u00B7 '+n+' teams \u00B7 ranked within league';
+  document.getElementById('hdrSub').textContent=populationNote(scopedTeams().length);
   renderAsOf();
+}
+/* The league control as markup, for the control bar of whichever view needs
+   it. It used to sit in the header beside "Team Profiles", squeezing the
+   title; it is a filter and belongs with the filters. */
+function leagueCtrl(){
+  if(LEAGUES.length<2)return '';
+  var all=LGSEL.length===0;
+  return '<div style="display:flex;flex-direction:column;gap:5px"><span class="kpi-l">Leagues</span>'+
+    '<div class="lgtoggle">'+
+    '<button type="button" class="'+(all?'on':'')+'" aria-pressed="'+all+'" '+
+      'onclick="setLeagues([])" title="Every league, pooled">All</button>'+
+    LEAGUES.map(function(l){
+      var on=!all&&LGSEL.indexOf(l.league)>=0;
+      var available=TEAMS.filter(function(x){return lgOf(x.team)===l.league}).length;
+      return '<button type="button" class="'+(on?'on':'')+'" aria-pressed="'+on+'" '+
+        'title="'+available+' teams" '+
+        'onclick="toggleLeague('+JSON.stringify(l.league).replace(/"/g,'&quot;')+')">'+
+        esc(l.display_name)+'</button>'}).join('')+
+    '</div></div>';
 }
 function renderLeaguePicker(){
   var host=document.getElementById('lgPick');
-  if(!host||LEAGUES.length<2){if(host)host.style.display='none';return}
-  host.innerHTML='<select id="lgSel" onchange="setLeague(this.value)">'+
-    '<option value="ALL"'+(LG==='ALL'?' selected':'')+'>All leagues</option>'+
-    LEAGUES.map(function(l){
-      var available=TEAMS.filter(function(t){return lgOf(t.team)===l.league}).length;
-      return '<option value="'+esc(l.league)+'"'+(LG===l.league?' selected':'')+'>'+
-        esc(l.display_name)+' ('+available+' available)</option>'}).join('')+'</select>';
+  if(!host)return;
+  host.innerHTML=LEAGUES.length<2?'':leagueCtrl();
 }
-function setLeague(v){
-  LG=v;
-  try{localStorage.setItem('leagueScope',v)}catch(e){}
+function toggleLeague(code){
+  var i=LGSEL.indexOf(code);
+  if(i>=0)LGSEL.splice(i,1); else LGSEL.push(code);
+  if(LGSEL.length===LEAGUES.length)LGSEL=[];
+  setLeagues(LGSEL);
+}
+function setLeagues(sel){
+  LGSEL=sel.slice();
+  try{localStorage.setItem('leagueScope',LGSEL.length?LGSEL.join(','):'ALL')}catch(e){}
   if(SEL&&!inScope(SEL)){var f=scopedTeams()[0];SEL=f?f.team:null}
-  renderList();updateHdr();draw();
+  renderList();updateHdr();renderLeaguePicker();draw();
+}
+/* Percentiles for a pooled selection, matching the definition players.html
+   uses: the share of the pooled population at or below this team, inverted
+   for a lower-is-better metric so the best is always 100. Whether that is
+   the definition mv_team_percentiles uses could not be checked tonight, the
+   database being out of scope; it is only ever applied to a pooled
+   selection, so it never sits in the same table as a stored value. Recorded
+   in DECISIONS_NEEDED.md. */
+function repoolTeamPct(rows,higherIsBetter){
+  var n=rows.length;
+  var good=function(r){return higherIsBetter===false?-r.value:r.value};
+  var sorted=rows.map(good).sort(function(a,b){return a-b});
+  rows.forEach(function(r){
+    var v=good(r),lo=0,hi=sorted.length;
+    while(lo<hi){var mid=(lo+hi)>>1;if(sorted[mid]<=v)lo=mid+1;else hi=mid}
+    r.pct=n>1?Math.round(100*lo/n):100;
+  });
+  return rows;
 }
 
 async function init(){
@@ -329,12 +401,14 @@ async function init(){
     LANES={};(r[4]||[]).forEach(function(l){if(!LANES[l.team])LANES[l.team]={};LANES[l.team][l.lane]=l});
     DIR={};(r[5]||[]).forEach(function(d){DIR[d.team]=d});
     LEAGUES=(r[6]||[]).filter(function(l){return l.teams>0});
-    if(LEAGUES.length===1)LG=LEAGUES[0].league;
-    else if(LG!=='ALL'&&!LEAGUES.some(function(l){return l.league===LG}))LG='ALL';
+    LGSEL=LGSEL.filter(function(c){return LEAGUES.some(function(l){return l.league===c})});
+    if(LEAGUES.length===1)LGSEL=[LEAGUES[0].league];
     const qt=new URLSearchParams(location.search).get('team');
     if(qt&&teamOf(qt)){
       SEL=qt;
-      if(LG!=='ALL'&&!inScope(SEL))LG=lgOf(SEL)||'ALL';
+      /* A ?team= deep link wins over the stored scope: widen to the league
+         that team is in rather than show an empty page. */
+      if(LGSEL.length&&!inScope(SEL))LGSEL=lgOf(SEL)?[lgOf(SEL)]:[];
     }else{
       // This page always shows one team, so it needs a selection. Take the
       // first in the current scope rather than a hardcoded club. SEL is also
@@ -521,6 +595,7 @@ function renderLeagueMap(){
   s+='</svg>';
   document.getElementById('main').innerHTML=
     '<div class="sect" style="margin-bottom:12px"><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
+    leagueCtrl()+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">X axis</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="LM.x=this.value;renderLeagueMap()">'+metricOpts(LM.x)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:190px"><span class="kpi-l">Y axis</span>'+
@@ -530,7 +605,7 @@ function renderLeagueMap(){
       eligible.sort(function(a,b){return tname(a.team).localeCompare(tname(b.team))}).map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div></div>'+
     '<div class="sect"><div class="viz-eyebrow">Relationship</div><div class="viz-title">'+esc(dy.label)+' vs '+esc(dx.label)+'</div>'+
-    '<div class="viz-sub">'+esc(lgScopeLabel())+' · '+pts.length+' eligible teams · raw values · dashed guides are displayed-sample medians.</div>'+s+
+    '<div class="viz-sub">'+esc(populationNote(pts.length))+' · raw values · dashed guides are displayed-sample medians.</div>'+s+
     '<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. The highlighted team and axis extremes are labelled; hover any dot for exact values. '+
     (LM.x==='ppda'&&LM.y==='field_tilt'?'Quadrants are named only for this defensible pairing and describe style, not quality. ':'')+
     'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
@@ -1027,6 +1102,8 @@ function renderRankings(){
      select:'*', so if the column is not there the value is undefined, which
      reads as higher-is-better and gives plain descending. */
   const hib=(d.higher_is_better!==false);
+  /* Before the sort, because the pooled percentile IS the sort key. */
+  if(isPooled()&&rows.length)repoolTeamPct(rows,d.higher_is_better);
   rows.sort(function(a,b){
     const ap=(a.pct==null?-1:a.pct),bp=(b.pct==null?-1:b.pct);
     if(ap!==bp)return bp-ap;
@@ -1066,13 +1143,14 @@ function renderRankings(){
   tb+='</tbody></table></div>';
   document.getElementById('main').innerHTML=
     '<div class="sect" style="margin-bottom:12px"><div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">'+
+    leagueCtrl()+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:250px"><span class="kpi-l">Rank teams by</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="RKT.metric=this.value;renderRankings()">'+metricOpts(RKT.metric)+'</select></div>'+
     '<div style="display:flex;flex-direction:column;gap:5px;min-width:220px"><span class="kpi-l">Highlight</span>'+
       '<select class="lnk" style="padding:8px 10px;width:100%" onchange="SEL=this.value;renderList();renderRankings()">'+
       scopedTeams().map(function(t){return '<option value="'+esc(t.team)+'"'+(SEL===t.team?' selected':'')+'>'+esc(tname(t.team))+'</option>'}).join('')+
       '</select></div></div>'+
-    '<div class="foot" style="margin-top:8px">'+esc(lgScopeLabel())+' \u00B7 sorted best to worst by league percentile, so inverted metrics like PPDA and goals conceded put the strongest team on top. The hairline marks zero and bars show the raw-value range. '+
+    '<div class="foot" style="margin-top:8px">'+esc(populationNote(rows.length))+' \u00B7 sorted best to worst by percentile, so inverted metrics like PPDA and goals conceded put the strongest team on top. The hairline marks zero and bars show the raw-value range. '+
     (d.definition?esc(d.definition):'')+'</div></div>'+
     '<div class="mobile-rank-note foot" style="margin:0 0 8px">The compact table carries every value; the full comparison chart is shown on wider screens.</div>'+
     '<div class="split2"><div class="sect ranking-chart">'+sv+'</div><div class="sect">'+tb+'</div></div>'+legendHtml();
@@ -1214,7 +1292,27 @@ async function snap(){
   stage.style.cssText='position:fixed;left:-100000px;top:0;width:'+el.clientWidth+'px;background:'+bg+';z-index:-1';
   clone.style.cssText='width:100%;height:auto;max-height:none;overflow:visible;padding:13px 18px';
   clone.querySelectorAll('.vz-tog,.vz-filters').forEach(function(control){control.remove()});
+  /* PANEL CONTENT ONLY. A .sect whose job is to hold selects is chrome: it
+     says what was asked for, not what the answer is. One that also carries a
+     chart or a table is a panel and stays. */
+  clone.querySelectorAll('.sect').forEach(function(sec){
+    if(sec.querySelector('select')&&!sec.querySelector('svg')&&!sec.querySelector('table'))sec.remove();
+  });
+  clone.querySelectorAll('select,input,button').forEach(function(c){c.remove()});
+  const cap=document.createElement('div');
+  cap.className='export-cap';
+  cap.textContent=['Team Profiles '+String.fromCharCode(183)+' '+TAB,
+    (SEL?tname(SEL):''),populationNote(null),
+    ((document.getElementById('asOf')||{}).textContent||'')]
+    .filter(Boolean).join('  '+String.fromCharCode(183)+'  ');
+  clone.appendChild(cap);
   stage.appendChild(clone);document.body.appendChild(stage);
+  /* ALWAYS LIGHT, for the reason players.html gives at length: the same chart
+     exported from the two themes came out as two different pictures.
+     html2canvas reads computed styles off the live DOM and a descendant
+     cannot escape an ancestor's html.dark, so the root class is the lever. */
+  const root=document.documentElement,wasDark=root.classList.contains('dark');
+  root.classList.remove('dark');
   try{
     if(document.fonts&&document.fonts.ready)await document.fonts.ready;
     /* Freeze viewport-relative pitches before html2canvas changes its virtual
@@ -1226,8 +1324,9 @@ async function snap(){
     });
     await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve)})});
     const w=clone.scrollWidth,h=clone.scrollHeight;
-    return await html2canvas(clone,{backgroundColor:bg,scale:2,width:w,height:h,windowWidth:w,windowHeight:h});
-  }finally{stage.remove()}
+    return await html2canvas(clone,{backgroundColor:getComputedStyle(document.body).backgroundColor,
+      scale:2,width:w,height:h,windowWidth:w,windowHeight:h});
+  }finally{if(wasDark)root.classList.add('dark');stage.remove()}
 }
 async function exportPNG(){try{const c=await snap();const a=document.createElement('a');
   a.download=(SEL||'team').replace(/[^\w]+/g,'_')+'.png';a.href=c.toDataURL('image/png');a.click()}catch(e){alert(e.message)}}

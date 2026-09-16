@@ -127,6 +127,19 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .btn:hover{filter:brightness(1.08)}
 .btn.sec{background:var(--surface2);color:var(--text2)}
 
+/* Off-screen, not hidden: html2canvas measures and reads computed styles
+   from a live box, so display:none or visibility:hidden would render nothing.
+   Fixed width so the export does not inherit whatever the window happens to
+   be, and the page ground so the sheet is not transparent. */
+.export-stage{position:fixed;left:-12000px;top:0;width:1180px;padding:22px;background:var(--bg);
+  display:flex;flex-direction:column;gap:12px}
+.export-cap{font:600 10px/1.5 var(--f-body);color:var(--text3);letter-spacing:.02em}
+.lgtoggle{display:flex;gap:6px;flex-wrap:wrap}
+.lgtoggle button{font:600 10px/1 var(--f-body);padding:6px 10px;border-radius:5px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text2);cursor:pointer;white-space:nowrap}
+.lgtoggle button:hover{border-color:var(--border2);color:var(--text)}
+.lgtoggle button.on{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)}
+.side-top #lgPick .cfield{min-width:0}
 .mchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .mchip{display:flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:6px;padding:6px 9px}
 .mchip-nm{font:600 10px/1 'Inter';color:var(--accent)}
@@ -314,14 +327,14 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="hdr-logo">P</div>
   <div class="hdr-id">
     <div class="hdr-title">Player Fingerprints</div>
-    <div class="hdr-row"><div id="lgPick" class="lgpick"></div>
+    <div class="hdr-row">
       <div class="hdr-sub" id="hdrSub">loading&hellip;</div><span class="as-of" id="asOf"></span></div>
   </div>
   <div class="tabs" id="tabs" aria-label="Player analysis sections"></div>
   <div class="hdr-right">
     <div class="navmenu" id="navMenu"></div>
-    <button class="lnk acc" onclick="exportPNG()">&#11015; PNG</button>
-    <button class="lnk acc" onclick="exportPDF()">&#11015; PDF</button>
+    <button class="lnk acc" onclick="exportPNG()" title="Panel content only, always rendered light">&#11015; PNG</button>
+    <button class="lnk acc" onclick="exportPDF()" title="Panel content only, always rendered light">&#11015; PDF</button>
     <button class="lnk" onclick="toggleDark()">Theme</button>
   </div>
 </div>
@@ -336,6 +349,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
         <option value="CM">CM</option><option value="AM">AM</option><option value="W">W</option><option value="ST">ST</option>
       </select>
       <input class="inp" id="search" placeholder="Search player&hellip;" oninput="renderList()">
+      <div id="lgPick"></div>
     </div>
     <div class="plist" id="plist"></div>
   </div>
@@ -361,16 +375,58 @@ const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:
 const LEAGUE_DISPLAY={'ENG-Premier League':'Premier League','ESP-La Liga':'La Liga','GER-Bundesliga':'Bundesliga','ITA-Serie A':'Serie A','FRA-Ligue 1':'Ligue 1','USA-MLS':'MLS'};
 const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare','Plot studio'];
 var PLG={}, PLEAGUES=[],
-    PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
+/* THE LEAGUE SCOPE IS A SET NOW, not one code or the string 'ALL'. An empty
+   set means every league, which keeps the stored 'ALL' working and means a
+   reader who deselects everything sees everything rather than nothing.
+   Persisted as a comma-joined list under the old key, so a value written by
+   the previous single-select version still reads correctly. */
+    PLGSEL=(function(){try{
+      var raw=localStorage.getItem('leagueScope');
+      if(!raw||raw==='ALL')return [];
+      return raw.split(',').filter(Boolean);
+    }catch(e){return []}})();
+/* The leagues actually in play, resolved against what the data contains, so a
+   stale stored code cannot silently empty the page. */
+function activeLeagues(){
+  var all=PLEAGUES.map(function(l){return l.league});
+  var sel=PLGSEL.filter(function(c){return all.indexOf(c)>=0});
+  return sel.length?sel:all;
+}
+function lgDisplay(code){
+  for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===code)return PLEAGUES[i].display_name;
+  return code;
+}
+/* True when more than one league is in play, which is the condition that
+   makes the stored per-league percentile the wrong number to show. */
+function isPooled(){return activeLeagues().length>1}
 function lgOfTeam(t){return PLG[t]||null}
 function leagueLabel(t){var c=lgOfTeam(t);for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===c)return PLEAGUES[i].display_name;return c||'League unavailable'}
-function teamInLeague(t){return PLGSCOPE==='ALL'||lgOfTeam(t)===PLGSCOPE}
+function teamInLeague(t){return activeLeagues().indexOf(lgOfTeam(t))>=0}
 function scopeLabel(){
-  if(PLGSCOPE==='ALL')return 'All leagues';
-  for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===PLGSCOPE)return PLEAGUES[i].display_name;
-  return PLGSCOPE;
+  var a=activeLeagues();
+  if(!a.length)return 'No leagues';
+  if(a.length===PLEAGUES.length&&PLEAGUES.length>1)return 'All '+a.length+' leagues';
+  if(a.length<=3)return a.map(lgDisplay).join(' + ');
+  return a.length+' leagues';
 }
-function scopeQuery(q){if(PLGSCOPE!=='ALL')q.league='eq.'+PLGSCOPE;return q}
+/* NAMES THE POPULATION, ON EVERY RENDER, not only when several leagues are
+   picked. Pooling treats the selection as one population of equal standard,
+   so a player from a weaker league drops without having changed anything;
+   that is only fair if the reader can see what the comparison set is. When
+   one league is selected the sentence is still there, saying so. */
+function populationNote(n){
+  var a=activeLeagues();
+  var who=scopeLabel()+(n==null?'':' \u00B7 '+n+' player'+(n===1?'':'s'));
+  return who+' \u00B7 '+(a.length>1
+    ? 'pooled as one population, percentiles recomputed across the pool'
+    : 'percentiles within this league');
+}
+/* A single league still filters at the source, which is the cheap path. A
+   pooled selection does not: PostgREST in.() needs every league code quoted
+   and the codes contain spaces, and the callers already drop out-of-scope
+   rows through teamInLeague. Fetching the lot and filtering in the page is
+   one fewer thing to get subtly wrong. */
+function scopeQuery(q){var a=activeLeagues();if(a.length===1)q.league='eq.'+a[0];return q}
 /* Site destinations, grouped for the header nav menu. Third field is the group. */
 const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'],['Search','search.html','explore'],
  ['Match','match.html','explore'],['Teams','teams.html','explore'],['Sequences','sequences.html','explore'],
@@ -379,7 +435,7 @@ const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'
 let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP=(function(){try{return localStorage.getItem('playerCategory')||'All'}catch(e){return'All'}})(),TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820,MARKET_VALUES={};
 let EVIDENCE_PID=null,PB={mode:'pizza',group:'Passing',metrics:[],layers:['prog','box','key'],pattern:true,query:'',ready:false};
 let EVF={game:'',score:'',phase:'',min:'',max:''},CONTEXT_READY=false;
-let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
+let RK={metric:'hs_prog_90',pool:'',pos:'',n:25,dir:-1};
 let VZ={passMode:'prog',outcome:'',shotFocus:true,off:{},mode:{Passing:'pattern',Carrying:'pattern',Combined:'pattern'}};
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
@@ -404,7 +460,7 @@ function groupsFor(pool){
   if(pool!=='GK')out.splice(1,0,'Combined');
   return out;
 }
-let SC={pool:'W',x:'prog_carries_90',y:'key_pass_90',hi:[]};
+let SC={pool:'W',pos:'',x:'prog_carries_90',y:'key_pass_90',hi:[]};
 let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[],show:'both'};
 let CMP={a:null,b:null,pool:'W'};
 
@@ -566,11 +622,11 @@ async function init(){
     const presentLeagues={};PLAYERS.forEach(function(p){const league=PLG[p.team];if(league)presentLeagues[league]=true});
     PLEAGUES=Object.keys(presentLeagues).sort().map(function(league){return{league:league,display_name:LEAGUE_DISPLAY[league]||league}});
     (res[6]||[]).forEach(function(v){MARKET_VALUES[v.player_id]=v});
-    if(PLGSCOPE!=='ALL'&&!PLEAGUES.some(function(l){return l.league===PLGSCOPE}))PLGSCOPE='ALL';
+    PLGSEL=PLGSEL.filter(function(c){return PLEAGUES.some(function(l){return l.league===c})});
     const qp=new URLSearchParams(location.search).get('player');
-    if(qp&&playerOf(qp)&&PLGSCOPE!=='ALL'&&!teamInLeague(playerOf(qp).team)){
+    if(qp&&playerOf(qp)&&PLGSEL.length&&!teamInLeague(playerOf(qp).team)){
       const targetLeague=lgOfTeam(playerOf(qp).team);
-      PLGSCOPE=PLEAGUES.some(function(l){return l.league===targetLeague})?targetLeague:'ALL';
+      PLGSEL=PLEAGUES.some(function(l){return l.league===targetLeague})?[targetLeague]:[];
     }
     renderLeaguePick();
     fillTeamSel();
@@ -610,10 +666,64 @@ function exportName(){
   if(TAB==='Player'&&SEL){const p=playerOf(SEL);return (p?p.player_name:'player').replace(/[^\w]+/g,'_')}
   return 'fingerprints_'+TAB.toLowerCase();
 }
+/* EXPORTS ARE A DOCUMENT, NOT A SCREENSHOT OF THE APP.
+   ---------------------------------------------------------------------------
+   Two rules, both of which the old snap() broke by capturing #main whole in
+   whatever theme the reader happened to be using.
+
+   ALWAYS LIGHT. The same plot exported from the two themes came out as two
+   different pictures, which is no use to anyone putting them side by side in
+   a report. match.html solved this with EXP_LIGHT, a flag its canvas
+   renderers consult; these pages are CSS-driven and SVG-driven, so the
+   equivalent lever is the root class itself. It is removed for the duration
+   of the capture and put back afterwards. The page does visibly flash light
+   while html2canvas works: html2canvas reads computed styles off the live
+   DOM, and a descendant cannot escape an ancestor's html.dark, so there is
+   nowhere else to put the light copy. A brief flash on a deliberate button
+   press is the smaller cost.
+
+   PANEL CONTENT ONLY. Every .sect in the view goes in -- those carry the
+   title, the subtitle that names the population, the chart or table, and the
+   legend. Nothing else does: the control bar says what was asked for rather
+   than what the answer is, and the header, tab strip and player list are
+   navigation. The as-of line is appended because a chart without a date is
+   not evidence of anything. */
+function exportCaption(){
+  const asOf=(document.getElementById('asOf')||{}).textContent||'';
+  const bits=['Player Fingerprints \u00B7 '+TAB];
+  if(TAB==='Player'&&SEL){const q=playerOf(SEL);if(q&&q.player_name)bits.push(q.player_name)}
+  bits.push(populationNote(null));
+  if(asOf)bits.push(asOf);
+  return bits.join('  \u00B7  ');
+}
+async function withExportSurface(fn){
+  const root=document.documentElement,wasDark=root.classList.contains('dark');
+  const main=document.getElementById('main');
+  const stage=document.createElement('div');
+  stage.className='export-stage';
+  main.querySelectorAll('.sect').forEach(function(s){stage.appendChild(s.cloneNode(true))});
+  /* A view with no .sect at all -- an error or empty state -- still exports
+     something rather than a blank sheet. */
+  if(!stage.childNodes.length)stage.appendChild(main.cloneNode(true));
+  const cap=document.createElement('div');
+  cap.className='export-cap';cap.textContent=exportCaption();
+  stage.appendChild(cap);
+  document.body.appendChild(stage);
+  root.classList.remove('dark');
+  try{
+    return await fn(stage);
+  }finally{
+    if(wasDark)root.classList.add('dark');
+    stage.remove();
+  }
+}
 async function snap(){
-  const el=document.getElementById('main');
-  const bg=getComputedStyle(document.body).backgroundColor;
-  return await html2canvas(el,{backgroundColor:bg,scale:2,useCORS:true,windowWidth:el.scrollWidth,height:el.scrollHeight,windowHeight:el.scrollHeight});
+  return await withExportSurface(async function(stage){
+    const bg=getComputedStyle(document.body).backgroundColor;
+    return await html2canvas(stage,{backgroundColor:bg,scale:2,useCORS:true,
+      windowWidth:stage.scrollWidth,width:stage.scrollWidth,
+      height:stage.scrollHeight,windowHeight:stage.scrollHeight});
+  });
 }
 async function exportPNG(){
   try{
@@ -649,32 +759,51 @@ function fillTeamSel(){
 }
 function updateHdrSub(){
   const n=PLAYERS.filter(function(p){return teamInLeague(p.team)}).length;
-  const lbl=(PLGSCOPE==='ALL')
-    ? (PLEAGUES.length+' league'+(PLEAGUES.length===1?'':'s'))
-    : (function(){for(var i=0;i<PLEAGUES.length;i++)if(PLEAGUES[i].league===PLGSCOPE)return PLEAGUES[i].display_name;return PLGSCOPE})();
+  const lbl=scopeLabel();
   document.getElementById('hdrSub').textContent=
     lbl+' \u00B7 '+n+' players \u00B7 '+DEFS.length+' metrics \u00B7 ranked within role';
   renderAsOf();
 }
+/* The league control, as markup, for wherever it is needed. It used to sit
+   in the page header beside the title, where it squeezed "Player
+   Fingerprints" into two lines on the Rank and Scatter tabs. It belongs with
+   the other filters: it is a filter. */
+function leagueCtrl(){
+  if(PLEAGUES.length<2)return '';
+  const all=PLGSEL.length===0;
+  return '<div class="cfield" style="min-width:auto"><span class="clbl">Leagues</span>'+
+    '<div class="lgtoggle">'+
+    '<button type="button" class="'+(all?'on':'')+'" aria-pressed="'+all+'" '+
+      'onclick="setPlayerLeagues([])" title="Every league, pooled">All</button>'+
+    PLEAGUES.map(function(l){
+      const on=!all&&PLGSEL.indexOf(l.league)>=0;
+      return '<button type="button" class="'+(on?'on':'')+'" aria-pressed="'+on+'" '+
+        'onclick="togglePlayerLeague('+JSON.stringify(l.league).replace(/"/g,'&quot;')+')">'+
+        esc(l.display_name)+'</button>'}).join('')+
+    '</div></div>';
+}
 function renderLeaguePick(){
   const host=document.getElementById('lgPick');
-  if(!host) return;
-  if(PLEAGUES.length<2){host.style.display='none';return}
-  host.innerHTML='<select id="lgSel" onchange="setPlayerLeague(this.value)">'+
-    '<option value="ALL"'+(PLGSCOPE==='ALL'?' selected':'')+'>All leagues</option>'+
-    PLEAGUES.map(function(l){
-      return '<option value="'+esc(l.league)+'"'+(PLGSCOPE===l.league?' selected':'')+'>'+
-        esc(l.display_name)+'</option>'}).join('')+'</select>';
+  if(!host)return;
+  host.innerHTML=PLEAGUES.length<2?'':leagueCtrl();
 }
-function setPlayerLeague(v){
-  PLGSCOPE=v;
-  try{localStorage.setItem('leagueScope',v)}catch(e){}
+function togglePlayerLeague(code){
+  const i=PLGSEL.indexOf(code);
+  if(i>=0)PLGSEL.splice(i,1); else PLGSEL.push(code);
+  /* Selecting every league one by one is the same population as All, and
+     saying so keeps one state for one view. */
+  if(PLGSEL.length===PLEAGUES.length)PLGSEL=[];
+  setPlayerLeagues(PLGSEL);
+}
+function setPlayerLeagues(sel){
+  PLGSEL=sel.slice();
+  try{localStorage.setItem('leagueScope',PLGSEL.length?PLGSEL.join(','):'ALL')}catch(e){}
   const current=playerOf(SEL);
   if(current&&!teamInLeague(current.team)){SEL=null;PACT=null;PCAR=null;PREC=null}
   SC.hi=SC.hi.filter(function(id){const p=playerOf(id);return p&&teamInLeague(p.team)});
   if(CMP.a&&!teamInLeague((playerOf(CMP.a)||{}).team))CMP.a=null;
   if(CMP.b&&!teamInLeague((playerOf(CMP.b)||{}).team))CMP.b=null;
-  fillTeamSel();updateHdrSub();renderList();
+  fillTeamSel();updateHdrSub();renderList();renderLeaguePick();
   setTab(TAB);
 }
 function renderList(){
@@ -1027,12 +1156,41 @@ function metricOptions(sel){
   });
   return out+'</optgroup>';
 }
+/* POSITION IS NOT ROLE, and the page has always held both: pool is the group
+   a player is judged in, assigned from where he actually plays, and
+   modal_position is what the team sheet lists him as. A left-back reassigned
+   to a wide-forward pool is one of the more interesting things this data
+   says, and collapsing the two would hide it. Both filters, side by side. */
+function positionsInPlay(){
+  const seen={};
+  PLAYERS.forEach(function(p){
+    if(!teamInLeague(p.team)||!p.modal_position)return;
+    seen[p.modal_position]=true;
+  });
+  return Object.keys(seen).sort();
+}
+function positionCtrl(current,handler){
+  const list=positionsInPlay();
+  if(!list.length)return '';
+  return '<div class="cfield" style="min-width:150px"><span class="clbl">Listed position</span>'+
+    '<select class="sel" onchange="'+handler+'">'+
+    '<option value="">Any position</option>'+
+    list.map(function(x){return '<option value="'+esc(x)+'"'+(current===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+
+    '</select></div>';
+}
+function posMatches(pid,pos){
+  if(!pos)return true;
+  const p=playerOf(pid)||{};
+  return p.modal_position===pos;
+}
 function scatterCtrls(){
   const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
   let h='<div class="ctrls"><div class="crow">'+
+    leagueCtrl()+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];renderScatter()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SC.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
+    positionCtrl(SC.pos,'SC.pos=this.value;renderScatter()')+
     '<div class="cfield"><span class="clbl">X axis</span><select class="sel" onchange="SC.x=this.value;renderScatter()">'+metricOptions(SC.x)+'</select></div>'+
     '<div class="cfield"><span class="clbl">Y axis</span><select class="sel" onchange="SC.y=this.value;renderScatter()">'+metricOptions(SC.y)+'</select></div>'+
     '<div class="cfield" style="min-width:220px"><span class="clbl">Highlight player</span>'+
@@ -1056,10 +1214,22 @@ async function renderScatter(){
     const pts=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid];if(!v[SC.x]||!v[SC.y])return;
-      const p=playerOf(pid)||{};if(!p.player_name||!teamInLeague(p.team))return;
-      pts.push({id:pid,name:p.player_name||'?',team:p.team||'',x:+v[SC.x].value,y:+v[SC.y].value,
+      const p=playerOf(pid)||{};
+      if(!p.player_name||!teamInLeague(p.team)||!posMatches(pid,SC.pos))return;
+      pts.push({id:pid,name:p.player_name||'?',team:p.team||'',pool:SC.pool,
+                x:+v[SC.x].value,y:+v[SC.y].value,
                 px:+v[SC.x].pct,py:+v[SC.y].pct,hi:SC.hi.indexOf(pid)>=0});
     });
+    /* The dot colour is the mean of the two percentiles, so the pooled
+       selection has to recolour as well as relabel. Each axis is repooled on
+       its own metric, which is why this runs twice over the same points. */
+    if(isPooled()&&pts.length){
+      [['x','px',SC.x],['y','py',SC.y]].forEach(function(axis){
+        const shadow=pts.map(function(q){return{pool:q.pool,value:q[axis[0]]}});
+        repoolPct(shadow,(defOf(axis[2])||{}).higher_is_better);
+        shadow.forEach(function(s,i){pts[i][axis[1]]=s.pct});
+      });
+    }
     main.innerHTML=scatterCtrls()+scatterSvg(pts);
     wireTips();
   }catch(e){main.innerHTML=scatterCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
@@ -1083,7 +1253,8 @@ function scatterSvg(pts){
   const xdir=dx.higher_is_better===false?' (lower is better)':'';
   const ydir=dy.higher_is_better===false?' (lower is better)':'';
   const chartTitle=(dy.label||SC.y)+' vs '+(dx.label||SC.x);
-  const chartSub=POOL_NAME[SC.pool]+' · '+scopeLabel()+' · raw per-90 values · dashed guides are population medians';
+  const chartSub=POOL_NAME[SC.pool]+(SC.pos?' · listed '+SC.pos:'')+' · '+
+    populationNote(pts.length)+' · raw per-90 values · dashed guides are population medians';
   let s='<div class="sect"><div class="viz-eyebrow">Relationship</div>'+
         '<div class="viz-title" data-chart-title="scatter">'+esc(chartTitle)+'</div>'+
         '<div class="viz-sub">'+esc(chartSub)+'</div>'+
@@ -1152,6 +1323,7 @@ function scoutCtrls(){
     opts+='<option value="'+d.key+'">'+esc(d.label)+'</option>';});
   if(g)opts+='</optgroup>';
   let h='<div class="ctrls"><div class="crow">'+
+    leagueCtrl()+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SK.pool=this.value;renderScout()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     '<div class="cfield" style="min-width:250px"><span class="clbl">Add metric (up to 10)</span>'+
@@ -1272,6 +1444,7 @@ async function renderCompare(){
   if(!CMP.a&&pool[0])CMP.a=pool[0].player_id;
   if(!CMP.b&&pool[1])CMP.b=pool[1].player_id;
   const ctrl='<div class="ctrls"><div class="crow">'+
+    leagueCtrl()+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="CMP.pool=this.value;CMP.a=null;CMP.b=null;renderCompare()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(CMP.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     '<div class="cfield" style="min-width:210px"><span class="clbl">Player A</span><input class="inp" list="comparePlayers" value="'+esc(playerChoice(playerOf(CMP.a)||{}))+'" onchange="comparePlayerSearch(\'a\',this.value)" placeholder="Search player or team"></div>'+
@@ -1342,18 +1515,62 @@ function rankCtrls(){
   return '<div class="ctrls"><div class="crow">'+
     '<div class="cfield" style="min-width:250px"><span class="clbl">Rank players by</span>'+
       '<select class="sel" onchange="RK.metric=this.value;renderRank()">'+metricOptions(RK.metric)+'</select></div>'+
+    leagueCtrl()+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="RK.pool=this.value;renderRank()">'+
       '<option value="">All roles</option>'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(RK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+
       '</select></div>'+
+    positionCtrl(RK.pos,'RK.pos=this.value;renderRank()')+
     '<div class="cfield" style="min-width:130px"><span class="clbl">Show</span><select class="sel" onchange="RK.n=+this.value;renderRank()">'+
       [10,25,50,100].map(function(n){return '<option value="'+n+'"'+(RK.n===n?' selected':'')+'>Top '+n+'</option>'}).join('')+
       '</select></div>'+
     '<div class="cfield" style="min-width:130px"><span class="clbl">Order</span><select class="sel" onchange="RK.dir=+this.value;renderRank()">'+
       '<option value="-1"'+(RK.dir===-1?' selected':'')+'>Highest first</option>'+
       '<option value="1"'+(RK.dir===1?' selected':'')+'>Lowest first</option></select></div>'+
-    '</div><div class="foot" style="margin-top:8px">With all roles selected, rank uses each player\u2019s <b>league-and-role percentile</b>. '+
-    'With one role selected, rank uses the <b>raw metric value</b> because the units are directly comparable. The league picker above controls the population. Click a player to open their profile.</div></div>';
+    '</div><div class="foot" style="margin-top:8px">'+esc(populationNote(null))+'. '+
+    'With all roles selected, rank uses each player\u2019s <b>role percentile</b>. '+
+    'With one role selected, rank uses the <b>raw metric value</b> because the units are directly comparable. '+
+    'Role is the pool a player is judged in; position is what he is listed as, and they are filtered separately. '+
+    'Click a player to open their profile.</div></div>';
+}
+/* Percentiles for a pooled selection.
+   ---------------------------------------------------------------------------
+   mv_player_percentiles stores pct computed WITHIN one league. Pool two
+   leagues and that number answers a question nobody asked: it says where a
+   player sits among his own countrymen while the table claims to rank him
+   against everyone on screen. So when more than one league is in play the
+   percentile is recomputed here, across the rows actually being shown.
+
+   Within the role pool, as the source does -- a centre-back is ranked against
+   centre-backs, not against wingers -- and inverted for a lower-is-better
+   metric, again as the source does.
+
+   The definition used is the share of the pooled population at or below this
+   player, so the best in the pool is 100 and the worst is above 0. Whether
+   that matches the definition in the materialised view could not be checked
+   tonight: the database is out of scope for this run. It is only ever used
+   for a pooled selection -- one league still shows the stored number
+   untouched -- so the two never appear in the same table. Recorded in
+   DECISIONS_NEEDED.md. */
+function repoolPct(rows,higherIsBetter){
+  const groups={};
+  rows.forEach(function(r){(groups[r.pool||'']=groups[r.pool||'']||[]).push(r)});
+  Object.keys(groups).forEach(function(k){
+    const g=groups[k],n=g.length;
+    /* Score in the direction that means "better", so one comparison serves
+       both metric polarities. */
+    const good=function(r){return higherIsBetter===false?-r.value:r.value};
+    const sorted=g.map(good).sort(function(a,b){return a-b});
+    g.forEach(function(r){
+      const v=good(r);
+      /* index of the first element strictly greater than v == how many are
+         at or below it */
+      let lo=0,hi=sorted.length;
+      while(lo<hi){const mid=(lo+hi)>>1;if(sorted[mid]<=v)lo=mid+1;else hi=mid}
+      r.pct=n>1?Math.round(100*lo/n):100;
+    });
+  });
+  return rows;
 }
 async function renderRank(){
   const main=document.getElementById('main');
@@ -1363,31 +1580,40 @@ async function renderRank(){
     if(RK.pool)q.pool='eq.'+RK.pool;
     const rows=await sbAll('mv_player_percentiles',q);
     const d=defOf(RK.metric)||{};
-    const list=rows.map(function(r){
+    const pooled=isPooled();
+    let list=rows.map(function(r){
       const p=playerOf(r.player_id)||{};
       return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
-    }).filter(function(r){return r.name&&teamInLeague(r.team)})
-      .sort(function(a,b){
-        /* THE ORDER HAS TO BE TOTAL, and it was not. pct is stored whole
-           across all 92,068 rows, so a hundred players genuinely tie at 100,
-           and the old fallback compared a.pct with b.pct -- the same two
-           numbers the line above had just found equal. It always returned 0,
-           so tied rows kept whatever order PostgREST happened to return, and
-           that order is not stable between requests: the same query could
-           put a different player on top after a reload.
+    }).filter(function(r){return r.name&&teamInLeague(r.team)&&posMatches(r.id,RK.pos)});
+    /* THE ORDER HAS TO BE TOTAL, and it was not. pct is stored whole across
+       all 92,068 rows, so a hundred players genuinely tie at 100, and the old
+       fallback compared a.pct with b.pct -- the same two numbers the active
+       key had just found equal. It always returned 0, so tied rows kept
+       whatever order PostgREST happened to return, and that order is not
+       stable between requests: the same query could put a different player on
+       top after a reload.
 
-           Active key first, in the direction the Order control asks for.
-           Then the OTHER number, which is finer-grained and breaks most of
-           the remaining ties on its own, in the same direction so that
-           "lowest first" stays coherent all the way down. Then player_id,
-           which is unique, so no two rows can compare equal and the result
-           cannot depend on arrival order. */
-        const prim=RK.pool?'value':'pct',sec=RK.pool?'pct':'value';
-        if(a[prim]!==b[prim])return (a[prim]-b[prim])*RK.dir;
-        if(a[sec]!==b[sec])return (a[sec]-b[sec])*RK.dir;
-        return String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0;
-      }).slice(0,RK.n);
-    if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players</div>';return}
+       Active key first, in the direction the Order control asks for. Then the
+       OTHER number, which is finer-grained and breaks most of the remaining
+       ties on its own, in the same direction so that "lowest first" stays
+       coherent all the way down. Then player_id, which is unique, so no two
+       rows can compare equal and the result cannot depend on arrival order.
+
+       A named function rather than an inline one because the pooled
+       percentile has to be computed before this runs, and the sort therefore
+       no longer sits in the same expression as the filter. */
+    function rankCmp(a,b){
+      const prim=RK.pool?'value':'pct',sec=RK.pool?'pct':'value';
+      if(a[prim]!==b[prim])return (a[prim]-b[prim])*RK.dir;
+      if(a[sec]!==b[sec])return (a[sec]-b[sec])*RK.dir;
+      return String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0;
+    }
+    if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players in '+esc(scopeLabel())+' for this role, position and metric</div>';return}
+    /* Recompute BEFORE the sort and before the cut to Top N: the pooled
+       percentile is the sort key, so ordering on the stored one and then
+       relabelling would show a correctly-labelled table in the wrong order. */
+    if(pooled)repoolPct(list,d.higher_is_better);
+    list=list.sort(rankCmp).slice(0,RK.n);
     /* Which column is doing the ordering is otherwise invisible: this table
        has no clickable headers, and the key switches silently from percentile
        to raw value the moment a role pool is chosen. Name it in the header
@@ -1399,7 +1625,7 @@ async function renderRank(){
     const vrange=(vmax-vmin)||1,zeroPct=((0-vmin)/vrange)*100;
     let h='<div class="sect"><div class="sect-h"><span>'+esc(d.label||RK.metric)+
       (RK.pool?' \u00B7 '+POOL_NAME[RK.pool]:' \u00B7 all roles')+'</span>'+
-      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+esc(scopeLabel())+' \u00B7 '+list.length+' shown</span></div>'+
+      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+esc(populationNote(list.length))+'</span></div>'+
       '<div style="max-height:calc(100vh - 408px);min-height:260px;overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
@@ -1426,7 +1652,7 @@ async function renderRank(){
           '<div class="rankbar-f" style="left:'+left+'%;width:'+w+'%;background:'+t.c+'"></div></div></td>'+
         '<td class="num" style="color:'+t.c+';font-weight:700">'+r.pct+'</td></tr>';
     });
-    h+='</tbody></table></div><div class="foot">'+esc(scopeLabel())+' \u00B7 minimum '+MIN90+' nineties \u00B7 '+esc(d.definition||'')+
+    h+='</tbody></table></div><div class="foot">'+esc(populationNote(list.length))+' \u00B7 minimum '+MIN90+' nineties \u00B7 '+esc(d.definition||'')+
        (d.higher_is_better===false?' <b>Lower is better</b>, so the percentile is inverted.':'')+'</div>'+
        legendHtml()+'</div>';
     main.innerHTML=rankCtrls()+h;
