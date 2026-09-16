@@ -25,7 +25,7 @@ the role token they point at.
 rather than as a mark. The category comes from the name, and it is
 printed, so a wrong row can be spotted.
 
-**328 failures out of 804 measurements.**
+**324 failures out of 800 measurements.**
 
 ## Failures
 
@@ -100,27 +100,19 @@ judgement, and Phase 3 is where it gets made.
 | `match` dark | `--ink-on-accent` | text | --accent-base | `#fff` | **4.49** | 4.5 |
 | `lab` light | `--ink-on-accent` | text | --accent-base | `#fff` | **4.49** | 4.5 |
 
-### mark — 90 failing
+### mark — 82 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
 | `app` light | `--heat-legend-low` | mark | --surface-raised | `rgba(245,166,35,.12)` | **1.07** | 3.0 |
 | `app` light | `--heat-legend-low` | mark | --ground | `rgba(245,166,35,.12)` | **1.08** | 3.0 |
-| `match` light | `--team-all-veil` | mark | --surface-raised | `rgba(139,149,181,0.10)` | **1.09** | 3.0 |
-| `match` light | `--team-all-veil` | mark | --ground | `rgba(139,149,181,0.10)` | **1.09** | 3.0 |
-| `match` dark | `--team-all-veil` | mark | --ground | `rgba(139,149,181,0.10)` | **1.14** | 3.0 |
-| `match` dark | `--team-all-veil` | mark | --surface-raised | `rgba(139,149,181,0.10)` | **1.16** | 3.0 |
 | `app` dark | `--heat-legend-low` | mark | --ground | `rgba(245,166,35,.12)` | **1.22** | 3.0 |
-| `match` light | `--team-all-edge` | mark | --surface-raised | `rgba(139,149,181,0.24)` | **1.23** | 3.0 |
-| `match` light | `--team-all-edge` | mark | --ground | `rgba(139,149,181,0.24)` | **1.24** | 3.0 |
 | `app` dark | `--heat-legend-low` | mark | --surface-raised | `rgba(245,166,35,.12)` | **1.25** | 3.0 |
 | `app` light | `--series-carry` | mark | --pitch-fill | `#ffc93c` | **1.28** | 3.0 |
 | `app` light | `--layer-neutral` | mark | --surface-raised | `#cbd5e1` | **1.32** | 3.0 |
 | `app` light | `--series-ok` | mark | --pitch-fill | `#22e39a` | **1.39** | 3.0 |
 | `app` light | `--series-pass` | mark | --pitch-fill | `#22e39a` | **1.39** | 3.0 |
 | `app` light | `--layer-neutral` | mark | --ground | `#cbd5e1` | **1.40** | 3.0 |
-| `match` dark | `--team-all-edge` | mark | --ground | `rgba(139,149,181,0.24)` | **1.45** | 3.0 |
-| `match` dark | `--team-all-edge` | mark | --surface-raised | `rgba(139,149,181,0.24)` | **1.48** | 3.0 |
 | `app` light | `--series-box` | mark | --pitch-fill | `#f0a5ff` | **1.51** | 3.0 |
 | `match` light | `--legend-heat-high` | mark | --pitch-fill | `#e2b877` | **1.54** | 3.0 |
 | `match` light | `--marker-in` | mark | --pitch-fill | `#e2b877` | **1.54** | 3.0 |
@@ -195,7 +187,7 @@ judgement, and Phase 3 is where it gets made.
 | `doc` light | `--rank-top` | mark | --surface-raised | `#16a34a` | **2.92** | 3.0 |
 | `market` light | `--state-negative` | mark | --ground | `#d16f52` | **2.97** | 3.0 |
 
-### boundary — 181 failing
+### boundary — 185 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -231,7 +223,9 @@ judgement, and Phase 3 is where it gets made.
 | `match` light | `--export-rule` | boundary | --ground (light) | `rgba(22,25,31,0.09)` | **1.20** | 3.0 |
 | `match` dark | `--export-rule` | boundary | --ground (light) | `rgba(22,25,31,0.09)` | **1.20** | 3.0 |
 | `market` light | `--border-hairline` | boundary | --ground | `#ded9cd` | **1.22** | 3.0 |
+| `match` light | `--team-all-edge` | boundary | --surface-raised | `rgba(139,149,181,0.24)` | **1.23** | 3.0 |
 | `match` light | `--blue-edge` | boundary | --surface-raised | `rgba(90,169,255,.28)` | **1.24** | 3.0 |
+| `match` light | `--team-all-edge` | boundary | --ground | `rgba(139,149,181,0.24)` | **1.24** | 3.0 |
 | `app` light | `--gate-card-border` | boundary | --gate-ground | `#1c222c` | **1.24** | 3.0 |
 | `app` dark | `--gate-card-border` | boundary | --gate-ground | `#1c222c` | **1.24** | 3.0 |
 | `doc` light | `--gate-card-border` | boundary | --gate-ground | `#1c222c` | **1.24** | 3.0 |
@@ -284,7 +278,9 @@ judgement, and Phase 3 is where it gets made.
 | `match` light | `--plot-line` | boundary | --pitch-fill | `rgba(0,0,0,0.15)` | **1.41** | 3.0 |
 | `review` light | `--border-hairline` | boundary | --surface-raised | `#d8d3c8` | **1.43** | 3.0 |
 | `writing` dark | `--border-hairline` | boundary | --surface-raised | `#303944` | **1.45** | 3.0 |
+| `match` dark | `--team-all-edge` | boundary | --ground | `rgba(139,149,181,0.24)` | **1.45** | 3.0 |
 | `review` dark | `--border-hairline` | boundary | --ground | `#2a323e` | **1.48** | 3.0 |
+| `match` dark | `--team-all-edge` | boundary | --surface-raised | `rgba(139,149,181,0.24)` | **1.48** | 3.0 |
 | `doc` light | `--accent-edge` | boundary | --surface-raised | `rgba(156,107,30,.32)` | **1.48** | 3.0 |
 | `app` light | `--gate-field-border` | boundary | --gate-card | `#2b333f` | **1.48** | 3.0 |
 | `app` dark | `--gate-field-border` | boundary | --gate-card | `#2b333f` | **1.48** | 3.0 |
@@ -802,14 +798,12 @@ judgement, and Phase 3 is where it gets made.
 | `market` dark | `--gate-ink` | text | --gate-card | `#e8eef6` | **16.20** | 4.5 |
 | `market` dark | `--ink-primary` | text | --ground | `#edf2f8` | **16.67** | 4.5 |
 
-### `match` light — 136 measurements, 76 failing
+### `match` light — 134 measurements, 74 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
 | `match` light | `--grid-line` | boundary | --surface-raised | `rgba(139,152,171,.018)` | **1.01** | 3.0 |
 | `match` light | `--grid-line` | boundary | --ground | `rgba(139,152,171,.018)` | **1.02** | 3.0 |
-| `match` light | `--team-all-veil` | mark | --surface-raised | `rgba(139,149,181,0.10)` | **1.09** | 3.0 |
-| `match` light | `--team-all-veil` | mark | --ground | `rgba(139,149,181,0.10)` | **1.09** | 3.0 |
 | `match` light | `--gold-edge-soft` | boundary | --surface-raised | `rgba(226,184,119,.24)` | **1.12** | 3.0 |
 | `match` light | `--gold-edge` | boundary | --surface-raised | `rgba(226,184,119,.25)` | **1.13** | 3.0 |
 | `match` light | `--gold-edge-soft` | boundary | --ground | `rgba(226,184,119,.24)` | **1.13** | 3.0 |
@@ -821,9 +815,9 @@ judgement, and Phase 3 is where it gets made.
 | `match` light | `--shape-in-edge` | boundary | --pitch-fill | `rgba(226,184,119,.40)` | **1.18** | 3.0 |
 | `match` light | `--plot-grid` | boundary | --pitch-fill | `rgba(0,0,0,0.08)` | **1.19** | 3.0 |
 | `match` light | `--export-rule` | boundary | --ground (light) | `rgba(22,25,31,0.09)` | **1.20** | 3.0 |
-| `match` light | `--team-all-edge` | mark | --surface-raised | `rgba(139,149,181,0.24)` | **1.23** | 3.0 |
+| `match` light | `--team-all-edge` | boundary | --surface-raised | `rgba(139,149,181,0.24)` | **1.23** | 3.0 |
 | `match` light | `--blue-edge` | boundary | --surface-raised | `rgba(90,169,255,.28)` | **1.24** | 3.0 |
-| `match` light | `--team-all-edge` | mark | --ground | `rgba(139,149,181,0.24)` | **1.24** | 3.0 |
+| `match` light | `--team-all-edge` | boundary | --ground | `rgba(139,149,181,0.24)` | **1.24** | 3.0 |
 | `match` light | `--gate-card-border` | boundary | --gate-ground | `#1c222c` | **1.24** | 3.0 |
 | `match` light | `--gold-edge-hard` | boundary | --surface-raised | `rgba(226,184,119,.45)` | **1.24** | 3.0 |
 | `match` light | `--border-hairline` | boundary | --surface-raised | `#ded9cd` | **1.25** | 3.0 |
@@ -943,7 +937,7 @@ judgement, and Phase 3 is where it gets made.
 | `match` light | `--gate-ink` | text | --gate-card | `#e8eef6` | **16.20** | 4.5 |
 | `match` light | `--ink-primary` | text | --ground | `#16191f` | **16.59** | 4.5 |
 
-### `match` dark — 136 measurements, 55 failing
+### `match` dark — 134 measurements, 53 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -955,8 +949,6 @@ judgement, and Phase 3 is where it gets made.
 | `match` dark | `--accent-edge` | boundary | --surface-raised | `rgba(239,1,7,0.18)` | **1.10** | 3.0 |
 | `match` dark | `--plot-share-label` | text | --pitch-fill | `rgba(0,0,0,0.55)` | **1.10** | 4.5 |
 | `match` dark | `--accent-edge` | boundary | --ground | `rgba(239,1,7,0.18)` | **1.11** | 3.0 |
-| `match` dark | `--team-all-veil` | mark | --ground | `rgba(139,149,181,0.10)` | **1.14** | 3.0 |
-| `match` dark | `--team-all-veil` | mark | --surface-raised | `rgba(139,149,181,0.10)` | **1.16** | 3.0 |
 | `match` dark | `--export-rule` | boundary | --ground (light) | `rgba(22,25,31,0.09)` | **1.20** | 3.0 |
 | `match` dark | `--gate-card-border` | boundary | --gate-ground | `#1c222c` | **1.24** | 3.0 |
 | `match` dark | `--zone-edge` | boundary | --pitch-fill | `rgba(26,122,58,0.25)` | **1.26** | 3.0 |
@@ -964,8 +956,8 @@ judgement, and Phase 3 is where it gets made.
 | `match` dark | `--border-hairline` | boundary | --ground | `#272e3a` | **1.37** | 3.0 |
 | `match` dark | `--export-border` | boundary | --ground (light) | `rgba(22,25,31,0.16)` | **1.39** | 3.0 |
 | `match` dark | `--plot-label` | text | --pitch-fill | `#333` | **1.42** | 4.5 |
-| `match` dark | `--team-all-edge` | mark | --ground | `rgba(139,149,181,0.24)` | **1.45** | 3.0 |
-| `match` dark | `--team-all-edge` | mark | --surface-raised | `rgba(139,149,181,0.24)` | **1.48** | 3.0 |
+| `match` dark | `--team-all-edge` | boundary | --ground | `rgba(139,149,181,0.24)` | **1.45** | 3.0 |
+| `match` dark | `--team-all-edge` | boundary | --surface-raised | `rgba(139,149,181,0.24)` | **1.48** | 3.0 |
 | `match` dark | `--gate-field-border` | boundary | --gate-card | `#2b333f` | **1.48** | 3.0 |
 | `match` dark | `--legend-heat-high` | mark | --legend-pill | `#e2b877` | **1.56** | 3.0 |
 | `match` dark | `--pitch-line` | boundary | --pitch-fill | `rgba(182,194,212,0.22)` | **1.63** | 3.0 |

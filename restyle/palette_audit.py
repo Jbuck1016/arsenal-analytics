@@ -64,7 +64,8 @@ BOUNDARY = ("--border-hairline", "--border-strong", "--select-edge",
             "--error-edge", "--export-border", "--export-rule",
             "--gate-action-edge", "--plot-node-ring", "--plot-node-ring-soft",
             "--shape-node-ring", "--shape-out-edge", "--shape-in-edge",
-            "--timeline-sel-edge", "--tier-t2-edge", "--tier-t4-edge")
+            "--timeline-sel-edge", "--tier-t2-edge", "--tier-t4-edge",
+            "--team-all-edge")
 # Data marks: read as objects, so 3:1, same as a boundary.
 MARK_PREFIX = ("--series-", "--group-", "--layer-", "--rank-", "--action-",
                "--pos-line-", "--shot-", "--state-", "--style-axis-",
@@ -89,7 +90,7 @@ GROUND_PREFIX = ("--ground", "--surface-", "--pitch-fill", "--pitch-band",
                  "--gate-action-fill", "--gate-action-fill-hover", "--select-fill",
                  "--elevation", "--label-on-fill-halo", "--plot-shadow",
                  "--shape-shift-", "--live-glow", "--page-wash", "--pill-nb-fill",
-                 "--select-ink")
+                 "--select-ink", "--team-all-veil")
 
 
 def category(name: str) -> str:
