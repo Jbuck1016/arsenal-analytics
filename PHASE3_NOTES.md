@@ -89,3 +89,33 @@ be fixed by choosing a different colour:
 
 Where a failure survives, the report says so and says why, rather than the gate
 being loosened to hide it.
+
+**Outcome: none survived.** The contrast gate reports 0 failures out of 508
+measurements. Two of the three worries above were resolved rather than
+tolerated -- `--ink-on-accent` by giving accent-as-fill its own token, and the
+mark-measured-as-text cases by fixing the surface each one is measured against
+rather than its category. Every reclassification that did happen is listed in
+`PHASE3_REPORT.md` under "Two judgements contrast.md asked Phase 3 to make",
+with the rule it follows and the seven tokens it does NOT cover.
+
+---
+
+## 4. Four typefaces were removed, not just deprecated
+
+The brief says to "consolidate onto one of each rather than adding a face". I
+read that as licence to remove, and removed Archivo, DM Mono, IBM Plex Mono and
+IBM Plex Sans Condensed. Every page now loads Inter, JetBrains Mono and
+Newsreader and nothing else.
+
+**Implemented as written, and it is the largest visual change in the phase that
+nobody asked for explicitly.** `model-lab.html` was set in IBM Plex Mono and IBM
+Plex Sans Condensed throughout and now reads in JetBrains Mono and Inter;
+`writing-lab.html` loses DM Mono. Those pages had a deliberate typographic
+identity of their own, and the argument for taking it away is consistency
+rather than anything about those pages.
+
+I think it is right -- six faces is what happens when every page picks its own,
+and the editorial family already keeps what actually distinguishes those pages,
+which is the paper ground and the serif reading face. But it is a judgement,
+the pages looked considered before, and it is one `<link>` and one token per
+page to put back.

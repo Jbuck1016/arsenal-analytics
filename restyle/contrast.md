@@ -25,7 +25,7 @@ the role token they point at.
 rather than as a mark. The category comes from the name, and it is
 printed, so a wrong row can be spotted.
 
-**0 failures out of 504 measurements.**
+**0 failures out of 508 measurements.**
 
 ## Failures
 
@@ -42,7 +42,7 @@ None.
 
 ## Everything, by scope
 
-### `app` light — 211 measurements, 0 failing
+### `app` light — 213 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -206,6 +206,7 @@ None.
 | `app` light | `--rank-top` | mark | --surface-raised | `#0e7d5c` | **5.03** | 3.0 |
 | `app` light | `--state-positive` | mark | --ground | `#0f7a52` | **5.04** | 3.0 |
 | `app` light | `--signal-alt` | mark | --ground | `#0f7777` | **5.04** | 3.0 |
+| `app` light | `--ink-quaternary` | text | --ground | `#726a58` | **5.05** | 4.5 |
 | `app` light | `--banner-warn-ink` | text | --banner-warn-fill | `#b91c1c` | **5.08** | 4.5 |
 | `app` light | `--opponent` | mark | --surface-raised | `#2563eb` | **5.08** | 3.0 |
 | `app` light | `--style-axis-hi` | mark | --surface-raised | `#2563eb` | **5.08** | 3.0 |
@@ -217,6 +218,7 @@ None.
 | `app` light | `--layer-challenge` | mark | --ground | `#c0342a` | **5.25** | 3.0 |
 | `app` light | `--state-positive` | mark | --surface-raised | `#0f7a52` | **5.26** | 3.0 |
 | `app` light | `--signal-alt` | mark | --surface-raised | `#0f7777` | **5.26** | 3.0 |
+| `app` light | `--ink-quaternary` | text | --surface-raised | `#726a58` | **5.27** | 4.5 |
 | `app` light | `--series-link` | mark | --ground | `#2f6aa8` | **5.28** | 3.0 |
 | `app` light | `--ink-on-state` | text | --state-negative | `#fff` | **5.29** | 4.5 |
 | `app` light | `--layer-save` | mark | --surface-raised | `#a83fa0` | **5.32** | 3.0 |
@@ -258,7 +260,7 @@ None.
 | `app` light | `--label-on-fill` | text | --label-on-fill-halo | `#fff` | **18.58** | 4.5 |
 | `app` light | `--print-ink` | text | --print-paper | `#000` | **21.00** | 4.5 |
 
-### `app` dark — 211 measurements, 0 failing
+### `app` dark — 213 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -396,6 +398,7 @@ None.
 | `app` dark | `--layer-quick` | mark | --surface-raised | `#1f9d5f` | **4.97** | 3.0 |
 | `app` dark | `--group-halfspaces` | mark | --surface-raised | `#3f9c48` | **4.98** | 3.0 |
 | `app` dark | `--group-carrying` | mark | --surface-raised | `#b28407` | **5.09** | 3.0 |
+| `app` dark | `--ink-quaternary` | text | --surface-raised | `#808d9b` | **5.10** | 4.5 |
 | `app` dark | `--timeline-sel-edge` | boundary | --surface-raised | `#ff4a42` | **5.19** | 3.0 |
 | `app` dark | `--pitch-text-soft` | text | --pitch-fill | `rgba(182,194,212,0.68)` | **5.23** | 4.5 |
 | `app` dark | `--positive-ink` | text | --surface-raised | `#16a34a` | **5.24** | 4.5 |
@@ -404,6 +407,7 @@ None.
 | `app` dark | `--group-halfspaces` | mark | --ground | `#3f9c48` | **5.41** | 3.0 |
 | `app` dark | `--group-holdup` | mark | --surface-raised | `#d97706` | **5.42** | 3.0 |
 | `app` dark | `--group-carrying` | mark | --ground | `#b28407` | **5.54** | 3.0 |
+| `app` dark | `--ink-quaternary` | text | --ground | `#808d9b` | **5.54** | 4.5 |
 | `app` dark | `--plot-frame` | decoration | --pitch-fill | `rgba(170,184,206,0.75)` | **5.54** | 0.0 |
 | `app` dark | `--timeline-sel-edge` | boundary | --ground | `#ff4a42` | **5.64** | 3.0 |
 | `app` dark | `--positive-ink` | text | --ground | `#16a34a` | **5.69** | 4.5 |

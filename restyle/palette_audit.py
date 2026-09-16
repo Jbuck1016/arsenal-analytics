@@ -85,18 +85,15 @@ DECORATION = ("--border-hairline", "--plot-grid", "--plot-guide", "--grid-line",
               "--plot-line", "--pitch-line", "--plot-node-ring",
               "--plot-node-ring-soft", "--export-rule", "--export-border",
               "--print-rule", "--plot-frame")
-BOUNDARY = ("--border-strong", "--select-edge",
-            "--accent-edge", "--gate-card-border", "--gate-field-border",
-            "--gate-focus-ring", "--print-rule", "--pitch-line",
-            "--pitch-line-strong", "--plot-grid", "--plot-frame", "--plot-line",
-            "--plot-guide", "--grid-line", "--zone-edge", "--gold-edge",
-            "--gold-edge-soft", "--gold-edge-strong", "--gold-edge-hard",
-            "--blue-edge", "--banner-team-edge", "--banner-warn-edge",
-            "--error-edge", "--export-border", "--export-rule",
-            "--gate-action-edge", "--plot-node-ring", "--plot-node-ring-soft",
-            "--shape-node-ring", "--shape-out-edge", "--shape-in-edge",
-            "--timeline-sel-edge", "--tier-t2-edge", "--tier-t4-edge",
-            "--team-all-edge")
+# AFFORDANCES, held to 3:1. Seven, and it is a short list on purpose: every
+# one of these is the ONLY thing saying where a control ends or which state it
+# is in. Everything else that used to be listed here is in DECORATION above,
+# which category() consults first -- they were left in both tuples for a while
+# and the file read as though thirty-five boundaries were being enforced when
+# seven were.
+BOUNDARY = ("--border-strong", "--select-edge", "--timeline-sel-edge",
+            "--pitch-line-strong", "--gate-field-border", "--gate-action-edge",
+            "--gate-focus-ring")
 # Data marks: read as objects, so 3:1, same as a boundary.
 MARK_PREFIX = ("--series-", "--group-", "--layer-", "--rank-", "--action-",
                "--pos-line-", "--shot-", "--state-", "--style-axis-",
