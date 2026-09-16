@@ -1,10 +1,11 @@
-"""Process Writing Lab match requests without exposing database credentials.
+"""Process browser-submitted WhoScored matches without exposing credentials.
 
 The browser may enqueue a WhoScored match URL, but it cannot run Selenium or
 hold a service-role key.  This worker claims those rows, downloads the match
-centre payload with the existing scraper, and writes cup data only to the
-isolated ``*_cup`` tables.  League-only analytics and model features therefore
-remain untouched.
+centre payload with the existing scraper. Modeled domestic leagues are written
+to the canonical ``matches``/``events`` path and enqueue the normal governed
+analytics rebuild. Cups, Europe and other competitions remain isolated in the
+``*_cup`` tables so they cannot contaminate league features.
 
 Run once::
 
@@ -24,7 +25,12 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from scrape_and_load import cached_event_json_path, get_scraper, get_supabase
+from scrape_and_load import (
+    cached_event_json_path,
+    get_scraper,
+    get_supabase,
+    process_match as process_canonical_match,
+)
 from scrape_cup import (
     install_league_dict,
     purge_null_cache,
@@ -34,6 +40,16 @@ from scrape_cup import (
 )
 
 MATCH_RE = re.compile(r"/matches/(\d+)", re.I)
+CANONICAL_COMPETITIONS = frozenset(
+    {
+        "ENG-Premier League",
+        "ESP-La Liga",
+        "FRA-Ligue 1",
+        "GER-Bundesliga",
+        "ITA-Serie A",
+        "USA-MLS",
+    }
+)
 
 
 def iso_now() -> str:
@@ -75,7 +91,7 @@ def claim_next(sb) -> dict | None:
     return claimed[0] if claimed else None
 
 
-def upsert_match(sb, game_data: dict, game_id: str, competition: str, season: str) -> dict:
+def match_payload(game_data: dict, game_id: str, competition: str, season: str) -> dict:
     home = game_data.get("home") or {}
     away = game_data.get("away") or {}
     started = game_data.get("startDate") or game_data.get("startTime")
@@ -91,8 +107,58 @@ def upsert_match(sb, game_data: dict, game_id: str, competition: str, season: st
         "venue": game_data.get("venueName"),
         "stage": game_data.get("stage"),
     }
-    sb.table("matches_cup").upsert(payload, on_conflict="game_id").execute()
     return payload
+
+
+def canonical_schedule_row(payload: dict) -> pd.Series:
+    """Shape a direct match-centre payload like the governed league loader."""
+    return pd.Series(
+        {
+            "game_id": payload["game_id"],
+            "date": payload["date"],
+            "home_team": payload["home_team"],
+            "away_team": payload["away_team"],
+            "home_score": payload["home_score"],
+            "away_score": payload["away_score"],
+            "week": None,
+            "venue": payload["venue"],
+        }
+    )
+
+
+def ingest_match(sb, ws, game_data: dict, game_id: str, competition: str, season: str):
+    """Route modeled leagues to canonical data and everything else to cup isolation."""
+    payload = match_payload(game_data, game_id, competition, season)
+    if competition in CANONICAL_COMPETITIONS:
+        loaded_id, event_count = process_canonical_match(
+            sb,
+            ws,
+            canonical_schedule_row(payload),
+            competition,
+            season,
+        )
+        if not loaded_id or not event_count:
+            raise RuntimeError(
+                "The match failed the canonical league guard or produced zero events"
+            )
+        try:
+            sb.rpc("enqueue_rebuild_if_new_data", {}).execute()
+        except Exception as exc:  # noqa: BLE001 - scheduled enqueue is the fallback
+            print(
+                f"  analytics enqueue deferred to the scheduled worker: {exc}",
+                flush=True,
+            )
+        return payload, event_count, "canonical"
+
+    sb.table("matches_cup").upsert(payload, on_conflict="game_id").execute()
+    upsert_cup_players_and_lineups(sb, game_data, game_id)
+    event_count = upsert_cup_events(sb, game_data, game_id)
+    record_cup_clubs(
+        sb,
+        game_data,
+        pd.Series({"home_team": payload["home_team"], "away_team": payload["away_team"]}),
+    )
+    return payload, event_count, "isolated"
 
 
 def process(sb, project: dict, *, headless: bool) -> None:
@@ -147,13 +213,8 @@ def process(sb, project: dict, *, headless: bool) -> None:
     if not isinstance(game_data, dict) or not game_data.get("events"):
         raise RuntimeError("The downloaded match payload contains no events")
 
-    match = upsert_match(sb, game_data, game_id, competition, season)
-    upsert_cup_players_and_lineups(sb, game_data, game_id)
-    event_count = upsert_cup_events(sb, game_data, game_id)
-    record_cup_clubs(
-        sb,
-        game_data,
-        pd.Series({"home_team": match["home_team"], "away_team": match["away_team"]}),
+    match, event_count, scope = ingest_match(
+        sb, ws, game_data, game_id, competition, season
     )
     if not event_count:
         raise RuntimeError("The event payload produced zero canonical events")
@@ -173,8 +234,8 @@ def process(sb, project: dict, *, headless: bool) -> None:
         }
     ).eq("id", project["id"]).execute()
     print(
-        f"READY {match['home_team']} {match['home_score']}-{match['away_score']} "
-        f"{match['away_team']} · {event_count} events",
+        f"READY [{scope}] {match['home_team']} {match['home_score']}-"
+        f"{match['away_score']} {match['away_team']} · {event_count} events",
         flush=True,
     )
 

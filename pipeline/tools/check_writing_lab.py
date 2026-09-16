@@ -35,6 +35,12 @@ def main() -> None:
     require("retryScrape" in page, "failed match requests can be re-queued in place")
     require("events_cup" in page and "matches_cup" in worker,
             "cup writing evidence stays outside league-only analytics")
+    require("CANONICAL_COMPETITIONS" in worker and "process_canonical_match" in worker,
+            "modeled leagues use the governed canonical ingestion path")
+    require("enqueue_rebuild_if_new_data" in worker,
+            "a manual canonical ingest queues the normal analytics publisher")
+    require("CANONICAL.has(CUR.competition)?'events':'events_cup'" in page,
+            "Writing Lab reads from the table selected by ingestion scope")
     require("--watch" in worker and "scrape_status" in worker,
             "the local worker can process the browser queue continuously")
     require("(\"ENG-Premier League\", \"2526\")" in worker,
