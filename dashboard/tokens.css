@@ -21,13 +21,22 @@
    component defines its own colour. Phase 3 converges the families deliberately.
 
    SCOPES
-     html:not(.dark)               light, app family (default)
-     html.dark                     dark,  app family
-     html:not(.dark).fam-doc       light, document family
-     html.dark.fam-doc             dark,  document family
-     html:not(.dark).fam-lab       light, lab family
-     html.dark.fam-lab             dark,  lab family
-   Every token resolves in all six.
+     html:not(.dark)                        light, app family (default)
+     html.dark                              dark,  app family
+     html:not(.dark).fam-doc                light, document family
+     html.dark.fam-doc                      dark,  document family
+     html:not(.dark).fam-doc.fam-doc-aa     light, the three AA-darkened docs
+     html:not(.dark).fam-market             light, market-values
+     html.dark.fam-market                   dark,  market-values
+     html:not(.dark).fam-lab                light, lab family
+     html.dark.fam-lab                      dark,  lab family
+   A family scope declares only what it differs on; everything else falls
+   through to the app scope above it, which is why fam-doc-aa needs no dark
+   twin -- those pages' dark amber is the document family's.
+
+   The authority on which classes a page carries is assert_tokens.STATE, and
+   restyle/assert_page_parity.py derives its family detection from it, so a new
+   family is added there and both gates follow.
 
    WHY html:not(.dark) AND NOT :root, FOR THE LIGHT SCOPES
    The same specificity problem theme.css documents. Every page declares its own
@@ -350,6 +359,46 @@ html:not(.dark).fam-doc.fam-doc-aa{
   --accent-base:#8a5e1a;
   --accent-veil:rgba(138,94,26,.10);
   --accent-edge:rgba(138,94,26,.32);
+}
+
+/* ===== MARKET FAMILY =============================================== */
+/* market-values: a warm editorial palette that shares no value with the app
+   or document families and only two with either -- its dark paper and panel
+   happen to equal the document family's ground and raised surface. It reads
+   nine names of its own (--paper, --ink, --muted, --signal, --signal2, --soft)
+   and none of the shared vocabulary, so folding it into fam-doc would have
+   left sixteen of its eighteen values as literals in the page and put nothing
+   in this file. It gets a scope instead, which is what a scope is for.
+   Phase 3 should look at this family and fam-lab together: both are warm
+   print palettes that arrived independently. */
+html:not(.dark).fam-market{
+  --ground:#f2eee4;
+  /* NO --surface-raised OR --border-hairline IN LIGHT, deliberately. The page
+     declared #faf7ef and #c9c1b1 for them, and neither has ever been painted:
+     theme.css aliases --panel and --line at html:not(.dark), which outranks a
+     page :root, so this page's light panels and rules have been the app
+     family's #f4f1e9 and #ded9cd since theme.css landed. Writing the page's
+     values here would be a recolour dressed as a refactor. Recorded in
+     deliberate-skips.csv; Phase 3 decides which set this page should have. */
+  --ink-primary:#17202c;
+  --ink-tertiary:#657080;
+  --accent-base:#a66a12;
+  --accent-veil:rgba(166,106,18,.1);
+  /* A second signal hue, teal against the amber. Not a ramp with --accent:
+     the two encode different things, fee direction and contract status. */
+  --signal-alt:#0f7777;
+  --elevation-1:0 18px 55px rgba(49,38,20,.08);
+}
+html.dark.fam-market{
+  --ground:#0e1219;
+  --surface-raised:#161b24;
+  --border-hairline:#323b49;
+  --ink-primary:#edf2f8;
+  --ink-tertiary:#98a6ba;
+  --accent-base:#efbd6f;
+  --accent-veil:rgba(239,189,111,.09);
+  --signal-alt:#4cc8c4;
+  --elevation-1:0 18px 55px rgba(0,0,0,.22);
 }
 
 /* ===== LAB FAMILY ================================================== */

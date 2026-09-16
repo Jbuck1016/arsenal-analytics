@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark fam-market">
 <head>
 <script>(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}})();</script>
 <meta charset="UTF-8">
@@ -12,8 +12,14 @@
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
 <style>
-:root{--ink:#17202c;--paper:#f2eee4;--panel:#faf7ef;--line:#c9c1b1;--muted:#657080;--signal:#a66a12;--signal2:#0f7777;--soft:rgba(166,106,18,.1);--shadow:0 18px 55px rgba(49,38,20,.08)}
-html.dark{--ink:#edf2f8;--paper:#0e1219;--panel:#161b24;--line:#323b49;--muted:#98a6ba;--signal:#efbd6f;--signal2:#4cc8c4;--soft:rgba(239,189,111,.09);--shadow:0 18px 55px rgba(0,0,0,.22)}
+/* This page reads nine names of its own and none of the shared vocabulary, so
+   it gets its own scope in tokens.css rather than being folded into the
+   document family, which would have left sixteen of these eighteen values as
+   literals here. The names below are aliases onto that scope; the values live
+   in tokens.css under role names, in both themes. */
+:root{--ink:var(--ink-primary);--paper:var(--ground);--panel:var(--surface-raised);
+ --line:var(--border-hairline);--muted:var(--ink-tertiary);--signal:var(--accent-base);
+ --signal2:var(--signal-alt);--soft:var(--accent-veil);--shadow:var(--elevation-1)}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,sans-serif;background-image:linear-gradient(rgba(127,118,99,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(127,118,99,.055) 1px,transparent 1px);background-size:36px 36px}
 a{color:inherit}.shell{max-width:1320px;margin:auto;padding:24px 24px 70px}.top{display:flex;align-items:center;gap:12px;border-top:3px solid var(--signal);padding:12px 0 24px}.back{font:600 10px JetBrains Mono;text-decoration:none;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}.back:hover{color:var(--signal)}.theme{margin-left:auto;border:1px solid var(--line);background:var(--panel);color:var(--muted);height:30px;padding:0 10px;font:600 9px JetBrains Mono;cursor:pointer}
 .hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:22px;align-items:end;margin:6px 0 24px}.eyebrow{font:600 10px JetBrains Mono;color:var(--signal);text-transform:uppercase;letter-spacing:.2em}.hero h1{font:800 clamp(42px,7vw,88px)/.88 Archivo;margin:10px 0 14px;letter-spacing:-.065em;max-width:760px}.hero p{font:500 14px/1.65 Inter;color:var(--muted);max-width:720px}.method{border-left:2px solid var(--signal2);padding:13px 16px;background:color-mix(in srgb,var(--panel) 88%,transparent);font:500 11px/1.65 JetBrains Mono;color:var(--muted)}.method b{display:block;color:var(--ink);margin-bottom:5px;text-transform:uppercase;letter-spacing:.1em;font-size:9px}

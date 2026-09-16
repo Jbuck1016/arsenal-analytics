@@ -109,19 +109,26 @@ def _at(rev: str, path: str) -> str | None:
     return r.stdout if r.returncode == 0 else None
 
 
+# family name <- the fam-* classes that select it, read straight off STATE so
+# adding a family to assert_tokens.py is enough. An earlier hand-written
+# if-chain here did not know about fam-market and silently called that page
+# app-family, which reported all eighteen of its colours as changed.
+# "gate" is gate.js's scope, not an HTML page family, and it shares app's empty
+# class set; leaving it in made every classless page resolve as gate.
+_BY_CLASSES = {frozenset(c for c in classes if c.startswith("fam-")): fam
+               for (fam, theme), classes in A.STATE.items()
+               if theme == "light" and fam != "gate"}
+
+
 def _family(html: str) -> str:
-    """The family a page's <html> tag puts it in. No class means app."""
+    """The family a page's <html> tag puts it in. No fam- class means app."""
     tag = re.search(r"<html[^>]*>", html)
-    if not tag:
-        return "app"
-    classes = set(re.findall(r"fam-[\w-]+", tag.group()))
-    if "fam-lab" in classes:
-        return "lab"
-    if "fam-doc-aa" in classes:
-        return "doc-aa"
-    if "fam-doc" in classes:
-        return "doc"
-    return "app"
+    classes = frozenset(re.findall(r"fam-[\w-]+", tag.group() if tag else ""))
+    fam = _BY_CLASSES.get(classes)
+    if fam is None:
+        raise SystemExit(f"<html> carries {sorted(classes)}, which matches no "
+                         f"family in assert_tokens.STATE")
+    return fam
 
 
 def _cascade(page_src: str, tokens_src: str | None, theme_src: str | None):
@@ -176,23 +183,20 @@ def main() -> int:
     if len(sys.argv) > 1:
         pages = sys.argv[1:]
     else:
-        # Every page that has been given a family class, plus the two pages
-        # converted before families existed. An unconverted page is skipped
-        # rather than passed: it has nothing to be at parity with yet.
-        pages = []
-        for p in sorted((A.ROOT / "dashboard").glob("*.html")):
-            rel = f"dashboard/{p.name}"
-            if rel not in A.FAMILY:
-                continue
-            if _family(p.read_text(encoding="utf-8")) != "app" or rel in (
-                    "dashboard/players.html", "dashboard/teams.html"):
-                pages.append(rel)
+        # EVERY page, not just the converted ones. tokens.css is linked by all
+        # of them, so a token added there can change a page nobody has touched:
+        # match.html reads var(--dim,#8b95b5) and had no --dim at the branch
+        # point, so introducing a --dim alias silently replaced its fallback.
+        # An unconverted page is exactly where that goes unnoticed.
+        pages = [f"dashboard/{p.name}"
+                 for p in sorted((A.ROOT / "dashboard").glob("*.html"))
+                 if f"dashboard/{p.name}" in A.FAMILY]
 
     failures = []
     for page in pages:
         failures += check(page)
 
-    print(f"{len(pages)} converted page(s) checked for resolution parity with {BASE}")
+    print(f"{len(pages)} page(s) checked for paint parity with {BASE}")
     if failures:
         print(f"\n{len(failures)} TOKENS CHANGED VALUE:")
         for x in failures[:80]:

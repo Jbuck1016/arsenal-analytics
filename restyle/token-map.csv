@@ -253,3 +253,19 @@ dashboard/validation.html,36,#ff5f56,--state-negative,dark,negative state
 dashboard/validation.html,35,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill
 dashboard/validation.html,35,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border
 dashboard/validation.html,35,#5aa9ff,--series-link,dark,dark blue
+dashboard/market-values.html,20,#17202c,--ink-primary,light,primary ink
+dashboard/market-values.html,20,#f2eee4,--ground,light,paper canvas
+dashboard/market-values.html,21,#657080,--ink-tertiary,light,muted ink
+dashboard/market-values.html,21,#a66a12,--accent-base,light,signal amber
+dashboard/market-values.html,22,#0f7777,--signal-alt,light,second signal teal
+dashboard/market-values.html,22,"rgba(166,106,18,.1)",--accent-veil,light,signal tint
+dashboard/market-values.html,22,"0 18px 55px rgba(49,38,20,.08)",--elevation-1,light,card elevation
+dashboard/market-values.html,20,#edf2f8,--ink-primary,dark,primary ink
+dashboard/market-values.html,20,#0e1219,--ground,dark,paper canvas
+dashboard/market-values.html,20,#161b24,--surface-raised,dark,panel surface
+dashboard/market-values.html,21,#323b49,--border-hairline,dark,hairline rule
+dashboard/market-values.html,21,#98a6ba,--ink-tertiary,dark,muted ink
+dashboard/market-values.html,21,#efbd6f,--accent-base,dark,signal amber
+dashboard/market-values.html,22,#4cc8c4,--signal-alt,dark,second signal teal
+dashboard/market-values.html,22,"rgba(239,189,111,.09)",--accent-veil,dark,signal tint
+dashboard/market-values.html,22,"0 18px 55px rgba(0,0,0,.22)",--elevation-1,dark,card elevation

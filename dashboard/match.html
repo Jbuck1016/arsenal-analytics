@@ -537,6 +537,13 @@ html.dark{
   --border:#272e3a;--border2:#3a4351;
   --text:#f2f5fa;--text2:#b6c2d4;--text3:#8b98ab;
   --gold:#e2b877;--green:#3ddc97;--blue:#5aa9ff;--red-bright:#ff5f56;
+  /* .chk-n paints with var(--dim,#8b95b5). --dim is document vocabulary and
+     did not exist on this page, so that fallback was what got painted in dark;
+     tokens.css then added a --dim alias at :root and silently replaced it with
+     #c3cde2. This page is not converted yet, so the fix is to say what was
+     being painted rather than to let an alias decide. In light the fallback
+     never fired: theme.css has carried --dim since before this branch. */
+  --dim:#8b95b5;
   --pitch:#111722;
   --shadow:0 12px 28px rgba(0,0,0,.22);--shadow2:0 20px 54px rgba(0,0,0,.34);
 }
