@@ -1,7 +1,30 @@
-# Overnight run — Phases 2, 5, 4 and 6
+# Overnight run — Phases 2, 5, 4, 6 and the scraper heartbeat
 
 Branch `restyle/global-theme`. Everything below is committed and pushed.
 Phase 3 was not started.
+
+## Where the tree was on resume
+
+This report covers two sessions. The first was interrupted by a machine
+restart; the second resumed against the repo rather than the brief and found
+**all four restyle phases already committed**:
+
+```
+0315a02 docs: overnight run report
+d082fa1 test: contrast, separability, contact sheet, colour lint   Phase 6
+3078fa1 feat: league multi-select, position filter, exports        Phase 4
+4b9dfdd fix: total stable sort order on rank                       Phase 5
+3da72f0 feat: one global theme switch across every surface         Phase 2
+```
+
+`python restyle/check.py` passed all four gates at `0315a02` before anything
+was touched, so nothing had been left half-applied by the restart. The
+restyle phases were therefore skipped, not redone. The only outstanding item
+in the brief was the scraper heartbeat, which had not been started: nothing in
+the tree or the report mentioned it.
+
+The second session added exactly one commit, `706834d`, plus this section and
+item 5 in `DECISIONS_NEEDED.md`.
 
 Four static gates, three browser verifiers and a fifteen-page smoke test all
 pass at the final commit.
@@ -136,7 +159,106 @@ theme restored, no leftover DOM.
 
 ---
 
+### Scraper heartbeat — the real event count · `706834d`
+
+Not part of the restyle. Repo code, no database access.
+
+**What the bug actually was: a discarded return value.** Of the four causes
+the brief offered, it is that one, and the code says so without ambiguity.
+
+`process_match()` in `scrape_and_load.py:396` has always returned
+`(game_id, n)`, where `n` is what `upsert_events()` actually upserted —
+`len(rows)` after deduplicating on `(game_id, ws_id)`, so it is the number
+that landed rather than the number the feed offered. `scrape_one_league()`
+called it as:
+
+```python
+game_id, _ = process_match(...)
+```
+
+and dropped the count on the floor. Nothing above that line had one to pass
+on. `scrape_one_league` and `scrape_targets` both returned
+`(ok, failed, remaining)`, with no fourth element, so `main()` called:
+
+```python
+hb.record(matches_attempted=..., matches_written=total_ok,
+          matches_failed=..., matches_remaining=...)
+```
+
+**without `events_written` at all.** `record()`'s default for it is `0`, the
+accumulator stayed at `0`, and `_settle()` wrote that `0` to the row on every
+run that ever ran.
+
+It is worth being precise about what it was *not*, because three plausible
+stories are wrong here:
+
+- **Not a counter that is never incremented.** `_Heartbeat.record()` and
+  `_settle()` in `scraper_heartbeat.py` are correct and always were. They were
+  being handed nothing.
+- **Not a local going out of scope.** The accumulator lives on the heartbeat
+  object for the whole `with` block.
+- **Not a row written before the flush.** `_settle()` runs on context-manager
+  exit, long after every `upsert_events()` call has returned.
+
+**The fix.** `scrape_one_league` and `scrape_targets` return a fourth element
+and `main()` passes it to `hb.record()`. The count accumulates only for
+fixtures that ingested, so a run that fetched nothing still settles a genuine
+zero — which is the case the heartbeat exists to make visible, and it would be
+self-defeating to paper over. The per-league and run summaries print the total
+too, so the log and the row can be compared without a query.
+
+**`matches_written`, checked against the same standard: it is right.**
+`succeeded` increments only after `process_match` returns a truthy `game_id`
+with no exception raised. A whitelist rejection returns `("", 0)`, and the
+caller turns that falsy `game_id` into `RuntimeError("match was rejected
+before ingestion")`, so a refused match counts as failed and never as written.
+`matches_attempted` is `total_ok + total_failed`, which correctly excludes
+fixtures the time-budget `break` never reached. One edge case behaves
+correctly and is worth knowing: a match that ingests from an empty feed counts
+`matches_written` 1 and `events_written` 0, which is exactly what it should
+say.
+
+**This fix is unverified against a live run.** The database was out of scope
+and nothing here reached it. Three things were done instead:
+
+1. Read the whole call chain, `process_match` → `scrape_one_league` →
+   `scrape_targets` → `main` → `hb.record` → `_settle`, and confirmed every
+   caller of the two changed functions was updated. There are three:
+   `scrape_history.py`, `tools/check_historical_scraper.py`, and `main()`.
+   The other `process_match` callers — `scrape_and_load.py:488`, `:496`,
+   `scrape_new.py:142` — ignore the return value entirely and write no
+   heartbeat row, so they are unaffected.
+2. Ran the existing dry-run harness, `pipeline/tools/check_historical_scraper.py`.
+   Its `scrape_targets` fixture now asserts the event count, and that a league
+   which aborts contributes none. All 23 checks pass.
+3. Drove `heartbeat()` against a fake Supabase client with the shape of the
+   16 September run — 5 matches, 6,072 events — and asserted the settled
+   payload. It reports `events_written: 6072` where it previously reported
+   `0`.
+
+The first real run will confirm it. The thing to look at is whether the
+`events` line in the run summary matches `scraper_runs.events_written` for
+that run, and whether both match the row count actually added to `events`.
+
+**A second, worse bug found on the way, deliberately not fixed.**
+`drain_rescrape_queue()` calls `process_match()` with a signature that does
+not exist, so every re-scrape has always failed instantly with `TypeError` and
+been recorded as a fixture failure. Three of those marks a fixture exhausted
+and permanently excluded. It is item 5 in `DECISIONS_NEEDED.md`, with what
+the database would need to be asked to confirm it. It is left alone because
+fixing it restructures the drain and may require a data repair, and because
+the truncated-fixture tables sit near the parallel `mv_*` rebuild.
+
+One consequence is load-bearing for the fix above: because the drain writes
+no events today, leaving its total out of `events_written` costs nothing right
+now. A comment at the `hb.record()` call marks the gap so it is not missed if
+the drain is ever repaired.
+
+---
+
 ## Deferred to `DECISIONS_NEEDED.md`
+
+Items 1–4 are from the first session; item 5 from the second.
 
 1. **The team profile scatter (4.5).** Out of scope per the brief, and the
    reason holds: the axes need a pair of team metrics, and which pair is a
@@ -263,6 +385,30 @@ colour spelled two ways. `norm()` now equates the sixteen basic CSS keywords
 with their hex, pinned by regression cases that fail if it went too far: `red`
 must not equal `#ff0001`, `white` must not equal `#fffffe`, and a keyword
 outside the table must not match anything.
+
+---
+
+## Where I stopped
+
+Everything in the brief is done. Phases 2, 5, 4 and 6 landed in the first
+session; the scraper heartbeat landed in the second. Phase 3 was not started
+and no colour value, family or component was touched, so Phase 1's guarantee
+that nothing renders differently still holds for everything except the
+deliberate changes the brief listed.
+
+Two things were deferred rather than guessed: Phase 4.5, as the brief
+directed, and the `drain_rescrape_queue()` defect, which is a genuine bug but
+outside what "fix the event count" authorises and entangled with a data
+repair. Both are in `DECISIONS_NEEDED.md` with what each would need.
+
+One note on the working tree, because it is not obvious from the log: there is
+uncommitted parallel work in `pipeline/scrape_history.py` and
+`pipeline/tools/check_historical_scraper.py` — `EXPECTED_MATCHES`, the
+`--refresh-schedule` flag, and the whole `scrape_targets` test fixture. Commit
+`706834d` stages **only** the heartbeat hunks and leaves that work
+uncommitted, so it has not been published under a commit message that does not
+describe it. The working tree still has it, plus the one assertion added to
+that fixture, which will land when that work is committed.
 
 ---
 

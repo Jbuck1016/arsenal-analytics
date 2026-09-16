@@ -125,3 +125,63 @@ the default direction and is internally consistent in the other.
 **If the literal reading was intended** — raw value always descending
 regardless of the control — it is a one-character change:
 `(a[sec]-b[sec])*RK.dir` becomes `(b[sec]-a[sec])`.
+
+---
+
+## 5. `drain_rescrape_queue()` calls `process_match()` with the wrong signature
+
+Found while fixing the heartbeat's event count. It is a real defect in
+`pipeline/rescrape_queue.py`, separate from the heartbeat, and it was left
+alone because fixing it changes what gets written to the database.
+
+**What is wrong.** `rescrape_queue.py:61` calls:
+
+```python
+process_match(game_id, scraper=scraper)
+```
+
+`process_match`'s actual signature, in `scrape_and_load.py:396`, is:
+
+```python
+def process_match(sb, ws, sched_row, league, season, historical=False) -> tuple[str, int]
+```
+
+There is no `scraper` keyword and `game_id` lands in the `sb` slot. Every call
+raises `TypeError` immediately, on every fixture, before any fetch is
+attempted. The `except Exception` around it catches that, and the run then
+reports the fixture as a failure to `record_rescrape_result`.
+
+**Why it matters.** The re-scrape queue holds fixtures whose event feed was
+truncated — the ones `mv_match_length` and `mv_player_minutes` mis-scale, and
+the reason those per-90s are diluted. Nothing has ever been repaired by this
+path. Worse, each run increments `attempts` on up to ten fixtures, and three
+failures marks a fixture *exhausted* and raises an alert. `exhausted_game_ids()`
+then permanently excludes it from the backfill's to-do list. So the queue has
+most likely been converting truncated fixtures into permanently skipped ones
+at ten per run, and the alert that fires says the fixture is unfetchable when
+in fact it was never fetched.
+
+This is stated from reading the code, not from the database, which was out of
+scope. **The database will say whether it actually happened**: the counts in
+`rescrape_queue` by status, and whether the recorded errors all read
+`TypeError`, settle it in one query.
+
+**The decision.** Three separable questions:
+
+1. **Fix the call?** It needs `sb`, an opened `ws` scraper for that fixture's
+   league and season, and the schedule row — none of which the drain currently
+   has. It runs before the per-league scrapers are built, so this is a real
+   restructure, not a one-line signature fix, and it belongs in its own change
+   with its own review.
+2. **Unwind the damage?** If fixtures were wrongly marked exhausted, their
+   `attempts` and status need resetting or they stay excluded forever. That is
+   a data repair, and it touches tables the parallel rebuild may also be on.
+3. **Should the drain's events count toward `events_written`?** Once the drain
+   actually writes events, it will be writing them inside the heartbeat's
+   context and they will not be counted. `scrape_league.py` carries a comment
+   at the `hb.record()` call marking this gap. If the answer is yes,
+   `drain_rescrape_queue` should return an event total alongside `done`.
+
+**Cost once decided:** 1 is a moderate change to the drain's structure. 2 is a
+small, careful data fix that must be sequenced against the parallel `mv_*`
+rebuild. 3 is a few lines once 1 lands.
