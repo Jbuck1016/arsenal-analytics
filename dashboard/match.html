@@ -867,24 +867,69 @@ const DEF_TYPES=['Tackle','Interception','Clearance','BallRecovery','BlockedPass
 const DEF_COLORS={Tackle:'#ef4444',Interception:'#2563eb',Clearance:'#7c3aed',BallRecovery:'#16a34a',BlockedPass:'#d4a017',Aerial:'#0891b2',Challenge:'#db2777'};
 const XT=[[.000,.000,.000,.000,.000,.000,.000,.000],[.001,.001,.001,.002,.002,.001,.001,.001],[.002,.003,.004,.005,.005,.004,.003,.002],[.004,.006,.008,.011,.011,.008,.006,.004],[.006,.009,.014,.019,.019,.014,.009,.006],[.010,.015,.022,.030,.030,.022,.015,.010],[.016,.024,.035,.048,.048,.035,.024,.016],[.025,.037,.054,.075,.075,.054,.037,.025],[.038,.056,.082,.115,.115,.082,.056,.038],[.055,.082,.122,.170,.170,.122,.082,.055],[.082,.120,.178,.250,.250,.178,.120,.082],[.120,.180,.270,.390,.390,.270,.180,.120]];
 function getXT(x,y){return XT[Math.min(11,Math.floor(x/100*12))][Math.min(7,Math.floor(y/100*8))];}
-let PASS_OK='#1a6b3a',PASS_FAIL='#c0392b';
-/* Canvas can't read CSS variables, so the palette is mirrored here and swapped
-   whenever the theme changes. */
+/* Assigned by syncCanvasTheme() below, which runs once at module scope and
+   again from initThemeToggle() before anything is drawn. They used to be
+   initialised to '#1a6b3a' and '#c0392b', which are neither theme's pass
+   colours: syncCanvasTheme() overwrote both before the first paint, so those
+   two literals had never been painted. */
+let PASS_OK,PASS_FAIL;
 /* Set while an export is being drawn. Exports are always light, so the pitch,
    pass colours and in-plot type have to resolve light even when the workspace
    is dark. Without this the same plot exported from the two themes came out as
    two different pictures. */
 let EXP_LIGHT=false;
+
+/* ---- THE CANVAS TOKEN BRIDGE ---------------------------------------------
+   A canvas cannot read a CSS variable, and it does not complain about being
+   asked to. ctx.fillStyle='var(--pitch-fill)' is not an error: the assignment
+   is silently discarded and the previous fill stays, so a mistake here paints
+   the wrong colour with nothing in the console and nothing in any static
+   check. That is why the palette was mirrored in JavaScript in the first
+   place, and why it drifted from the stylesheet.
+
+   So the values still reach the canvas as concrete strings -- they are just
+   read out of tokens.css instead of retyped. restyle/bridge-probe.html
+   establishes that this works, and restyle/run_bridge_probe.py runs it:
+   getComputedStyle returns a custom property EXACTLY as authored, byte for
+   byte, including rgba() spacing, so a value read through here is identical
+   to the one the assertion in restyle/assert_tokens.py checks.
+
+   BOTH PALETTES ARE CAPTURED UP FRONT, by toggling .dark on the root element
+   between two reads, rather than read on demand. Test 3 of the probe is the
+   reason: a descendant element cannot escape an ancestor's html.dark, so
+   there is no way to ask for the light palette while the page is dark -- and
+   the export path has to do exactly that. Toggling costs two style recalcs,
+   once, on the first call.
+
+   Note this reads the ROOT element, so anything applyTheme() writes there
+   with setProperty wins -- which is correct for --accent, and is why no
+   token whose value is overwritten at runtime belongs in the list below. */
+const CANVAS_TOKENS={pitch:'--pitch-fill',line:'--pitch-line',
+  lineStrong:'--pitch-line-strong',band:'--pitch-band',text:'--pitch-text',
+  textSoft:'--pitch-text-soft',chipBg:'--chip-ground',chipText:'--chip-ink',
+  passOk:'--pass-ok',passFail:'--pass-fail'};
+let CT_LIGHT=null,CT_DARK=null;
+function readCanvasTokens(){
+  const root=document.documentElement,wasDark=root.classList.contains('dark');
+  const grab=()=>{const cs=getComputedStyle(root),o={};
+    for(const k in CANVAS_TOKENS)o[k]=cs.getPropertyValue(CANVAS_TOKENS[k]).trim();
+    return o;};
+  root.classList.add('dark');CT_DARK=grab();
+  root.classList.remove('dark');CT_LIGHT=grab();
+  if(wasDark)root.classList.add('dark');
+  /* An empty string here means the token did not resolve, and the canvas
+     would take it as a no-op and paint with whatever was set last. Nothing
+     else would report it, so this does. */
+  const missing=Object.keys(CANVAS_TOKENS)
+    .filter(k=>!CT_LIGHT[k]||!CT_DARK[k]).map(k=>CANVAS_TOKENS[k]);
+  if(missing.length)console.error('canvas token bridge: unresolved '+missing.join(', '));
+}
 function CT(){
-  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
-  return d?{pitch:'#111722',line:'rgba(182,194,212,0.22)',lineStrong:'rgba(226,184,119,0.52)',
-            band:'rgba(90,169,255,0.018)',text:'rgba(242,245,250,0.90)',textSoft:'rgba(182,194,212,0.48)',
-            chipBg:'rgba(14,18,25,0.92)',chipText:'#f2f5fa',passOk:'#3ddc97',passFail:'#ff6b63'}
-          :{pitch:'#f0ead6',line:'#888',lineStrong:'#666',
-            band:'rgba(0,0,0,0.012)',text:'#333',textSoft:'rgba(0,0,0,0.40)',
-            chipBg:'rgba(25,28,34,0.90)',chipText:'#fff',passOk:'#12855a',passFail:'#cc4038'};
+  if(!CT_LIGHT)readCanvasTokens();
+  return (!EXP_LIGHT&&document.documentElement.classList.contains('dark'))?CT_DARK:CT_LIGHT;
 }
 function syncCanvasTheme(){const c=CT();PASS_OK=c.passOk;PASS_FAIL=c.passFail;}
+syncCanvasTheme();
 const PM=20; // pitch margin - MUST match drawPitch
 /* Hi-DPI canvas setup: physical buffer scales by devicePixelRatio, c.width/height return logical values, ctx is pre-scaled so renderer code works unchanged */
 function setupHiDpiCanvas(can,logicalW,logicalH){const dpr=window.devicePixelRatio||1;can.width=Math.round(logicalW*dpr);can.height=Math.round(logicalH*dpr);Object.defineProperty(can,'width',{get:()=>logicalW,set:()=>{},configurable:true});Object.defineProperty(can,'height',{get:()=>logicalH,set:()=>{},configurable:true});const ctx=can.getContext('2d');ctx.scale(dpr,dpr);return ctx;}

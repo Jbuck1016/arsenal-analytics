@@ -84,6 +84,28 @@ palettes, and caching them. The `EXP_LIGHT` export path then reads the cached
 light object and works while the page is dark — which matters, because exports
 are what actually leave the building.
 
+### And the bridge as built is verified too, separately
+
+Proving the mechanism works in a probe page is not the same as proving the
+page uses it correctly. `restyle/verify_canvas_bridge.py` loads the real
+`match.html` in a browser and checks three things:
+
+- `CT()` returns, in each theme, exactly the ten values the hand-mirrored
+  palette returned before the bridge replaced it. Those ten pairs are written
+  out in the verifier rather than read from `tokens.css`; reading them from
+  the file the bridge reads would make the check a tautology.
+- with `EXP_LIGHT` set while the document is dark, `CT()` returns the light
+  palette — the case that motivated caching both.
+- every value the bridge produces is **assigned to a real `ctx.fillStyle` and
+  read back**, after setting a marker fill first. A canvas normalises what it
+  accepts and ignores what it does not, so a value that comes back as the
+  marker was silently discarded. This is the only check anywhere that tests
+  the failure mode this section is about, instead of reasoning about it.
+
+That closes hole 2 for everything that goes through `CT()`. It does not close
+it for a call site that builds a colour some other way, so any new canvas
+paint needs to come through the bridge or be added to the verifier.
+
 ## 3. It counts what a regex thinks is a colour
 
 The scanner matches `#[0-9a-fA-F]{3,8}` and so also matches HTML numeric
