@@ -346,6 +346,21 @@ html:not(.dark).fam-doc{
   --accent-veil:rgba(156,107,30,.10);
   --accent-edge:rgba(156,107,30,.32);
   --series-link:#2f6aa8;
+
+  /* index.html's own three. The wash is a warm bloom behind the masthead and
+     the glow is the ring around the live dot; both are tints of colours this
+     family already carries, at alphas nothing else uses. The popover
+     elevation is the command-bar results panel. */
+  --page-wash:rgba(226,184,119,.05);
+  --live-glow:rgba(61,220,151,.14);
+  --elevation-popover:0 16px 44px rgba(0,0,0,.6);
+  /* sequences.html's node pills. --nb is that page's own name for its node
+     blue; this is its fill at 14%, the same in both themes. */
+  --pill-nb-fill:rgba(90,160,255,.14);
+  /* validation.html's tier badges. Tints of the dark blue and red at 40%,
+     the same in both themes as the page had them. */
+  --tier-t2-edge:rgba(90,169,255,.4);
+  --tier-t4-edge:rgba(255,95,86,.4);
   /* The --amber, --blue and tint aliases used to live here. They are theme
      independent, like every other alias, so they now sit in the :root block at
      the bottom of this file. Declared here they existed in light and simply
@@ -371,6 +386,21 @@ html.dark.fam-doc{
   --state-positive:#3ddc97;
   --state-negative:#ff5f56;
   --series-link:#5aa9ff;
+
+  /* index.html's own three. The wash is a warm bloom behind the masthead and
+     the glow is the ring around the live dot; both are tints of colours this
+     family already carries, at alphas nothing else uses. The popover
+     elevation is the command-bar results panel. */
+  --page-wash:rgba(226,184,119,.05);
+  --live-glow:rgba(61,220,151,.14);
+  --elevation-popover:0 16px 44px rgba(0,0,0,.6);
+  /* sequences.html's node pills. --nb is that page's own name for its node
+     blue; this is its fill at 14%, the same in both themes. */
+  --pill-nb-fill:rgba(90,160,255,.14);
+  /* validation.html's tier badges. Tints of the dark blue and red at 40%,
+     the same in both themes as the page had them. */
+  --tier-t2-edge:rgba(90,169,255,.4);
+  --tier-t4-edge:rgba(255,95,86,.4);
 }
 
 /* Pages whose light amber was darkened for AA on the shared surfaces: guide,
@@ -408,6 +438,10 @@ html:not(.dark).fam-market{
   /* A second signal hue, teal against the amber. Not a ramp with --accent:
      the two encode different things, fee direction and contract status. */
   --signal-alt:#0f7777;
+  /* Low squad coverage. One value in both themes, as the page had it. */
+  --state-negative:#d16f52;
+  /* the faint graph-paper grid ruled across the page background */
+  --grid-line:rgba(127,118,99,.055);
   --elevation-1:0 18px 55px rgba(49,38,20,.08);
 }
 html.dark.fam-market{
@@ -419,6 +453,10 @@ html.dark.fam-market{
   --accent-base:#efbd6f;
   --accent-veil:rgba(239,189,111,.09);
   --signal-alt:#4cc8c4;
+  /* Low squad coverage. One value in both themes, as the page had it. */
+  --state-negative:#d16f52;
+  /* the faint graph-paper grid ruled across the page background */
+  --grid-line:rgba(127,118,99,.055);
   --elevation-1:0 18px 55px rgba(0,0,0,.22);
 }
 
@@ -959,6 +997,8 @@ html:not(.dark).fam-lab{
   --series-3:#086843;
   --series-4:#8b5500;
   --series-5:#a82424;
+  /* the active tab's label, on the acid accent */
+  --ink-on-accent:#fff;
 }
 html.dark.fam-lab{
   --ground:#081017;
@@ -971,6 +1011,8 @@ html.dark.fam-lab{
   --series-3:#5add9f;
   --series-4:#ffc566;
   --series-5:#ff7972;
+  /* the active tab's label, on the acid accent */
+  --ink-on-accent:#fff;
 }
 
 /* --- model-review -------------------------------------------------- */
@@ -1021,6 +1063,13 @@ html:not(.dark).fam-writing{
   --state-negative:#e14b2d;
   --series-link:#315f78;
   --elevation-1:0 18px 60px rgba(13,18,25,.18);
+  /* The select control is DARK IN BOTH THEMES: these are this family's
+     dark sheet and ink, typed into an unscoped rule, so a light page
+     paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
+  --select-fill:#171d24;
+  --select-ink:#edf0e9;
+  /* the faint graph-paper grid ruled across the page background */
+  --grid-line:rgba(120,110,90,.045);
 }
 html.dark.fam-writing{
   --ground:#10151b;
@@ -1033,6 +1082,13 @@ html.dark.fam-writing{
   --state-negative:#ff6848;
   --series-link:#72abc2;
   --elevation-1:0 22px 70px rgba(0,0,0,.38);
+  /* The select control is DARK IN BOTH THEMES: these are this family's
+     dark sheet and ink, typed into an unscoped rule, so a light page
+     paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
+  --select-fill:#171d24;
+  --select-ink:#edf0e9;
+  /* the faint graph-paper grid ruled across the page background */
+  --grid-line:rgba(120,110,90,.045);
 }
 
 /* ===== COMPATIBILITY ALIASES ======================================= */
@@ -1089,6 +1145,16 @@ html.dark.fam-writing{
   --amber-dim:var(--accent-veil);
   --amber-line:var(--accent-edge);
   --blue:var(--series-link);
+}
+
+/* ===== PRINT ======================================================= */
+/* guide and methodology carry an @media print block. Print is a third
+   context, not a third theme: it does not follow the reader's light or dark
+   choice, it is ink on paper. These sit on :root for that reason. */
+:root{
+  --print-paper:#fff;
+  --print-ink:#000;
+  --print-rule:#ccc;
 }
 
 /* ===== GATE ======================================================== */

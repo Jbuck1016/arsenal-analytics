@@ -58,7 +58,7 @@ html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
 /* Header base is in shell.css. These are this page's differences from it. */
-.hdr-logo{font:800 13px/1 'Inter';color:#12141a}
+.hdr-logo{font:800 13px/1 'Inter';color:var(--ink-on-accent)}
 .tab{text-decoration:none}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
@@ -102,7 +102,7 @@ select option{background:var(--bg2);color:var(--text)}
 .scard-s b{font-family:'JetBrains Mono',monospace;color:var(--text2);font-weight:700}
 .pbox{width:100%;aspect-ratio:111.5 / 74}
 .pill{display:inline-block;font:700 8px/1 Inter;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:var(--accent-dim);color:var(--accent)}
-.pill.nb{background:rgba(90,160,255,.14);color:var(--nb)}
+.pill.nb{background:var(--pill-nb-fill);color:var(--nb)}
 .back{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:600 10px/1 Inter;padding:6px 11px;border-radius:6px;cursor:pointer}
 .back:hover{color:var(--text);background:var(--surface2)}
 .ov-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}

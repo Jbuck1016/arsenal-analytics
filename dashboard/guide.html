@@ -153,12 +153,12 @@ details p:last-child{margin-bottom:0}
 @media print{
   .toc,.nav,.tbtn,.score,.btn,.noprint{display:none!important}
   .wrap{display:block;max-width:100%;padding:0}
-  body{background:#fff;color:#000}
-  h2{page-break-after:avoid;border-top:1px solid #ccc}
+  body{background:var(--print-paper);color:var(--print-ink)}
+  h2{page-break-after:avoid;border-top:1px solid var(--print-rule)}
   .q,.box,table,details{page-break-inside:avoid}
-  details{border:1px solid #ccc}
+  details{border:1px solid var(--print-rule)}
   details:not([open]) > *:not(summary){display:block!important}
-  a{color:#000;text-decoration:none}
+  a{color:var(--print-ink);text-decoration:none}
 }
 .unavail{color:var(--red,#ff5f56);font-weight:600}
 </style>
