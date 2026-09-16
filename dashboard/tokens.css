@@ -65,32 +65,78 @@
 
 /* ===== APP FAMILY, LIGHT =========================================== */
 html:not(.dark){
-  /* grounds and surfaces */
+  /* GROUNDS AND SURFACES. Light is canonical: it is designed first and dark is
+     derived from it, so this block is the one to read.
+
+     The raised surface is LIGHTER than the ground and a shade warmer, which is
+     the opposite of what this family used to do -- #f4f1e9 was darker than the
+     #faf8f3 it sat on, so a card read as a dent rather than a sheet. Recessed
+     is the darker one, which is what the name says. */
   --ground:#faf8f3;
-  --surface-raised:#f4f1e9;
-  --surface-recessed:#eceadf;
-  --surface-veil:rgba(25,28,34,.03);
-  --surface-veil-strong:#e8e4d8;
+  --surface-raised:#fffdf8;
+  --surface-recessed:#f0ebdf;
+  --surface-veil:rgba(28,22,14,.035);
+  --surface-veil-strong:#e8e1d0;
 
-  /* boundaries */
-  --border-hairline:#ded9cd;
-  --border-strong:#b9b2a1;
+  /* BOUNDARIES, AND THE JUDGEMENT contrast.md ASKED FOR.
+     WCAG 1.4.11 wants 3:1 from a boundary that is REQUIRED to identify a
+     control or its state. Most rules on these pages are not that: a line
+     between two table rows already separated by position is decoration, and
+     drawing it at 3:1 on cream would mean a near-black hairline through every
+     table. So the scale splits by job. --border-hairline is decoration and is
+     measured but not failed; --border-strong is affordance -- control edges,
+     the select, anything whose boundary is the only thing saying where it ends
+     -- and clears 3:1 on all three surfaces of both themes. */
+  --border-hairline:#e0d8c7;
+  --border-strong:#8f8674;
 
-  /* ink */
-  --ink-primary:#16191f;
-  --ink-secondary:#4a5262;
-  --ink-tertiary:#6b7280;
-  --ink-quaternary:#9aa0aa;
-  --ink-on-accent:#12141a;
+  /* INK. Warm near-black rather than pure #000, on a warm grey scale rather
+     than the blue-grey this family carried. Every rung clears 4.5:1 on all
+     three light surfaces, including the recessed one, which is where the old
+     --ink-tertiary failed at 4.28. */
+  --ink-primary:#17140f;
+  --ink-secondary:#4a4436;
+  --ink-tertiary:#655e4d;
+  --ink-quaternary:#726a58;
+  /* White, not near-black. On the accent fill white measures 4.59:1 and
+     near-black 4.10:1, so there was only ever one legible answer here. */
+  --ink-on-accent:#fff;
   /* Ink on a state-coloured fill: the W/D/L badge in teams.html sits on a win
-     green or loss red chip, not on the accent, and carries its own near-black.
-     Distinct from --label-on-fill, which is the white pizza-slice number. */
-  --ink-on-state:#0d0f14;
+     green or loss red chip, not on the accent, and carries its own ink.
+     Distinct from --label-on-fill, which is the white pizza-slice number.
+     IT FOLLOWS THE THEME NOW. The light states are dark fills, so this is
+     white on them (5.35:1 and 5.29:1); the near-black it used to carry in both
+     themes measured 3.58:1 and 3.62:1 and failed on the ground it was named
+     for. In dark the states are bright fills and it goes back to near-black. */
+  --ink-on-state:#fff;
 
-  /* accent, one brand voice */
+  /* THE ACCENT, AND WHY IT IS THREE TOKENS AND NOT ONE.
+     One brand voice, three jobs, because a single value cannot do all three
+     and clear its thresholds. See PHASE3_NOTES.md.
+
+     --accent-base is the brand red exactly, #EF0107, and it is a MARK: rules,
+     bars, focus rings, the left edge of a panel, any fill with no text on it.
+     It needs 3:1 and clears it on every surface of both themes.
+
+     --accent-solid is a fill that CARRIES TEXT. White on #EF0107 measures
+     4.49:1, which misses AA, and no ink clears it -- white is the maximum.
+     Three units of red darker and white measures 4.59:1. The pair are 0.65
+     CIEDE2000 apart, which is below the threshold of noticing a difference at
+     all, so this is the brand red wherever a label sits on it.
+
+     --accent-ink is accent-coloured TEXT on a page surface, and it is the one
+     that has to move per theme, because a red that reads on cream cannot read
+     on #0e1219. Both clear 4.5:1 on all three surfaces of their theme.
+
+     This is NOT fam-doc-aa under a new name. That was a second scope: one
+     role, --accent-base, meaning a different colour on three pages. This is
+     three roles in one family, every page carrying all three, no page
+     disagreeing with any other. Splitting by role is what let the scope die. */
   --accent-base:#EF0107;
+  --accent-solid:#EC0107;
+  --accent-ink:#C10005;
   --accent-veil:rgba(239,1,7,0.07);
-  --accent-edge:rgba(239,1,7,0.18);
+  --accent-edge:rgba(239,1,7,0.20);
 
   /* percentile ramp: diverging, keyed to percentile band, not to hue names */
   --rank-top:#16a34a;
@@ -241,18 +287,29 @@ html.dark{
   --surface-veil-strong:rgba(255,255,255,0.07);
 
   --border-hairline:#272e3a;
-  --border-strong:#3a4351;
+  /* was #3a4351, which reached 1.72:1 and could not be an affordance edge */
+  --border-strong:#667486;
 
   --ink-primary:#f2f5fa;
   --ink-secondary:#b6c2d4;
   --ink-tertiary:#8b98ab;
-  --ink-quaternary:#7c8699;
-  --ink-on-accent:#12141a;
+  /* was #7c8699, which reached only 3.97:1 on the recessed surface */
+  --ink-quaternary:#808d9b;
+  --ink-on-accent:#fff;
+  /* The dark states are bright fills, so the ink on them is near-black:
+     10.85:1 on the win green, 6.41:1 on the loss red. */
   --ink-on-state:#0d0f14;
 
-  --accent-base:#D8B384;
-  --accent-veil:rgba(216,179,132,0.12);
-  --accent-edge:rgba(216,179,132,0.28);
+  /* THE SAME ACCENT AS LIGHT, because there is one brand voice. Only
+     --accent-ink moves, and it has to: #C10005 measures 2.92:1 on this ground.
+     The warm gold this family used to carry is --accent-muted now, a second
+     tier for companion marks, which is the whole of what it is good for. */
+  --accent-base:#EF0107;
+  --accent-solid:#EC0107;
+  --accent-ink:#FF4A42;
+  --accent-veil:rgba(239,1,7,0.14);
+  --accent-edge:rgba(239,1,7,0.32);
+  --accent-muted:#e2b877;
 
   --rank-top:#34d399;
   --rank-high:#6ee7a8;
@@ -454,7 +511,7 @@ html:not(.dark){
   /* A second, quieter accent beside the red. Same role name model-review uses
      for its companion gold, and the same behaviour: warm and dark on a light
      ground, warm and light on a dark one. */
-  --accent-muted:#9a6f2a;
+  --accent-muted:#8a5e1a;
   /* Two elevation levels, both larger and softer than the app's single
      --elevation-1. The panels on this page float over a workspace. */
   --elevation-2:0 18px 46px rgba(23,27,34,.13);
@@ -711,9 +768,6 @@ html:not(.dark){
   --pct-low:#f97316;
 }
 html.dark{
-  /* Not a translucent veil in dark on this page but an opaque surface, and the
-     same value as --surface-recessed. Verbatim in Phase 1. */
-  --accent-muted:#e2b877;
   --elevation-2:0 20px 54px rgba(0,0,0,.34);
 
   /* --- match.html component colours; the light scope carries the notes --- */
@@ -1098,13 +1152,17 @@ html.dark.fam-editorial{
   --gate-ink:#e8eef6;
   --gate-ink-soft:#8794a6;
   --gate-field:#141821;
-  --gate-field-border:#2b333f;
+  /* The password field's edge is the only thing saying where the field is, so
+     it is an affordance and held to 3:1. It measured 1.48:1 on the card. */
+  --gate-field-border:#586474;
   --gate-focus-ring:rgba(226,184,119,.5);
   /* The Enter button: a tinted fill, its edge, and the hover fill. Named for
      the action rather than for the mark they are tints of, because Phase 2 may
      well give the button a solid fill and keep the mark as it is. */
   --gate-action-fill:rgba(226,184,119,.12);
-  --gate-action-edge:rgba(226,184,119,.35);
+  /* As the field edge: the Enter button is a tinted fill with no border but
+     this one, so the border is what makes it a button. Was .35, at 2.24:1. */
+  --gate-action-edge:rgba(226,184,119,.62);
   --gate-action-fill-hover:rgba(226,184,119,.2);
   --gate-error:#ff5f56;
 }

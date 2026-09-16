@@ -51,7 +51,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .team-pick option,select.s-sel option,select.trend-sel option,#matchSel option,
 .team-pick optgroup,#matchSel optgroup{background-color:var(--bg2);color:var(--text)}
 .team-btn{background:none;border:none;color:var(--text3);font:600 11px/1 'Inter',sans-serif;padding:4px 14px;border-radius:6px;cursor:pointer;transition:.15s}
-.team-btn.on{background:var(--accent);color:var(--ink-on-accent)}
+.team-btn.on{background:var(--accent-solid);color:var(--ink-on-accent)}
 .team-btn:hover:not(.on){color:var(--text)}
 .hdr-sub{margin-top:0}
 .hdr-tabs{display:flex;gap:2px;margin-left:16px;background:var(--surface);border-radius:8px;padding:3px}
@@ -96,7 +96,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .report-pill{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 9px;font:600 10px/1 'Inter',sans-serif;color:var(--text2);font-variant-numeric:tabular-nums}
 .report-pill b{color:var(--accent);font-weight:700}
 .report-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
-.report-btn{background:var(--accent);border:none;color:var(--ink-on-accent);font:600 11px/1 'Inter',sans-serif;padding:8px 16px;border-radius:6px;cursor:pointer;transition:.15s}
+.report-btn{background:var(--accent-solid);border:none;color:var(--ink-on-accent);font:600 11px/1 'Inter',sans-serif;padding:8px 16px;border-radius:6px;cursor:pointer;transition:.15s}
 .report-btn:hover{opacity:.88}
 .report-btn.sec{background:var(--bg);border:1px solid var(--border);color:var(--text2)}
 .report-btn.sec:hover{background:var(--surface2);color:var(--text)}
@@ -122,7 +122,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .pos-grp{display:flex;flex-wrap:wrap;gap:3px}
 .pos-grp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text2);font:600 9px/1 'Inter',sans-serif;padding:5px 9px;border-radius:5px;cursor:pointer;transition:.13s;letter-spacing:.05em}
 .pos-grp-btn:hover{background:var(--surface2);color:var(--text)}
-.pos-grp-btn.on{background:var(--accent);color:var(--ink-on-accent);border-color:var(--accent)}
+.pos-grp-btn.on{background:var(--accent-solid);color:var(--ink-on-accent);border-color:var(--accent)}
 .pos-grp-btn.pos-all{margin-left:auto;background:none;color:var(--text3);font-weight:500}
 
 /* Viz buttons */
@@ -171,11 +171,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .vt-label{font:600 9px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
 .vt-pill{display:flex;background:var(--surface2);border-radius:18px;padding:2px;gap:2px}
 .vt-pill-btn{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter',sans-serif;padding:5px 12px;border-radius:16px;cursor:pointer;transition:.15s;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.vt-pill-btn.on{background:var(--accent);color:var(--ink-on-accent)}
+.vt-pill-btn.on{background:var(--accent-solid);color:var(--ink-on-accent)}
 .vt-pill-btn.on.opp{background:var(--opponent)}
 .vt-cmp-btn{background:var(--bg);border:1px solid var(--border);color:var(--text2);font:600 10px/1 'Inter',sans-serif;padding:6px 12px;border-radius:16px;cursor:pointer;transition:.15s;margin-left:4px}
 .vt-cmp-btn:hover{background:var(--surface2);color:var(--text)}
-.vt-cmp-btn.on{background:linear-gradient(90deg,var(--accent) 0%,var(--accent) 50%,var(--opponent) 50%,var(--opponent) 100%);color:var(--ink-on-accent);border-color:transparent}
+.vt-cmp-btn.on{background:linear-gradient(90deg,var(--accent-solid) 0%,var(--accent-solid) 50%,var(--opponent) 50%,var(--opponent) 100%);color:var(--ink-on-accent);border-color:transparent}
 .compare-indicator{font:700 10px/1 var(--f-body);letter-spacing:.16em;color:var(--accent);padding:5px 10px;border:1.5px solid var(--accent);border-radius:16px;background:var(--accent-dim);text-transform:uppercase}
 .concept-info-bar{background:var(--surface);border-top:1px solid var(--border);padding:6px 14px;font:400 10px/1.4 'Inter',sans-serif;color:var(--text2);flex-shrink:0;display:none;gap:8px;align-items:flex-start;max-height:44px;overflow:hidden;position:relative;z-index:3}
 .concept-info-bar.show{display:flex}
@@ -327,7 +327,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .scomp-group{display:flex;gap:6px;flex-wrap:wrap}
 .scomp-group .chk{background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:6px 12px 6px 10px;gap:6px;font-size:11px;font-weight:600;color:var(--text2);transition:.15s}
 .scomp-group .chk:hover{border-color:var(--accent-glow);color:var(--text)}
-.scomp-group .chk:has(input:checked){background:var(--accent);border-color:var(--accent);color:var(--ink-on-accent)}
+.scomp-group .chk:has(input:checked){background:var(--accent-solid);border-color:var(--accent);color:var(--ink-on-accent)}
 .scomp-group .chk input{accent-color:var(--ink-on-accent);width:12px;height:12px}
 .col-toggles{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
 .col-tog{font:500 9px/1 'Inter',sans-serif;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;transition:.13s}
@@ -441,13 +441,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .ps-match-row.sel td:first-child{border-left:3px solid var(--accent)}
 .ps-filter-banner{background:var(--accent-dim);border:1px solid var(--accent-glow);color:var(--accent);border-radius:6px;padding:8px 12px;font:500 11px/1.3 'Inter',sans-serif;margin-bottom:10px;text-align:center}
 .ps-filter-banner b{font-weight:700}
-.ps-export-btn{background:var(--accent);border:none;color:var(--ink-on-accent);font:600 11px/1 'Inter',sans-serif;padding:7px 16px;border-radius:6px;cursor:pointer;transition:.15s}
+.ps-export-btn{background:var(--accent-solid);border:none;color:var(--ink-on-accent);font:600 11px/1 'Inter',sans-serif;padding:7px 16px;border-radius:6px;cursor:pointer;transition:.15s}
 .ps-export-btn:hover{opacity:.85}
 /* Per Game / Total toggle */
 .ps-toggle-wrap{display:flex;align-items:center;gap:10px}
 .ps-pill{display:flex;background:var(--surface2);border-radius:20px;padding:2px;gap:2px}
 .ps-pill-btn{background:none;border:none;color:var(--text3);font:600 10px/1 'Inter',sans-serif;padding:5px 14px;border-radius:18px;cursor:pointer;transition:.15s;white-space:nowrap}
-.ps-pill-btn.on{background:var(--accent);color:var(--ink-on-accent)}
+.ps-pill-btn.on{background:var(--accent-solid);color:var(--ink-on-accent)}
 /* Momentum tab */
 .mom-tab{display:none;flex:1;min-height:0;overflow:hidden}
 .mom-tab.show{display:flex}
@@ -3214,7 +3214,13 @@ function exportPlayerPDF(){
    matter what the theme said. Canvas comes from theme.css in both modes now.
    The removeProperty calls stay, so a tab still holding values from an older
    build drops them. */
-function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);s.removeProperty('--bg');s.removeProperty('--bg2');}
+// --accent-solid is written here as well as --accent, and it has to be. The
+// accent fills that carry a label read --accent-solid now, so setting only
+// --accent would leave every filled button on the brand red while the rules
+// and edges around it followed the selected team. Same value: at runtime the
+// fill IS the team colour, and the mark/label split only has a job to do on
+// the palette this file declares.
+function applyTheme(){syncCanvasTheme();const t=T(),s=document.documentElement.style;s.setProperty('--accent',t.color);s.setProperty('--accent-solid',t.color);s.setProperty('--accent-dim',t.colorDim);s.setProperty('--accent-glow',t.colorGlow);s.removeProperty('--bg');s.removeProperty('--bg2');}
 function initThemeToggle(){
   const btn=document.getElementById('themeToggle');
   if(btn)btn.onclick=()=>FutTheme.toggle();

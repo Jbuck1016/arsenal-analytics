@@ -46,7 +46,8 @@ FAMILIES = ["app", "editorial"]
 # Longest prefix wins, so --pitch-text-soft is text and --pitch-line is a
 # boundary even though both start --pitch-.
 TEXT = ("--ink-primary", "--ink-secondary", "--ink-tertiary", "--ink-quaternary",
-        "--ink-on-accent", "--ink-on-state", "--pitch-text", "--pitch-text-soft",
+        "--ink-on-accent", "--ink-on-state", "--accent-ink",
+        "--pitch-text", "--pitch-text-soft",
         "--chip-ink", "--label-on-fill", "--gate-ink", "--gate-ink-soft",
         "--gate-mark", "--gate-error", "--print-ink", "--error-ink",
         "--banner-team-ink", "--banner-warn-ink", "--list-group-ink",
@@ -54,7 +55,23 @@ TEXT = ("--ink-primary", "--ink-secondary", "--ink-tertiary", "--ink-quaternary"
         "--pos-gk-ink", "--pos-def-ink", "--pos-mid-ink", "--pos-fwd-ink",
         "--plot-label", "--plot-pill-ink", "--legend-muted", "--legend-muted-ink",
         "--plot-share-label")
-BOUNDARY = ("--border-hairline", "--border-strong", "--select-edge",
+# DECORATION: measured and reported, never failed. This is the judgement
+# contrast.md asked Phase 3 to make and would not make for it. WCAG 1.4.11
+# requires 3:1 of a boundary that is REQUIRED to identify a control or its
+# state. A rule between two table rows already separated by position is not
+# that, and drawing every such rule at 3:1 on a cream ground means a near-black
+# hairline through every table on the site -- worse to read, not better.
+#
+# The split is by JOB, not by how the number came out. A token is decoration
+# only if removing it entirely would cost nothing but polish. --border-hairline
+# rules rows and edges cards that already differ in surface colour;
+# --plot-grid and --plot-guide rule a chart behind its own data. --border-strong
+# is NOT here, and neither is --select-edge or --gate-field-border: those are
+# the only thing saying where a control ends, and they are held to 3:1.
+DECORATION = ("--border-hairline", "--plot-grid", "--plot-guide", "--grid-line",
+              "--pitch-band", "--plot-shadow", "--row-stripe",
+              "--gate-card-border")
+BOUNDARY = ("--border-strong", "--select-edge",
             "--accent-edge", "--gate-card-border", "--gate-field-border",
             "--gate-focus-ring", "--print-rule", "--pitch-line",
             "--pitch-line-strong", "--plot-grid", "--plot-frame", "--plot-line",
@@ -70,6 +87,7 @@ BOUNDARY = ("--border-hairline", "--border-strong", "--select-edge",
 MARK_PREFIX = ("--series-", "--group-", "--layer-", "--rank-", "--action-",
                "--pos-line-", "--shot-", "--state-", "--style-axis-",
                "--heat-legend-", "--xt-", "--accent-base", "--accent-muted",
+               "--accent-solid",
                "--opponent", "--marker-", "--team-all", "--pct-", "--signal-alt",
                "--flow-arrow", "--peak-ring", "--legend-heat-", "--momentum-them",
                # the two pass-outcome colours the pitch draws arrows with
@@ -96,6 +114,8 @@ GROUND_PREFIX = ("--ground", "--surface-", "--pitch-fill", "--pitch-band",
 def category(name: str) -> str:
     if name in TEXT:
         return "text"
+    if name in DECORATION:
+        return "decoration"
     if name in BOUNDARY:
         return "boundary"
     if any(name.startswith(p) for p in GROUND_PREFIX):
@@ -117,7 +137,7 @@ def category(name: str) -> str:
 # --ground and --surface-raised, which is the common case.
 GROUND_FOR = [
     # on the accent, or on a state fill, by name
-    ("--ink-on-accent", ["--accent-base"]),
+    ("--ink-on-accent", ["--accent-solid"]),
     ("--ink-on-state", ["--state-positive", "--state-negative"]),
     ("--label-on-fill", ["--group-passing", "--group-shooting", "--rank-mid"]),
     # the password overlay, which has its own ground and its own card
@@ -445,7 +465,9 @@ def main() -> int:
                         grounds = default_grounds
                 else:
                     grounds = default_grounds
-                need = 4.5 if cat == "text" else 3.0
+                # Decoration is measured and reported but never failed: it has
+                # no threshold to miss, because nothing depends on seeing it.
+                need = 4.5 if cat == "text" else (0.0 if cat == "decoration" else 3.0)
                 for gname, g in grounds:
                     r = ratio(over(fg, g), over(g, (255, 255, 255, 1.0)))
                     rows.append({"fam": fam, "theme": theme, "token": n, "cat": cat,

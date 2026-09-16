@@ -25,7 +25,7 @@
 
 /* Logo chip. Geometry only: the four pages set the glyph's font and colour
    differently, so those stay inline (match.html also recolours the chip). */
-.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+.hdr-logo{width:32px;height:32px;border-radius:50%;background:var(--accent-solid);display:grid;place-items:center}
 
 /* Title block. match.html has no .hdr-title element; it uses .hdr-info.
 
