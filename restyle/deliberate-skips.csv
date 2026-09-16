@@ -1,0 +1,9 @@
+file,line,literal,reason
+dashboard/shell.css,114,"rgba(0,0,0,0)",gradient end-stop: fades the tab scroll cue to nothing. Equivalent to the keyword transparent and theme independent; a token would name the absence of a colour.
+dashboard/shell.css,116,"rgba(0,0,0,0)",gradient end-stop: as line 114.
+dashboard/shell.css,119,"rgba(0,0,0,0)",gradient end-stop: as line 114.
+dashboard/shell.css,120,"rgba(0,0,0,0)",gradient end-stop: as line 114.
+dashboard/shell.css,61,transparent,"semantic keyword: means no paint, not a colour with a role. Used to drop the select's own box inside the header chip."
+dashboard/shell.css,73,transparent,semantic keyword: header action buttons sit on the header surface rather than painting their own.
+dashboard/shell.css,148,transparent,semantic keyword: three sides of the caret triangle are unpainted.
+dashboard/shell.css,148,currentColor,semantic keyword: the caret inherits the button's ink so it follows whatever colour that already resolves to.

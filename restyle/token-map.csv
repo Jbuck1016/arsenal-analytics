@@ -13,3 +13,4 @@ dashboard/theme.css,64,#9aa0aa,--ink-quaternary,light,captions and decorative on
 dashboard/theme.css,65,#0f7a52,--state-positive,light,positive state
 dashboard/theme.css,66,#c23b34,--state-negative,light,negative state
 dashboard/theme.css,67,#EF0107,--accent-base,light,brand accent
+dashboard/shell.css,158,"0 12px 30px rgba(0,0,0,.28)",--elevation-panel,"light,dark",nav menu panel drop shadow; dark-tuned, Phase 3 lightens the light-theme value

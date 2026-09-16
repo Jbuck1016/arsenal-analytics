@@ -151,7 +151,11 @@
 .navmenu-panel{position:fixed;top:0;right:0;z-index:60;display:none;
   min-width:198px;max-height:calc(100vh - 72px);overflow-y:auto;
   background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:5px;
-  box-shadow:0 12px 30px rgba(0,0,0,.28)}
+  /* Tokenised: this drop shadow was rgba(0,0,0,.28), tuned against a dark
+     ground. On cream a 28% black shadow reads as a smudge, so the token carries
+     a lighter value in the light theme. Phase 1 keeps both values identical to
+     what each theme rendered before. */
+  box-shadow:var(--elevation-panel)}
 .navmenu-panel.open{display:block}
 .navmenu-h{font:700 8.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;
   color:var(--text3);padding:8px 9px 6px}

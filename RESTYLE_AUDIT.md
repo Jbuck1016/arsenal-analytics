@@ -93,6 +93,22 @@ were skipped as data files.
 No d3 scheme, no Tailwind colour class, no Plotly colorway and no `oklch()` was found: the app paints
 entirely with hand-written hex, `rgba()` and CSS named colours.
 
+**CORRECTED DURING PHASE 1: the conversion surface is 838, not 980.** The raw
+scan counts every regex match, and two categories are not colours needing a
+token. Measured, not estimated, by re-testing each named match against the line
+it sits on:
+
+| Category | Count | Why it is not a conversion |
+| --- | ---: | --- |
+| named matches that are not colours | 93 | `white` inside `white-space:nowrap`, `red`/`blue`/`green`/`gold` inside identifiers and class names. The scanner's word-boundary test passed them; checking the surrounding characters rejects them. |
+| `transparent` and `currentColor` | 49 | Semantic keywords already. `transparent` means "no paint" and `currentColor` inherits the ink; naming either as a token would add a name for the absence of a colour. |
+| **remaining, genuinely needing a token** | **838** | |
+
+`shell.css` is the clearest example: the scan credits it with 14 literals, of
+which 8 are `transparent`, 1 is `currentColor`, 4 are `rgba(0,0,0,0)` gradient
+end-stops that exist only to fade the scroll cue to nothing, and exactly **one**
+is a real colour, the nav panel's dark-tuned drop shadow.
+
 | Live file | Occurrences |
 | --- | ---: |
 | `dashboard/index.html` | 38 |

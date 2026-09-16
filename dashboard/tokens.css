@@ -95,6 +95,10 @@ html:not(.dark){
 
   /* elevation */
   --elevation-1:0 1px 3px rgba(0,0,0,0.07);
+  /* Nav menu panel, from shell.css. Verbatim in Phase 1: both themes rendered
+     the same 28% black before, so both carry it now. Phase 3 lightens the
+     light-theme value, where a 28% black shadow reads as a smudge on cream. */
+  --elevation-panel:0 12px 30px rgba(0,0,0,.28);
 
   /* pitch and canvas paints (match.html CT(), light branch) */
   --pitch-fill:#f0ead6;
@@ -158,6 +162,7 @@ html.dark{
   --state-negative:#ff5f56;
 
   --elevation-1:0 1px 3px rgba(0,0,0,0.35);
+  --elevation-panel:0 12px 30px rgba(0,0,0,.28);
 
   --pitch-fill:#111722;
   --pitch-line:rgba(182,194,212,0.22);
