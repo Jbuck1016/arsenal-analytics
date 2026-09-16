@@ -29,3 +29,4 @@ dashboard/teams.html,21-22,"#2c313d #414957 #272b35 #3a3f4b","COMMENT PROSE, not
 dashboard/index.html,32,#9a6f2a,"light amber. The document family carries #9c6b1e; this page has always carried #9a6f2a. A different colour, not a different spelling, so the token would change what renders. Phase 3 picks a winner."
 dashboard/index.html,32,"rgba(154,111,42,.09)","light amber tint fill. Family carries rgba(156,107,30,.10). As line 32."
 dashboard/index.html,32,"rgba(154,111,42,.34)","light amber tint border. Family carries rgba(156,107,30,.32). As line 32."
+dashboard/search.html,39,#191d25,"dark select background. The rule reads var(--bg2,var(--panel,#1a1d24)); --bg2 is not this page's vocabulary and resolves through the :root alias to the APP family raised surface #191d25, while --panel is #161b24. Two raised surfaces in one dark page. fam-doc would collapse them, which is a visual change. Phase 3."

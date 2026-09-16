@@ -36,6 +36,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOKENS = ROOT / "dashboard" / "tokens.css"
 LEDGER = ROOT / "restyle" / "token-map.csv"
+# Values a page deliberately keeps for itself because the family scope it now
+# carries would otherwise swallow them. token-map.csv asserts "this literal
+# became this token"; this asserts the opposite and equally load-bearing claim,
+# "this token must NOT have become the family's value here". Without it,
+# deleting one of those pins is a silent recolour that every other check passes.
+PINS = ROOT / "restyle" / "pinned.csv"
 
 # Which family scope each live file renders under. tokens.css keys values by a
 # class on <html>; this is the mapping from file to that scope chain.
@@ -389,7 +395,33 @@ def main() -> int:
                     f"{f}:{r['line']} {token} in {fam}/{theme} resolves {got!r}, "
                     f"expected {original!r}")
 
+    pins = 0
+    if PINS.exists():
+        for r in csv.DictReader(PINS.open(encoding="utf-8")):
+            f, token, value = r["file"], r["token"], r["value"]
+            if f not in cascades:
+                cascades[f] = parse_cascade(f)
+            fam = FAMILY.get(f)
+            if fam is None:
+                failures.append(f"{f} pin {token}: unknown family for file")
+                continue
+            for theme in [t.strip() for t in r["themes"].split(",") if t.strip()]:
+                classes = STATE.get((fam, theme))
+                if classes is None:
+                    failures.append(f"{f} pin {token}: no scope state for {fam}/{theme}")
+                    continue
+                got = resolve(token, classes, cascades[f])
+                pins += 1
+                if got is None:
+                    failures.append(f"{f} pin {token} does not resolve in {fam}/{theme}")
+                elif norm(got) != norm(value):
+                    failures.append(
+                        f"{f} pin {token} in {fam}/{theme} resolves {got!r}, "
+                        f"pinned {value!r} -- the family scope has swallowed it")
+
     print(f"{len(rows)} converted occurrences, {checked} token/theme resolutions checked")
+    if pins:
+        print(f"{pins} page-local pins checked against the family they override")
     if failures:
         print(f"\n{len(failures)} FAILURES:")
         for x in failures[:60]:

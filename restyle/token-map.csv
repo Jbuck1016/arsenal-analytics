@@ -140,3 +140,18 @@ dashboard/index.html,38,"rgba(226,184,119,.10)",--accent-veil,dark,amber tint fi
 dashboard/index.html,38,"rgba(226,184,119,.32)",--accent-edge,dark,amber tint border
 dashboard/index.html,39,#3ddc97,--state-positive,dark,positive state
 dashboard/index.html,39,#ff5f56,--state-negative,dark,negative state
+dashboard/search.html,17,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
+dashboard/search.html,17,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
+dashboard/search.html,17,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/search.html,27,#0e1219,--ground,dark,page canvas
+dashboard/search.html,27,#161b24,--surface-raised,dark,raised surface
+dashboard/search.html,27,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/search.html,28,#272e3a,--border-hairline,dark,hairline rule
+dashboard/search.html,28,#3a4351,--border-strong,dark,strong rule
+dashboard/search.html,29,#f2f5fa,--ink-primary,dark,primary text
+dashboard/search.html,29,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/search.html,29,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/search.html,30,#e2b877,--accent-base,dark,document-family amber accent
+dashboard/search.html,30,"rgba(226,184,119,.10)",--accent-veil,dark,amber tint fill
+dashboard/search.html,30,"rgba(226,184,119,.32)",--accent-edge,dark,amber tint border
+dashboard/search.html,31,#3ddc97,--state-positive,dark,positive state
