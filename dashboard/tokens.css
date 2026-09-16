@@ -1,44 +1,48 @@
 /* ---------------------------------------------------------------------------
    SEMANTIC COLOUR TOKENS. One name per ROLE, two complete theme scopes.
 
-   Phase 1 of the restyle brief: this file is a pure refactor. Every value below
-   is copied verbatim from the palette it replaces, so the app renders
-   pixel-identically. Nothing here is a new colour.
+   Phase 1 built this file as a pure refactor: every value copied verbatim from
+   the palette it replaced, so the app rendered pixel-identically. Phase 3 lifts
+   that guarantee. Values here are chosen now, not inherited, and the contrast
+   and separability audits in restyle/ are what keep the choosing honest.
 
    NAMING is by role, never by appearance: --ink-secondary, not --grey-400;
    --series-1, not --green. The old names (--bg2, --dim, --amber, --elite) are
    kept as aliases at the bottom of each block so several hundred existing rules
    keep resolving while they are migrated file by file.
 
-   WHY FAMILIES EXIST
-   The audit found seven independent palettes across live surfaces, and they
-   disagree on values for the same role: the app pages (players, teams, match)
-   ground on #101319 in dark, the document pages (index, search, glossary,
-   sequences, insights, guide, methodology, validation) on #0e1219, and the lab
-   pages on something else again. Collapsing them to one value is a VISUAL
-   change, which Phase 1 forbids. So the names are shared and the values are
-   keyed by a family class on <html>. The values live here either way, so no
-   component defines its own colour. Phase 3 converges the families deliberately.
+   TWO FAMILIES, AND WHY THERE ARE NOT SIX
+   Phase 1 found seven independent palettes on live surfaces and recorded them
+   faithfully as seven scopes, because collapsing them would have been a visual
+   change and Phase 1 forbade one. That was a census, not a design system.
+   Phase 3 is where they converge.
+
+   app        The working surfaces. players, teams, match, index, search,
+              glossary, sequences, insights, guide, methodology, validation,
+              market-values. One ground, one ink scale, one border scale, one
+              accent, one rank ramp, one series palette.
+
+   editorial  model-lab, model-review, writing-lab. Print-styled reading
+              surfaces with a different job: a warm paper ground and a serif
+              reading face. They share the app family's ink logic, accent and
+              states -- only the surfaces and the numbered series differ.
 
    SCOPES
      html:not(.dark)                        light, app family (default)
      html.dark                              dark,  app family
-     html:not(.dark).fam-doc                light, document family
-     html.dark.fam-doc                      dark,  document family
-     html:not(.dark).fam-doc.fam-doc-aa     light, the three AA-darkened docs
-     html:not(.dark).fam-market             light, market-values
-     html.dark.fam-market                   dark,  market-values
-     html:not(.dark).fam-match              light, match
-     html.dark.fam-match                    dark,  match
-     html:not(.dark).fam-lab                light, model-lab
-     html.dark.fam-lab                      dark,  model-lab
-     html:not(.dark).fam-review             light, model-review
-     html.dark.fam-review                   dark,  model-review
-     html:not(.dark).fam-writing            light, writing-lab
-     html.dark.fam-writing                  dark,  writing-lab
-   A family scope declares only what it differs on; everything else falls
-   through to the app scope above it, which is why fam-doc-aa needs no dark
-   twin -- those pages' dark amber is the document family's.
+     html:not(.dark).fam-editorial          light, editorial
+     html.dark.fam-editorial                dark,  editorial
+   The editorial scope declares only what it differs on; everything else falls
+   through to the app scope above it.
+
+   WHAT THE COLLAPSE DECIDED
+   Where two families disagreed on a role, the app value won, with one
+   exception the measurement earned: the app family's dark ground becomes the
+   document family's #0e1219, along with the surfaces, borders and inks that go
+   with it. match.html and all eight document pages already painted those; the
+   two app pages were the outlier. fam-doc-aa is deleted outright -- it existed
+   only because the amber accent failed AA on the shared surfaces, and the
+   amber is no longer the accent.
 
    The authority on which classes a page carries is assert_tokens.STATE, and
    restyle/assert_page_parity.py derives its family detection from it, so a new
@@ -230,18 +234,18 @@ html:not(.dark){
 
 /* ===== APP FAMILY, DARK ============================================ */
 html.dark{
-  --ground:#101319;
-  --surface-raised:#191d25;
-  --surface-recessed:#222732;
+  --ground:#0e1219;
+  --surface-raised:#161b24;
+  --surface-recessed:#1e242e;
   --surface-veil:rgba(255,255,255,0.035);
   --surface-veil-strong:rgba(255,255,255,0.07);
 
-  --border-hairline:#272b35;
-  --border-strong:#3a3f4b;
+  --border-hairline:#272e3a;
+  --border-strong:#3a4351;
 
-  --ink-primary:#f4f6fb;
-  --ink-secondary:#c3cde2;
-  --ink-tertiary:#9aa7c2;
+  --ink-primary:#f2f5fa;
+  --ink-secondary:#b6c2d4;
+  --ink-tertiary:#8b98ab;
   --ink-quaternary:#7c8699;
   --ink-on-accent:#12141a;
   --ink-on-state:#0d0f14;
@@ -337,14 +341,14 @@ html.dark{
   --select-edge:var(--border-hairline);
 }
 
-/* ===== DOCUMENT FAMILY ============================================= */
-/* index, search, glossary, sequences, insights, guide, methodology,
-   validation. Same role names, this family's own values. The amber accent is
-   deliberately not the brand red: on these pages it is chrome, not a signal. */
-html:not(.dark).fam-doc{
-  --accent-base:#9c6b1e;
-  --accent-veil:rgba(156,107,30,.10);
-  --accent-edge:rgba(156,107,30,.32);
+/* ===== APP: NAMES THE DOCUMENT PAGES BROUGHT ======================= */
+/* index, search, glossary, sequences, insights, guide, methodology and
+   validation are app-family pages now. Their palette WAS the app palette in
+   all but three roles -- an amber accent and its two tints -- and those are
+   gone: the accent is the brand, everywhere the site speaks in its own voice.
+   What survives is the seven names below, which name things the app family
+   had no token for at all rather than things it spelled differently. */
+html:not(.dark){
   --series-link:#2f6aa8;
 
   /* index.html's own three. The wash is a warm bloom behind the masthead and
@@ -368,23 +372,9 @@ html:not(.dark).fam-doc{
      redeclare --amber:var(--accent-base) in its own dark block -- five copies
      of an alias, to work around this block being the wrong home for one. */
 }
-html.dark.fam-doc{
+html.dark{
   /* sequences.html is the one shell.css consumer that draws this edge with
      the strong rule rather than the hairline. */
-  --select-edge:var(--border-strong);
-  --ground:#0e1219;
-  --surface-raised:#161b24;
-  --surface-recessed:#1e242e;
-  --border-hairline:#272e3a;
-  --border-strong:#3a4351;
-  --ink-primary:#f2f5fa;
-  --ink-secondary:#b6c2d4;
-  --ink-tertiary:#8b98ab;
-  --accent-base:#e2b877;
-  --accent-veil:rgba(226,184,119,.10);
-  --accent-edge:rgba(226,184,119,.32);
-  --state-positive:#3ddc97;
-  --state-negative:#ff5f56;
   --series-link:#5aa9ff;
 
   /* index.html's own three. The wash is a warm bloom behind the masthead and
@@ -406,24 +396,24 @@ html.dark.fam-doc{
 /* Pages whose light amber was darkened for AA on the shared surfaces: guide,
    methodology, validation. Kept as its own scope so the contrast work done
    there is not silently undone by the family default. */
-html:not(.dark).fam-doc.fam-doc-aa{
-  --accent-base:#8a5e1a;
-  --accent-veil:rgba(138,94,26,.10);
-  --accent-edge:rgba(138,94,26,.32);
-}
 
-/* ===== MARKET FAMILY =============================================== */
-/* market-values: a warm editorial palette that shares no value with the app
-   or document families and only two with either -- its dark paper and panel
-   happen to equal the document family's ground and raised surface. It reads
-   nine names of its own (--paper, --ink, --muted, --signal, --signal2, --soft)
-   and none of the shared vocabulary, so folding it into fam-doc would have
-   left sixteen of its eighteen values as literals in the page and put nothing
-   in this file. It gets a scope instead, which is what a scope is for.
-   Phase 3 should look at this family and fam-lab together: both are warm
-   print palettes that arrived independently. */
-html:not(.dark).fam-market{
-  --ground:#f2eee4;
+
+/* ===== APP: NAMES market-values BROUGHT ============================= */
+/* market-values is an app-family page. Phase 1 gave it a scope of its own
+   because it read nine private names and none of the shared vocabulary, and
+   noted that Phase 3 should look at it beside the lab pages, both being warm
+   print palettes that arrived independently.
+
+   It went the other way. market-values is a working surface -- a market
+   intelligence table people read down a column of -- not a reading surface,
+   and the brief's own enumeration of the app family names it. Its private
+   grounds and inks were a spelling of roles the app family already has, so
+   they are gone. Two names survive because they name something real that no
+   other page had: a second signal hue that is not a ramp with the accent,
+   and the graph-paper grid. See PHASE3_NOTES.md -- the brief names this page
+   in both families, and this is the reading that leaves only one of its two
+   membership lists wrong instead of both. */
+html:not(.dark){
   /* NO --surface-raised OR --border-hairline IN LIGHT, deliberately. The page
      declared #faf7ef and #c9c1b1 for them, and neither has ever been painted:
      theme.css aliases --panel and --line at html:not(.dark), which outranks a
@@ -431,70 +421,42 @@ html:not(.dark).fam-market{
      family's #f4f1e9 and #ded9cd since theme.css landed. Writing the page's
      values here would be a recolour dressed as a refactor. Recorded in
      deliberate-skips.csv; Phase 3 decides which set this page should have. */
-  --ink-primary:#17202c;
-  --ink-tertiary:#657080;
-  --accent-base:#a66a12;
-  --accent-veil:rgba(166,106,18,.1);
   /* A second signal hue, teal against the amber. Not a ramp with --accent:
      the two encode different things, fee direction and contract status. */
   --signal-alt:#0f7777;
   /* Low squad coverage. One value in both themes, as the page had it. */
-  --state-negative:#d16f52;
   /* the faint graph-paper grid ruled across the page background */
   --grid-line:rgba(127,118,99,.055);
-  --elevation-1:0 18px 55px rgba(49,38,20,.08);
 }
-html.dark.fam-market{
-  --ground:#0e1219;
-  --surface-raised:#161b24;
-  --border-hairline:#323b49;
-  --ink-primary:#edf2f8;
-  --ink-tertiary:#98a6ba;
-  --accent-base:#efbd6f;
-  --accent-veil:rgba(239,189,111,.09);
+html.dark{
   --signal-alt:#4cc8c4;
+  --grid-line:rgba(139,152,171,.030);
   /* Low squad coverage. One value in both themes, as the page had it. */
-  --state-negative:#d16f52;
   /* the faint graph-paper grid ruled across the page background */
-  --grid-line:rgba(127,118,99,.055);
-  --elevation-1:0 18px 55px rgba(0,0,0,.22);
 }
 
-/* ===== MATCH ======================================================= */
-/* match.html looks like an app page -- it sits beside players and teams and
-   shares shell.css -- and its palette is not the app family's. Its dark
-   surfaces are the DOCUMENT family's to the byte (#0e1219, #161b24, #272e3a,
-   #f2f5fa), while its accent is the brand red in BOTH themes, where every
-   other page's dark accent is the warm one. It matches no existing family in
-   either direction, so it gets its own; folding it into fam-doc would have
-   left the accent, both shadows and both veils as literals in a page that has
-   quite enough of those already.
+/* ===== APP: NAMES match.html BROUGHT =============================== */
+/* Phase 1 asked whether match should look like players and teams or like the
+   document pages, and refused to answer. The answer is that the question was
+   wrong: match was already right. Its dark surfaces were the document
+   family's to the byte and its accent was the brand red in both themes, which
+   is what every app page now carries. Folding it in changed three values in
+   light and eight in dark, all of them match's, and left the 134 names below
+   -- which is everything match.html actually needed a scope for.
 
-   THAT IS A PHASE 3 QUESTION, NOT A PHASE 1 ANSWER. Whether match should look
-   like players and teams or like the document pages is a design decision, and
-   this scope only records which it currently is. Recording it here at least
-   makes the disagreement visible in one file instead of buried in 296KB of
-   inline style.
-
-   The accent is declared identically in both scopes on purpose, because the
-   page really does paint brand red on a dark ground. Note also that
-   applyTheme() overwrites --accent, --accent-dim and --accent-glow on the root
-   element at runtime with the selected team's colour, so what is declared here
-   is what the page paints only before the first applyTheme() call. That is a
-   setProperty blind spot no stylesheet gate can see; see
+   applyTheme() still overwrites --accent, --accent-dim and --accent-glow on
+   the root at runtime with the selected team's colour. That is DATA, not
+   chrome, and it stays: a team's colour is a fact about the team. What is
+   declared here is what the page paints before the first applyTheme() call.
+   It is a setProperty blind spot no stylesheet gate can see; see
    restyle/gate-limitations.md. */
-html:not(.dark).fam-match{
-  --accent-base:#EF0107;
-  --accent-veil:rgba(239,1,7,0.07);
-  --accent-edge:rgba(239,1,7,0.18);
+html:not(.dark){
   /* A second, quieter accent beside the red. Same role name model-review uses
      for its companion gold, and the same behaviour: warm and dark on a light
      ground, warm and light on a dark one. */
   --accent-muted:#9a6f2a;
-  --series-link:#2f6fd0;
   /* Two elevation levels, both larger and softer than the app's single
      --elevation-1. The panels on this page float over a workspace. */
-  --elevation-1:0 10px 26px rgba(23,27,34,.07);
   --elevation-2:0 18px 46px rgba(23,27,34,.13);
 
   /* --- match.html component colours ---------------------------------
@@ -512,8 +474,6 @@ html:not(.dark).fam-match{
      WHERE A VALUE IS THE SAME IN BOTH THEMES it is declared in both scopes,
      because the rule that reads it is not theme-scoped and would otherwise
      resolve to nothing on one side. */
-  --ink-on-accent:#fff;
-  --scrim:rgba(0,0,0,0.3);
 
   /* elevation, one per surface that floats */
   --elevation-drawer:-8px 0 24px rgba(0,0,0,0.12);
@@ -591,7 +551,6 @@ html:not(.dark).fam-match{
   --blue-veil:rgba(90,169,255,.12);
   --blue-edge:rgba(90,169,255,.28);
 
-  --grid-line:rgba(139,152,171,.018);
 
   /* THE FLOATING SURFACES. Seven levels of translucency over the workspace
      grid. In dark they are one colour at seven alphas; in light they are the
@@ -751,32 +710,13 @@ html:not(.dark).fam-match{
   --pct-high:#4ade80;
   --pct-low:#f97316;
 }
-html.dark.fam-match{
-  --ground:#0e1219;
-  --surface-raised:#161b24;
-  --surface-recessed:#1e242e;
-  --surface-veil:rgba(255,255,255,.025);
+html.dark{
   /* Not a translucent veil in dark on this page but an opaque surface, and the
      same value as --surface-recessed. Verbatim in Phase 1. */
-  --surface-veil-strong:#1e242e;
-  --border-hairline:#272e3a;
-  --border-strong:#3a4351;
-  --ink-primary:#f2f5fa;
-  --ink-secondary:#b6c2d4;
-  --ink-tertiary:#8b98ab;
-  --accent-base:#EF0107;
-  --accent-veil:rgba(239,1,7,0.07);
-  --accent-edge:rgba(239,1,7,0.18);
   --accent-muted:#e2b877;
-  --state-positive:#3ddc97;
-  --state-negative:#ff5f56;
-  --series-link:#5aa9ff;
-  --elevation-1:0 12px 28px rgba(0,0,0,.22);
   --elevation-2:0 20px 54px rgba(0,0,0,.34);
 
   /* --- match.html component colours; the light scope carries the notes --- */
-  --ink-on-accent:#fff;
-  --scrim:rgba(0,0,0,0.3);
   --elevation-drawer:-8px 0 24px rgba(0,0,0,0.12);
   --elevation-dialog:0 8px 32px rgba(0,0,0,0.12);
   --elevation-card:0 2px 8px rgba(0,0,0,0.06);
@@ -830,7 +770,6 @@ html.dark.fam-match{
   --blue-wash:rgba(90,169,255,.08);
   --blue-veil:rgba(90,169,255,.12);
   --blue-edge:rgba(90,169,255,.28);
-  --grid-line:rgba(139,152,171,.018);
 
   --float-header:rgba(22,27,36,.94);
   --float-rail:rgba(22,27,36,.9);
@@ -982,132 +921,101 @@ html.dark.fam-match{
   --pct-low:#f97316;
 }
 
-/* ===== THE THREE LAB PAGES ========================================= */
-/* These were one family in an earlier draft of this file, and they are not.
-   fam-lab's values are model-lab.html's to the byte; model-review and
-   writing-lab share neither its grounds, its inks, nor its rules. Three
-   editorial palettes that arrived independently, so three scopes. Putting
-   them under one name would have meant either recolouring two pages or
-   leaving their values as literals, and the point of this file is that no
-   page defines its own colour.
+/* ===== EDITORIAL FAMILY ============================================ */
+/* model-lab, model-review, writing-lab. Three print-styled reading surfaces
+   that arrived with three independent palettes; one family now.
 
-   That is six families with market: app, doc (and its AA variant), market,
-   lab, review, writing. The audit found seven independent palettes, and this
-   is where they went. Phase 3 is where they get converged on purpose --
-   market, lab, review and writing are all warm print palettes and there is
-   very likely one good editorial family hiding in the four. */
+   WHAT EDITORIAL IS, AND IS NOT. It is not a second design system. It shares
+   the app family's ink logic, its accent, its states and its series -- every
+   token not declared below falls through to the app scope above, which is the
+   point of declaring only the difference. What it keeps is a warm paper
+   ground, a raised sheet lighter than the paper, and a serif reading face.
+   That is the whole of the divergence, and it is a divergence about the job
+   the surface does: these pages are read, not worked.
 
-/* --- model-lab ----------------------------------------------------- */
-/* The series are numbered, not named for their hues: --series-1 is acid
-   orange in light and a hotter orange in dark, and Phase 3 may move both. */
-html:not(.dark).fam-lab{
+   WHERE THE THREE DISAGREED, model-lab's values won, as the brief directs.
+   They are the most considered of the set: model-review's --ink-tertiary
+   measured 2.47:1 on its own ground, and writing-lab painted a DARK select
+   control on a light page in both themes, which is the bug at --select-fill
+   below rather than a taste to preserve.
+
+   The three pages' private vocabularies -- model-lab's --bg/--paper,
+   writing-lab's --paper/--sheet for the same two roles one step apart in
+   meaning -- are gone. The role names are the ones that survive. */
+html:not(.dark).fam-editorial{
+  /* Paper and sheet. model-lab's, and the one place editorial and app really
+     part company: the app grounds on near-white, editorial on a warmer,
+     darker paper with the sheet raised off it. */
   --ground:#e9e5dc;
   --surface-raised:#fffdf6;
+  --surface-recessed:#ded9ce;
+  --surface-veil:rgba(28,24,18,.035);
+  --surface-veil-strong:#e2dccd;
+
+  --border-hairline:#aaa394;
+  --border-strong:#8d8676;
+
   --ink-primary:#101820;
   --ink-secondary:#45535e;
-  --border-hairline:#aaa394;
+  /* NOT model-review's #929aa6, which measured 2.47:1 on its own ground and
+     2.72:1 on its own sheet. Darkened until it clears 4.5:1 on both. */
+  --ink-tertiary:#5b6672;
+  --ink-quaternary:#6f7a86;
+
+  /* The five numbered plot series. Numbered and not named for their hues,
+     because the hues move and the series identities do not. */
   --series-1:#c9431d;
   --series-2:#006f79;
   --series-3:#086843;
   --series-4:#8b5500;
   --series-5:#a82424;
-  /* the active tab's label, on the acid accent */
+
+  /* The active tab's label sits on the accent fill. */
   --ink-on-accent:#fff;
+
+  /* A larger, warmer shadow than the app's: these panels are sheets on paper
+     rather than cards on a workspace. */
+  --elevation-1:0 18px 60px rgba(13,18,25,.18);
+
+  /* THE SELECT CONTROL FOLLOWS THE THEME NOW. writing-lab typed its dark
+     sheet and ink into an unscoped rule, so a light page painted a dark
+     dropdown in both themes. Phase 1 carried that verbatim and called it a
+     Phase 3 job; this is that job. Pointed at the surface tokens so it can
+     never drift from the theme again. */
+  --select-fill:var(--surface-raised);
+  --select-ink:var(--ink-primary);
 }
-html.dark.fam-lab{
+html.dark.fam-editorial{
   --ground:#081017;
   --surface-raised:#111d26;
+  --surface-recessed:#18262f;
+  --surface-veil:rgba(255,255,255,.03);
+  --surface-veil-strong:#1b2a34;
+
+  --border-hairline:#52616d;
+  --border-strong:#6b7a86;
+
   --ink-primary:#f7f7f1;
   --ink-secondary:#bac4cb;
-  --border-hairline:#52616d;
+  --ink-tertiary:#93a0a9;
+  --ink-quaternary:#7d8a94;
+
   --series-1:#ff754a;
   --series-2:#64d7df;
   --series-3:#5add9f;
   --series-4:#ffc566;
   --series-5:#ff7972;
-  /* the active tab's label, on the acid accent */
+
   --ink-on-accent:#fff;
-}
 
-/* --- model-review -------------------------------------------------- */
-/* --accent-muted is the page's second gold, and it INVERTS between themes:
-   lighter than the accent in light, darker than it in dark. That is not a
-   mistake to tidy -- it is a muted companion to the accent, and "muted"
-   means a different direction on each ground. */
-html:not(.dark).fam-review{
-  --ground:#f1efe8;
-  --surface-raised:#fbfaf6;
-  --ink-primary:#171b22;
-  --ink-secondary:#667080;
-  --ink-tertiary:#929aa6;
-  --border-hairline:#d8d3c8;
-  --accent-base:#96681c;
-  --accent-muted:#d9ac62;
-  --state-positive:#087854;
-  --state-negative:#ba3f38;
-  --series-link:#2766b0;
-}
-html.dark.fam-review{
-  --ground:#0b1017;
-  --surface-raised:#141a23;
-  --ink-primary:#f3f5f8;
-  --ink-secondary:#aeb9c8;
-  --ink-tertiary:#778395;
-  --border-hairline:#2a323e;
-  --accent-base:#edbd70;
-  --accent-muted:#8e6326;
-  --state-positive:#42d89c;
-  --state-negative:#ff746b;
-  --series-link:#70b4ff;
-}
-
-/* --- writing-lab --------------------------------------------------- */
-/* NOTE THE NAMES ARE NOT THE OTHER LABS'. Here --paper is the page ground and
-   --sheet is the raised surface, where model-lab uses --bg for the ground and
-   --paper for the surface. Same word, one step apart in meaning, which is
-   precisely why the role names in this file are the ones worth trusting. */
-html:not(.dark).fam-writing{
-  --ground:#f2efe6;
-  --surface-raised:#fffdf7;
-  --ink-primary:#121820;
-  --ink-secondary:#68717c;
-  --border-hairline:#d8d1c2;
-  --accent-base:#c79843;
-  --state-positive:#176b51;
-  --state-negative:#e14b2d;
-  --series-link:#315f78;
-  --elevation-1:0 18px 60px rgba(13,18,25,.18);
-  /* The select control is DARK IN BOTH THEMES: these are this family's
-     dark sheet and ink, typed into an unscoped rule, so a light page
-     paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
-  --select-fill:#171d24;
-  --select-ink:#edf0e9;
-  /* The solid button sits on --state-negative and needs light ink. */
-  --ink-on-state:#fff;
-  /* the faint graph-paper grid ruled across the page background */
-  --grid-line:rgba(120,110,90,.045);
-}
-html.dark.fam-writing{
-  --ground:#10151b;
-  --surface-raised:#171d24;
-  --ink-primary:#edf0e9;
-  --ink-secondary:#9da8ac;
-  --border-hairline:#303944;
-  --accent-base:#e2b877;
-  --state-positive:#4cc39b;
-  --state-negative:#ff6848;
-  --series-link:#72abc2;
   --elevation-1:0 22px 70px rgba(0,0,0,.38);
-  /* The select control is DARK IN BOTH THEMES: these are this family's
-     dark sheet and ink, typed into an unscoped rule, so a light page
-     paints a dark dropdown. Verbatim in Phase 1, and a Phase 3 job. */
-  --select-fill:#171d24;
-  --select-ink:#edf0e9;
-  /* The solid button sits on --state-negative and needs light ink. */
-  --ink-on-state:#fff;
-  /* the faint graph-paper grid ruled across the page background */
-  --grid-line:rgba(120,110,90,.045);
+
+  /* As the light scope: the control follows the theme rather than being
+     pinned to one sheet colour. */
+  --select-fill:var(--surface-raised);
+  --select-ink:var(--ink-primary);
 }
+
 
 /* ===== COMPATIBILITY ALIASES ======================================= */
 /* The names several hundred existing rules already use, pointed at the role

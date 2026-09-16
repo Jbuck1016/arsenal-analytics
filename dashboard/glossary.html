@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-doc">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +10,9 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Light palette and font tokens are in theme.css. <html> carries fam-doc, so
-   tokens.css resolves the amber accent family from the document-family scopes.
-   The light block is deleted rather than tokenised: it declared the family's
-   own three values on a :root that html:not(.dark).fam-doc outranks anyway.
-   --blue, --green and --red are gone because the page declared all three and
-   read none of them. Same shape as search.html. */
+/* Light palette and font tokens are in theme.css; the colour tokens are in
+   tokens.css, app family. This page declares no palette of its own and needs
+   none: every value it paints is a role the family names. */
 html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);

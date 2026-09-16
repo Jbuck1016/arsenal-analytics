@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark fam-doc fam-doc-aa">
+<html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,15 +11,10 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text, green and red come from theme.css. <html>
-   carries fam-doc fam-doc-aa, so the light amber comes from the AA scope in
-   tokens.css: a step darker than the family's, because #9c6b1e was 4.10:1 on
-   a card here and #8a5e1a is 5.03:1. Same hue family, tints rebased, dark mode
-   untouched.
-
-   The whole light block is deleted rather than tokenised: #8a5e1a and its two
-   tints are the AA scope's values to the byte, and --blue is the document
-   family's #2f6aa8. Nothing here that the family does not already say. */
+/* Canvas, surfaces, lines, text, green and red come from theme.css; the
+   colour tokens are in tokens.css, app family. The AA-darkened amber this page
+   carried with guide and validation is gone along with the scope that held it:
+   the accent is the brand now and clears its thresholds without a variant. */
 html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);

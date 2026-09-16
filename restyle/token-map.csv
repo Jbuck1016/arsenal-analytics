@@ -13,7 +13,7 @@ dashboard/theme.css,64,#9aa0aa,--ink-quaternary,light,captions and decorative on
 dashboard/theme.css,65,#0f7a52,--state-positive,light,positive state
 dashboard/theme.css,66,#c23b34,--state-negative,light,negative state
 dashboard/theme.css,67,#EF0107,--accent-base,light,brand accent
-dashboard/shell.css,158,"0 12px 30px rgba(0,0,0,.28)",--elevation-panel,"light,dark",nav menu panel drop shadow; dark-tuned, Phase 3 lightens the light-theme value
+dashboard/shell.css,158,"0 12px 30px rgba(0,0,0,.28)",--elevation-panel,"light,dark",nav menu panel drop shadow; dark-tuned
 dashboard/players.html,29,"rgba(239,1,7,0.07)",--accent-veil,light,page :root accent tint
 dashboard/players.html,29,"rgba(239,1,7,0.18)",--accent-edge,light,page :root accent edge
 dashboard/players.html,30,#16a34a,--rank-top,light,percentile ramp 80+
@@ -25,16 +25,16 @@ dashboard/players.html,31,"0 1px 3px rgba(0,0,0,0.07)",--elevation-1,light,card 
 dashboard/players.html,34,#D8B384,--accent-base,dark,accent
 dashboard/players.html,34,"rgba(216,179,132,0.12)",--accent-veil,dark,accent tint
 dashboard/players.html,34,"rgba(216,179,132,0.28)",--accent-edge,dark,accent edge
-dashboard/players.html,35,#101319,--ground,dark,page canvas
-dashboard/players.html,35,#191d25,--surface-raised,dark,raised surface
-dashboard/players.html,35,#222732,--surface-recessed,dark,recessed surface
+dashboard/players.html,35,#0e1219,--ground,dark,page canvas | phase 3 recoloured; phase 1 value was #101319
+dashboard/players.html,35,#161b24,--surface-raised,dark,raised surface | phase 3 recoloured; phase 1 value was #191d25
+dashboard/players.html,35,#1e242e,--surface-recessed,dark,recessed surface | phase 3 recoloured; phase 1 value was #222732
 dashboard/players.html,36,"rgba(255,255,255,0.035)",--surface-veil,dark,translucent veil
 dashboard/players.html,36,"rgba(255,255,255,0.07)",--surface-veil-strong,dark,stronger veil
-dashboard/players.html,37,#272b35,--border-hairline,dark,default boundary
-dashboard/players.html,37,#3a3f4b,--border-strong,dark,emphasised boundary
-dashboard/players.html,38,#f4f6fb,--ink-primary,dark,primary text
-dashboard/players.html,38,#c3cde2,--ink-secondary,dark,secondary text
-dashboard/players.html,38,#9aa7c2,--ink-tertiary,dark,label text
+dashboard/players.html,37,#272e3a,--border-hairline,dark,default boundary | phase 3 recoloured; phase 1 value was #272b35
+dashboard/players.html,37,#3a4351,--border-strong,dark,emphasised boundary | phase 3 recoloured; phase 1 value was #3a3f4b
+dashboard/players.html,38,#f2f5fa,--ink-primary,dark,primary text | phase 3 recoloured; phase 1 value was #f4f6fb
+dashboard/players.html,38,#b6c2d4,--ink-secondary,dark,secondary text | phase 3 recoloured; phase 1 value was #c3cde2
+dashboard/players.html,38,#8b98ab,--ink-tertiary,dark,label text | phase 3 recoloured; phase 1 value was #9aa7c2
 dashboard/players.html,39,#34d399,--rank-top,dark,percentile ramp 80+
 dashboard/players.html,39,#6ee7a8,--rank-high,dark,percentile ramp 60+
 dashboard/players.html,39,#fbbf24,--rank-mid,dark,percentile ramp 40+
@@ -71,16 +71,16 @@ dashboard/players.html,866,#e63956,--group-shooting,"light,dark",pizzaColor fall
 dashboard/players.html,866,#f2b134,--group-carrying,"light,dark",pizzaColor fallback array
 dashboard/players.html,866,#7656d6,--group-defending,"light,dark",pizzaColor fallback array
 dashboard/players.html,879,#fff,--label-on-fill,"light,dark",pizza slice percentile label ink
-dashboard/players.html,879,"rgba(0,0,0,.28)",--label-on-fill-halo,"light,dark",pizza slice label halo; dark-dependent trick, Phase 3 revisits
+dashboard/players.html,879,"rgba(0,0,0,.28)",--label-on-fill-halo,"light,dark",pizza slice label halo; dark-dependent trick
 dashboard/players.html,961,#cbd5e1,--layer-neutral,"light,dark",neutral evidence layer
 dashboard/players.html,972,#a78bfa,--layer-through,"light,dark",through balls layer
 dashboard/players.html,976,#22d3ee,--layer-receipt,"light,dark",receipts layer
 dashboard/players.html,977,#f472b6,--layer-shot,"light,dark",shots layer
-dashboard/players.html,1642,#a78bfa,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through, which named the token after a different action that happens to share the hue
+dashboard/players.html,1642,#a78bfa,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through
 dashboard/players.html,1674,#34d399,--layer-quick,"light,dark",under-1s release layer
 dashboard/players.html,1687,#a78bfa,--layer-clearance,"light,dark",clearance in defensive action map; was --layer-through
-dashboard/players.html,1688,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot, which read as 'shot' on a challenge
-dashboard/players.html,1688,#22d3ee,--layer-save,"light,dark",save in defensive action map; was --layer-receipt, which read as 'receipt' on a shot block
+dashboard/players.html,1688,#f472b6,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot
+dashboard/players.html,1688,#22d3ee,--layer-save,"light,dark",save in defensive action map; was --layer-receipt
 dashboard/players.html,2004,#a78bfa,--layer-blocked,"light,dark",blocked outcome in shot map; was --layer-through
 dashboard/players.html,2007,#a78bfa,--layer-blocked,"light,dark",blocked entry in shot map legend; was --layer-through
 dashboard/teams.html,27,"rgba(239,1,7,.07)",--accent-veil,light,page :root accent tint
@@ -94,16 +94,16 @@ dashboard/teams.html,27,#2563eb,--style-axis-hi,light,style axis high pole
 dashboard/teams.html,27,#d97706,--style-axis-low,light,style axis low pole
 dashboard/teams.html,27,"0 1px 3px rgba(0,0,0,.07)",--elevation-1,light,card elevation
 dashboard/teams.html,30,#D8B384,--accent-base,dark,accent
-dashboard/teams.html,30,"rgba(216,179,132,.12)",--accent-veil,dark,accent tint; bare-decimal alpha, matched via the widened norm()
+dashboard/teams.html,30,"rgba(216,179,132,.12)",--accent-veil,dark,accent tint; bare-decimal alpha
 dashboard/teams.html,30,"rgba(216,179,132,.28)",--accent-edge,dark,accent edge; bare-decimal alpha
-dashboard/teams.html,30,#101319,--ground,dark,page canvas
-dashboard/teams.html,30,#191d25,--surface-raised,dark,raised surface
-dashboard/teams.html,30,#222732,--surface-recessed,dark,recessed surface
+dashboard/teams.html,30,#0e1219,--ground,dark,page canvas | phase 3 recoloured; phase 1 value was #101319
+dashboard/teams.html,30,#161b24,--surface-raised,dark,raised surface | phase 3 recoloured; phase 1 value was #191d25
+dashboard/teams.html,30,#1e242e,--surface-recessed,dark,recessed surface | phase 3 recoloured; phase 1 value was #222732
 dashboard/teams.html,30,"rgba(255,255,255,.035)",--surface-veil,dark,translucent veil; bare-decimal alpha
 dashboard/teams.html,30,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stronger veil; bare-decimal alpha
-dashboard/teams.html,30,#f4f6fb,--ink-primary,dark,primary text
-dashboard/teams.html,30,#c3cde2,--ink-secondary,dark,secondary text
-dashboard/teams.html,30,#9aa7c2,--ink-tertiary,dark,label text
+dashboard/teams.html,30,#f2f5fa,--ink-primary,dark,primary text | phase 3 recoloured; phase 1 value was #f4f6fb
+dashboard/teams.html,30,#b6c2d4,--ink-secondary,dark,secondary text | phase 3 recoloured; phase 1 value was #c3cde2
+dashboard/teams.html,30,#8b98ab,--ink-tertiary,dark,label text | phase 3 recoloured; phase 1 value was #9aa7c2
 dashboard/teams.html,30,#34d399,--rank-top,dark,percentile ramp 80+
 dashboard/teams.html,30,#6ee7a8,--rank-high,dark,percentile ramp 60+
 dashboard/teams.html,30,#fbbf24,--rank-mid,dark,percentile ramp 40+
@@ -114,7 +114,7 @@ dashboard/teams.html,30,#fbbf24,--style-axis-low,dark,style axis low pole
 dashboard/teams.html,30,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation; bare-decimal alpha
 dashboard/teams.html,39,#12141a,--ink-on-accent,"light,dark",logo glyph on the accent chip
 dashboard/teams.html,141,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; bare-decimal alpha
-dashboard/teams.html,173,#0d0f14,--ink-on-state,"light,dark",W/D/L badge ink on a result-coloured chip; new role token, distinct from --ink-on-accent and --label-on-fill
+dashboard/teams.html,173,#0d0f14,--ink-on-state,"light,dark",W/D/L badge ink on a result-coloured chip; new role token
 dashboard/teams.html,255,#22e39a,--series-ok,"light,dark",TPAL.ok; TPAL duplicated players.html PAL exactly
 dashboard/teams.html,255,#ff5a5a,--series-fail,"light,dark",TPAL.fail
 dashboard/teams.html,255,#22e39a,--series-pass,"light,dark",TPAL.pass
@@ -135,14 +135,14 @@ dashboard/index.html,36,#3a4351,--border-strong,dark,strong rule
 dashboard/index.html,37,#f2f5fa,--ink-primary,dark,primary text
 dashboard/index.html,37,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/index.html,37,#8b98ab,--ink-tertiary,dark,tertiary text
-dashboard/index.html,38,#e2b877,--accent-base,dark,document-family amber accent
-dashboard/index.html,38,"rgba(226,184,119,.10)",--accent-veil,dark,amber tint fill
-dashboard/index.html,38,"rgba(226,184,119,.32)",--accent-edge,dark,amber tint border
+dashboard/index.html,38,#D8B384,--accent-base,dark,document-family amber accent | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/index.html,38,"rgba(216,179,132,0.12)",--accent-veil,dark,"amber tint fill | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/index.html,38,"rgba(216,179,132,0.28)",--accent-edge,dark,"amber tint border | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/index.html,39,#3ddc97,--state-positive,dark,positive state
 dashboard/index.html,39,#ff5f56,--state-negative,dark,negative state
-dashboard/search.html,17,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
-dashboard/search.html,17,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
-dashboard/search.html,17,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/search.html,17,#EF0107,--accent-base,light,light amber: declaration deleted as a duplicate of the family value | phase 3 recoloured; phase 1 value was #9c6b1e
+dashboard/search.html,17,"rgba(239,1,7,0.07)",--accent-veil,light,"light amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.10)"
+dashboard/search.html,17,"rgba(239,1,7,0.18)",--accent-edge,light,"light amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.32)"
 dashboard/search.html,27,#0e1219,--ground,dark,page canvas
 dashboard/search.html,27,#161b24,--surface-raised,dark,raised surface
 dashboard/search.html,27,#1e242e,--surface-recessed,dark,recessed surface
@@ -151,13 +151,13 @@ dashboard/search.html,28,#3a4351,--border-strong,dark,strong rule
 dashboard/search.html,29,#f2f5fa,--ink-primary,dark,primary text
 dashboard/search.html,29,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/search.html,29,#8b98ab,--ink-tertiary,dark,tertiary text
-dashboard/search.html,26,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
-dashboard/search.html,26,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
-dashboard/search.html,26,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/search.html,26,#D8B384,--accent-base,dark,dark amber: declaration deleted | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/search.html,26,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/search.html,26,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/search.html,30,#3ddc97,--state-positive,dark,positive state
-dashboard/glossary.html,14,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
-dashboard/glossary.html,14,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
-dashboard/glossary.html,14,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/glossary.html,14,#EF0107,--accent-base,light,light amber: declaration deleted as a duplicate of the family value | phase 3 recoloured; phase 1 value was #9c6b1e
+dashboard/glossary.html,14,"rgba(239,1,7,0.07)",--accent-veil,light,"light amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.10)"
+dashboard/glossary.html,14,"rgba(239,1,7,0.18)",--accent-edge,light,"light amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.32)"
 dashboard/glossary.html,19,#0e1219,--ground,dark,page canvas
 dashboard/glossary.html,19,#161b24,--surface-raised,dark,raised surface
 dashboard/glossary.html,19,#1e242e,--surface-recessed,dark,recessed surface
@@ -166,11 +166,11 @@ dashboard/glossary.html,20,#3a4351,--border-strong,dark,strong rule
 dashboard/glossary.html,21,#f2f5fa,--ink-primary,dark,primary text
 dashboard/glossary.html,21,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/glossary.html,21,#8b98ab,--ink-tertiary,dark,tertiary text
-dashboard/glossary.html,18,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
-dashboard/glossary.html,18,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
-dashboard/glossary.html,18,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
-dashboard/insights.html,15,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
-dashboard/insights.html,15,"rgba(156,107,30,.10)",--accent-veil,light,light amber tint fill: deleted duplicate
+dashboard/glossary.html,18,#D8B384,--accent-base,dark,dark amber: declaration deleted | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/glossary.html,18,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/glossary.html,18,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
+dashboard/insights.html,15,#EF0107,--accent-base,light,light amber: declaration deleted as a duplicate of the family value | phase 3 recoloured; phase 1 value was #9c6b1e
+dashboard/insights.html,15,"rgba(239,1,7,0.07)",--accent-veil,light,"light amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.10)"
 dashboard/insights.html,33,#0e1219,--ground,dark,page canvas
 dashboard/insights.html,33,#161b24,--surface-raised,dark,raised surface
 dashboard/insights.html,33,#1e242e,--surface-recessed,dark,recessed surface
@@ -179,21 +179,21 @@ dashboard/insights.html,34,#3a4351,--border-strong,dark,strong rule
 dashboard/insights.html,35,#f2f5fa,--ink-primary,dark,primary text
 dashboard/insights.html,35,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/insights.html,35,#8b98ab,--ink-tertiary,dark,tertiary text
-dashboard/insights.html,32,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
-dashboard/insights.html,32,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
-dashboard/insights.html,36,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border
+dashboard/insights.html,32,#D8B384,--accent-base,dark,dark amber: declaration deleted | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/insights.html,32,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/insights.html,36,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/insights.html,37,#3ddc97,--state-positive,dark,positive state
-dashboard/sequences.html,30,"rgba(156,107,30,.10)",--accent-veil,light,accent tint fill
-dashboard/sequences.html,37,#2f6aa8,--series-link,light,link and node blue
-dashboard/sequences.html,16,#9c6b1e,--accent-base,light,light amber: declaration deleted as a duplicate of the family value
-dashboard/sequences.html,16,"rgba(156,107,30,.32)",--accent-edge,light,light amber tint border: deleted duplicate
+dashboard/sequences.html,30,"rgba(239,1,7,0.07)",--accent-veil,light,"accent tint fill | phase 3 recoloured; phase 1 value was rgba(156,107,30,.10)"
+dashboard/sequences.html,37,#2f6aa8,--series-link,light,link and node blue | phase 3 recoloured; phase 1 value was #2f6aa8 | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/sequences.html,16,#EF0107,--accent-base,light,light amber: declaration deleted as a duplicate of the family value | phase 3 recoloured; phase 1 value was #9c6b1e
+dashboard/sequences.html,16,"rgba(239,1,7,0.18)",--accent-edge,light,"light amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(156,107,30,.32)"
 dashboard/sequences.html,45,#161b24,--surface-raised,dark,raised surface
 dashboard/sequences.html,45,#1e242e,--surface-recessed,dark,recessed surface
 dashboard/sequences.html,46,#272e3a,--border-hairline,dark,hairline rule
 dashboard/sequences.html,46,#3a4351,--border-strong,dark,strong rule
 dashboard/sequences.html,47,#b6c2d4,--ink-secondary,dark,secondary text
-dashboard/sequences.html,40,#e2b877,--accent-base,dark,dark amber: declaration deleted, the :root aliases supply it
-dashboard/sequences.html,40,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/sequences.html,40,#D8B384,--accent-base,dark,dark amber: declaration deleted | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/sequences.html,40,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/sequences.html,54,"rgba(255,255,255,.035)",--surface-veil,dark,translucent veil
 dashboard/sequences.html,54,"rgba(255,255,255,.07)",--surface-veil-strong,dark,stronger translucent veil
 dashboard/sequences.html,56,#34d399,--rank-top,dark,percentile ramp: top
@@ -202,13 +202,13 @@ dashboard/sequences.html,56,#fbbf24,--rank-mid,dark,percentile ramp: mid
 dashboard/sequences.html,56,#fb923c,--rank-low,dark,percentile ramp: low
 dashboard/sequences.html,56,#f87171,--rank-bottom,dark,percentile ramp: bottom
 dashboard/sequences.html,56,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation
-dashboard/guide.html,27,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
-dashboard/guide.html,27,"rgba(138,94,26,.10)",--accent-veil,light,light AA amber tint fill: deleted duplicate
-dashboard/guide.html,27,"rgba(138,94,26,.32)",--accent-edge,light,light AA amber tint border: deleted duplicate
-dashboard/guide.html,27,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value
-dashboard/guide.html,34,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
-dashboard/guide.html,34,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
-dashboard/guide.html,34,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/guide.html,27,#EF0107,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value | phase 3 recoloured; phase 1 value was #8a5e1a
+dashboard/guide.html,27,"rgba(239,1,7,0.07)",--accent-veil,light,"light AA amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(138,94,26,.10)"
+dashboard/guide.html,27,"rgba(239,1,7,0.18)",--accent-edge,light,"light AA amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(138,94,26,.32)"
+dashboard/guide.html,27,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value | phase 3 recoloured; phase 1 value was #2f6aa8 | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/guide.html,34,#D8B384,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it | phase 3 recoloured; phase 1 value was #e2b877"
+dashboard/guide.html,34,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/guide.html,34,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/guide.html,34,#5aa9ff,--series-link,dark,dark blue: deleted duplicate
 dashboard/guide.html,35,#0e1219,--ground,dark,page canvas
 dashboard/guide.html,35,#161b24,--surface-raised,dark,raised surface
@@ -220,13 +220,13 @@ dashboard/guide.html,37,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/guide.html,37,#8b98ab,--ink-tertiary,dark,tertiary text
 dashboard/guide.html,38,#3ddc97,--state-positive,dark,positive state
 dashboard/guide.html,38,#ff5f56,--state-negative,dark,negative state
-dashboard/methodology.html,22,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
-dashboard/methodology.html,22,"rgba(138,94,26,.10)",--accent-veil,light,light AA amber tint fill: deleted duplicate
-dashboard/methodology.html,22,"rgba(138,94,26,.32)",--accent-edge,light,light AA amber tint border: deleted duplicate
-dashboard/methodology.html,22,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value
-dashboard/methodology.html,25,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
-dashboard/methodology.html,25,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
-dashboard/methodology.html,25,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/methodology.html,22,#EF0107,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value | phase 3 recoloured; phase 1 value was #8a5e1a
+dashboard/methodology.html,22,"rgba(239,1,7,0.07)",--accent-veil,light,"light AA amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(138,94,26,.10)"
+dashboard/methodology.html,22,"rgba(239,1,7,0.18)",--accent-edge,light,"light AA amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(138,94,26,.32)"
+dashboard/methodology.html,22,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value | phase 3 recoloured; phase 1 value was #2f6aa8 | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/methodology.html,25,#D8B384,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it | phase 3 recoloured; phase 1 value was #e2b877"
+dashboard/methodology.html,25,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/methodology.html,25,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/methodology.html,25,#5aa9ff,--series-link,dark,dark blue: deleted duplicate
 dashboard/methodology.html,26,#0e1219,--ground,dark,page canvas
 dashboard/methodology.html,26,#161b24,--surface-raised,dark,raised surface
@@ -238,8 +238,8 @@ dashboard/methodology.html,28,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/methodology.html,28,#8b98ab,--ink-tertiary,dark,tertiary text
 dashboard/methodology.html,29,#3ddc97,--state-positive,dark,positive state
 dashboard/methodology.html,29,#ff5f56,--state-negative,dark,negative state
-dashboard/validation.html,16,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
-dashboard/validation.html,31,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
+dashboard/validation.html,16,#EF0107,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value | phase 3 recoloured; phase 1 value was #8a5e1a
+dashboard/validation.html,31,#D8B384,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it | phase 3 recoloured; phase 1 value was #e2b877"
 dashboard/validation.html,32,#0e1219,--ground,dark,page canvas
 dashboard/validation.html,32,#161b24,--surface-raised,dark,raised surface
 dashboard/validation.html,32,#1e242e,--surface-recessed,dark,recessed surface
@@ -250,25 +250,25 @@ dashboard/validation.html,34,#b6c2d4,--ink-secondary,dark,secondary text
 dashboard/validation.html,34,#8b98ab,--ink-tertiary,dark,tertiary text
 dashboard/validation.html,36,#3ddc97,--state-positive,dark,positive state
 dashboard/validation.html,36,#ff5f56,--state-negative,dark,negative state
-dashboard/validation.html,35,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill
-dashboard/validation.html,35,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border
+dashboard/validation.html,35,"rgba(216,179,132,0.12)",--accent-veil,dark,"dark amber tint fill | phase 3 recoloured; phase 1 value was rgba(226,184,119,.10)"
+dashboard/validation.html,35,"rgba(216,179,132,0.28)",--accent-edge,dark,"dark amber tint border | phase 3 recoloured; phase 1 value was rgba(226,184,119,.32)"
 dashboard/validation.html,35,#5aa9ff,--series-link,dark,dark blue
-dashboard/market-values.html,20,#17202c,--ink-primary,light,primary ink
-dashboard/market-values.html,20,#f2eee4,--ground,light,paper canvas
-dashboard/market-values.html,21,#657080,--ink-tertiary,light,muted ink
-dashboard/market-values.html,21,#a66a12,--accent-base,light,signal amber
+dashboard/market-values.html,20,#16191f,--ink-primary,light,primary ink | phase 3 recoloured; phase 1 value was #17202c
+dashboard/market-values.html,20,#faf8f3,--ground,light,paper canvas | phase 3 recoloured; phase 1 value was #f2eee4
+dashboard/market-values.html,21,#6b7280,--ink-tertiary,light,muted ink | phase 3 recoloured; phase 1 value was #657080
+dashboard/market-values.html,21,#EF0107,--accent-base,light,signal amber | phase 3 recoloured; phase 1 value was #a66a12
 dashboard/market-values.html,22,#0f7777,--signal-alt,light,second signal teal
-dashboard/market-values.html,22,"rgba(166,106,18,.1)",--accent-veil,light,signal tint
-dashboard/market-values.html,22,"0 18px 55px rgba(49,38,20,.08)",--elevation-1,light,card elevation
-dashboard/market-values.html,20,#edf2f8,--ink-primary,dark,primary ink
+dashboard/market-values.html,22,"rgba(239,1,7,0.07)",--accent-veil,light,"signal tint | phase 3 recoloured; phase 1 value was rgba(166,106,18,.1)"
+dashboard/market-values.html,22,"0 1px 3px rgba(0,0,0,0.07)",--elevation-1,light,"card elevation | phase 3 recoloured; phase 1 value was 0 18px 55px rgba(49,38,20,.08)"
+dashboard/market-values.html,20,#f2f5fa,--ink-primary,dark,primary ink | phase 3 recoloured; phase 1 value was #edf2f8
 dashboard/market-values.html,20,#0e1219,--ground,dark,paper canvas
 dashboard/market-values.html,20,#161b24,--surface-raised,dark,panel surface
-dashboard/market-values.html,21,#323b49,--border-hairline,dark,hairline rule
-dashboard/market-values.html,21,#98a6ba,--ink-tertiary,dark,muted ink
-dashboard/market-values.html,21,#efbd6f,--accent-base,dark,signal amber
+dashboard/market-values.html,21,#272e3a,--border-hairline,dark,hairline rule | phase 3 recoloured; phase 1 value was #323b49
+dashboard/market-values.html,21,#8b98ab,--ink-tertiary,dark,muted ink | phase 3 recoloured; phase 1 value was #98a6ba
+dashboard/market-values.html,21,#D8B384,--accent-base,dark,signal amber | phase 3 recoloured; phase 1 value was #efbd6f
 dashboard/market-values.html,22,#4cc8c4,--signal-alt,dark,second signal teal
-dashboard/market-values.html,22,"rgba(239,189,111,.09)",--accent-veil,dark,signal tint
-dashboard/market-values.html,22,"0 18px 55px rgba(0,0,0,.22)",--elevation-1,dark,card elevation
+dashboard/market-values.html,22,"rgba(216,179,132,0.12)",--accent-veil,dark,"signal tint | phase 3 recoloured; phase 1 value was rgba(239,189,111,.09)"
+dashboard/market-values.html,22,"0 1px 3px rgba(0,0,0,0.35)",--elevation-1,dark,"card elevation | phase 3 recoloured; phase 1 value was 0 18px 55px rgba(0,0,0,.22)"
 dashboard/gate.js,71,#080a0e,--gate-ground,"light,dark",overlay ground
 dashboard/gate.js,74,#0e1116,--gate-card,"light,dark",card surface
 dashboard/gate.js,75,#1c222c,--gate-card-border,"light,dark",card edge
@@ -303,65 +303,68 @@ dashboard/model-lab.html,28,#64d7df,--series-2,dark,series 2
 dashboard/model-lab.html,28,#5add9f,--series-3,dark,series 3
 dashboard/model-lab.html,29,#ffc566,--series-4,dark,series 4
 dashboard/model-lab.html,29,#ff7972,--series-5,dark,series 5
-dashboard/model-review.html,24,#f1efe8,--ground,light,page ground
-dashboard/model-review.html,24,#fbfaf6,--surface-raised,light,paper surface
-dashboard/model-review.html,24,#171b22,--ink-primary,light,primary ink
-dashboard/model-review.html,25,#667080,--ink-secondary,light,muted ink
-dashboard/model-review.html,25,#929aa6,--ink-tertiary,light,faint ink
-dashboard/model-review.html,25,#d8d3c8,--border-hairline,light,hairline rule
-dashboard/model-review.html,26,#96681c,--accent-base,light,gold accent
-dashboard/model-review.html,26,#d9ac62,--accent-muted,light,muted companion gold
-dashboard/model-review.html,24,#0b1017,--ground,dark,page ground
-dashboard/model-review.html,24,#141a23,--surface-raised,dark,paper surface
-dashboard/model-review.html,24,#f3f5f8,--ink-primary,dark,primary ink
-dashboard/model-review.html,25,#aeb9c8,--ink-secondary,dark,muted ink
-dashboard/model-review.html,25,#778395,--ink-tertiary,dark,faint ink
-dashboard/model-review.html,25,#2a323e,--border-hairline,dark,hairline rule
-dashboard/model-review.html,26,#edbd70,--accent-base,dark,gold accent
-dashboard/model-review.html,26,#8e6326,--accent-muted,dark,muted companion gold
-dashboard/model-review.html,23,#087854,--state-positive,light,positive state: declared and read nowhere; value kept in the family scope
-dashboard/model-review.html,23,#ba3f38,--state-negative,light,negative state: as above
-dashboard/model-review.html,23,#2766b0,--series-link,light,link blue: as above
-dashboard/model-review.html,23,#42d89c,--state-positive,dark,positive state: as above
-dashboard/model-review.html,23,#ff746b,--state-negative,dark,negative state: as above
-dashboard/model-review.html,23,#70b4ff,--series-link,dark,link blue: as above
-dashboard/writing-lab.html,19,#121820,--ink-primary,light,primary ink
-dashboard/writing-lab.html,19,#68717c,--ink-secondary,light,muted ink
-dashboard/writing-lab.html,20,#f2efe6,--ground,light,page ground
-dashboard/writing-lab.html,20,#fffdf7,--surface-raised,light,sheet surface
-dashboard/writing-lab.html,20,#d8d1c2,--border-hairline,light,hairline rule
-dashboard/writing-lab.html,21,#e14b2d,--state-negative,light,negative state
-dashboard/writing-lab.html,21,#c79843,--accent-base,light,gold accent
-dashboard/writing-lab.html,21,#176b51,--state-positive,light,positive state
-dashboard/writing-lab.html,22,#315f78,--series-link,light,link blue
+dashboard/model-review.html,24,#e9e5dc,--ground,light,page ground | phase 3 recoloured; phase 1 value was #f1efe8
+dashboard/model-review.html,24,#fffdf6,--surface-raised,light,paper surface | phase 3 recoloured; phase 1 value was #fbfaf6
+dashboard/model-review.html,24,#101820,--ink-primary,light,primary ink | phase 3 recoloured; phase 1 value was #171b22
+dashboard/model-review.html,25,#45535e,--ink-secondary,light,muted ink | phase 3 recoloured; phase 1 value was #667080
+dashboard/model-review.html,25,#5b6672,--ink-tertiary,light,faint ink | phase 3 recoloured; phase 1 value was #929aa6
+dashboard/model-review.html,25,#aaa394,--border-hairline,light,hairline rule | phase 3 recoloured; phase 1 value was #d8d3c8
+dashboard/model-review.html,26,#EF0107,--accent-base,light,gold accent | phase 3 recoloured; phase 1 value was #96681c
+dashboard/model-review.html,26,#9a6f2a,--accent-muted,light,muted companion gold | phase 3 recoloured; phase 1 value was #d9ac62
+dashboard/model-review.html,24,#081017,--ground,dark,page ground | phase 3 recoloured; phase 1 value was #0b1017
+dashboard/model-review.html,24,#111d26,--surface-raised,dark,paper surface | phase 3 recoloured; phase 1 value was #141a23
+dashboard/model-review.html,24,#f7f7f1,--ink-primary,dark,primary ink | phase 3 recoloured; phase 1 value was #f3f5f8
+dashboard/model-review.html,25,#bac4cb,--ink-secondary,dark,muted ink | phase 3 recoloured; phase 1 value was #aeb9c8
+dashboard/model-review.html,25,#93a0a9,--ink-tertiary,dark,faint ink | phase 3 recoloured; phase 1 value was #778395
+dashboard/model-review.html,25,#52616d,--border-hairline,dark,hairline rule | phase 3 recoloured; phase 1 value was #2a323e
+dashboard/model-review.html,26,#D8B384,--accent-base,dark,gold accent | phase 3 recoloured; phase 1 value was #edbd70
+dashboard/model-review.html,26,#e2b877,--accent-muted,dark,muted companion gold | phase 3 recoloured; phase 1 value was #8e6326
+dashboard/model-review.html,23,#0f7a52,--state-positive,light,positive state: declared and read nowhere; value kept in the family scope | phase 3 recoloured; phase 1 value was #087854
+dashboard/model-review.html,23,#c23b34,--state-negative,light,negative state: as above | phase 3 recoloured; phase 1 value was #ba3f38
+dashboard/model-review.html,23,#2f6aa8,--series-link,light,link blue: as above | phase 3 recoloured; phase 1 value was #2766b0 | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/model-review.html,23,#3ddc97,--state-positive,dark,positive state: as above | phase 3 recoloured; phase 1 value was #42d89c
+dashboard/model-review.html,23,#ff5f56,--state-negative,dark,negative state: as above | phase 3 recoloured; phase 1 value was #ff746b
+dashboard/model-review.html,23,#5aa9ff,--series-link,dark,link blue: as above | phase 3 recoloured; phase 1 value was #70b4ff
+dashboard/writing-lab.html,19,#101820,--ink-primary,light,primary ink | phase 3 recoloured; phase 1 value was #121820
+dashboard/writing-lab.html,19,#45535e,--ink-secondary,light,muted ink | phase 3 recoloured; phase 1 value was #68717c
+dashboard/writing-lab.html,20,#e9e5dc,--ground,light,page ground | phase 3 recoloured; phase 1 value was #f2efe6
+dashboard/writing-lab.html,20,#fffdf6,--surface-raised,light,sheet surface | phase 3 recoloured; phase 1 value was #fffdf7
+dashboard/writing-lab.html,20,#aaa394,--border-hairline,light,hairline rule | phase 3 recoloured; phase 1 value was #d8d1c2
+dashboard/writing-lab.html,21,#c23b34,--state-negative,light,negative state | phase 3 recoloured; phase 1 value was #e14b2d
+dashboard/writing-lab.html,21,#EF0107,--accent-base,light,gold accent | phase 3 recoloured; phase 1 value was #c79843
+dashboard/writing-lab.html,21,#0f7a52,--state-positive,light,positive state | phase 3 recoloured; phase 1 value was #176b51
+dashboard/writing-lab.html,22,#2f6aa8,--series-link,light,link blue | phase 3 recoloured; phase 1 value was #315f78 | phase 3 recoloured; phase 1 value was #2f6fd0
 dashboard/writing-lab.html,22,"0 18px 60px rgba(13,18,25,.18)",--elevation-1,light,sheet elevation
-dashboard/writing-lab.html,19,#edf0e9,--ink-primary,dark,primary ink
-dashboard/writing-lab.html,19,#9da8ac,--ink-secondary,dark,muted ink
-dashboard/writing-lab.html,20,#10151b,--ground,dark,page ground
-dashboard/writing-lab.html,20,#171d24,--surface-raised,dark,sheet surface
-dashboard/writing-lab.html,20,#303944,--border-hairline,dark,hairline rule
-dashboard/writing-lab.html,21,#ff6848,--state-negative,dark,negative state
-dashboard/writing-lab.html,21,#e2b877,--accent-base,dark,gold accent
-dashboard/writing-lab.html,21,#4cc39b,--state-positive,dark,positive state
-dashboard/writing-lab.html,22,#72abc2,--series-link,dark,link blue
+dashboard/writing-lab.html,19,#f7f7f1,--ink-primary,dark,primary ink | phase 3 recoloured; phase 1 value was #edf0e9
+dashboard/writing-lab.html,19,#bac4cb,--ink-secondary,dark,muted ink | phase 3 recoloured; phase 1 value was #9da8ac
+dashboard/writing-lab.html,20,#081017,--ground,dark,page ground | phase 3 recoloured; phase 1 value was #10151b
+dashboard/writing-lab.html,20,#111d26,--surface-raised,dark,sheet surface | phase 3 recoloured; phase 1 value was #171d24
+dashboard/writing-lab.html,20,#52616d,--border-hairline,dark,hairline rule | phase 3 recoloured; phase 1 value was #303944
+dashboard/writing-lab.html,21,#ff5f56,--state-negative,dark,negative state | phase 3 recoloured; phase 1 value was #ff6848
+dashboard/writing-lab.html,21,#D8B384,--accent-base,dark,gold accent | phase 3 recoloured; phase 1 value was #e2b877
+dashboard/writing-lab.html,21,#3ddc97,--state-positive,dark,positive state | phase 3 recoloured; phase 1 value was #4cc39b
+dashboard/writing-lab.html,22,#5aa9ff,--series-link,dark,link blue | phase 3 recoloured; phase 1 value was #72abc2
 dashboard/writing-lab.html,22,"0 22px 70px rgba(0,0,0,.38)",--elevation-1,dark,sheet elevation
-dashboard/match.html,19,#EF0107,--accent-base,"light,dark",brand accent: declaration deleted, the :root alias resolves it in both themes
-dashboard/match.html,19,"rgba(239,1,7,0.07)",--accent-veil,"light,dark",accent tint fill: deleted duplicate
-dashboard/match.html,19,"rgba(239,1,7,0.18)",--accent-edge,"light,dark",accent tint border: deleted duplicate
+dashboard/match.html,19,#EF0107,--accent-base,light,brand accent: declaration deleted
+dashboard/match.html,19,#D8B384,--accent-base,dark,brand accent: declaration deleted | phase 3 recoloured; phase 1 value was #EF0107
+dashboard/match.html,19,"rgba(239,1,7,0.07)",--accent-veil,light,accent tint fill: deleted duplicate
+dashboard/match.html,19,"rgba(216,179,132,0.12)",--accent-veil,dark,"accent tint fill: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(239,1,7,0.07)"
+dashboard/match.html,19,"rgba(239,1,7,0.18)",--accent-edge,light,accent tint border: deleted duplicate
+dashboard/match.html,19,"rgba(216,179,132,0.28)",--accent-edge,dark,"accent tint border: deleted duplicate | phase 3 recoloured; phase 1 value was rgba(239,1,7,0.18)"
 dashboard/match.html,19,#f0ead6,--pitch-fill,light,light pitch fill: deleted duplicate of the alias
 dashboard/match.html,539,#9a6f2a,--accent-muted,light,second accent gold
 dashboard/match.html,539,#e2b877,--accent-muted,dark,second accent gold
 dashboard/match.html,540,"0 18px 46px rgba(23,27,34,.13)",--elevation-2,light,second elevation level
 dashboard/match.html,540,"0 20px 54px rgba(0,0,0,.34)",--elevation-2,dark,second elevation level
-dashboard/match.html,538,"0 10px 26px rgba(23,27,34,.07)",--elevation-1,light,panel elevation: declaration deleted, the :root alias resolves it
-dashboard/match.html,538,"0 12px 28px rgba(0,0,0,.22)",--elevation-1,dark,panel elevation: deleted duplicate
-dashboard/match.html,538,#2f6fd0,--series-link,light,link blue: deleted duplicate of the alias
+dashboard/match.html,538,"0 1px 3px rgba(0,0,0,0.07)",--elevation-1,light,"panel elevation: declaration deleted | phase 3 recoloured; phase 1 value was 0 10px 26px rgba(23,27,34,.07)"
+dashboard/match.html,538,"0 1px 3px rgba(0,0,0,0.35)",--elevation-1,dark,"panel elevation: deleted duplicate | phase 3 recoloured; phase 1 value was 0 12px 28px rgba(0,0,0,.22)"
+dashboard/match.html,538,#2f6aa8,--series-link,light,link blue: deleted duplicate of the alias | phase 3 recoloured; phase 1 value was #2f6fd0
 dashboard/match.html,538,#5aa9ff,--series-link,dark,link blue: deleted duplicate
 dashboard/match.html,542,#0e1219,--ground,dark,page canvas
 dashboard/match.html,542,#161b24,--surface-raised,dark,raised surface
 dashboard/match.html,542,#1e242e,--surface-recessed,dark,recessed surface
-dashboard/match.html,542,"rgba(255,255,255,.025)",--surface-veil,dark,translucent veil
-dashboard/match.html,542,#1e242e,--surface-veil-strong,dark,opaque veil surface
+dashboard/match.html,542,"rgba(255,255,255,0.035)",--surface-veil,dark,"translucent veil | phase 3 recoloured; phase 1 value was rgba(255,255,255,.025)"
+dashboard/match.html,542,"rgba(255,255,255,0.07)",--surface-veil-strong,dark,opaque veil surface | phase 3 recoloured; phase 1 value was #1e242e
 dashboard/match.html,542,#272e3a,--border-hairline,dark,hairline rule
 dashboard/match.html,542,#3a4351,--border-strong,dark,strong rule
 dashboard/match.html,542,#f2f5fa,--ink-primary,dark,primary text

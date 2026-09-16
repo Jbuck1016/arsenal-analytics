@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-doc">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,28 +10,15 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text, green and red live in theme.css now, as do
-   the font tokens. <html> carries fam-doc, so tokens.css resolves this page's
-   accent family from the document-family scopes.
+/* Canvas, surfaces, lines, text, green and red live in theme.css, as do the
+   font tokens; the colour tokens are in tokens.css, app family.
 
-   THE LIGHT AMBER STAYS LITERAL, and it is the only thing here that does.
-   The document family carries #9c6b1e / .10 / .32; this page has always
-   carried #9a6f2a / .09 / .34. Those are different colours, not different
-   spellings, so pointing them at --accent-base would change what renders and
-   Phase 1 forbids that. Recorded in deliberate-skips.csv for Phase 3.
-
-   :root is enough to hold them. tokens.css declares --amber:var(--accent-base)
-   among the aliases at :root, so a page's own :root wins on later source order
-   at equal specificity: the alias layer fills gaps and does not overrule a
-   page. It was not always so -- the aliases sat in the fam-doc light scope at
-   (0,2,1) and did swallow these three, which is why pinned.csv asserts they
-   still resolve to the values below.
-
-   --blue is gone rather than tokenised: this page declared #2f6fd0 and read it
-   nowhere. Deleting a declaration nothing resolves cannot change a pixel. */
-:root{
-  --amber:#9a6f2a;--amber-dim:rgba(154,111,42,.09);--amber-line:rgba(154,111,42,.34);
-}
+   THE LIGHT AMBER IS GONE. This page carried #9a6f2a / .09 / .34 where the
+   document family carried #9c6b1e / .10 / .32 -- six values for one role,
+   differing in the third decimal of an alpha. Phase 1 could not choose and
+   recorded both; Phase 3 chose the brand for the accent, which retires the
+   question rather than settling it. --amber now resolves through the alias
+   layer to --accent-base like everywhere else. */
 html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);

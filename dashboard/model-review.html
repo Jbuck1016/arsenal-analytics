@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-review">
+<html lang="en" class="dark fam-editorial">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -12,15 +12,14 @@
 <script src="gate.js"></script>
 <script src="model-review-data.js"></script>
 <style>
-/* tokens.css is linked above; theme.css deliberately is not, because its
-   light aliases sit at html:not(.dark) and would overrule this page's own
-   surfaces. One alias block serves both themes: the role tokens behind these
-   names are redefined per theme in tokens.css under fam-review, so the
-   html.dark palette this page carried is gone rather than duplicated.
+/* tokens.css is linked above; theme.css deliberately is not, because its light
+   aliases sit at html:not(.dark) and would overrule this page's own surfaces.
 
-   --green, --red and --blue are deleted: declared here, read nowhere. Their
-   values are kept in the fam-review scope, which is this page's palette
-   whether or not today's markup happens to reach for all of it. */
+   <html> carries fam-editorial, which this page now shares with model-lab and
+   writing-lab. Where the three disagreed the editorial family took model-lab's
+   values, so this page's own grounds and inks are gone -- including an
+   --ink-tertiary that measured 2.47:1 on its own ground. One alias block
+   serves both themes. */
 :root{--bg:var(--ground);--paper:var(--surface-raised);--ink:var(--ink-primary);
  --muted:var(--ink-secondary);--faint:var(--ink-tertiary);--line:var(--border-hairline);
  --gold:var(--accent-base);--gold2:var(--accent-muted);

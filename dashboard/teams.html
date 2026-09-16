@@ -17,26 +17,25 @@
    This page declared no font tokens at all, so ten font: shorthands that used
    them were invalid and rendered as inherited body type; they resolve now.
    Light accent is the shared brand accent, so the tints below match it. */
-/* Two literals stay in the dark block below, and they are the only two. This
-   page's dark rules are #2c313d and #414957 where the app-family tokens carry
-   #272b35 and #3a3f4b: four different colours, not four spellings of two, so
-   pointing them at the token would change what renders. The app family is not
-   uniform on dark borders; both are in deliberate-skips.csv and Phase 3 has to
-   pick a winner rather than have one chosen by accident.
+/* THE TWO DARK BORDER LITERALS ARE GONE. This page pinned
+   --border-hairline:#2c313d and --border-strong:#414957 against the app
+   family's #272b35 and #3a3f4b -- four colours, not four spellings of two --
+   and Phase 1 could not choose between them without changing what rendered.
+   Phase 3 chose: one family, and the app scale wins, which is now #272e3a and
+   #3a4351 on the document family's dark ground.
 
-   THEY PIN THE ROLE TOKENS, NOT THE ALIASES, and that is not cosmetic. They
-   used to be written --border and --border2, which left --border-hairline at
-   the app value underneath; shell.css then started drawing this page's league
-   picker with var(--select-edge), which reads --border-hairline, and the
-   select got the app's #272b35 while every other rule on the page got
-   #2c313d. Pinning the role means everything downstream of it follows,
-   including a consumer this page does not know about. */
+   The pin is worth remembering even though it is gone. It pinned the ROLE
+   tokens and not the --border/--border2 aliases, because shell.css draws this
+   page's league picker with var(--select-edge), which reads --border-hairline;
+   pinning the alias left the select on the app value while every other rule on
+   the page took the page value. Anything that pins a colour here again should
+   pin the role for the same reason. */
 :root{--accent-dim:var(--accent-veil);--accent-glow:var(--accent-edge);
  --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);
  --style-hi:var(--style-axis-hi);--style-low:var(--style-axis-low);--shadow:var(--elevation-1)}
 html.dark{--accent:var(--accent-base);--accent-dim:var(--accent-veil);--accent-glow:var(--accent-edge);
  --bg:var(--ground);--bg2:var(--surface-raised);--bg3:var(--surface-recessed);--surface:var(--surface-veil);--surface2:var(--surface-veil-strong);
- --border-hairline:#2c313d;--border-strong:#414957;--text:var(--ink-primary);--text2:var(--ink-secondary);--text3:var(--ink-tertiary);
+ --text:var(--ink-primary);--text2:var(--ink-secondary);--text3:var(--ink-tertiary);
  --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);
  --style-hi:var(--style-axis-hi);--style-low:var(--style-axis-low);--shadow:var(--elevation-1)}
 *{box-sizing:border-box;margin:0;padding:0}

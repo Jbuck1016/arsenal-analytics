@@ -45,14 +45,14 @@ diverge them on purpose. A zero here is that, showing up as arithmetic.
 
 | set | scope | closest pair | ΔE00 |
 |---|---|---|---|
-| match.html defensive actions | `match` light | `--action-clearance` / `--action-interception` | 15.1 |
-| match.html defensive actions | `match` dark | `--action-clearance` / `--action-interception` | 15.1 |
-| match.html position lines | `match` light | `--pos-line-am` / `--pos-line-mid` | 18.2 |
-| match.html position lines | `match` dark | `--pos-line-am` / `--pos-line-mid` | 18.2 |
-| match.html shot outcomes | `match` light | `--shot-blocked` / `--shot-goal` | 15.3 |
-| match.html shot outcomes | `match` dark | `--shot-blocked` / `--shot-goal` | 15.0 |
-| match.html position badges | `match` light | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
-| match.html position badges | `match` dark | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
+| match.html defensive actions | `app` light | `--action-clearance` / `--action-interception` | 15.1 |
+| match.html defensive actions | `app` dark | `--action-clearance` / `--action-interception` | 15.1 |
+| match.html position lines | `app` light | `--pos-line-am` / `--pos-line-mid` | 18.2 |
+| match.html position lines | `app` dark | `--pos-line-am` / `--pos-line-mid` | 18.2 |
+| match.html shot outcomes | `app` light | `--shot-blocked` / `--shot-goal` | 15.3 |
+| match.html shot outcomes | `app` dark | `--shot-blocked` / `--shot-goal` | 15.0 |
+| match.html position badges | `app` light | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
+| match.html position badges | `app` dark | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
 | players.html metric groups | `app` light | `--group-goalkeeping` / `--group-passing` | 3.1 |
 | players.html metric groups | `app` dark | `--group-goalkeeping` / `--group-passing` | 3.1 |
 | players.html evidence layers | `app` light | `--layer-blocked` / `--layer-clearance` | 0.0 |
@@ -61,7 +61,7 @@ diverge them on purpose. A zero here is that, showing up as arithmetic.
 | pitch layer series (PAL / TPAL) | `app` dark | `--series-ok` / `--series-pass` | 0.0 |
 | percentile ramp | `app` light | `--rank-high` / `--rank-top` | 16.0 |
 | percentile ramp | `app` dark | `--rank-high` / `--rank-top` | 6.0 |
-| W/D/L result inks | `match` light | `--caution-ink` / `--negative-ink` | 34.3 |
-| W/D/L result inks | `match` dark | `--caution-ink` / `--negative-ink` | 34.3 |
-| lab series | `lab` light | `--series-1` / `--series-5` | 12.2 |
-| lab series | `lab` dark | `--series-1` / `--series-5` | 10.1 |
+| W/D/L result inks | `app` light | `--caution-ink` / `--negative-ink` | 34.3 |
+| W/D/L result inks | `app` dark | `--caution-ink` / `--negative-ink` | 34.3 |
+| editorial series | `editorial` light | `--series-1` / `--series-5` | 12.2 |
+| editorial series | `editorial` dark | `--series-1` / `--series-5` | 10.1 |

@@ -40,7 +40,7 @@ OUT_SEPARABILITY = A.ROOT / "restyle" / "separability.md"
 
 # Which scopes are real surfaces someone reads. gate is the password overlay,
 # which is theme-independent and has its own ground.
-FAMILIES = ["app", "doc", "doc-aa", "market", "match", "lab", "review", "writing"]
+FAMILIES = ["app", "editorial"]
 
 # ---------------------------------------------------------------- category
 # Longest prefix wins, so --pitch-text-soft is text and --pitch-line is a
@@ -325,16 +325,16 @@ SERIES = {
     "percentile ramp": ["--rank-top", "--rank-high", "--rank-mid", "--rank-low",
         "--rank-bottom"],
     "W/D/L result inks": ["--positive-ink", "--caution-ink", "--negative-ink"],
-    "lab series": ["--series-1", "--series-2", "--series-3", "--series-4", "--series-5"],
+    "editorial series": ["--series-1", "--series-2", "--series-3", "--series-4", "--series-5"],
 }
 # Which family each series actually renders in, so it is measured in the scope
 # that paints it rather than in one that merely resolves it.
 SERIES_FAMILY = {
-    "match.html defensive actions": "match", "match.html position lines": "match",
-    "match.html shot outcomes": "match", "match.html position badges": "match",
+    "match.html defensive actions": "app", "match.html position lines": "app",
+    "match.html shot outcomes": "app", "match.html position badges": "app",
     "players.html metric groups": "app", "players.html evidence layers": "app",
     "pitch layer series (PAL / TPAL)": "app", "percentile ramp": "app",
-    "W/D/L result inks": "match", "lab series": "lab",
+    "W/D/L result inks": "app", "editorial series": "editorial",
 }
 
 

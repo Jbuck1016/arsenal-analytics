@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark fam-doc">
+<html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,23 +9,9 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Light palette and font tokens are in theme.css. <html> carries fam-doc, so
-   tokens.css resolves the amber accent family from the document-family scopes.
-   --amber and --amber-dim were the family's own values and are deleted;
-   --blue and --red were declared and never read and are deleted too.
-
-   --amber-line STAYS LITERAL. The family carries rgba(156,107,30,.32) and this
-   page has always carried .30. A different colour, not a different spelling.
-   Recorded in deliberate-skips.csv for Phase 3.
-
-   IT HAS TO BE REDECLARED IN DARK, and that is the whole reason the dark block
-   still mentions it. :root has no theme in it, so this light value matches in
-   dark as well; without the html.dark declaration below it would win there on
-   source order over the alias and paint the light amber's edge on a dark page.
-   pinned.csv asserts both halves. */
-:root{
-  --amber-line:rgba(156,107,30,.30);
-}
+/* Light palette and font tokens are in theme.css; the colour tokens are in
+   tokens.css, app family. The page's own --amber-line at .30, against the
+   document family's .32, is gone with the rest of the amber accent. */
 html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);

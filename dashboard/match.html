@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-match">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,15 +12,17 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text and the font tokens are in theme.css. <html>
-   carries fam-match, whose scopes in tokens.css hold this page's palette --
-   see the long note there for why it has one of its own.
+/* Canvas, surfaces, lines, text and the font tokens are in theme.css; the
+   colour tokens are in tokens.css, app family.
 
-   THIS BLOCK IS GONE RATHER THAN TOKENISED, all four declarations of it. The
-   accent trio is declared identically in both fam-match scopes, because this
-   page paints brand red in dark as well as light, so the :root alias resolves
-   it in both modes without a page declaration. --pitch is likewise already an
-   alias onto --pitch-fill, which tokens.css keys per theme. */
+   THIS PAGE HAD A FAMILY OF ITS OWN AND NO LONGER NEEDS ONE. Phase 1 gave it
+   fam-match because it matched nothing: its dark surfaces were the document
+   family's to the byte while its accent was the brand red in both themes,
+   where every other page went warm in dark. Phase 3 made the brand the accent
+   everywhere and the document ground the app ground, which is to say it made
+   every other page agree with this one. Folding it in changed three of its
+   values in light and eight in dark; the 134 names it actually needed a scope
+   for are app-family tokens now. */
 /* The dark palette this file used to declare here has been deleted, not
    tokenised. All thirteen of its declarations -- --bg, --bg2, --bg3,
    --surface, --surface2, --border, --border2, --text, --text2, --text3,
@@ -525,32 +527,29 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* 2026 visual system: the match workspace now shares the homepage's
    restrained football-intelligence terminal language.
 
-   Everything that was a colour here is in the fam-match scopes of tokens.css
-   now, in both themes, so this block is two aliases and the dark block below
-   is one. --gold is this page's second accent and --shadow2 its second
-   elevation level; neither name is global, because --gold means the PRIMARY
-   accent on model-review and a global alias would make the two pages
-   disagree about what the word means. */
+   Everything that was a colour here is in tokens.css now, in both themes, so
+   this block is two aliases. --gold is this page's second accent and --shadow2
+   its second elevation level; neither name is global, because --gold meant the
+   PRIMARY accent on model-review and a global alias would have made the two
+   pages disagree about what the word means. */
 :root{
   --gold:var(--accent-muted);
   --shadow2:var(--elevation-2);
 }
-/* One declaration left in dark, and it is a literal on purpose.
+/* NOTHING IS DECLARED IN DARK ANY MORE.
 
-   .chk-n paints with var(--dim,#8b95b5). --dim is document vocabulary that
-   this page never declared, so in dark the FALLBACK was what painted; then
-   tokens.css gained a --dim alias and silently replaced it with #c3cde2. The
-   value is this page's own muted grey -- the same #8b95b5 that TEAMS.__ALL__
-   carries as its colour -- and it belongs to no family's ink scale, so it
-   stays here and is pinned in pinned.csv. In light the fallback never fired:
-   theme.css has carried --dim since before this branch, and still does.
+   The last survivor was --dim:#8b95b5, this page's own muted grey. .chk-n
+   paints with var(--dim,#8b95b5); --dim was document vocabulary this page
+   never declared, so in dark the FALLBACK painted, until tokens.css gained a
+   --dim alias and silently replaced it with the app family's ink. Phase 1
+   pinned the page's grey rather than choose. Phase 3 chose: there is one ink
+   scale, --ink-secondary is the muted rung of it, and a page does not get a
+   private grey because its fallback used to win. The literal in the var()
+   fallback position stays, as every fallback does.
 
-   --pitch, --shadow and --shadow2 were here too and are gone: all three are
-   aliases that tokens.css resolves per theme through --pitch-fill,
-   --elevation-1 and --elevation-2. */
-html.dark{
-  --dim:#8b95b5;
-}
+   --pitch, --shadow and --shadow2 went earlier: all three are aliases that
+   tokens.css resolves per theme through --pitch-fill, --elevation-1 and
+   --elevation-2. */
 body{
   font-family:var(--f-body);
   background-color:var(--bg);

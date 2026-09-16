@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-doc">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,50 +11,39 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* THIS PAGE IS TWO PALETTES AND PHASE 1 CANNOT MERGE THEM.
-   In light it is a document page: its accent is the document amber #9c6b1e,
-   and here --accent is data ink rather than chrome -- seqTrace() paints every
-   pass arrow with it, so the brand red would read as a signal. In dark it is
-   an app page: the second html.dark block below is the app palette, ground
-   #101319 and accent #D8B384, and being later at equal specificity it beats
-   the document values in the first block outright.
-   <html> carries fam-doc, which is what the light surface is. The dark app
-   values therefore have no token to point at and stay literal; every one is
-   in deliberate-skips.csv, and reconciling the two palettes is Phase 3's.
+/* THIS PAGE WAS TWO PALETTES AND IS NOW ONE.
+   In light it was a document page, accent #9c6b1e; in dark it pasted the app
+   palette over the top -- ground #101319, accent #D8B384, twelve literals in a
+   second html.dark block that beat the first on source order. Phase 1 recorded
+   every one of them in deliberate-skips.csv and left reconciling the two to
+   Phase 3. The collapse reconciled them: one family, one accent, and the
+   second block deleted entirely.
 
-   Deleted rather than tokenised: --amber, --amber-dim and --amber-line, which
-   the :root aliases now supply in both themes from --accent-base; --blue,
-   --green, --red, --dim2, --elite and the rest of the percentile names that
-   this page declares and never reads; and html:not(.dark){--accent:#9c6b1e},
-   which is exactly what fam-doc resolves --accent to in light. */
+   ONE THING FROM THE OLD COMMENT IS STILL TRUE AND STILL MATTERS. On this page
+   --accent is DATA INK, not chrome: seqTrace() paints every pass arrow with
+   it. The accent being the brand red is therefore a stronger claim here than
+   on a page where it only rules a heading, and if the pass arrows ever need to
+   stop reading as a signal, this is the page where that shows up first. */
 :root{
   --accent-dim:var(--accent-veil);
-  /* .28 where the document family carries .32. A different colour, not a
-     different spelling; recorded for Phase 3. */
-  --accent-glow:rgba(156,107,30,.28);
-  /* Light shadow: rgba(42,37,28,.12) where --elevation-1 is rgba(0,0,0,0.07).
-     A warm shadow tuned for this page's paper. Recorded for Phase 3. */
-  --shadow:0 1px 3px rgba(42,37,28,.12);
   --nb:var(--series-link);
 }
-/* First dark block. --bg:#0e1219 and --text:#f2f5fa used to live here and are
-   GONE, not tokenised: the second html.dark block below redeclares both at the
-   same specificity and later in source, so neither has ever been painted.
-   Writing them into tokens.css would have put values the browser discards into
-   the file whose purpose is to be the source of truth. */
+/* The dark block. It used to be the first of two: a second block below pasted
+   the app palette over the document one and, being later at equal specificity,
+   won every declaration they shared. Both palettes are one family now and the
+   second block is gone, so this is simply the page's dark block. */
 html.dark{
   --panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);
   --dim:var(--ink-secondary);
 }
-/* Second dark block: the app palette, pasted over the document one. Under
-   fam-doc the grounds, inks and accent have no token that carries these
-   values, so they stay literal. The percentile ramp, the veils and the
-   elevation are family independent and do tokenise. */
-html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba(216,179,132,.28);
- --bg:#101319;--bg2:#191d25;--bg3:#222732;--surface:var(--surface-veil);--surface2:var(--surface-veil-strong);
- --border:#2c313d;--border2:#414957;--text:#f4f6fb;--text2:#c3cde2;--text3:#9aa7c2;
- --elite:var(--rank-top);--above:var(--rank-high);--avg:var(--rank-mid);--below:var(--rank-low);--poor:var(--rank-bottom);--shadow:var(--elevation-1);--nb:#5aa0ff}
+/* The second dark block is GONE. It pasted the app palette over the document
+   one -- ground, surfaces, borders, inks and accent, twelve literals -- because
+   under fam-doc no token carried the app values this page wanted. There is one
+   family now and it carries them, so every one of those declarations resolved
+   to the same thing it was overriding. --nb, the node blue, was the one real
+   divergence in the block (#5aa0ff against --series-link's #5aa9ff) and it is
+   settled in the :root above. */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}

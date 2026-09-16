@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-lab">
+<html lang="en" class="dark fam-editorial">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -17,12 +17,11 @@
    page's :root, so linking it would hand this page the app family's light
    surfaces. Nothing here needs it -- the fonts below are this page's own.
 
-   ONE BLOCK NOW, NOT TWO. The aliases are theme independent because the role
-   tokens they point at are redefined per theme in tokens.css under fam-lab,
-   so the html.dark palette block this page carried is gone rather than
-   duplicated. The hue names are kept because a hundred rules read them; the
-   values behind them are numbered series, so Phase 3 can move the palette
-   without renaming anything here. */
+   <html> carries fam-editorial. The aliases are theme independent because the
+   role tokens behind them are redefined per theme in tokens.css, so there is
+   one block here and not two. The hue names are kept because a hundred rules
+   read them; the values behind them are numbered series, so the palette can
+   move without renaming anything on this page. */
 :root{--bg:var(--ground);--paper:var(--surface-raised);--ink:var(--ink-primary);
  --muted:var(--ink-secondary);--line:var(--border-hairline);
  --acid:var(--series-1);--cyan:var(--series-2);--green:var(--series-3);

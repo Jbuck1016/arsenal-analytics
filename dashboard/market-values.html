@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-market">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -12,11 +12,16 @@
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
 <style>
-/* This page reads nine names of its own and none of the shared vocabulary, so
-   it gets its own scope in tokens.css rather than being folded into the
-   document family, which would have left sixteen of these eighteen values as
-   literals here. The names below are aliases onto that scope; the values live
-   in tokens.css under role names, in both themes. */
+/* THIS PAGE IS AN APP PAGE. Phase 1 gave it a scope of its own because it
+   reads nine private names -- --paper, --ink, --muted, --signal, --signal2,
+   --soft -- and none of the shared vocabulary, so folding it in would have
+   left sixteen of its eighteen values as literals here. Phase 3 folded it in
+   properly: the names below are aliases onto app-family roles, and only
+   --signal-alt and --grid-line name anything the family did not already have.
+
+   The brief lists this page in both families. It is a working surface -- a
+   market table read down a column -- rather than a reading surface, so it is
+   here and not in editorial. See PHASE3_NOTES.md. */
 :root{--ink:var(--ink-primary);--paper:var(--ground);--panel:var(--surface-raised);
  --line:var(--border-hairline);--muted:var(--ink-tertiary);--signal:var(--accent-base);
  --signal2:var(--signal-alt);--soft:var(--accent-veil);--shadow:var(--elevation-1)}

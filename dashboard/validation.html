@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark fam-doc fam-doc-aa">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,24 +10,16 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text, green and red come from theme.css. <html>
-   carries fam-doc fam-doc-aa, so the light amber base comes from the AA scope
-   in tokens.css: a step darker than the family's, because #9a6f2a was 3.97:1
-   on a card here and #8a5e1a is 5.03:1. --amber is deleted for that reason.
+/* Canvas, surfaces, lines, text, green and red come from theme.css; the colour
+   tokens are in tokens.css, app family.
 
-   THREE LITERALS STAY, and they are the three where this page differs from
-   both its siblings. guide and methodology spell the tints .10 and .32 and
-   their blue #2f6aa8; this page has always spelled them .09, .34 and #2f6fd0.
-   Different colours, not different spellings, so the AA scope would recolour
-   the tier badges and the callout fills. Recorded in deliberate-skips.csv.
-
-   All three are redeclared in the dark block below, and have to be: :root has
-   no theme in it, so these light values match in dark too and would otherwise
-   win there on source order over the aliases. pinned.csv asserts both halves. */
-:root{
-  --amber-dim:rgba(138,94,26,.09);--amber-line:rgba(138,94,26,.34);
-  --blue:#2f6fd0;
-}
+   THE THREE LITERALS ARE GONE. This page spelled the amber tints .09 and .34
+   and its blue #2f6fd0 where guide and methodology spelled them .10, .32 and
+   #2f6aa8 -- the three places it differed from its two siblings, and three
+   colours rather than three spellings. The amber went with the accent. The
+   blue was decided on measurement: #2f6aa8 clears 4.5:1 on all three light
+   surfaces and #2f6fd0 reaches only 4.14:1 on the recessed one, so the family
+   carries the darker blue and this page reads it. */
 html.dark{
   --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
   --line:var(--border-hairline);--line2:var(--border-strong);

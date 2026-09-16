@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark fam-doc fam-doc-aa">
+<html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,23 +9,17 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text, green and red come from theme.css. <html>
-   carries fam-doc fam-doc-aa, and the AA scope in tokens.css is where this
-   page's darker light amber now lives.
+/* Canvas, surfaces, lines, text, green and red come from theme.css; the
+   colour tokens are in tokens.css, app family.
 
-   THE AMBER IS A STEP DARKER THAN THE HUE THIS PAGE SHIPPED WITH, and that
-   decision is recorded here because tokens.css only carries the result:
-   #9c6b1e sat at 4.36:1 on the canvas and 3.84:1 on the recessed surface, so
-   the small headings and labels set in it were under AA on the page that
-   states the limitations. #8a5e1a clears 4.5:1 on every shared surface, and at
-   36 degrees it is still the same amber, nowhere near the brand red. The tints
-   keep their alphas on the new base. Dark mode amber is unchanged: it is
-   already light on a dark ground.
-
-   The light block is deleted rather than tokenised. It declared #8a5e1a and
-   its two tints, which are the AA scope's values to the byte, and --blue,
-   which this page declares and never reads. The reading serif stays: it is a
-   font, not a colour, and no other page has one. */
+   THE AA AMBER IS GONE, AND SO IS THE SCOPE THAT HELD IT. This page, with
+   methodology and validation, carried fam-doc-aa: a darkened #8a5e1a, because
+   the family's #9c6b1e sat at 4.36:1 on the canvas and 3.84:1 on the recessed
+   surface, under AA on the page that states the limitations. The accent is the
+   brand now and the darkened variant has nothing left to do, so the scope is
+   deleted rather than carried. The reading serif stays: it is a font, not a
+   colour, and it is what makes this an editorial page in every sense except
+   the one tokens.css means. */
 :root{
   --f-read:'Newsreader',Georgia,serif;
 }
