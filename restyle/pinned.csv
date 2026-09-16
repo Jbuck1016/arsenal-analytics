@@ -4,3 +4,9 @@ dashboard/index.html,--amber-dim,light,"rgba(154,111,42,.09)",as --amber
 dashboard/index.html,--amber-line,light,"rgba(154,111,42,.34)",as --amber
 dashboard/insights.html,--amber-line,light,"rgba(156,107,30,.30)",page tint border predates the family .32
 dashboard/insights.html,--amber-line,dark,"rgba(226,184,119,.32)",the light pin above also matches in dark and must not leak there
+dashboard/validation.html,--amber-dim,light,"rgba(138,94,26,.09)",page tint fill predates the AA scope .10
+dashboard/validation.html,--amber-line,light,"rgba(138,94,26,.34)",page tint border predates the AA scope .32
+dashboard/validation.html,--blue,light,#2f6fd0,page blue predates the family #2f6aa8
+dashboard/validation.html,--amber-dim,dark,"rgba(226,184,119,.10)",the light pins above also match in dark and must not leak there
+dashboard/validation.html,--amber-line,dark,"rgba(226,184,119,.32)",as above
+dashboard/validation.html,--blue,dark,#5aa9ff,as above

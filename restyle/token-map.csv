@@ -202,3 +202,54 @@ dashboard/sequences.html,56,#fbbf24,--rank-mid,dark,percentile ramp: mid
 dashboard/sequences.html,56,#fb923c,--rank-low,dark,percentile ramp: low
 dashboard/sequences.html,56,#f87171,--rank-bottom,dark,percentile ramp: bottom
 dashboard/sequences.html,56,"0 1px 3px rgba(0,0,0,.35)",--elevation-1,dark,card elevation
+dashboard/guide.html,27,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
+dashboard/guide.html,27,"rgba(138,94,26,.10)",--accent-veil,light,light AA amber tint fill: deleted duplicate
+dashboard/guide.html,27,"rgba(138,94,26,.32)",--accent-edge,light,light AA amber tint border: deleted duplicate
+dashboard/guide.html,27,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value
+dashboard/guide.html,34,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
+dashboard/guide.html,34,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
+dashboard/guide.html,34,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/guide.html,34,#5aa9ff,--series-link,dark,dark blue: deleted duplicate
+dashboard/guide.html,35,#0e1219,--ground,dark,page canvas
+dashboard/guide.html,35,#161b24,--surface-raised,dark,raised surface
+dashboard/guide.html,35,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/guide.html,36,#272e3a,--border-hairline,dark,hairline rule
+dashboard/guide.html,36,#3a4351,--border-strong,dark,strong rule
+dashboard/guide.html,37,#f2f5fa,--ink-primary,dark,primary text
+dashboard/guide.html,37,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/guide.html,37,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/guide.html,38,#3ddc97,--state-positive,dark,positive state
+dashboard/guide.html,38,#ff5f56,--state-negative,dark,negative state
+dashboard/methodology.html,22,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
+dashboard/methodology.html,22,"rgba(138,94,26,.10)",--accent-veil,light,light AA amber tint fill: deleted duplicate
+dashboard/methodology.html,22,"rgba(138,94,26,.32)",--accent-edge,light,light AA amber tint border: deleted duplicate
+dashboard/methodology.html,22,#2f6aa8,--series-link,light,light blue: deleted duplicate of the family value
+dashboard/methodology.html,25,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
+dashboard/methodology.html,25,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill: deleted duplicate
+dashboard/methodology.html,25,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border: deleted duplicate
+dashboard/methodology.html,25,#5aa9ff,--series-link,dark,dark blue: deleted duplicate
+dashboard/methodology.html,26,#0e1219,--ground,dark,page canvas
+dashboard/methodology.html,26,#161b24,--surface-raised,dark,raised surface
+dashboard/methodology.html,26,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/methodology.html,27,#272e3a,--border-hairline,dark,hairline rule
+dashboard/methodology.html,27,#3a4351,--border-strong,dark,strong rule
+dashboard/methodology.html,28,#f2f5fa,--ink-primary,dark,primary text
+dashboard/methodology.html,28,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/methodology.html,28,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/methodology.html,29,#3ddc97,--state-positive,dark,positive state
+dashboard/methodology.html,29,#ff5f56,--state-negative,dark,negative state
+dashboard/validation.html,16,#8a5e1a,--accent-base,light,light AA amber: declaration deleted as a duplicate of the AA scope value
+dashboard/validation.html,31,#e2b877,--accent-base,dark,"dark amber: declaration deleted, the :root aliases supply it"
+dashboard/validation.html,32,#0e1219,--ground,dark,page canvas
+dashboard/validation.html,32,#161b24,--surface-raised,dark,raised surface
+dashboard/validation.html,32,#1e242e,--surface-recessed,dark,recessed surface
+dashboard/validation.html,33,#272e3a,--border-hairline,dark,hairline rule
+dashboard/validation.html,33,#3a4351,--border-strong,dark,strong rule
+dashboard/validation.html,34,#f2f5fa,--ink-primary,dark,primary text
+dashboard/validation.html,34,#b6c2d4,--ink-secondary,dark,secondary text
+dashboard/validation.html,34,#8b98ab,--ink-tertiary,dark,tertiary text
+dashboard/validation.html,36,#3ddc97,--state-positive,dark,positive state
+dashboard/validation.html,36,#ff5f56,--state-negative,dark,negative state
+dashboard/validation.html,35,"rgba(226,184,119,.10)",--accent-veil,dark,dark amber tint fill
+dashboard/validation.html,35,"rgba(226,184,119,.32)",--accent-edge,dark,dark amber tint border
+dashboard/validation.html,35,#5aa9ff,--series-link,dark,dark blue

@@ -44,3 +44,6 @@ dashboard/sequences.html,55,#f4f6fb,"dark primary text: the app value, not the d
 dashboard/sequences.html,55,#c3cde2,"dark secondary text: the app value. As line 53."
 dashboard/sequences.html,55,#9aa7c2,"dark tertiary text: the app value. As line 53."
 dashboard/sequences.html,56,#5aa0ff,"dark node blue. --series-link carries #5aa9ff in the document family; this page has always carried #5aa0ff. Phase 3."
+dashboard/validation.html,28,"rgba(138,94,26,.09)","light AA amber tint fill. guide and methodology spell it .10 and the AA scope carries .10; this page has always carried .09. Phase 3."
+dashboard/validation.html,28,"rgba(138,94,26,.34)","light AA amber tint border. The AA scope carries .32; this page has always carried .34. Phase 3."
+dashboard/validation.html,29,#2f6fd0,"light blue. The document family carries #2f6aa8; this page has always carried #2f6fd0. Phase 3."

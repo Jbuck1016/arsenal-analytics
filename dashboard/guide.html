@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark fam-doc fam-doc-aa">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,27 +11,31 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="theme.css">
 <style>
-/* Canvas, surfaces, lines, text, green and red come from theme.css, which
-   carries this page's token names as aliases onto the shared palette. What is
-   left is this page's own accent family, its blue, and the reading serif. */
+/* Canvas, surfaces, lines, text, green and red come from theme.css. <html>
+   carries fam-doc fam-doc-aa, and the AA scope in tokens.css is where this
+   page's darker light amber now lives.
+
+   THE AMBER IS A STEP DARKER THAN THE HUE THIS PAGE SHIPPED WITH, and that
+   decision is recorded here because tokens.css only carries the result:
+   #9c6b1e sat at 4.36:1 on the canvas and 3.84:1 on the recessed surface, so
+   the small headings and labels set in it were under AA on the page that
+   states the limitations. #8a5e1a clears 4.5:1 on every shared surface, and at
+   36 degrees it is still the same amber, nowhere near the brand red. The tints
+   keep their alphas on the new base. Dark mode amber is unchanged: it is
+   already light on a dark ground.
+
+   The light block is deleted rather than tokenised. It declared #8a5e1a and
+   its two tints, which are the AA scope's values to the byte, and --blue,
+   which this page declares and never reads. The reading serif stays: it is a
+   font, not a colour, and no other page has one. */
 :root{
   --f-read:'Newsreader',Georgia,serif;
-  /* Light amber is a step darker than the hue this page shipped with:
-     #9c6b1e sat at 4.36:1 on the canvas and 3.84:1 on the recessed surface,
-     so the small headings and labels set in it were under AA on the page that
-     states the limitations. #8a5e1a clears 4.5:1 on every shared surface, and
-     at 36 degrees it is still the same amber, nowhere near the brand red.
-     The tints keep their alphas and move to the new base. Dark mode amber is
-     unchanged: it is already light on a dark ground. */
-  --amber:#8a5e1a;--amber-dim:rgba(138,94,26,.10);--amber-line:rgba(138,94,26,.32);
-  --blue:#2f6aa8;
 }
 html.dark{
-  --bg:#0e1219;--panel:#161b24;--panel2:#1e242e;
-  --line:#272e3a;--line2:#3a4351;
-  --text:#f2f5fa;--dim:#b6c2d4;--dim2:#8b98ab;
-  --amber:#e2b877;--amber-dim:rgba(226,184,119,.10);--amber-line:rgba(226,184,119,.32);
-  --green:#3ddc97;--red:#ff5f56;--blue:#5aa9ff;
+  --bg:var(--ground);--panel:var(--surface-raised);--panel2:var(--surface-recessed);
+  --line:var(--border-hairline);--line2:var(--border-strong);
+  --text:var(--ink-primary);--dim:var(--ink-secondary);--dim2:var(--ink-tertiary);
+  --green:var(--state-positive);--red:var(--state-negative);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);line-height:1.6;
