@@ -1,0 +1,15 @@
+file,line,original,token,themes,note
+dashboard/theme.css,54,#faf8f3,--ground,light,page canvas
+dashboard/theme.css,55,#f4f1e9,--surface-raised,light,raised surface: header and cards
+dashboard/theme.css,56,#eceadf,--surface-recessed,light,recessed surface: pitch fill
+dashboard/theme.css,57,"rgba(25,28,34,.03)",--surface-veil,light,translucent veil over the canvas
+dashboard/theme.css,58,#e8e4d8,--surface-veil-strong,light,opaque veil equivalent
+dashboard/theme.css,59,#ded9cd,--border-hairline,light,default boundary
+dashboard/theme.css,60,#b9b2a1,--border-strong,light,emphasised boundary
+dashboard/theme.css,61,#16191f,--ink-primary,light,primary text
+dashboard/theme.css,62,#4a5262,--ink-secondary,light,secondary and body text
+dashboard/theme.css,63,#6b7280,--ink-tertiary,light,labels legible at 10px
+dashboard/theme.css,64,#9aa0aa,--ink-quaternary,light,captions and decorative only
+dashboard/theme.css,65,#0f7a52,--state-positive,light,positive state
+dashboard/theme.css,66,#c23b34,--state-negative,light,negative state
+dashboard/theme.css,67,#EF0107,--accent-base,light,brand accent

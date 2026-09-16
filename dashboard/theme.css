@@ -42,20 +42,29 @@
 }
 
 html:not(.dark){
-  --bg:#faf8f3;          /* page canvas */
-  --bg2:#f4f1e9;         /* raised surface: header, cards */
-  --bg3:#eceadf;         /* recessed surface: pitch fill */
-  --surface:rgba(25,28,34,.03);
-  --surface2:#e8e4d8;
-  --border:#ded9cd;
-  --border2:#b9b2a1;
-  --text:#16191f;        /* primary */
-  --text2:#4a5262;       /* secondary, body */
-  --text3:#6b7280;       /* labels, legible at 10px */
-  --text4:#9aa0aa;       /* captions and decorative only */
-  --green:#0f7a52;
-  --red-bright:#c23b34;
-  --accent:#EF0107;
+  /* PHASE 1 TOKENISATION. Every value below moved to tokens.css under a role
+     name; these are now references, not values. The names on the left are kept
+     because several hundred rules across the pages use them. tokens.css is
+     linked BEFORE this file, so its html:not(.dark) block has already defined
+     the role tokens by the time these resolve.
+
+     Verified by restyle/assert_tokens.py, which resolves each token through the
+     real cascade (tokens.css + theme.css + the consuming page's inline style)
+     and asserts byte-equality with the literal it replaced. */
+  --bg:var(--ground);                 /* page canvas */
+  --bg2:var(--surface-raised);        /* raised surface: header, cards */
+  --bg3:var(--surface-recessed);      /* recessed surface: pitch fill */
+  --surface:var(--surface-veil);
+  --surface2:var(--surface-veil-strong);
+  --border:var(--border-hairline);
+  --border2:var(--border-strong);
+  --text:var(--ink-primary);          /* primary */
+  --text2:var(--ink-secondary);       /* secondary, body */
+  --text3:var(--ink-tertiary);        /* labels, legible at 10px */
+  --text4:var(--ink-quaternary);      /* captions and decorative only */
+  --green:var(--state-positive);
+  --red-bright:var(--state-negative);
+  --accent:var(--accent-base);
 
   /* Same palette under the names the terminal-styled pages use: index,
      insights, search, glossary, sequences, and the three gated documents
