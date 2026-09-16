@@ -841,9 +841,12 @@ async function loadTeams(){
   }catch(e){ names=['Los Angeles FC']; }
   if(!names.length)names=['Los Angeles FC'];
   TEAMS={};
-  TEAMS['__ALL__']={name:'__ALL__',display:'\u00B7 All teams \u00B7',color:'#8b95b5',
-    colorDim:'rgba(139,149,181,0.10)',colorGlow:'rgba(139,149,181,0.24)',colorBright:'#8b95b5',
-    comps:LEAGUES};
+  /* The pseudo-team shown before a club is picked. Its colour is neither a
+     club colour nor the brand accent but the deliberate absence of both, so
+     it is a token rather than a literal here. */
+  TEAMS['__ALL__']={name:'__ALL__',display:'\u00B7 All teams \u00B7',color:TOK('--team-all'),
+    colorDim:TOK('--team-all-veil'),colorGlow:TOK('--team-all-edge'),
+    colorBright:TOK('--team-all'),comps:LEAGUES};
   names.forEach(n=>{
     const c=teamColor(n);
     TEAMS[n]={name:n,display:n,color:c,colorDim:hexToRgba(c,0.10),colorGlow:hexToRgba(c,0.24),
@@ -863,8 +866,23 @@ const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const VIZ_LABELS={passes:'Pass Map',heatmap:'Touch Density',shots:'Attacking-Half Shot Map',network:'Passing Network',progressive:'Progressive Passes',final_third:'Passes Into Final Third',zone14:'Passes Into Zone 14',box_passes:'Passes Into Box',defensive:'Defensive Actions',pressure:'Defensive Density',shape:'Phase Shape Shift',passflow:'Pass Flow',keypasses:'Key Passes',xt:'xT Map',formation:'Average-Position Formation',dominance:'Zone Dominance',combos:'Pass Combos'};
 const TEAM_VIZ=new Set(['dominance','formation','passflow','shape']);
 function isProgPass(e){if(e.type!=='Pass'||e.x==null||e.end_x==null)return false;const g=e.end_x-e.x;if(e.x<50&&e.end_x<50)return g>=30;if(e.x<50&&e.end_x>=50)return g>=15;if(e.x>=50&&e.end_x>=50)return g>=10;return false;}
+/* Shirt code -> the colour of the line that player occupies. The two
+   renderers that need this had a copy each, identical except that the
+   network's carried a Sub entry and the formation's did not; that is the
+   `withSub` argument rather than two maps that can drift apart. */
+function lineColors(withSub){
+  const gk=TOK('--pos-line-gk'),df=TOK('--pos-line-def'),dm=TOK('--pos-line-dm'),
+        md=TOK('--pos-line-mid'),am=TOK('--pos-line-am'),fw=TOK('--pos-line-fw');
+  const m={GK:gk,DC:df,DL:df,DR:df,DMC:dm,MC:md,ML:md,MR:md,
+           AMC:am,AML:am,AMR:am,FW:fw,FWL:fw,FWR:fw};
+  if(withSub)m.Sub=TOK('--pos-line-sub');
+  return m;
+}
 const DEF_TYPES=['Tackle','Interception','Clearance','BallRecovery','BlockedPass','Aerial','Challenge'];
-const DEF_COLORS={Tackle:'#ef4444',Interception:'#2563eb',Clearance:'#7c3aed',BallRecovery:'#16a34a',BlockedPass:'#d4a017',Aerial:'#0891b2',Challenge:'#db2777'};
+/* Read through the bridge on first use rather than at parse time: the
+   renderers below are the only callers and none of them runs before the
+   stylesheet is applied. */
+const defColors=()=>({Tackle:TOK('--action-tackle'),Interception:TOK('--action-interception'),Clearance:TOK('--action-clearance'),BallRecovery:TOK('--action-recovery'),BlockedPass:TOK('--action-block'),Aerial:TOK('--action-aerial'),Challenge:TOK('--action-challenge')});
 const XT=[[.000,.000,.000,.000,.000,.000,.000,.000],[.001,.001,.001,.002,.002,.001,.001,.001],[.002,.003,.004,.005,.005,.004,.003,.002],[.004,.006,.008,.011,.011,.008,.006,.004],[.006,.009,.014,.019,.019,.014,.009,.006],[.010,.015,.022,.030,.030,.022,.015,.010],[.016,.024,.035,.048,.048,.035,.024,.016],[.025,.037,.054,.075,.075,.054,.037,.025],[.038,.056,.082,.115,.115,.082,.056,.038],[.055,.082,.122,.170,.170,.122,.082,.055],[.082,.120,.178,.250,.250,.178,.120,.082],[.120,.180,.270,.390,.390,.270,.180,.120]];
 function getXT(x,y){return XT[Math.min(11,Math.floor(x/100*12))][Math.min(7,Math.floor(y/100*8))];}
 /* Assigned by syncCanvasTheme() below, which runs once at module scope and
@@ -908,26 +926,52 @@ const CANVAS_TOKENS={pitch:'--pitch-fill',line:'--pitch-line',
   lineStrong:'--pitch-line-strong',band:'--pitch-band',text:'--pitch-text',
   textSoft:'--pitch-text-soft',chipBg:'--chip-ground',chipText:'--chip-ink',
   passOk:'--pass-ok',passFail:'--pass-fail'};
-let CT_LIGHT=null,CT_DARK=null;
-function readCanvasTokens(){
+/* Everything else this file paints from JavaScript. Named here so one read
+   captures the lot; TOK() and TOKL() below are how the rest of the file asks
+   for them. Anything added to a renderer has to be added here too, or TOK()
+   returns undefined and the canvas quietly keeps its previous colour -- which
+   is what readPalette() shouts about. */
+const JS_TOKENS=['--ground','--surface-raised','--ink-primary','--ink-secondary',
+  '--ink-tertiary','--export-border','--export-rule',
+  '--action-tackle','--action-interception','--action-clearance',
+  '--action-recovery','--action-block','--action-aerial','--action-challenge',
+  '--action-other',
+  '--pos-line-gk','--pos-line-def','--pos-line-dm','--pos-line-mid',
+  '--pos-line-am','--pos-line-fw','--pos-line-sub',
+  '--shot-ok','--shot-fail','--shot-goal','--shot-blocked','--shot-post',
+  '--result-win-tint','--result-draw-tint','--result-loss-tint',
+  '--positive-ink','--caution-ink','--negative-ink','--rank-high','--rank-low',
+  '--team-all','--team-all-veil','--team-all-edge','--opponent'];
+let CT_LIGHT=null,CT_DARK=null,P_LIGHT=null,P_DARK=null;
+function readPalette(){
   const root=document.documentElement,wasDark=root.classList.contains('dark');
-  const grab=()=>{const cs=getComputedStyle(root),o={};
-    for(const k in CANVAS_TOKENS)o[k]=cs.getPropertyValue(CANVAS_TOKENS[k]).trim();
-    return o;};
-  root.classList.add('dark');CT_DARK=grab();
-  root.classList.remove('dark');CT_LIGHT=grab();
+  const grab=()=>{const cs=getComputedStyle(root),ct={},p={};
+    for(const k in CANVAS_TOKENS)ct[k]=cs.getPropertyValue(CANVAS_TOKENS[k]).trim();
+    for(const n of JS_TOKENS)p[n]=cs.getPropertyValue(n).trim();
+    return [ct,p];};
+  root.classList.add('dark');[CT_DARK,P_DARK]=grab();
+  root.classList.remove('dark');[CT_LIGHT,P_LIGHT]=grab();
   if(wasDark)root.classList.add('dark');
-  /* An empty string here means the token did not resolve, and the canvas
-     would take it as a no-op and paint with whatever was set last. Nothing
-     else would report it, so this does. */
+  /* An empty string here means the token did not resolve, and a canvas takes
+     that as a no-op and paints with whatever was set last. Nothing else would
+     report it, so this does. */
   const missing=Object.keys(CANVAS_TOKENS)
-    .filter(k=>!CT_LIGHT[k]||!CT_DARK[k]).map(k=>CANVAS_TOKENS[k]);
-  if(missing.length)console.error('canvas token bridge: unresolved '+missing.join(', '));
+      .filter(k=>!CT_LIGHT[k]||!CT_DARK[k]).map(k=>CANVAS_TOKENS[k])
+    .concat(JS_TOKENS.filter(n=>!P_LIGHT[n]||!P_DARK[n]));
+  if(missing.length)console.error('token bridge: unresolved '+missing.join(', '));
 }
 function CT(){
-  if(!CT_LIGHT)readCanvasTokens();
+  if(!CT_LIGHT)readPalette();
   return (!EXP_LIGHT&&document.documentElement.classList.contains('dark'))?CT_DARK:CT_LIGHT;
 }
+/* TOK: the value for the theme being drawn, honouring EXP_LIGHT the way CT()
+   does. TOKL: the light value whatever the workspace is showing, for the
+   export palette, which is a document rather than a screenshot of the app. */
+function TOK(n){
+  if(!P_LIGHT)readPalette();
+  return ((!EXP_LIGHT&&document.documentElement.classList.contains('dark'))?P_DARK:P_LIGHT)[n];
+}
+function TOKL(n){if(!P_LIGHT)readPalette();return P_LIGHT[n];}
 function syncCanvasTheme(){const c=CT();PASS_OK=c.passOk;PASS_FAIL=c.passFail;}
 syncCanvasTheme();
 const PM=20; // pitch margin - MUST match drawPitch
@@ -1145,12 +1189,13 @@ function drawAttackingHalfPitch(ctx,c){
    theme keeps the same hues at a lower lightness so they stay readable on the
    cream pitch. */
 function shotPalette(forTeam){
-  /* EXP_LIGHT for the same reason CT() honours it: an export is always the light
-     document, so the marker colours cannot depend on the workspace theme. */
-  const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
-  const ok=d?'#22e39a':'#0f7a52',fail=d?'#ff5a5a':'#bf3535';
-  return {goal:d?'#f0a5ff':'#a1279b',saved:forTeam?ok:fail,blocked:d?'#a78bfa':'#6641cf',
-          post:d?'#ffc93c':'#9a6b00',off:forTeam?ok:fail};
+  /* TOK() honours EXP_LIGHT and the document theme itself, which is the same
+     rule this function used to apply by hand: an export is always the light
+     document, so the marker colours cannot follow the workspace theme. The
+     local `d` that used to encode that is gone with the ternaries it fed. */
+  const ok=TOK('--shot-ok'),fail=TOK('--shot-fail');
+  return {goal:TOK('--shot-goal'),saved:forTeam?ok:fail,blocked:TOK('--shot-blocked'),
+          post:TOK('--shot-post'),off:forTeam?ok:fail};
 }
 /* Same five shapes as teams.html shotMark(): goal is a filled disc inside a
    thin ring, saved a filled disc, blocked a diamond, post and off target are
@@ -1229,7 +1274,7 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     '<span class="leg leg-note">'+sizeNote+'</span>';
 }
 
-function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
+function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};S.events.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors=lineColors(true);const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||TOK('--pos-line-sub');ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(name.split(' ').pop(),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
 
 function renderProgressive(ctx,c,evts,titleEl,legendEl){
   drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
@@ -1251,11 +1296,11 @@ function drawDefensiveMark(ctx,x,y,type,col,won){ctx.save();ctx.strokeStyle=hexA
 function renderDefensive(ctx,c,evts,titleEl,legendEl){
   drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
   const counts={};const stored=[];
-  evts.forEach(e=>{if(e.x==null)return;const p=toXY(e.x,e.y,c);const col=DEF_COLORS[e.type]||'#9ca3af';const won=e.outcome_type==='Successful';counts[e.type]=(counts[e.type]||0)+1;drawDefensiveMark(ctx,p.cx,p.cy,e.type,col,won);stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,outcome:e.outcome_type,type:e.type});});
+  evts.forEach(e=>{if(e.x==null)return;const p=toXY(e.x,e.y,c);const col=defColors()[e.type]||TOK('--action-other');const won=e.outcome_type==='Successful';counts[e.type]=(counts[e.type]||0)+1;drawDefensiveMark(ctx,p.cx,p.cy,e.type,col,won);stored.push({cx:p.cx,cy:p.cy,player:e.player,minute:e.minute,outcome:e.outcome_type,type:e.type});});
   S.canvasEvents.set(c,stored);
   const wonCount=evts.filter(e=>e.outcome_type==='Successful').length;
   titleEl.textContent='Defensive Actions';
-  const items=Object.entries(DEF_COLORS).filter(([tp])=>counts[tp]);
+  const items=Object.entries(defColors()).filter(([tp])=>counts[tp]);
   legendEl.innerHTML=items.map(([tp,col])=>'<span class="leg"><span class="leg-mark" style="color:'+col+'">'+esc(defensiveGlyph(tp))+'</span>'+esc(tp)+' ('+counts[tp]+')</span>').join('')+
     '<span class="leg">'+wonCount+' / '+evts.length+' successful · '+pct(wonCount,evts.length)+'</span>';
 }
@@ -1273,7 +1318,7 @@ function renderFormation(ctx,c,evts,titleEl,legendEl){drawPitch(ctx,c);if(S.show
   const outSorted=[...outfield].sort((a,b)=>a[1].x-b[1].x);// Simple k-means style: try to split into lines
   const xs=outSorted.map(p=>p[1].x);const xMin=Math.min(...xs),xMax=Math.max(...xs);const lineBands=[];// Greedy split, if 10 outfield, decide line counts by gaps
   const gaps=[];for(let i=1;i<xs.length;i++)gaps.push({idx:i,gap:xs[i]-xs[i-1]});gaps.sort((a,b)=>b.gap-a.gap);const splitPoints=gaps.slice(0,3).map(g=>g.idx).sort((a,b)=>a-b);const lines=[];let prev=0;splitPoints.forEach(sp=>{lines.push(outSorted.slice(prev,sp));prev=sp;});lines.push(outSorted.slice(prev));const formString=lines.map(l=>l.length).join('-');// Draw lines (position-line connectors)
-  const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444'};const inferCol=(avgX)=>avgX<25?'#d4a017':avgX<45?'#2563eb':avgX<68?'#16a34a':'#ef4444';
+  const posColors=lineColors(false);const inferCol=(avgX)=>avgX<25?TOK('--pos-line-gk'):avgX<45?TOK('--pos-line-def'):avgX<68?TOK('--pos-line-mid'):TOK('--pos-line-fw');
   ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;lines.forEach(line=>{if(line.length<2)return;const sorted=[...line].sort((a,b)=>a[1].y-b[1].y);for(let i=0;i<sorted.length-1;i++){const a=toXY(sorted[i][1].x,sorted[i][1].y,c),b=toXY(sorted[i+1][1].x,sorted[i+1][1].y,c);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();}});
   const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);const all=[gkEntry,...outfield];const fStored=[];all.forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=8+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name];const col=ppos&&posColors[ppos]?posColors[ppos]:inferCol(p.x);// Drop shadow
     ctx.fillStyle='rgba(0,0,0,0.18)';ctx.beginPath();ctx.arc(pt.cx+1.5,pt.cy+2,r,0,Math.PI*2);ctx.fill();ctx.fillStyle=hexAlpha(col,0.88);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.75)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#333';ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(lastName(name),pt.cx,pt.cy+r+11);fStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,fStored);

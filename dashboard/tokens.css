@@ -569,6 +569,68 @@ html:not(.dark).fam-match{
   --float-timeline:color-mix(in srgb,var(--bg2) 82%,transparent);
   --float-tools:color-mix(in srgb,var(--bg2) 86%,transparent);
   --float-card:color-mix(in srgb,var(--bg2) 92%,transparent);
+
+  /* --- match.html, painted from JavaScript ---------------------------
+     A canvas cannot read a custom property, so these reach the renderers
+     through the token bridge in match.html rather than through a var().
+     They are tokens all the same: the page had them typed into object
+     literals, which is exactly the drift this phase exists to end.
+
+     ALL OF THESE ARE THE SAME IN BOTH THEMES except the five --shot-*
+     below. The page drew its defensive actions and its position colours
+     with one palette on either ground; carried verbatim. */
+  --export-border:rgba(22,25,31,0.16);
+  --export-rule:rgba(22,25,31,0.09);
+
+  /* The seven defensive action types, plus the colour for anything the
+     feed reports that is not one of them. */
+  --action-tackle:#ef4444;
+  --action-interception:#2563eb;
+  --action-clearance:#7c3aed;
+  --action-recovery:#16a34a;
+  --action-block:#d4a017;
+  --action-aerial:#0891b2;
+  --action-challenge:#db2777;
+  --action-other:#9ca3af;
+
+  /* Position colours for the passing network and the average-position
+     formation. Named for the line a player occupies, not for the shirt
+     code: DC, DL and DR are all the defensive line and all one colour.
+     Distinct from --pos-*-ink above, which are the CSS badges in the
+     player list and carry different values -- #d4a017 here, #b8860b
+     there, for the same goalkeeper. */
+  --pos-line-gk:#d4a017;
+  --pos-line-def:#2563eb;
+  --pos-line-dm:#0d9488;
+  --pos-line-mid:#16a34a;
+  --pos-line-am:#84cc16;
+  --pos-line-fw:#ef4444;
+  --pos-line-sub:#9ca3af;
+
+  /* Result tints behind a W/D/L cell in the season table, at 8%. The
+     --result-*-fill tokens above are the cell backgrounds and are not the
+     same values; these are the lighter wash resultTint() returns. */
+  --result-win-tint:rgba(22,163,74,0.08);
+  --result-draw-tint:rgba(212,160,23,0.08);
+  --result-loss-tint:rgba(220,38,38,0.08);
+
+  /* The __ALL__ pseudo-team, which is what the page shows before a club is
+     picked. It is not a club colour and it is not the brand accent; it is
+     the deliberate absence of both. applyTheme() writes it onto the root
+     element as --accent at runtime, which is why this page's declared
+     accent is almost never what is painted. */
+  --team-all:#8b95b5;
+  --team-all-veil:rgba(139,149,181,0.10);
+  --team-all-edge:rgba(139,149,181,0.24);
+
+  /* Shot markers. The only JavaScript palette on this page with two
+     themes: the dark variants are bright on a dark pitch, these are their
+     darker counterparts for the light one and for exports. */
+  --shot-ok:#0f7a52;
+  --shot-fail:#bf3535;
+  --shot-goal:#a1279b;
+  --shot-blocked:#6641cf;
+  --shot-post:#9a6b00;
 }
 html.dark.fam-match{
   --ground:#0e1219;
@@ -658,6 +720,66 @@ html.dark.fam-match{
   --float-timeline:rgba(22,27,36,.72);
   --float-tools:rgba(22,27,36,.72);
   --float-card:rgba(22,27,36,.82);
+
+  /* --- match.html, painted from JavaScript ---------------------------
+     A canvas cannot read a custom property, so these reach the renderers
+     through the token bridge in match.html rather than through a var().
+     They are tokens all the same: the page had them typed into object
+     literals, which is exactly the drift this phase exists to end.
+
+     ALL OF THESE ARE THE SAME IN BOTH THEMES except the five --shot-*
+     below. The page drew its defensive actions and its position colours
+     with one palette on either ground; carried verbatim. */
+  --export-border:rgba(22,25,31,0.16);
+  --export-rule:rgba(22,25,31,0.09);
+
+  /* The seven defensive action types, plus the colour for anything the
+     feed reports that is not one of them. */
+  --action-tackle:#ef4444;
+  --action-interception:#2563eb;
+  --action-clearance:#7c3aed;
+  --action-recovery:#16a34a;
+  --action-block:#d4a017;
+  --action-aerial:#0891b2;
+  --action-challenge:#db2777;
+  --action-other:#9ca3af;
+
+  /* Position colours for the passing network and the average-position
+     formation. Named for the line a player occupies, not for the shirt
+     code: DC, DL and DR are all the defensive line and all one colour.
+     Distinct from --pos-*-ink above, which are the CSS badges in the
+     player list and carry different values -- #d4a017 here, #b8860b
+     there, for the same goalkeeper. */
+  --pos-line-gk:#d4a017;
+  --pos-line-def:#2563eb;
+  --pos-line-dm:#0d9488;
+  --pos-line-mid:#16a34a;
+  --pos-line-am:#84cc16;
+  --pos-line-fw:#ef4444;
+  --pos-line-sub:#9ca3af;
+
+  /* Result tints behind a W/D/L cell in the season table, at 8%. The
+     --result-*-fill tokens above are the cell backgrounds and are not the
+     same values; these are the lighter wash resultTint() returns. */
+  --result-win-tint:rgba(22,163,74,0.08);
+  --result-draw-tint:rgba(212,160,23,0.08);
+  --result-loss-tint:rgba(220,38,38,0.08);
+
+  /* The __ALL__ pseudo-team, which is what the page shows before a club is
+     picked. It is not a club colour and it is not the brand accent; it is
+     the deliberate absence of both. applyTheme() writes it onto the root
+     element as --accent at runtime, which is why this page's declared
+     accent is almost never what is painted. */
+  --team-all:#8b95b5;
+  --team-all-veil:rgba(139,149,181,0.10);
+  --team-all-edge:rgba(139,149,181,0.24);
+
+  /* Shot markers; see the light scope. */
+  --shot-ok:#22e39a;
+  --shot-fail:#ff5a5a;
+  --shot-goal:#f0a5ff;
+  --shot-blocked:#a78bfa;
+  --shot-post:#ffc93c;
 }
 
 /* ===== THE THREE LAB PAGES ========================================= */

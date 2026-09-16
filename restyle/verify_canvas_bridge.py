@@ -1,4 +1,4 @@
-"""Prove the canvas bridge in a browser, because no static gate can.
+"""Prove the token bridge in a browser, because no static gate can.
 
 restyle/gate-limitations.md names two blind spots. This closes the second one
 for match.html: a canvas silently discards a value it cannot parse, so
@@ -30,6 +30,31 @@ from playwright.sync_api import sync_playwright
 
 PAGE = pathlib.Path(__file__).resolve().parent.parent / "dashboard" / "match.html"
 
+# What the JavaScript palettes held before the bridge, transcribed from the
+# deleted literals. Transcribed, not read from tokens.css: reading them from
+# the file the bridge reads would make every check below a tautology.
+JS_EXPECT = {
+    # theme-independent: the same object in light and dark
+    "both": {
+        "defColors": {"Tackle": "#ef4444", "Interception": "#2563eb",
+                      "Clearance": "#7c3aed", "BallRecovery": "#16a34a",
+                      "BlockedPass": "#d4a017", "Aerial": "#0891b2",
+                      "Challenge": "#db2777"},
+        "lineColorsSub": {"GK": "#d4a017", "DC": "#2563eb", "DL": "#2563eb",
+                          "DR": "#2563eb", "DMC": "#0d9488", "MC": "#16a34a",
+                          "ML": "#16a34a", "MR": "#16a34a", "AMC": "#84cc16",
+                          "AML": "#84cc16", "AMR": "#84cc16", "FW": "#ef4444",
+                          "FWL": "#ef4444", "FWR": "#ef4444", "Sub": "#9ca3af"},
+        "teamAll": {"color": "#8b95b5", "colorDim": "rgba(139,149,181,0.10)",
+                    "colorGlow": "rgba(139,149,181,0.24)",
+                    "colorBright": "#8b95b5"},
+    },
+    "dark": {"shot": {"goal": "#f0a5ff", "ok": "#22e39a", "fail": "#ff5a5a",
+                      "blocked": "#a78bfa", "post": "#ffc93c"}},
+    "light": {"shot": {"goal": "#a1279b", "ok": "#0f7a52", "fail": "#bf3535",
+                       "blocked": "#6641cf", "post": "#9a6b00"}},
+}
+
 # What CT() returned before the bridge, transcribed from the deleted literals.
 EXPECT = {
     "dark": {"pitch": "#111722", "line": "rgba(182,194,212,0.22)",
@@ -49,10 +74,22 @@ PROBE = """() => {
   const was = root.classList.contains('dark');
   const snap = () => { const c = CT(), o = {}; for (const k in c) o[k] = c[k]; return o; };
 
-  root.classList.add('dark');    EXP_LIGHT = false; out.dark  = snap();
-  root.classList.remove('dark'); EXP_LIGHT = false; out.light = snap();
+  const js = () => ({
+    defColors: defColors(),
+    lineColorsSub: lineColors(true),
+    shot: (() => { const s = shotPalette(true); return {
+      goal: s.goal, ok: s.saved, fail: shotPalette(false).saved,
+      blocked: s.blocked, post: s.post }; })(),
+    teamAll: (() => { const a = TEAMS && TEAMS['__ALL__']; return a ? {
+      color: a.color, colorDim: a.colorDim,
+      colorGlow: a.colorGlow, colorBright: a.colorBright } : null; })(),
+  });
+
+  root.classList.add('dark');    EXP_LIGHT = false; out.dark  = snap(); out.jsDark  = js();
+  root.classList.remove('dark'); EXP_LIGHT = false; out.light = snap(); out.jsLight = js();
   // The export case: document dark, palette light.
   root.classList.add('dark');    EXP_LIGHT = true;  out.exportWhileDark = snap();
+  out.jsExportWhileDark = js();
   EXP_LIGHT = false;
   if (!was) root.classList.remove('dark');
 
@@ -78,6 +115,18 @@ def main() -> int:
         page = browser.new_page()
         page.goto(PAGE.as_uri())
         page.wait_for_function("() => typeof CT === 'function'", timeout=15_000)
+        # TEAMS['__ALL__'] is built inside loadTeams(), which init() calls. Its
+        # Supabase fetches all fail under file:// and are all caught, so it
+        # still reaches the assignment -- but not before the page has been
+        # parsed. Wait for it rather than testing whatever happens to exist.
+        try:
+            page.wait_for_function(
+                "() => typeof TEAMS === 'object' && TEAMS && TEAMS['__ALL__']",
+                timeout=20_000)
+        except Exception:
+            print("TEAMS['__ALL__'] never appeared: loadTeams() did not reach "
+                  "its assignment, so the pseudo-team colours are UNVERIFIED")
+            return 1
         got = page.evaluate(PROBE)
         browser.close()
 
@@ -96,9 +145,27 @@ def main() -> int:
                 bad.append(f"canvas DISCARDED {theme} {k} = "
                            f"{got[theme][k]!r}; it would paint the previous fill")
 
+    # The JavaScript palettes.
+    checked_js = 0
+    for theme, key in (("dark", "jsDark"), ("light", "jsLight")):
+        want = dict(JS_EXPECT["both"])
+        want.update(JS_EXPECT[theme])
+        for name, table in want.items():
+            for k, v in table.items():
+                checked_js += 1
+                if (got[key].get(name) or {}).get(k) != v:
+                    bad.append(f"{name} in {theme}: {k} is "
+                               f"{(got[key].get(name) or {}).get(k)!r}, expected {v!r}")
+    # And the export case again, for the one JS palette that has two themes.
+    for k, v in JS_EXPECT["light"]["shot"].items():
+        checked_js += 1
+        if got["jsExportWhileDark"]["shot"].get(k) != v:
+            bad.append(f"export case: shot {k} is "
+                       f"{got['jsExportWhileDark']['shot'].get(k)!r}, expected {v!r}")
+
     n = sum(len(v) for v in EXPECT.values())
     print(f"{n * 2} palette values checked, {n} export values, "
-          f"{n * 2} canvas acceptance checks")
+          f"{n * 2} canvas acceptance checks, {checked_js} JavaScript palette values")
     if bad:
         print(f"\n{len(bad)} FAILURES:")
         for x in bad:
