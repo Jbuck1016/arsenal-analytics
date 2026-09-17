@@ -25,7 +25,7 @@ the role token they point at.
 rather than as a mark. The category comes from the name, and it is
 printed, so a wrong row can be spotted.
 
-**0 failures out of 508 measurements.**
+**0 failures out of 490 measurements.**
 
 ## Failures
 
@@ -42,7 +42,7 @@ None.
 
 ## Everything, by scope
 
-### `app` light — 213 measurements, 0 failing
+### `app` light — 204 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -91,112 +91,107 @@ None.
 | `app` light | `--legend-heat-low` | decoration | --legend-pill | `rgb(150,176,168)` | **2.16** | 0.0 |
 | `app` light | `--heat-legend-low` | decoration | --ground | `rgb(150,176,168)` | **2.18** | 0.0 |
 | `app` light | `--heat-legend-low` | decoration | --surface-raised | `rgb(150,176,168)` | **2.28** | 0.0 |
-| `app` light | `--pitch-line` | decoration | --pitch-fill | `#888` | **2.94** | 0.0 |
 | `app` light | `--group-holdup` | mark | --ground | `#d97706` | **3.00** | 3.0 |
 | `app` light | `--style-axis-low` | mark | --ground | `#d97706` | **3.00** | 3.0 |
-| `app` light | `--pos-line-am` | mark | --pitch-fill | `#609510` | **3.01** | 3.0 |
-| `app` light | `--action-other` | mark | --pitch-fill | `#7e8797` | **3.01** | 3.0 |
-| `app` light | `--pos-line-sub` | mark | --pitch-fill | `#7e8797` | **3.01** | 3.0 |
 | `app` light | `--team-all` | mark | --ground | `#858fb1` | **3.02** | 3.0 |
-| `app` light | `--marker-out` | mark | --pitch-fill | `#1384ff` | **3.02** | 3.0 |
-| `app` light | `--xt-low` | decoration | --pitch-fill | `#ad7e10` | **3.02** | 0.0 |
-| `app` light | `--action-recovery` | mark | --pitch-fill | `#159a46` | **3.04** | 3.0 |
-| `app` light | `--pos-line-mid` | mark | --pitch-fill | `#159a46` | **3.04** | 3.0 |
-| `app` light | `--series-ok` | mark | --pitch-fill | `#139866` | **3.05** | 3.0 |
-| `app` light | `--action-block` | mark | --pitch-fill | `#a87f12` | **3.06** | 3.0 |
-| `app` light | `--pos-line-gk` | mark | --pitch-fill | `#a87f12` | **3.06** | 3.0 |
-| `app` light | `--action-aerial` | mark | --pitch-fill | `#0891b2` | **3.06** | 3.0 |
-| `app` light | `--marker-in` | mark | --pitch-fill | `#b17a26` | **3.07** | 3.0 |
-| `app` light | `--pos-line-dm` | mark | --pitch-fill | `#0d9488` | **3.11** | 3.0 |
-| `app` light | `--action-tackle` | mark | --pitch-fill | `#ef4444` | **3.13** | 3.0 |
-| `app` light | `--pos-line-fw` | mark | --pitch-fill | `#ef4444` | **3.13** | 3.0 |
 | `app` light | `--group-holdup` | mark | --surface-raised | `#d97706` | **3.13** | 3.0 |
 | `app` light | `--style-axis-low` | mark | --surface-raised | `#d97706` | **3.13** | 3.0 |
 | `app` light | `--gate-field-border` | boundary | --gate-card | `#586474` | **3.14** | 3.0 |
 | `app` light | `--team-all` | mark | --surface-raised | `#858fb1` | **3.15** | 3.0 |
 | `app` light | `--group-carrying` | mark | --ground | `#b28407` | **3.19** | 3.0 |
 | `app` light | `--group-halfspaces` | mark | --ground | `#3f9c48` | **3.26** | 3.0 |
-| `app` light | `--layer-quick` | mark | --ground | `#1f9d5f` | **3.27** | 3.0 |
 | `app` light | `--group-tempo` | mark | --ground | `#0d94b8` | **3.33** | 3.0 |
 | `app` light | `--group-carrying` | mark | --surface-raised | `#b28407` | **3.33** | 3.0 |
 | `app` light | `--gate-focus-ring` | boundary | --gate-card | `rgba(226,184,119,.5)` | **3.36** | 3.0 |
 | `app` light | `--border-strong` | boundary | --ground | `#8f8674` | **3.39** | 3.0 |
 | `app` light | `--select-edge` | boundary | --ground | `#8f8674` | **3.39** | 3.0 |
 | `app` light | `--group-halfspaces` | mark | --surface-raised | `#3f9c48` | **3.41** | 3.0 |
-| `app` light | `--layer-quick` | mark | --surface-raised | `#1f9d5f` | **3.42** | 3.0 |
 | `app` light | `--group-tempo` | mark | --surface-raised | `#0d94b8` | **3.47** | 3.0 |
 | `app` light | `--border-strong` | boundary | --surface-raised | `#8f8674` | **3.54** | 3.0 |
 | `app` light | `--select-edge` | boundary | --surface-raised | `#8f8674` | **3.54** | 3.0 |
 | `app` light | `--group-discipline` | mark | --ground | `#e1561c` | **3.57** | 3.0 |
 | `app` light | `--rank-low` | mark | --ground | `#c56a10` | **3.64** | 3.0 |
-| `app` light | `--layer-receipt` | mark | --ground | `#0e8f9e` | **3.64** | 3.0 |
 | `app` light | `--group-passing` | mark | --ground | `#2f80ed` | **3.64** | 3.0 |
 | `app` light | `--group-creation` | mark | --ground | `#00918c` | **3.64** | 3.0 |
-| `app` light | `--series-carry` | mark | --pitch-fill | `#9a7100` | **3.68** | 3.0 |
 | `app` light | `--shape-node-ring` | decoration | --pitch-fill | `rgba(37,99,235,0.9)` | **3.72** | 0.0 |
 | `app` light | `--group-discipline` | mark | --surface-raised | `#e1561c` | **3.72** | 3.0 |
 | `app` light | `--rank-low` | mark | --surface-raised | `#c56a10` | **3.80** | 3.0 |
-| `app` light | `--layer-receipt` | mark | --surface-raised | `#0e8f9e` | **3.80** | 3.0 |
-| `app` light | `--xt-high` | mark | --pitch-fill | `#e03000` | **3.80** | 3.0 |
 | `app` light | `--group-passing` | mark | --surface-raised | `#2f80ed` | **3.80** | 3.0 |
 | `app` light | `--group-creation` | mark | --surface-raised | `#00918c` | **3.81** | 3.0 |
-| `app` light | `--action-challenge` | mark | --pitch-fill | `#db2777` | **3.82** | 3.0 |
 | `app` light | `--plot-frame` | decoration | --pitch-fill | `rgba(96,96,96,0.85)` | **3.85** | 0.0 |
-| `app` light | `--pass-ok` | mark | --pitch-fill | `#12855a` | **3.85** | 3.0 |
 | `app` light | `--group-shooting` | mark | --ground | `#e63956` | **3.89** | 3.0 |
-| `app` light | `--shot-post` | mark | --pitch-fill | `#9a6b00` | **3.90** | 3.0 |
-| `app` light | `--peak-ring` | mark | --pitch-fill | `#9a6a1f` | **3.92** | 3.0 |
-| `app` light | `--layer-blocked` | mark | --ground | `#c2620a` | **3.92** | 3.0 |
 | `app` light | `--rank-mid` | mark | --ground | `#8d7c12` | **3.94** | 3.0 |
 | `app` light | `--rank-high` | mark | --ground | `#4b8a2a` | **3.98** | 3.0 |
-| `app` light | `--pass-fail` | mark | --pitch-fill | `#cc4038` | **4.00** | 3.0 |
-| `app` light | `--layer-neutral` | mark | --ground | `#707c86` | **4.02** | 3.0 |
 | `app` light | `--group-shooting` | mark | --surface-raised | `#e63956` | **4.06** | 3.0 |
-| `app` light | `--series-prog` | mark | --pitch-fill | `#1a6fd4` | **4.09** | 3.0 |
-| `app` light | `--layer-blocked` | mark | --surface-raised | `#c2620a` | **4.09** | 3.0 |
 | `app` light | `--rank-mid` | mark | --surface-raised | `#8d7c12` | **4.11** | 3.0 |
 | `app` light | `--rank-high` | mark | --surface-raised | `#4b8a2a` | **4.16** | 3.0 |
-| `app` light | `--layer-neutral` | mark | --surface-raised | `#707c86` | **4.20** | 3.0 |
 | `app` light | `--accent-base` | mark | --ground | `#EF0107` | **4.23** | 3.0 |
-| `app` light | `--layer-shot` | mark | --ground | `#d4357f` | **4.29** | 3.0 |
-| `app` light | `--action-interception` | mark | --pitch-fill | `#2563eb` | **4.29** | 3.0 |
-| `app` light | `--flow-arrow` | mark | --pitch-fill | `#2563eb` | **4.29** | 3.0 |
-| `app` light | `--pos-line-def` | mark | --pitch-fill | `#2563eb` | **4.29** | 3.0 |
 | `app` light | `--accent-solid` | mark | --ground | `#EC0107` | **4.33** | 3.0 |
 | `app` light | `--group-setpieces` | mark | --ground | `#b94d8c` | **4.39** | 3.0 |
 | `app` light | `--accent-base` | mark | --surface-raised | `#EF0107` | **4.42** | 3.0 |
-| `app` light | `--layer-through` | mark | --ground | `#7c5ce0` | **4.43** | 3.0 |
-| `app` light | `--shot-ok` | mark | --pitch-fill | `#0f7a52` | **4.44** | 3.0 |
-| `app` light | `--layer-shot` | mark | --surface-raised | `#d4357f` | **4.48** | 3.0 |
-| `app` light | `--series-fail` | mark | --pitch-fill | `#c92c2c` | **4.50** | 3.0 |
+| `app` light | `--layer-shot` | pitch mark | --pitch-fill | `#c32971` | **4.50** | 4.5 |
+| `app` light | `--layer-clearance` | pitch mark | --pitch-fill | `#2c68c3` | **4.50** | 4.5 |
+| `app` light | `--series-ok` | pitch mark | --pitch-fill | `#0f7951` | **4.50** | 4.5 |
 | `app` light | `--positive-ink` | text | --ground | `#12843c` | **4.51** | 4.5 |
+| `app` light | `--pass-fail` | pitch mark | --pitch-fill | `#c03931` | **4.51** | 4.5 |
+| `app` light | `--layer-quick` | pitch mark | --pitch-fill | `#187949` | **4.51** | 4.5 |
+| `app` light | `--series-carry` | pitch mark | --pitch-fill | `#886400` | **4.51** | 4.5 |
 | `app` light | `--pos-def-ink` | text | --pos-def-fill | `#195bea` | **4.51** | 4.5 |
+| `app` light | `--action-block` | pitch mark | --pitch-fill | `#85650e` | **4.51** | 4.5 |
+| `app` light | `--pos-line-gk` | pitch mark | --pitch-fill | `#85650e` | **4.51** | 4.5 |
+| `app` light | `--action-tackle` | pitch mark | --pitch-fill | `#d31212` | **4.51** | 4.5 |
+| `app` light | `--pos-line-fw` | pitch mark | --pitch-fill | `#d31212` | **4.51** | 4.5 |
+| `app` light | `--action-recovery` | pitch mark | --pitch-fill | `#117a37` | **4.52** | 4.5 |
+| `app` light | `--pos-line-mid` | pitch mark | --pitch-fill | `#117a37` | **4.52** | 4.5 |
 | `app` light | `--accent-solid` | mark | --surface-raised | `#EC0107` | **4.52** | 3.0 |
+| `app` light | `--marker-out` | pitch mark | --pitch-fill | `#0066d5` | **4.52** | 4.5 |
+| `app` light | `--xt-high` | pitch mark | --pitch-fill | `#ca2b00` | **4.52** | 4.5 |
 | `app` light | `--list-group-ink` | text | --ground | `#74726d` | **4.53** | 4.5 |
+| `app` light | `--layer-neutral` | pitch mark | --pitch-fill | `#606b73` | **4.53** | 4.5 |
+| `app` light | `--action-other` | pitch mark | --pitch-fill | `#616a79` | **4.54** | 4.5 |
+| `app` light | `--pos-line-sub` | pitch mark | --pitch-fill | `#616a79` | **4.54** | 4.5 |
+| `app` light | `--action-aerial` | pitch mark | --pitch-fill | `#06738d` | **4.54** | 4.5 |
+| `app` light | `--action-interception` | pitch mark | --pitch-fill | `#1e5eea` | **4.54** | 4.5 |
+| `app` light | `--flow-arrow` | pitch mark | --pitch-fill | `#1e5eea` | **4.54** | 4.5 |
+| `app` light | `--pos-line-def` | pitch mark | --pitch-fill | `#1e5eea` | **4.54** | 4.5 |
+| `app` light | `--marker-in` | pitch mark | --pitch-fill | `#8c611e` | **4.54** | 4.5 |
+| `app` light | `--series-prog` | pitch mark | --pitch-fill | `#1868c7` | **4.54** | 4.5 |
 | `app` light | `--error-ink` | text | --error-veil | `#c0392b` | **4.54** | 4.5 |
+| `app` light | `--peak-ring` | pitch mark | --pitch-fill | `#8c611c` | **4.54** | 4.5 |
+| `app` light | `--layer-blocked` | pitch mark | --pitch-fill | `#a55308` | **4.54** | 4.5 |
 | `app` light | `--gate-action-edge` | boundary | --gate-card | `rgba(226,184,119,.62)` | **4.54** | 3.0 |
-| `app` light | `--shot-blocked` | mark | --pitch-fill | `#7250d6` | **4.55** | 3.0 |
+| `app` light | `--xt-low` | decoration | --pitch-fill | `#88630d` | **4.55** | 0.0 |
+| `app` light | `--layer-through` | pitch mark | --pitch-fill | `#714edd` | **4.55** | 4.5 |
+| `app` light | `--shot-blocked` | pitch mark | --pitch-fill | `#7250d6` | **4.55** | 4.5 |
 | `app` light | `--negative-ink` | text | --ground | `#dc2626` | **4.55** | 4.5 |
+| `app` light | `--layer-save` | pitch mark | --pitch-fill | `#a73e9f` | **4.55** | 4.5 |
+| `app` light | `--action-challenge` | pitch mark | --pitch-fill | `#c6216b` | **4.55** | 4.5 |
 | `app` light | `--momentum-them` | mark | --ground | `#6b7280` | **4.56** | 3.0 |
-| `app` light | `--series-box` | mark | --pitch-fill | `#a82fbe` | **4.57** | 3.0 |
+| `app` light | `--pass-ok` | pitch mark | --pitch-fill | `#107851` | **4.56** | 4.5 |
+| `app` light | `--shot-ok` | pitch mark | --pitch-fill | `#0f7851` | **4.56** | 4.5 |
+| `app` light | `--pitch-line` | decoration | --pitch-fill | `#696969` | **4.56** | 0.0 |
+| `app` light | `--series-fail` | pitch mark | --pitch-fill | `#c72c2c` | **4.56** | 4.5 |
+| `app` light | `--shot-post` | pitch mark | --pitch-fill | `#8c6100` | **4.56** | 4.5 |
+| `app` light | `--layer-receipt` | pitch mark | --pitch-fill | `#0b7480` | **4.56** | 4.5 |
+| `app` light | `--pos-line-dm` | pitch mark | --pitch-fill | `#0a766c` | **4.57** | 4.5 |
+| `app` light | `--series-box` | pitch mark | --pitch-fill | `#a82fbe` | **4.57** | 4.5 |
 | `app` light | `--caution-ink` | text | --ground | `#986803` | **4.58** | 4.5 |
 | `app` light | `--group-setpieces` | mark | --surface-raised | `#b94d8c` | **4.59** | 3.0 |
+| `app` light | `--pos-line-am` | pitch mark | --pitch-fill | `#4b740c` | **4.59** | 4.5 |
 | `app` light | `--ink-on-accent` | text | --accent-solid | `#fff` | **4.59** | 4.5 |
-| `app` light | `--layer-clearance` | mark | --ground | `#2f6fd0` | **4.60** | 3.0 |
 | `app` light | `--pos-gk-ink` | text | --pos-gk-fill | `#886308` | **4.60** | 4.5 |
 | `app` light | `--pos-fwd-ink` | text | --pos-fwd-fill | `#cd1212` | **4.60** | 4.5 |
-| `app` light | `--shot-fail` | mark | --pitch-fill | `#bf3535` | **4.62** | 3.0 |
+| `app` light | `--shot-fail` | pitch mark | --pitch-fill | `#bf3535` | **4.62** | 4.5 |
 | `app` light | `--pos-mid-ink` | text | --pos-mid-fill | `#107837` | **4.62** | 4.5 |
-| `app` light | `--layer-through` | mark | --surface-raised | `#7c5ce0` | **4.63** | 3.0 |
+| `app` light | `--layer-challenge` | pitch mark | --pitch-fill | `#c0342a` | **4.63** | 4.5 |
 | `app` light | `--positive-ink` | text | --surface-raised | `#12843c` | **4.70** | 4.5 |
 | `app` light | `--list-group-ink` | text | --surface-raised | `#74726d` | **4.73** | 4.5 |
-| `app` light | `--action-clearance` | mark | --pitch-fill | `#7c3aed` | **4.73** | 3.0 |
-| `app` light | `--shot-goal` | mark | --pitch-fill | `#ad2ba6` | **4.75** | 3.0 |
+| `app` light | `--action-clearance` | pitch mark | --pitch-fill | `#7c3aed` | **4.73** | 4.5 |
+| `app` light | `--shot-goal` | pitch mark | --pitch-fill | `#ad2ba6` | **4.75** | 4.5 |
 | `app` light | `--negative-ink` | text | --surface-raised | `#dc2626` | **4.75** | 4.5 |
 | `app` light | `--momentum-them` | mark | --surface-raised | `#6b7280` | **4.76** | 3.0 |
 | `app` light | `--pitch-line-strong` | boundary | --pitch-fill | `#666` | **4.77** | 3.0 |
 | `app` light | `--caution-ink` | text | --surface-raised | `#986803` | **4.79** | 4.5 |
-| `app` light | `--layer-clearance` | mark | --surface-raised | `#2f6fd0` | **4.80** | 3.0 |
 | `app` light | `--rank-top` | mark | --ground | `#0e7d5c` | **4.82** | 3.0 |
 | `app` light | `--banner-team-ink` | text | --banner-team-fill | `#836000` | **4.85** | 4.5 |
 | `app` light | `--opponent` | mark | --ground | `#2563eb` | **4.87** | 3.0 |
@@ -210,23 +205,19 @@ None.
 | `app` light | `--banner-warn-ink` | text | --banner-warn-fill | `#b91c1c` | **5.08** | 4.5 |
 | `app` light | `--opponent` | mark | --surface-raised | `#2563eb` | **5.08** | 3.0 |
 | `app` light | `--style-axis-hi` | mark | --surface-raised | `#2563eb` | **5.08** | 3.0 |
-| `app` light | `--layer-save` | mark | --ground | `#a83fa0` | **5.09** | 3.0 |
 | `app` light | `--group-defending` | mark | --ground | `#6e55ce` | **5.13** | 3.0 |
 | `app` light | `--group-goalkeeping` | mark | --ground | `#5a6b7d` | **5.16** | 3.0 |
 | `app` light | `--group-aerial` | mark | --surface-raised | `#a63fb5` | **5.16** | 3.0 |
 | `app` light | `--state-negative` | mark | --surface-raised | `#c23b34` | **5.20** | 3.0 |
-| `app` light | `--layer-challenge` | mark | --ground | `#c0342a` | **5.25** | 3.0 |
 | `app` light | `--state-positive` | mark | --surface-raised | `#0f7a52` | **5.26** | 3.0 |
 | `app` light | `--signal-alt` | mark | --surface-raised | `#0f7777` | **5.26** | 3.0 |
 | `app` light | `--ink-quaternary` | text | --surface-raised | `#726a58` | **5.27** | 4.5 |
 | `app` light | `--series-link` | mark | --ground | `#2f6aa8` | **5.28** | 3.0 |
 | `app` light | `--ink-on-state` | text | --state-negative | `#fff` | **5.29** | 4.5 |
-| `app` light | `--layer-save` | mark | --surface-raised | `#a83fa0` | **5.32** | 3.0 |
 | `app` light | `--ink-on-state` | text | --state-positive | `#fff` | **5.35** | 4.5 |
 | `app` light | `--accent-muted` | mark | --ground | `#8a5e1a` | **5.35** | 3.0 |
 | `app` light | `--group-defending` | mark | --surface-raised | `#6e55ce` | **5.36** | 3.0 |
 | `app` light | `--group-goalkeeping` | mark | --surface-raised | `#5a6b7d` | **5.39** | 3.0 |
-| `app` light | `--layer-challenge` | mark | --surface-raised | `#c0342a` | **5.49** | 3.0 |
 | `app` light | `--series-link` | mark | --surface-raised | `#2f6aa8` | **5.51** | 3.0 |
 | `app` light | `--accent-muted` | mark | --surface-raised | `#8a5e1a` | **5.59** | 3.0 |
 | `app` light | `--pitch-text-soft` | text | --pitch-fill | `rgba(0,0,0,0.62)` | **5.83** | 4.5 |
@@ -260,7 +251,7 @@ None.
 | `app` light | `--label-on-fill` | text | --label-on-fill-halo | `#fff` | **18.58** | 4.5 |
 | `app` light | `--print-ink` | text | --print-paper | `#000` | **21.00** | 4.5 |
 
-### `app` dark — 213 measurements, 0 failing
+### `app` dark — 204 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -309,101 +300,92 @@ None.
 | `app` dark | `--gold-edge-hard` | decoration | --surface-raised | `rgba(226,184,119,.45)` | **2.91** | 0.0 |
 | `app` dark | `--gold-edge-hard` | decoration | --ground | `rgba(226,184,119,.45)` | **2.94** | 0.0 |
 | `app` dark | `--shape-node-ring` | decoration | --pitch-fill | `rgba(37,99,235,0.9)` | **3.05** | 0.0 |
-| `app` dark | `--layer-challenge` | mark | --surface-raised | `#c0342a` | **3.10** | 3.0 |
-| `app` dark | `--shot-goal` | mark | --pitch-fill | `#ad2ba6` | **3.14** | 3.0 |
 | `app` dark | `--gate-field-border` | boundary | --gate-card | `#586474` | **3.14** | 3.0 |
-| `app` dark | `--action-clearance` | mark | --pitch-fill | `#7c3aed` | **3.15** | 3.0 |
 | `app` dark | `--group-goalkeeping` | mark | --surface-raised | `#5a6b7d` | **3.15** | 3.0 |
 | `app` dark | `--group-defending` | mark | --surface-raised | `#6e55ce` | **3.17** | 3.0 |
-| `app` dark | `--layer-save` | mark | --surface-raised | `#a83fa0` | **3.19** | 3.0 |
-| `app` dark | `--shot-fail` | mark | --pitch-fill | `#bf3535` | **3.23** | 3.0 |
-| `app` dark | `--series-box` | mark | --pitch-fill | `#a82fbe` | **3.26** | 3.0 |
-| `app` dark | `--shot-blocked` | mark | --pitch-fill | `#7250d6` | **3.28** | 3.0 |
 | `app` dark | `--group-aerial` | mark | --surface-raised | `#a63fb5` | **3.29** | 3.0 |
-| `app` dark | `--series-fail` | mark | --pitch-fill | `#c92c2c` | **3.32** | 3.0 |
 | `app` dark | `--opponent` | mark | --surface-raised | `#2563eb` | **3.34** | 3.0 |
-| `app` dark | `--shot-ok` | mark | --pitch-fill | `#0f7a52` | **3.36** | 3.0 |
 | `app` dark | `--gate-focus-ring` | boundary | --gate-card | `rgba(226,184,119,.5)` | **3.36** | 3.0 |
-| `app` dark | `--layer-challenge` | mark | --ground | `#c0342a` | **3.36** | 3.0 |
 | `app` dark | `--group-goalkeeping` | mark | --ground | `#5a6b7d` | **3.43** | 3.0 |
 | `app` dark | `--group-defending` | mark | --ground | `#6e55ce` | **3.44** | 3.0 |
-| `app` dark | `--layer-save` | mark | --ground | `#a83fa0` | **3.47** | 3.0 |
-| `app` dark | `--action-interception` | mark | --pitch-fill | `#2563eb` | **3.47** | 3.0 |
-| `app` dark | `--flow-arrow` | mark | --pitch-fill | `#2563eb` | **3.47** | 3.0 |
-| `app` dark | `--pos-line-def` | mark | --pitch-fill | `#2563eb` | **3.47** | 3.0 |
 | `app` dark | `--pitch-line-strong` | boundary | --pitch-fill | `rgba(226,184,119,0.52)` | **3.49** | 3.0 |
-| `app` dark | `--layer-clearance` | mark | --surface-raised | `#2f6fd0` | **3.54** | 3.0 |
 | `app` dark | `--momentum-them` | mark | --surface-raised | `#6b7280` | **3.57** | 3.0 |
 | `app` dark | `--group-aerial` | mark | --ground | `#a63fb5` | **3.57** | 3.0 |
 | `app` dark | `--border-strong` | boundary | --surface-raised | `#667486` | **3.62** | 3.0 |
 | `app` dark | `--select-edge` | boundary | --surface-raised | `#667486` | **3.62** | 3.0 |
 | `app` dark | `--opponent` | mark | --ground | `#2563eb` | **3.63** | 3.0 |
-| `app` dark | `--series-prog` | mark | --pitch-fill | `#1a6fd4` | **3.65** | 3.0 |
-| `app` dark | `--layer-through` | mark | --surface-raised | `#7c5ce0` | **3.67** | 3.0 |
 | `app` dark | `--group-setpieces` | mark | --surface-raised | `#b94d8c` | **3.70** | 3.0 |
 | `app` dark | `--accent-solid` | mark | --surface-raised | `#EC0107` | **3.76** | 3.0 |
-| `app` dark | `--layer-shot` | mark | --surface-raised | `#d4357f` | **3.79** | 3.0 |
-| `app` dark | `--shot-post` | mark | --pitch-fill | `#9a6b00` | **3.83** | 3.0 |
 | `app` dark | `--accent-base` | mark | --surface-raised | `#EF0107` | **3.85** | 3.0 |
-| `app` dark | `--layer-clearance` | mark | --ground | `#2f6fd0` | **3.85** | 3.0 |
 | `app` dark | `--momentum-them` | mark | --ground | `#6b7280` | **3.88** | 3.0 |
-| `app` dark | `--action-challenge` | mark | --pitch-fill | `#db2777` | **3.91** | 3.0 |
-| `app` dark | `--xt-high` | mark | --pitch-fill | `#e03000` | **3.93** | 3.0 |
 | `app` dark | `--border-strong` | boundary | --ground | `#667486` | **3.94** | 3.0 |
 | `app` dark | `--select-edge` | boundary | --ground | `#667486` | **3.94** | 3.0 |
-| `app` dark | `--layer-through` | mark | --ground | `#7c5ce0` | **3.99** | 3.0 |
 | `app` dark | `--group-setpieces` | mark | --ground | `#b94d8c` | **4.02** | 3.0 |
-| `app` dark | `--layer-neutral` | mark | --surface-raised | `#707c86` | **4.04** | 3.0 |
-| `app` dark | `--series-carry` | mark | --pitch-fill | `#9a7100` | **4.05** | 3.0 |
 | `app` dark | `--accent-solid` | mark | --ground | `#EC0107` | **4.09** | 3.0 |
-| `app` dark | `--layer-shot` | mark | --ground | `#d4357f` | **4.12** | 3.0 |
-| `app` dark | `--layer-blocked` | mark | --surface-raised | `#c2620a` | **4.15** | 3.0 |
 | `app` dark | `--accent-base` | mark | --ground | `#EF0107` | **4.18** | 3.0 |
 | `app` dark | `--group-shooting` | mark | --surface-raised | `#e63956` | **4.18** | 3.0 |
-| `app` dark | `--layer-neutral` | mark | --ground | `#707c86` | **4.39** | 3.0 |
 | `app` dark | `--group-creation` | mark | --surface-raised | `#00918c` | **4.46** | 3.0 |
 | `app` dark | `--group-passing` | mark | --surface-raised | `#2f80ed` | **4.47** | 3.0 |
-| `app` dark | `--layer-receipt` | mark | --surface-raised | `#0e8f9e` | **4.47** | 3.0 |
-| `app` dark | `--layer-blocked` | mark | --ground | `#c2620a` | **4.51** | 3.0 |
+| `app` dark | `--layer-save` | pitch mark | --pitch-fill | `#c056b8` | **4.50** | 4.5 |
+| `app` dark | `--series-carry` | pitch mark | --pitch-fill | `#a47800` | **4.50** | 4.5 |
+| `app` dark | `--series-prog` | pitch mark | --pitch-fill | `#2a7fe5` | **4.50** | 4.5 |
+| `app` dark | `--xt-high` | pitch mark | --pitch-fill | `#f23400` | **4.50** | 4.5 |
+| `app` dark | `--layer-neutral` | pitch mark | --pitch-fill | `#75818b` | **4.51** | 4.5 |
+| `app` dark | `--action-interception` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
+| `app` dark | `--flow-arrow` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
+| `app` dark | `--pos-line-def` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
+| `app` dark | `--shot-goal` | pitch mark | --pitch-fill | `#d041c8` | **4.51** | 4.5 |
+| `app` dark | `--series-box` | pitch mark | --pitch-fill | `#bf4fd3` | **4.51** | 4.5 |
+| `app` dark | `--action-clearance` | pitch mark | --pitch-fill | `#9661f1` | **4.51** | 4.5 |
 | `app` dark | `--pos-fwd-ink` | text | --pos-fwd-fill | `#ef4646` | **4.53** | 4.5 |
+| `app` dark | `--shot-post` | pitch mark | --pitch-fill | `#aa7600` | **4.53** | 4.5 |
 | `app` dark | `--pos-def-ink` | text | --pos-def-fill | `#4d7fef` | **4.54** | 4.5 |
 | `app` dark | `--group-shooting` | mark | --ground | `#e63956` | **4.54** | 3.0 |
+| `app` dark | `--series-fail` | pitch mark | --pitch-fill | `#d95353` | **4.54** | 4.5 |
 | `app` dark | `--banner-warn-ink` | text | --banner-warn-fill | `#e44d4d` | **4.54** | 4.5 |
+| `app` dark | `--shot-ok` | pitch mark | --pitch-fill | `#129262` | **4.54** | 4.5 |
 | `app` dark | `--gate-action-edge` | boundary | --gate-card | `rgba(226,184,119,.62)` | **4.54** | 3.0 |
 | `app` dark | `--negative-ink` | text | --surface-raised | `#e35050` | **4.55** | 4.5 |
+| `app` dark | `--layer-challenge` | pitch mark | --pitch-fill | `#d8554b` | **4.55** | 4.5 |
+| `app` dark | `--shot-fail` | pitch mark | --pitch-fill | `#d15a5a` | **4.55** | 4.5 |
+| `app` dark | `--layer-blocked` | pitch mark | --pitch-fill | `#c8650a` | **4.55** | 4.5 |
 | `app` dark | `--error-ink` | text | --error-veil | `#d6574a` | **4.55** | 4.5 |
+| `app` dark | `--action-challenge` | pitch mark | --pitch-fill | `#e04389` | **4.56** | 4.5 |
+| `app` dark | `--layer-clearance` | pitch mark | --pitch-fill | `#4880d6` | **4.56** | 4.5 |
 | `app` dark | `--group-discipline` | mark | --surface-raised | `#e1561c` | **4.56** | 3.0 |
 | `app` dark | `--pos-gk-ink` | text | --pos-gk-fill | `#b8860b` | **4.56** | 4.5 |
+| `app` dark | `--layer-shot` | pitch mark | --pitch-fill | `#d94b8d` | **4.57** | 4.5 |
+| `app` dark | `--shot-blocked` | pitch mark | --pitch-fill | `#8a6edd` | **4.58** | 4.5 |
 | `app` dark | `--ink-on-accent` | text | --accent-solid | `#fff` | **4.59** | 4.5 |
-| `app` dark | `--action-tackle` | mark | --pitch-fill | `#ef4444` | **4.77** | 3.0 |
-| `app` dark | `--pos-line-fw` | mark | --pitch-fill | `#ef4444` | **4.77** | 3.0 |
-| `app` dark | `--pos-line-dm` | mark | --pitch-fill | `#0d9488` | **4.80** | 3.0 |
+| `app` dark | `--layer-through` | pitch mark | --pitch-fill | `#8a6de3` | **4.60** | 4.5 |
+| `app` dark | `--layer-receipt` | pitch mark | --pitch-fill | `#0e8f9e` | **4.65** | 4.5 |
+| `app` dark | `--action-tackle` | pitch mark | --pitch-fill | `#ef4444` | **4.77** | 4.5 |
+| `app` dark | `--pos-line-fw` | pitch mark | --pitch-fill | `#ef4444` | **4.77** | 4.5 |
+| `app` dark | `--pos-line-dm` | pitch mark | --pitch-fill | `#0d9488` | **4.80** | 4.5 |
 | `app` dark | `--banner-team-ink` | text | --banner-team-fill | `#bd8a00` | **4.81** | 4.5 |
 | `app` dark | `--group-creation` | mark | --ground | `#00918c` | **4.85** | 3.0 |
 | `app` dark | `--group-passing` | mark | --ground | `#2f80ed` | **4.85** | 3.0 |
-| `app` dark | `--layer-receipt` | mark | --ground | `#0e8f9e` | **4.86** | 3.0 |
-| `app` dark | `--action-aerial` | mark | --pitch-fill | `#0891b2` | **4.88** | 3.0 |
-| `app` dark | `--action-block` | mark | --pitch-fill | `#a87f12` | **4.88** | 3.0 |
-| `app` dark | `--pos-line-gk` | mark | --pitch-fill | `#a87f12` | **4.88** | 3.0 |
-| `app` dark | `--series-ok` | mark | --pitch-fill | `#139866` | **4.88** | 3.0 |
+| `app` dark | `--action-aerial` | pitch mark | --pitch-fill | `#0891b2` | **4.88** | 4.5 |
+| `app` dark | `--action-block` | pitch mark | --pitch-fill | `#a87f12` | **4.88** | 4.5 |
+| `app` dark | `--pos-line-gk` | pitch mark | --pitch-fill | `#a87f12` | **4.88** | 4.5 |
+| `app` dark | `--series-ok` | pitch mark | --pitch-fill | `#139866` | **4.88** | 4.5 |
 | `app` dark | `--group-tempo` | mark | --surface-raised | `#0d94b8` | **4.89** | 3.0 |
-| `app` dark | `--action-recovery` | mark | --pitch-fill | `#159a46` | **4.91** | 3.0 |
-| `app` dark | `--pos-line-mid` | mark | --pitch-fill | `#159a46` | **4.91** | 3.0 |
+| `app` dark | `--action-recovery` | pitch mark | --pitch-fill | `#159a46` | **4.91** | 4.5 |
+| `app` dark | `--pos-line-mid` | pitch mark | --pitch-fill | `#159a46` | **4.91** | 4.5 |
 | `app` dark | `--negative-ink` | text | --ground | `#e35050` | **4.94** | 4.5 |
 | `app` dark | `--group-discipline` | mark | --ground | `#e1561c` | **4.96** | 3.0 |
 | `app` dark | `--pos-mid-ink` | text | --pos-mid-fill | `#16a34a` | **4.96** | 4.5 |
-| `app` dark | `--action-other` | mark | --pitch-fill | `#7e8797` | **4.96** | 3.0 |
-| `app` dark | `--pos-line-sub` | mark | --pitch-fill | `#7e8797` | **4.96** | 3.0 |
-| `app` dark | `--pos-line-am` | mark | --pitch-fill | `#609510` | **4.96** | 3.0 |
-| `app` dark | `--layer-quick` | mark | --surface-raised | `#1f9d5f` | **4.97** | 3.0 |
+| `app` dark | `--action-other` | pitch mark | --pitch-fill | `#7e8797` | **4.96** | 4.5 |
+| `app` dark | `--pos-line-sub` | pitch mark | --pitch-fill | `#7e8797` | **4.96** | 4.5 |
+| `app` dark | `--pos-line-am` | pitch mark | --pitch-fill | `#609510` | **4.96** | 4.5 |
 | `app` dark | `--group-halfspaces` | mark | --surface-raised | `#3f9c48` | **4.98** | 3.0 |
 | `app` dark | `--group-carrying` | mark | --surface-raised | `#b28407` | **5.09** | 3.0 |
 | `app` dark | `--ink-quaternary` | text | --surface-raised | `#808d9b` | **5.10** | 4.5 |
+| `app` dark | `--layer-quick` | pitch mark | --pitch-fill | `#1f9d5f` | **5.17** | 4.5 |
 | `app` dark | `--timeline-sel-edge` | boundary | --surface-raised | `#ff4a42` | **5.19** | 3.0 |
 | `app` dark | `--pitch-text-soft` | text | --pitch-fill | `rgba(182,194,212,0.68)` | **5.23** | 4.5 |
 | `app` dark | `--positive-ink` | text | --surface-raised | `#16a34a` | **5.24** | 4.5 |
 | `app` dark | `--group-tempo` | mark | --ground | `#0d94b8` | **5.31** | 3.0 |
-| `app` dark | `--layer-quick` | mark | --ground | `#1f9d5f` | **5.40** | 3.0 |
 | `app` dark | `--group-halfspaces` | mark | --ground | `#3f9c48` | **5.41** | 3.0 |
 | `app` dark | `--group-holdup` | mark | --surface-raised | `#d97706` | **5.42** | 3.0 |
 | `app` dark | `--group-carrying` | mark | --ground | `#b28407` | **5.54** | 3.0 |
@@ -425,12 +407,12 @@ None.
 | `app` dark | `--caution-ink` | text | --ground | `#ca8a04` | **6.39** | 4.5 |
 | `app` dark | `--ink-on-state` | text | --state-negative | `#0d0f14` | **6.41** | 4.5 |
 | `app` dark | `--ink-tertiary` | text | --ground | `#8b98ab` | **6.41** | 4.5 |
-| `app` dark | `--pass-fail` | mark | --pitch-fill | `#ff6b63` | **6.44** | 3.0 |
+| `app` dark | `--pass-fail` | pitch mark | --pitch-fill | `#ff6b63` | **6.44** | 4.5 |
 | `app` dark | `--list-group-ink` | text | --ground | `#9a9894` | **6.52** | 4.5 |
 | `app` dark | `--style-axis-hi` | mark | --surface-raised | `#60a5fa` | **6.79** | 3.0 |
 | `app` dark | `--rank-bottom` | mark | --ground | `#ff6f6f` | **6.93** | 3.0 |
 | `app` dark | `--series-link` | mark | --surface-raised | `#5aa9ff` | **7.03** | 3.0 |
-| `app` dark | `--marker-out` | mark | --pitch-fill | `#5aa9ff` | **7.31** | 3.0 |
+| `app` dark | `--marker-out` | pitch mark | --pitch-fill | `#5aa9ff` | **7.31** | 4.5 |
 | `app` dark | `--style-axis-hi` | mark | --ground | `#60a5fa` | **7.38** | 3.0 |
 | `app` dark | `--series-link` | mark | --ground | `#5aa9ff` | **7.64** | 3.0 |
 | `app` dark | `--xt-low` | decoration | --pitch-fill | `#dca014` | **7.77** | 0.0 |
@@ -450,12 +432,12 @@ None.
 | `app` dark | `--rank-low` | mark | --ground | `#ffa347` | **9.45** | 3.0 |
 | `app` dark | `--ink-secondary` | text | --surface-raised | `#b6c2d4` | **9.58** | 4.5 |
 | `app` dark | `--legend-heat-high` | mark | --pitch-fill | `rgb(226,184,119)` | **9.71** | 3.0 |
-| `app` dark | `--marker-in` | mark | --pitch-fill | `#e2b877` | **9.71** | 3.0 |
-| `app` dark | `--peak-ring` | mark | --pitch-fill | `#e2b877` | **9.71** | 3.0 |
+| `app` dark | `--marker-in` | pitch mark | --pitch-fill | `#e2b877` | **9.71** | 4.5 |
+| `app` dark | `--peak-ring` | pitch mark | --pitch-fill | `#e2b877` | **9.71** | 4.5 |
 | `app` dark | `--state-positive` | mark | --surface-raised | `#3ddc97` | **9.77** | 3.0 |
 | `app` dark | `--accent-muted` | mark | --ground | `#e2b877` | **10.15** | 3.0 |
 | `app` dark | `--heat-legend-high` | mark | --ground | `rgb(226,184,119)` | **10.15** | 3.0 |
-| `app` dark | `--pass-ok` | mark | --pitch-fill | `#3ddc97` | **10.16** | 3.0 |
+| `app` dark | `--pass-ok` | pitch mark | --pitch-fill | `#3ddc97` | **10.16** | 4.5 |
 | `app` dark | `--gate-mark` | text | --gate-card | `#e2b877` | **10.23** | 4.5 |
 | `app` dark | `--style-axis-low` | mark | --surface-raised | `#fbbf24` | **10.34** | 3.0 |
 | `app` dark | `--plot-node-ring` | decoration | --pitch-fill | `rgba(255,255,255,0.75)` | **10.39** | 0.0 |

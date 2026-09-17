@@ -24,20 +24,20 @@ diverge them on purpose. A zero here is that, showing up as arithmetic.
 
 | set | scope | closest pair | ΔE00 |
 |---|---|---|---|
-| match.html defensive actions | `app` light | `--action-clearance` / `--action-interception` | 15.1 |
-| match.html defensive actions | `app` dark | `--action-clearance` / `--action-interception` | 15.1 |
-| match.html position lines | `app` light | `--pos-line-am` / `--pos-line-mid` | 11.5 |
+| match.html defensive actions | `app` light | `--action-clearance` / `--action-interception` | 14.2 |
+| match.html defensive actions | `app` dark | `--action-clearance` / `--action-interception` | 16.5 |
+| match.html position lines | `app` light | `--pos-line-am` / `--pos-line-mid` | 10.7 |
 | match.html position lines | `app` dark | `--pos-line-am` / `--pos-line-mid` | 11.5 |
 | match.html shot outcomes | `app` light | `--shot-blocked` / `--shot-goal` | 15.6 |
-| match.html shot outcomes | `app` dark | `--shot-blocked` / `--shot-goal` | 15.6 |
+| match.html shot outcomes | `app` dark | `--shot-blocked` / `--shot-goal` | 16.2 |
 | match.html position badges | `app` light | `--pos-fwd-ink` / `--pos-gk-ink` | 31.1 |
 | match.html position badges | `app` dark | `--pos-fwd-ink` / `--pos-gk-ink` | 35.7 |
 | players.html metric groups | `app` light | `--group-aerial` / `--group-setpieces` | 11.9 |
 | players.html metric groups | `app` dark | `--group-aerial` / `--group-setpieces` | 11.9 |
-| players.html evidence layers | `app` light | `--layer-save` / `--layer-shot` | 13.3 |
-| players.html evidence layers | `app` dark | `--layer-save` / `--layer-shot` | 13.3 |
-| pitch layer series (PAL / TPAL) | `app` light | `--series-neutral` / `--series-prog` | 11.7 |
-| pitch layer series (PAL / TPAL) | `app` dark | `--series-neutral` / `--series-prog` | 11.7 |
+| players.html evidence layers | `app` light | `--layer-save` / `--layer-shot` | 12.7 |
+| players.html evidence layers | `app` dark | `--layer-save` / `--layer-shot` | 11.4 |
+| pitch layer series (PAL / TPAL) | `app` light | `--series-alt` / `--series-box` | 12.2 |
+| pitch layer series (PAL / TPAL) | `app` dark | `--series-alt` / `--series-box` | 12.4 |
 | percentile ramp | `app` light | `--rank-high` / `--rank-top` | 15.9 |
 | percentile ramp | `app` dark | `--rank-high` / `--rank-top` | 19.3 |
 | W/D/L result inks | `app` light | `--caution-ink` / `--negative-ink` | 30.4 |

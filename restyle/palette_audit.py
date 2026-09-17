@@ -94,6 +94,38 @@ DECORATION = ("--border-hairline", "--plot-grid", "--plot-guide", "--grid-line",
 BOUNDARY = ("--border-strong", "--select-edge", "--timeline-sel-edge",
             "--pitch-line-strong", "--gate-field-border", "--gate-action-edge",
             "--gate-focus-ring")
+# THIN MARKS ON THE PITCH: 4.5:1, not 3:1.
+#
+# These passed the audit at 3:1 and were still hard to see on the cream pitch,
+# which is the interesting part -- the audit was right and the THRESHOLD was
+# wrong for this case. WCAG 1.4.11's 3:1 is written for "graphical objects"
+# meaning solid shapes at a reasonable size. Nothing here is that. The pitch
+# plots draw in a 0-100 viewBox, so a stroke-width of 0.32 and a dot of r=0.4
+# are a hairline and a speck once the SVG is laid out; --layer-through is a
+# dashed 0.4 line. At that size 3:1 is nowhere near enough, and the standard
+# says as much: 1.4.11 is explicitly about objects "required to understand the
+# content", not about how thin you may draw them.
+#
+# So this is a category rather than a one-off nudge on a few values, and it is
+# DATA marks only. A zone edge or a node ring is thin too, but it pairs with a
+# fill that identifies the thing, which is why those stayed decoration in Phase
+# 3. The test is the same one used there: is this the only thing carrying the
+# information, and here also, is it drawn thin enough that 3:1 cannot carry it.
+PITCH_MARK_PREFIX = (
+    # the pass-arrow palettes, drawn as 0.2-0.65 strokes
+    "--series-ok", "--series-fail", "--series-prog", "--series-carry",
+    "--series-box", "--series-alt", "--series-cool", "--series-warm",
+    "--series-neutral", "--pass-ok", "--pass-fail",
+    # the evidence layers, drawn as thin dashed lines and r=0.4 dots
+    "--layer-",
+    # match.html's three categorical pitch palettes
+    "--action-", "--pos-line-", "--shot-",
+    # single marks on the pitch
+    "--marker-", "--xt-", "--flow-arrow", "--peak-ring",
+    # the keylines the pitch itself is drawn with
+    "--pitch-line",
+)
+
 # Data marks: read as objects, so 3:1, same as a boundary.
 MARK_PREFIX = ("--series-", "--group-", "--layer-", "--rank-", "--action-",
                "--pos-line-", "--shot-", "--state-", "--style-axis-",
@@ -129,6 +161,8 @@ def category(name: str) -> str:
         return "decoration"
     if name in BOUNDARY:
         return "boundary"
+    if any(name.startswith(p) for p in PITCH_MARK_PREFIX):
+        return "pitch mark"
     if any(name.startswith(p) for p in GROUND_PREFIX):
         return "ground"
     if any(name.startswith(p) for p in MARK_PREFIX):
@@ -169,6 +203,7 @@ GROUND_FOR = [
     # everything drawn onto the pitch is measured on the pitch
     ("--pitch-", ["--pitch-fill"]),
     ("--plot-", ["--pitch-fill"]),
+    ("--layer-", ["--pitch-fill"]),
     ("--legend-", ["--legend-pill", "--pitch-fill"]),
     ("--peak-ring", ["--pitch-fill"]),
     ("--zone-", ["--pitch-fill"]),
@@ -479,7 +514,10 @@ def main() -> int:
                     grounds = default_grounds
                 # Decoration is measured and reported but never failed: it has
                 # no threshold to miss, because nothing depends on seeing it.
-                need = 4.5 if cat == "text" else (0.0 if cat == "decoration" else 3.0)
+                # A pitch mark wants what text wants, and for the same
+                # reason: it is small, and small things need more separation.
+                need = (4.5 if cat in ("text", "pitch mark")
+                        else (0.0 if cat == "decoration" else 3.0))
                 for gname, g in grounds:
                     # A TRANSLUCENT GROUND IS COMPOSITED OVER THE FAMILY'S OWN
                     # GROUND, not over white. The position badges are the case

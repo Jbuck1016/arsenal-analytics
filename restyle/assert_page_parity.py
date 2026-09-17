@@ -39,6 +39,47 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import assert_tokens as A  # noqa: E402
 
+# INTENDED CHANGES. A change that alters what a page paints is declared here,
+# by token, with the reason. The gate reports it and passes; anything NOT
+# declared still fails, which is the case this gate exists for.
+#
+# The alternative designs are both worse. Failing permanently is what this gate
+# did through Phase 3, and a red light nobody reads is not a signal. Moving BASE
+# on every change means the gate only ever compares a commit with itself. This
+# keeps BASE at the last commit whose rendering a human actually reviewed and
+# makes every divergence since then explicit and attributable.
+#
+# Clearing this list is part of accepting a review round: once the rendering has
+# been looked at, BASE moves to that commit and the entries go.
+INTENDED = {
+    # Review round 1, item 1: thin marks on the pitch move from 3:1 to 4.5:1
+    # against the pitch they sit on. No value can meet that on both pitches --
+    # the luminance windows do not overlap -- so each is keyed per theme.
+    "--series-ok", "--series-fail", "--series-prog", "--series-carry",
+    "--series-box", "--series-alt", "--series-cool", "--series-warm",
+    "--series-neutral", "--pass-ok", "--pass-fail",
+    "--layer-through", "--layer-receipt", "--layer-shot", "--layer-neutral",
+    "--layer-quick", "--layer-blocked", "--layer-clearance", "--layer-challenge",
+    "--layer-save",
+    "--action-tackle", "--action-interception", "--action-clearance",
+    "--action-recovery", "--action-block", "--action-aerial",
+    "--action-challenge", "--action-other",
+    "--pos-line-gk", "--pos-line-def", "--pos-line-dm", "--pos-line-mid",
+    "--pos-line-am", "--pos-line-fw", "--pos-line-sub",
+    "--shot-ok", "--shot-fail", "--shot-goal", "--shot-blocked", "--shot-post",
+    "--marker-in", "--marker-out", "--xt-low", "--xt-high", "--flow-arrow",
+    "--peak-ring", "--pitch-line", "--pitch-line-strong",
+    # Aliases the pages read these through.
+    "--pitch", "--gold",
+}
+
+
+def _declared(expr: str) -> bool:
+    """Does this var() expression read a token whose change was declared?"""
+    import re as _re
+    return any(t in INTENDED for t in _re.findall(r"--[\w-]+", expr))
+
+
 # THE BASELINE MOVED WITH PHASE 3. It was c855423, the last commit before the
 # restyle, and the gate asserted "nothing renders differently" -- which Phase 3
 # lifted on purpose, so from ad95b63 onwards that comparison could only fail and
@@ -183,7 +224,7 @@ def check(page: str) -> list[str]:
     # new role names -- --ground, --ink-primary -- against the branch point
     # asks what they resolved to before they existed, and answers None every
     # time; they are the mechanism, not the surface.
-    bad = []
+    bad, declared = [], []
     for theme in ("light", "dark"):
         for expr in sorted(set(var_sites(was_src))):
             b = paint(expr, A.STATE[(fam_was, theme)], was)
@@ -191,7 +232,8 @@ def check(page: str) -> list[str]:
             if b is None and a is None:
                 continue
             if b is None or a is None or A.norm(b) != A.norm(a):
-                bad.append(f"{page} {theme:5} {expr:44} painted {b!r}, now {a!r}")
+                line = f"{page} {theme:5} {expr:44} painted {b!r}, now {a!r}"
+                (declared if _declared(expr) else bad).append(line)
         # Expressions only the new source paints still have one thing to prove:
         # that they evaluate at all. An unresolved var() with no fallback
         # invalidates the whole declaration, so a typo'd role name paints
@@ -200,7 +242,7 @@ def check(page: str) -> list[str]:
             if paint(expr, A.STATE[(fam_now, theme)], now) is None:
                 bad.append(f"{page} {theme:5} {expr:44} evaluates to nothing; "
                            f"the declaration using it is invalid")
-    return bad
+    return bad, declared
 
 
 def main() -> int:
@@ -216,11 +258,15 @@ def main() -> int:
                  for p in sorted((A.ROOT / "dashboard").glob("*.html"))
                  if f"dashboard/{p.name}" in A.FAMILY]
 
-    failures = []
+    failures, declared = [], []
     for page in pages:
-        failures += check(page)
+        f, d = check(page)
+        failures += f
+        declared += d
 
     print(f"{len(pages)} page(s) checked for paint parity with {BASE}")
+    if declared:
+        print(f"{len(declared)} declared change(s), see INTENDED in this file")
     if failures:
         print(f"\n{len(failures)} TOKENS CHANGED VALUE:")
         for x in failures[:80]:

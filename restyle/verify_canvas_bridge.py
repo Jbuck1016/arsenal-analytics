@@ -49,29 +49,46 @@ PAGE = pathlib.Path(__file__).resolve().parent.parent / "dashboard" / "match.htm
 # moved to restyle/contrast.md and restyle/separability.md, which measure the
 # values rather than remembering them.
 JS_EXPECT = {
-    # theme-independent: the same object in light and dark
+    # WHAT IS STILL THEME-INDEPENDENT, AND WHY MOST OF IT NO LONGER IS.
+    # Every one of these palettes paints a thin stroke or a small dot on the
+    # pitch, and the review round holds those to 4.5:1 against the pitch they
+    # sit on rather than 3:1. No single value can meet that on both pitches:
+    # clearing 4.5:1 on #f0ead6 needs a relative luminance at or under 0.1438
+    # and clearing it on #111722 needs at least 0.2131, and the two windows do
+    # not overlap. So the categorical pitch palettes are keyed per theme.
     "both": {
-        "defColors": {"Tackle": "#ef4444", "Interception": "#2563eb",
-                      "Clearance": "#7c3aed", "BallRecovery": "#159a46",
-                      "BlockedPass": "#a87f12", "Aerial": "#0891b2",
-                      "Challenge": "#db2777"},
-        "lineColorsSub": {"GK": "#a87f12", "DC": "#2563eb", "DL": "#2563eb",
-                          "DR": "#2563eb", "DMC": "#0d9488", "MC": "#159a46",
-                          "ML": "#159a46", "MR": "#159a46", "AMC": "#609510",
-                          "AML": "#609510", "AMR": "#609510", "FW": "#ef4444",
-                          "FWL": "#ef4444", "FWR": "#ef4444", "Sub": "#7e8797"},
+        # --team-all is a pseudo-team swatch in the control rail rather than a
+        # mark on the pitch, so it keeps one value.
         "teamAll": {"color": "#858fb1", "colorDim": "rgba(139,149,181,0.10)",
                     "colorGlow": "rgba(139,149,181,0.24)",
                     "colorBright": "#858fb1"},
-        # THE SHOT PALETTE IS ONE SET NOW, NOT TWO. It used to hold a bright
-        # per-theme set in dark and a darker one in light; the five outcomes
-        # are single values that clear 3:1 on BOTH pitches, so the export case
-        # and the dark case want the same thing as light.
-        "shot": {"goal": "#ad2ba6", "ok": "#0f7a52", "fail": "#bf3535",
-                 "blocked": "#7250d6", "post": "#9a6b00"},
     },
-    "dark": {},
-    "light": {},
+    "dark": {
+        "defColors": {"Tackle": "#ef4444", "Interception": "#457aee",
+                      "Clearance": "#9661f1", "BallRecovery": "#159a46",
+                      "BlockedPass": "#a87f12", "Aerial": "#0891b2",
+                      "Challenge": "#e04389"},
+        "lineColorsSub": {"GK": "#a87f12", "DC": "#457aee", "DL": "#457aee",
+                          "DR": "#457aee", "DMC": "#0d9488", "MC": "#159a46",
+                          "ML": "#159a46", "MR": "#159a46", "AMC": "#609510",
+                          "AML": "#609510", "AMR": "#609510", "FW": "#ef4444",
+                          "FWL": "#ef4444", "FWR": "#ef4444", "Sub": "#7e8797"},
+        "shot": {"goal": "#d041c8", "ok": "#129262", "fail": "#d15a5a",
+                 "blocked": "#8a6edd", "post": "#aa7600"},
+    },
+    "light": {
+        "defColors": {"Tackle": "#d31212", "Interception": "#1e5eea",
+                      "Clearance": "#7c3aed", "BallRecovery": "#117a37",
+                      "BlockedPass": "#85650e", "Aerial": "#06738d",
+                      "Challenge": "#c6216b"},
+        "lineColorsSub": {"GK": "#85650e", "DC": "#1e5eea", "DL": "#1e5eea",
+                          "DR": "#1e5eea", "DMC": "#0a766c", "MC": "#117a37",
+                          "ML": "#117a37", "MR": "#117a37", "AMC": "#4b740c",
+                          "AML": "#4b740c", "AMR": "#4b740c", "FW": "#d31212",
+                          "FWL": "#d31212", "FWR": "#d31212", "Sub": "#616a79"},
+        "shot": {"goal": "#ad2ba6", "ok": "#0f7851", "fail": "#bf3535",
+                 "blocked": "#7250d6", "post": "#8c6100"},
+    },
 }
 
 # The inline paints, token by token.
@@ -98,11 +115,9 @@ PAINT_BOTH = {
     "--shape-in-edge": "rgba(226,184,119,.40)",
     "--shape-shift-line": "rgba(182,194,212,.27)",
     "--shape-shift-head": "rgba(226,184,119,.62)",
-    "--flow-arrow": "#2563eb",
     "--flow-node": "rgba(14,18,25,.84)",
     "--band-a": "rgba(90,169,255,.018)",
     "--band-b": "rgba(226,184,119,.018)",
-    "--xt-high": "#e03000",
     "--bar-track": "rgba(255,255,255,0.08)",
     "--timeline-sel-fill": "rgba(239,1,7,0.14)",
     "--momentum-them": "#6b7280",
@@ -120,6 +135,8 @@ PAINT_BOTH = {
 # ground -- a different colour in each theme, which is why one ink could not
 # serve both.
 PAINT_LIGHT = {
+    "--xt-high": "#ca2b00",
+    "--flow-arrow": "#1e5eea",
     "--plot-guide": "rgba(0,0,0,0.18)",
     "--plot-line": "rgba(0,0,0,0.15)",
     "--plot-shadow": "rgba(0,0,0,0.18)",
@@ -136,16 +153,18 @@ PAINT_LIGHT = {
     "--legend-muted-ink": "#454133",
     "--legend-heat-low": "rgb(150,176,168)",
     "--legend-heat-high": "rgb(150,26,22)",
-    "--peak-ring": "#9a6a1f",
-    "--marker-in": "#b17a26",
-    "--marker-out": "#1384ff",
-    "--xt-low": "#ad7e10",
+    "--peak-ring": "#8c611c",
+    "--marker-in": "#8c611e",
+    "--marker-out": "#0066d5",
+    "--xt-low": "#88630d",
     "--timeline-sel-edge": "#c10005",
     "--positive-ink": "#12843c",
     "--caution-ink": "#986803",
     "--negative-ink": "#dc2626",
 }
 PAINT_DARK = {
+    "--xt-high": "#f23400",
+    "--flow-arrow": "#457aee",
     "--plot-guide": "rgba(214,224,240,0.26)",
     "--plot-line": "rgba(214,224,240,0.24)",
     # deepens rather than lightens: a shadow on a dark ground is still a shadow
@@ -190,10 +209,10 @@ EXPECT = {
              "text": "rgba(242,245,250,0.90)", "textSoft": "rgba(182,194,212,0.68)",
              "chipBg": "rgba(14,18,25,0.92)", "chipText": "#f2f5fa",
              "passOk": "#3ddc97", "passFail": "#ff6b63"},
-    "light": {"pitch": "#f0ead6", "line": "#888", "lineStrong": "#666",
+    "light": {"pitch": "#f0ead6", "line": "#696969", "lineStrong": "#666",
               "band": "rgba(0,0,0,0.012)", "text": "#333",
               "textSoft": "rgba(0,0,0,0.62)", "chipBg": "rgba(25,28,34,0.90)",
-              "chipText": "#fff", "passOk": "#12855a", "passFail": "#cc4038"},
+              "chipText": "#fff", "passOk": "#107851", "passFail": "#c03931"},
 }
 
 PROBE = """(PAINT_NAMES) => {
@@ -305,7 +324,7 @@ def main() -> int:
     # And the export case again. The shot palette used to be the one JS table
     # with two themes, which is why this check exists; it is one set now, so
     # the export case wants what both themes want.
-    for k, v in JS_EXPECT["both"]["shot"].items():
+    for k, v in JS_EXPECT["light"]["shot"].items():
         checked_js += 1
         if got["jsExportWhileDark"]["shot"].get(k) != v:
             bad.append(f"export case: shot {k} is "

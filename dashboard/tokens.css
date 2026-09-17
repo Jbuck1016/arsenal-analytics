@@ -208,15 +208,15 @@ html:not(.dark){
      happen to have been given three hues between them. Separate names now
      cost nothing, keep the values verbatim, and let Phase 3 diverge or merge
      them on purpose rather than inheriting the collision. */
-  --layer-through:#7c5ce0;
-  --layer-receipt:#0e8f9e;
-  --layer-shot:#d4357f;
-  --layer-neutral:#707c86;
-  --layer-quick:#1f9d5f;
-  --layer-blocked:#c2620a;
-  --layer-clearance:#2f6fd0;
+  --layer-through:#714edd;
+  --layer-receipt:#0b7480;
+  --layer-shot:#c32971;
+  --layer-neutral:#606b73;
+  --layer-quick:#187949;
+  --layer-blocked:#a55308;
+  --layer-clearance:#2c68c3;
   --layer-challenge:#c0342a;
-  --layer-save:#a83fa0;
+  --layer-save:#a73e9f;
 
   /* Drill modal card and tooltip elevation, players.html. Both were tuned
      against a dark ground; carried verbatim in Phase 1.
@@ -226,15 +226,15 @@ html:not(.dark){
   --elevation-tip:0 4px 14px rgba(0,0,0,.35);
 
   /* categorical series, used by the pitch layer palettes (PAL / TPAL) */
-  --series-ok:#139866;
-  --series-fail:#c92c2c;
-  --series-prog:#1a6fd4;
-  --series-carry:#9a7100;
+  --series-ok:#0f7951;
+  --series-fail:#c72c2c;
+  --series-prog:#1868c7;
+  --series-carry:#886400;
   --series-box:#a82fbe;
-  --series-alt:#7d5ce0;
-  --series-cool:#0d8496;
-  --series-warm:#c93b86;
-  --series-neutral:#6c88aa;
+  --series-alt:#724edd;
+  --series-cool:#0b7383;
+  --series-warm:#ba337b;
+  --series-neutral:#6b6459;
 
   /* state */
   --state-positive:#0f7a52;
@@ -271,15 +271,15 @@ html:not(.dark){
 
   /* pitch and canvas paints (match.html CT(), light branch) */
   --pitch-fill:#f0ead6;
-  --pitch-line:#888;
+  --pitch-line:#696969;
   --pitch-line-strong:#666;
   --pitch-band:rgba(0,0,0,0.012);
   --pitch-text:#333;
   --pitch-text-soft:rgba(0,0,0,0.62);
   --chip-ground:rgba(25,28,34,0.90);
   --chip-ink:#fff;
-  --pass-ok:#12855a;
-  --pass-fail:#cc4038;
+  --pass-ok:#107851;
+  --pass-fail:#c03931;
 
   /* heatmap ramp stops (match.html densityRGB), low to high */
   /* THE DENSITY RAMP, BUILT FOR THE CREAM PITCH. Three stops the canvas and
@@ -347,14 +347,14 @@ html.dark{
   --heat-legend-high:rgb(226,184,119);
 
   --series-ok:#139866;
-  --series-fail:#c92c2c;
-  --series-prog:#1a6fd4;
-  --series-carry:#9a7100;
-  --series-box:#a82fbe;
-  --series-alt:#7d5ce0;
-  --series-cool:#0d8496;
-  --series-warm:#c93b86;
-  --series-neutral:#6c88aa;
+  --series-fail:#d95353;
+  --series-prog:#2a7fe5;
+  --series-carry:#a47800;
+  --series-box:#bf4fd3;
+  --series-alt:#896be3;
+  --series-cool:#0e8c9f;
+  --series-warm:#d05395;
+  --series-neutral:#9a9186;
 
   /* Metric-group and evidence-layer series. players.html carried one value for
      both themes, so both are carried verbatim. Declaring these in the light
@@ -372,15 +372,15 @@ html.dark{
   --group-holdup:#d97706;
   --group-setpieces:#b94d8c;
   --group-goalkeeping:#5a6b7d;
-  --layer-through:#7c5ce0;
+  --layer-through:#8a6de3;
   --layer-receipt:#0e8f9e;
-  --layer-shot:#d4357f;
-  --layer-neutral:#707c86;
+  --layer-shot:#d94b8d;
+  --layer-neutral:#75818b;
   --layer-quick:#1f9d5f;
-  --layer-blocked:#c2620a;
-  --layer-clearance:#2f6fd0;
-  --layer-challenge:#c0342a;
-  --layer-save:#a83fa0;
+  --layer-blocked:#c8650a;
+  --layer-clearance:#4880d6;
+  --layer-challenge:#d8554b;
+  --layer-save:#c056b8;
   --elevation-modal:0 18px 60px rgba(0,0,0,.5);
   --elevation-tip:0 4px 14px rgba(0,0,0,.35);
 
@@ -659,14 +659,14 @@ html:not(.dark){
 
   /* The seven defensive action types, plus the colour for anything the
      feed reports that is not one of them. */
-  --action-tackle:#ef4444;
-  --action-interception:#2563eb;
+  --action-tackle:#d31212;
+  --action-interception:#1e5eea;
   --action-clearance:#7c3aed;
-  --action-recovery:#159a46;
-  --action-block:#a87f12;
-  --action-aerial:#0891b2;
-  --action-challenge:#db2777;
-  --action-other:#7e8797;
+  --action-recovery:#117a37;
+  --action-block:#85650e;
+  --action-aerial:#06738d;
+  --action-challenge:#c6216b;
+  --action-other:#616a79;
 
   /* Position colours for the passing network and the average-position
      formation. Named for the line a player occupies, not for the shirt
@@ -674,13 +674,13 @@ html:not(.dark){
      Distinct from --pos-*-ink above, which are the CSS badges in the
      player list and carry different values -- #d4a017 here, #b8860b
      there, for the same goalkeeper. */
-  --pos-line-gk:#a87f12;
-  --pos-line-def:#2563eb;
-  --pos-line-dm:#0d9488;
-  --pos-line-mid:#159a46;
-  --pos-line-am:#609510;
-  --pos-line-fw:#ef4444;
-  --pos-line-sub:#7e8797;
+  --pos-line-gk:#85650e;
+  --pos-line-def:#1e5eea;
+  --pos-line-dm:#0a766c;
+  --pos-line-mid:#117a37;
+  --pos-line-am:#4b740c;
+  --pos-line-fw:#d31212;
+  --pos-line-sub:#616a79;
 
   /* Result tints behind a W/D/L cell in the season table, at 8%. The
      --result-*-fill tokens above are the cell backgrounds and are not the
@@ -701,11 +701,11 @@ html:not(.dark){
   /* Shot markers. The only JavaScript palette on this page with two
      themes: the dark variants are bright on a dark pitch, these are their
      darker counterparts for the light one and for exports. */
-  --shot-ok:#0f7a52;
+  --shot-ok:#0f7851;
   --shot-fail:#bf3535;
   --shot-goal:#ad2ba6;
   --shot-blocked:#7250d6;
-  --shot-post:#9a6b00;
+  --shot-post:#8c6100;
 
   /* PLOT CHROME, painted from JavaScript onto the pitch. It used to carry one
      value for each name on both grounds, all of them tuned for the light
@@ -744,7 +744,7 @@ html:not(.dark){
      blue-to-orange one from arithmetic. Both read the same three stops now. */
   --legend-heat-low:rgb(150,176,168);
   --legend-heat-high:rgb(150,26,22);
-  --peak-ring:#9a6a1f;
+  --peak-ring:#8c611c;
 
   /* the highlighted zone on the final-third, zone-14 and box-entry maps */
   --zone-fill:rgba(26,122,58,0.06);
@@ -760,18 +760,18 @@ html:not(.dark){
   --shape-in-edge:rgba(226,184,119,.40);
   --shape-shift-line:rgba(182,194,212,.27);
   --shape-shift-head:rgba(226,184,119,.62);
-  --marker-in:#b17a26;
-  --marker-out:#1384ff;
+  --marker-in:#8c611e;
+  --marker-out:#0066d5;
 
   /* pass flow */
-  --flow-arrow:#2563eb;
+  --flow-arrow:#1e5eea;
   --flow-node:rgba(14,18,25,.84);
   --band-a:rgba(90,169,255,.018);
   --band-b:rgba(226,184,119,.018);
 
   /* the xT ramp's two ends, and the bar track behind a player stat */
-  --xt-low:#ad7e10;
-  --xt-high:#e03000;
+  --xt-low:#88630d;
+  --xt-high:#ca2b00;
   --bar-track:rgba(255,255,255,0.08);
 
   /* timeline selection, and the opponent's line on the momentum chart */
@@ -867,12 +867,12 @@ html.dark{
   /* The seven defensive action types, plus the colour for anything the
      feed reports that is not one of them. */
   --action-tackle:#ef4444;
-  --action-interception:#2563eb;
-  --action-clearance:#7c3aed;
+  --action-interception:#457aee;
+  --action-clearance:#9661f1;
   --action-recovery:#159a46;
   --action-block:#a87f12;
   --action-aerial:#0891b2;
-  --action-challenge:#db2777;
+  --action-challenge:#e04389;
   --action-other:#7e8797;
 
   /* Position colours for the passing network and the average-position
@@ -882,7 +882,7 @@ html.dark{
      player list and carry different values -- #d4a017 here, #b8860b
      there, for the same goalkeeper. */
   --pos-line-gk:#a87f12;
-  --pos-line-def:#2563eb;
+  --pos-line-def:#457aee;
   --pos-line-dm:#0d9488;
   --pos-line-mid:#159a46;
   --pos-line-am:#609510;
@@ -906,11 +906,11 @@ html.dark{
   --team-all-edge:rgba(139,149,181,0.24);
 
   /* Shot markers; see the light scope. */
-  --shot-ok:#0f7a52;
-  --shot-fail:#bf3535;
-  --shot-goal:#ad2ba6;
-  --shot-blocked:#7250d6;
-  --shot-post:#9a6b00;
+  --shot-ok:#129262;
+  --shot-fail:#d15a5a;
+  --shot-goal:#d041c8;
+  --shot-blocked:#8a6edd;
+  --shot-post:#aa7600;
 
   /* PLOT CHROME FOR THE DARK PITCH. These were the clearest measured failure
      in the whole audit: near-black ink at low alpha painted onto a #111722
@@ -962,14 +962,14 @@ html.dark{
   --marker-out:#5aa9ff;
 
   /* pass flow */
-  --flow-arrow:#2563eb;
+  --flow-arrow:#457aee;
   --flow-node:rgba(14,18,25,.84);
   --band-a:rgba(90,169,255,.018);
   --band-b:rgba(226,184,119,.018);
 
   /* the xT ramp's two ends, and the bar track behind a player stat */
   --xt-low:#dca014;
-  --xt-high:#e03000;
+  --xt-high:#f23400;
   --bar-track:rgba(255,255,255,0.08);
 
   /* timeline selection, and the opponent's line on the momentum chart */

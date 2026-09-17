@@ -47,11 +47,16 @@ dashboard/players.html,126,#fff,--ink-on-accent,"light,dark",button label on the
 dashboard/players.html,238,"rgba(0,0,0,.62)",--scrim,"light,dark",drill modal scrim
 dashboard/players.html,239,"0 18px 60px rgba(0,0,0,.5)",--elevation-modal,"light,dark",drill card elevation; dark-tuned
 dashboard/players.html,242,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; dark-tuned
-dashboard/players.html,396,#139866,--series-ok,"light,dark",PAL.ok pitch layer palette | phase 3 recoloured; phase 1 value was #22e39a
-dashboard/players.html,396,#c92c2c,--series-fail,"light,dark",PAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a
-dashboard/players.html,396,#1a6fd4,--series-prog,"light,dark",PAL.prog | phase 3 recoloured; phase 1 value was #4d9fff
-dashboard/players.html,396,#9a7100,--series-carry,"light,dark",PAL.carry | phase 3 recoloured; phase 1 value was #ffc93c
-dashboard/players.html,396,#a82fbe,--series-box,"light,dark",PAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
+dashboard/players.html,396,#0f7951,--series-ok,light,PAL.ok pitch layer palette | phase 3 recoloured; phase 1 value was #22e39a | phase 3 recoloured; phase 1 value was #139866
+dashboard/players.html,396,#139866,--series-ok,dark,PAL.ok pitch layer palette | phase 3 recoloured; phase 1 value was #22e39a
+dashboard/players.html,396,#c72c2c,--series-fail,light,PAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a | phase 3 recoloured; phase 1 value was #c92c2c
+dashboard/players.html,396,#d95353,--series-fail,dark,PAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a | phase 3 recoloured; phase 1 value was #c92c2c
+dashboard/players.html,396,#1868c7,--series-prog,light,PAL.prog | phase 3 recoloured; phase 1 value was #4d9fff | phase 3 recoloured; phase 1 value was #1a6fd4
+dashboard/players.html,396,#2a7fe5,--series-prog,dark,PAL.prog | phase 3 recoloured; phase 1 value was #4d9fff | phase 3 recoloured; phase 1 value was #1a6fd4
+dashboard/players.html,396,#886400,--series-carry,light,PAL.carry | phase 3 recoloured; phase 1 value was #ffc93c | phase 3 recoloured; phase 1 value was #9a7100
+dashboard/players.html,396,#a47800,--series-carry,dark,PAL.carry | phase 3 recoloured; phase 1 value was #ffc93c | phase 3 recoloured; phase 1 value was #9a7100
+dashboard/players.html,396,#a82fbe,--series-box,light,PAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
+dashboard/players.html,396,#bf4fd3,--series-box,dark,PAL.box | phase 3 recoloured; phase 1 value was #f0a5ff | phase 3 recoloured; phase 1 value was #a82fbe
 dashboard/players.html,865,#2f80ed,--group-passing,"light,dark",PIZZA_COLORS metric group
 dashboard/players.html,865,#00918c,--group-creation,"light,dark",PIZZA_COLORS metric group | phase 3 recoloured; phase 1 value was #00a896
 dashboard/players.html,865,#e63956,--group-shooting,"light,dark",PIZZA_COLORS metric group
@@ -71,17 +76,28 @@ dashboard/players.html,866,#b28407,--group-carrying,"light,dark",pizzaColor fall
 dashboard/players.html,866,#6e55ce,--group-defending,"light,dark",pizzaColor fallback array | phase 3 recoloured; phase 1 value was #7656d6
 dashboard/players.html,879,#fff,--label-on-fill,"light,dark",pizza slice percentile label ink
 dashboard/players.html,879,#10131a,--label-on-fill-halo,"light,dark","pizza slice label halo; dark-dependent trick | phase 3 recoloured; phase 1 value was rgba(0,0,0,.28)"
-dashboard/players.html,961,#707c86,--layer-neutral,"light,dark",neutral evidence layer | phase 3 recoloured; phase 1 value was #cbd5e1
-dashboard/players.html,972,#7c5ce0,--layer-through,"light,dark",through balls layer | phase 3 recoloured; phase 1 value was #a78bfa
-dashboard/players.html,976,#0e8f9e,--layer-receipt,"light,dark",receipts layer | phase 3 recoloured; phase 1 value was #22d3ee
-dashboard/players.html,977,#d4357f,--layer-shot,"light,dark",shots layer | phase 3 recoloured; phase 1 value was #f472b6
-dashboard/players.html,1642,#c2620a,--layer-blocked,"light,dark",blocked shots layer; was mapped to --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
-dashboard/players.html,1674,#1f9d5f,--layer-quick,"light,dark",under-1s release layer | phase 3 recoloured; phase 1 value was #34d399
-dashboard/players.html,1687,#2f6fd0,--layer-clearance,"light,dark",clearance in defensive action map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
-dashboard/players.html,1688,#c0342a,--layer-challenge,"light,dark",challenge in defensive action map; was --layer-shot | phase 3 recoloured; phase 1 value was #f472b6
-dashboard/players.html,1688,#a83fa0,--layer-save,"light,dark",save in defensive action map; was --layer-receipt | phase 3 recoloured; phase 1 value was #22d3ee
-dashboard/players.html,2004,#c2620a,--layer-blocked,"light,dark",blocked outcome in shot map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
-dashboard/players.html,2007,#c2620a,--layer-blocked,"light,dark",blocked entry in shot map legend; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/players.html,961,#606b73,--layer-neutral,light,neutral evidence layer | phase 3 recoloured; phase 1 value was #cbd5e1 | phase 3 recoloured; phase 1 value was #707c86
+dashboard/players.html,961,#75818b,--layer-neutral,dark,neutral evidence layer | phase 3 recoloured; phase 1 value was #cbd5e1 | phase 3 recoloured; phase 1 value was #707c86
+dashboard/players.html,972,#714edd,--layer-through,light,through balls layer | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #7c5ce0
+dashboard/players.html,972,#8a6de3,--layer-through,dark,through balls layer | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #7c5ce0
+dashboard/players.html,976,#0b7480,--layer-receipt,light,receipts layer | phase 3 recoloured; phase 1 value was #22d3ee | phase 3 recoloured; phase 1 value was #0e8f9e
+dashboard/players.html,976,#0e8f9e,--layer-receipt,dark,receipts layer | phase 3 recoloured; phase 1 value was #22d3ee
+dashboard/players.html,977,#c32971,--layer-shot,light,shots layer | phase 3 recoloured; phase 1 value was #f472b6 | phase 3 recoloured; phase 1 value was #d4357f
+dashboard/players.html,977,#d94b8d,--layer-shot,dark,shots layer | phase 3 recoloured; phase 1 value was #f472b6 | phase 3 recoloured; phase 1 value was #d4357f
+dashboard/players.html,1642,#a55308,--layer-blocked,light,blocked shots layer; was mapped to --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/players.html,1642,#c8650a,--layer-blocked,dark,blocked shots layer; was mapped to --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/players.html,1674,#187949,--layer-quick,light,under-1s release layer | phase 3 recoloured; phase 1 value was #34d399 | phase 3 recoloured; phase 1 value was #1f9d5f
+dashboard/players.html,1674,#1f9d5f,--layer-quick,dark,under-1s release layer | phase 3 recoloured; phase 1 value was #34d399
+dashboard/players.html,1687,#2c68c3,--layer-clearance,light,clearance in defensive action map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/players.html,1687,#4880d6,--layer-clearance,dark,clearance in defensive action map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/players.html,1688,#c0342a,--layer-challenge,light,challenge in defensive action map; was --layer-shot | phase 3 recoloured; phase 1 value was #f472b6
+dashboard/players.html,1688,#d8554b,--layer-challenge,dark,challenge in defensive action map; was --layer-shot | phase 3 recoloured; phase 1 value was #f472b6 | phase 3 recoloured; phase 1 value was #c0342a
+dashboard/players.html,1688,#a73e9f,--layer-save,light,save in defensive action map; was --layer-receipt | phase 3 recoloured; phase 1 value was #22d3ee | phase 3 recoloured; phase 1 value was #a83fa0
+dashboard/players.html,1688,#c056b8,--layer-save,dark,save in defensive action map; was --layer-receipt | phase 3 recoloured; phase 1 value was #22d3ee | phase 3 recoloured; phase 1 value was #a83fa0
+dashboard/players.html,2004,#a55308,--layer-blocked,light,blocked outcome in shot map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/players.html,2004,#c8650a,--layer-blocked,dark,blocked outcome in shot map; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/players.html,2007,#a55308,--layer-blocked,light,blocked entry in shot map legend; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/players.html,2007,#c8650a,--layer-blocked,dark,blocked entry in shot map legend; was --layer-through | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
 dashboard/teams.html,27,"rgba(239,1,7,.07)",--accent-veil,light,page :root accent tint
 dashboard/teams.html,27,"rgba(239,1,7,0.20)",--accent-edge,light,"page :root accent edge | phase 3 recoloured; phase 1 value was rgba(239,1,7,.18)"
 dashboard/teams.html,27,#0e7d5c,--rank-top,light,percentile ramp 80+ | phase 3 recoloured; phase 1 value was #16a34a
@@ -115,19 +131,28 @@ dashboard/teams.html,39,#fff,--ink-on-accent,"light,dark",logo glyph on the acce
 dashboard/teams.html,141,"0 4px 14px rgba(0,0,0,.35)",--elevation-tip,"light,dark",tooltip elevation; bare-decimal alpha
 dashboard/teams.html,173,#fff,--ink-on-state,light,W/D/L badge ink on a result-coloured chip; new role token | phase 3 recoloured; phase 1 value was #0d0f14
 dashboard/teams.html,173,#0d0f14,--ink-on-state,dark,W/D/L badge ink on a result-coloured chip; new role token
-dashboard/teams.html,255,#139866,--series-ok,"light,dark",TPAL.ok; TPAL duplicated players.html PAL exactly | phase 3 recoloured; phase 1 value was #22e39a
-dashboard/teams.html,255,#c92c2c,--series-fail,"light,dark",TPAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a
-dashboard/teams.html,255,#1a6fd4,--series-prog,"light,dark",TPAL.prog | phase 3 recoloured; phase 1 value was #4d9fff
-dashboard/teams.html,255,#9a7100,--series-carry,"light,dark",TPAL.carry | phase 3 recoloured; phase 1 value was #ffc93c
-dashboard/teams.html,255,#a82fbe,--series-box,"light,dark",TPAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
-dashboard/teams.html,734,#c2620a,--layer-blocked,"light,dark",blocked shot in the outcome legend | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/teams.html,255,#0f7951,--series-ok,light,TPAL.ok; TPAL duplicated players.html PAL exactly | phase 3 recoloured; phase 1 value was #22e39a | phase 3 recoloured; phase 1 value was #139866
+dashboard/teams.html,255,#139866,--series-ok,dark,TPAL.ok; TPAL duplicated players.html PAL exactly | phase 3 recoloured; phase 1 value was #22e39a
+dashboard/teams.html,255,#c72c2c,--series-fail,light,TPAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a | phase 3 recoloured; phase 1 value was #c92c2c
+dashboard/teams.html,255,#d95353,--series-fail,dark,TPAL.fail | phase 3 recoloured; phase 1 value was #ff5a5a | phase 3 recoloured; phase 1 value was #c92c2c
+dashboard/teams.html,255,#1868c7,--series-prog,light,TPAL.prog | phase 3 recoloured; phase 1 value was #4d9fff | phase 3 recoloured; phase 1 value was #1a6fd4
+dashboard/teams.html,255,#2a7fe5,--series-prog,dark,TPAL.prog | phase 3 recoloured; phase 1 value was #4d9fff | phase 3 recoloured; phase 1 value was #1a6fd4
+dashboard/teams.html,255,#886400,--series-carry,light,TPAL.carry | phase 3 recoloured; phase 1 value was #ffc93c | phase 3 recoloured; phase 1 value was #9a7100
+dashboard/teams.html,255,#a47800,--series-carry,dark,TPAL.carry | phase 3 recoloured; phase 1 value was #ffc93c | phase 3 recoloured; phase 1 value was #9a7100
+dashboard/teams.html,255,#a82fbe,--series-box,light,TPAL.box | phase 3 recoloured; phase 1 value was #f0a5ff
+dashboard/teams.html,255,#bf4fd3,--series-box,dark,TPAL.box | phase 3 recoloured; phase 1 value was #f0a5ff | phase 3 recoloured; phase 1 value was #a82fbe
+dashboard/teams.html,734,#a55308,--layer-blocked,light,blocked shot in the outcome legend | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/teams.html,734,#c8650a,--layer-blocked,dark,blocked shot in the outcome legend | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
 dashboard/teams.html,873,"rgb(150,176,168)",--heat-legend-low,light,"heat legend gradient low stop; a separate ramp from match.html densityRGB | phase 3 recoloured; phase 1 value was rgba(245,166,35,.12)"
 dashboard/teams.html,873,"rgb(31,91,111)",--heat-legend-low,dark,"heat legend gradient low stop; a separate ramp from match.html densityRGB | phase 3 recoloured; phase 1 value was rgba(245,166,35,.12)"
 dashboard/teams.html,873,"rgb(150,26,22)",--heat-legend-high,light,heat legend gradient high stop | phase 3 recoloured; phase 1 value was #f5a623
 dashboard/teams.html,873,"rgb(226,184,119)",--heat-legend-high,dark,heat legend gradient high stop | phase 3 recoloured; phase 1 value was #f5a623
-dashboard/teams.html,903,#2f6fd0,--layer-clearance,"light,dark",clearance in defensive action map | phase 3 recoloured; phase 1 value was #a78bfa
-dashboard/teams.html,903,#c0342a,--layer-challenge,"light,dark",challenge in defensive action map | phase 3 recoloured; phase 1 value was #f472b6
-dashboard/teams.html,927,#c2620a,--layer-blocked,"light,dark",blocked outcome in shot map | phase 3 recoloured; phase 1 value was #a78bfa
+dashboard/teams.html,903,#2c68c3,--layer-clearance,light,clearance in defensive action map | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/teams.html,903,#4880d6,--layer-clearance,dark,clearance in defensive action map | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #2f6fd0
+dashboard/teams.html,903,#c0342a,--layer-challenge,light,challenge in defensive action map | phase 3 recoloured; phase 1 value was #f472b6
+dashboard/teams.html,903,#d8554b,--layer-challenge,dark,challenge in defensive action map | phase 3 recoloured; phase 1 value was #f472b6 | phase 3 recoloured; phase 1 value was #c0342a
+dashboard/teams.html,927,#a55308,--layer-blocked,light,blocked outcome in shot map | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
+dashboard/teams.html,927,#c8650a,--layer-blocked,dark,blocked outcome in shot map | phase 3 recoloured; phase 1 value was #a78bfa | phase 3 recoloured; phase 1 value was #c2620a
 dashboard/index.html,35,#0e1219,--ground,dark,page canvas
 dashboard/index.html,35,#161b24,--surface-raised,dark,raised surface: cards and header
 dashboard/index.html,35,#1e242e,--surface-recessed,dark,recessed surface
