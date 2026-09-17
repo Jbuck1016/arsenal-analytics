@@ -1110,8 +1110,8 @@ function drawPitch(ctx,c){
   ctx.beginPath();ctx.moveTo((W-gW)/2,m);ctx.lineTo((W+gW)/2,m);ctx.stroke();
   ctx.beginPath();ctx.moveTo((W-gW)/2,m+ph);ctx.lineTo((W+gW)/2,m+ph);ctx.stroke();
   ctx.lineWidth=1.5;ctx.strokeStyle=TH.line;
-  ctx.fillStyle=TH.textSoft;ctx.font='700 10px Inter,sans-serif';ctx.textAlign='center';
-  ctx.fillText('ATTACKING \u2191',W/2,Math.max(11,m-8));
+  ctx.fillStyle=TH.textSoft;ctx.font='600 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText('ATTACKING \u2191',W/2,Math.max(15,m-13));
 }
 
 function drawJdP(ctx,c){
@@ -1193,7 +1193,7 @@ function drawAttackingHalfPitch(ctx,c){
   ctx.beginPath();ctx.arc(r.x+r.w/2,spotY,r.w*.146,.65,Math.PI-.65);ctx.stroke();
   ctx.beginPath();ctx.arc(r.x+r.w/2,r.y+r.h,r.w*.146,Math.PI,0);ctx.stroke();
   ctx.lineWidth=3;ctx.strokeStyle=th.lineStrong;ctx.beginPath();ctx.moveTo(r.x+r.w*.46,r.y);ctx.lineTo(r.x+r.w*.54,r.y);ctx.stroke();
-  ctx.fillStyle=th.textSoft;ctx.font='700 10px Inter,sans-serif';ctx.textAlign='center';ctx.fillText('ATTACKING \u2191',c.width/2,r.y-8);
+  ctx.fillStyle=th.textSoft;ctx.font='600 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('ATTACKING \u2191',c.width/2,Math.max(15,r.y-13));
 }
 
 /* Canonical shot outcome grammar, shared with the Team Profiles shot map so a
