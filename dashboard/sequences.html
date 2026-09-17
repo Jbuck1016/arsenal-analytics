@@ -192,7 +192,37 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
+/* EVERY LIVE TOP-LEVEL PAGE, enumerated from the repo rather than curated.
+   Fifteen .html files in dashboard/, fifteen entries, home first.
+
+   It used to list nine, and each of the three copies of this array omitted a
+   different one -- whichever page it was sitting on -- so no two pages offered
+   the same menu. Six were missing from all three: Market values, Validation,
+   Model lab, Model review, Writing lab, and whichever of Players/Teams/
+   Sequences you were not on. A destination menu that hides destinations is
+   the one kind of menu that cannot be trusted.
+
+   The current page is listed and marked rather than hidden, so the menu is
+   the same shape everywhere and tells you where you are.
+
+   Subtabs are not here. Rank, Scatter, Compare and the rest are reached from
+   inside a page and are not pages. */
+const NAV=[
+ ['Home','index.html','explore'],
+ ['Insights','insights.html','explore'],
+ ['Search','search.html','explore'],
+ ['Players','players.html','explore'],
+ ['Teams','teams.html','explore'],
+ ['Match','match.html','explore'],
+ ['Sequences','sequences.html','explore'],
+ ['Market values','market-values.html','explore'],
+ ['Guide','guide.html','learn'],
+ ['Method','methodology.html','learn'],
+ ['Reference','glossary.html','learn'],
+ ['Validation','validation.html','learn'],
+ ['Model lab','model-lab.html','lab'],
+ ['Model review','model-review.html','lab'],
+ ['Writing lab','writing-lab.html','lab']];
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',

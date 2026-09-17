@@ -370,9 +370,37 @@ const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
 const TABS=['Profile','Sequences','Maps','Rankings','League Map','Matches','Squad'];
 /* Site destinations, grouped for the header nav menu. Third field is the group. */
-const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'],['Search','search.html','explore'],
- ['Match','match.html','explore'],['Players','players.html','explore'],['Sequences','sequences.html','explore'],
- ['Guide','guide.html','learn'],['Method','methodology.html','learn'],['Reference','glossary.html','learn']];
+/* EVERY LIVE TOP-LEVEL PAGE, enumerated from the repo rather than curated.
+   Fifteen .html files in dashboard/, fifteen entries, home first.
+
+   It used to list nine, and each of the three copies of this array omitted a
+   different one -- whichever page it was sitting on -- so no two pages offered
+   the same menu. Six were missing from all three: Market values, Validation,
+   Model lab, Model review, Writing lab, and whichever of Players/Teams/
+   Sequences you were not on. A destination menu that hides destinations is
+   the one kind of menu that cannot be trusted.
+
+   The current page is listed and marked rather than hidden, so the menu is
+   the same shape everywhere and tells you where you are.
+
+   Subtabs are not here. Rank, Scatter, Compare and the rest are reached from
+   inside a page and are not pages. */
+const NAV=[
+ ['Home','index.html','explore'],
+ ['Insights','insights.html','explore'],
+ ['Search','search.html','explore'],
+ ['Players','players.html','explore'],
+ ['Teams','teams.html','explore'],
+ ['Match','match.html','explore'],
+ ['Sequences','sequences.html','explore'],
+ ['Market values','market-values.html','explore'],
+ ['Guide','guide.html','learn'],
+ ['Method','methodology.html','learn'],
+ ['Reference','glossary.html','learn'],
+ ['Validation','validation.html','learn'],
+ ['Model lab','model-lab.html','lab'],
+ ['Model review','model-review.html','lab'],
+ ['Writing lab','writing-lab.html','lab']];
 let TEAMS=[],TDEFS=[],SEL=null,TAB='Profile',PCT={},PLAYERS=[],TEAMQ='';
 let DIR={},LEAGUES=[],
 /* A SET, not one code. Empty means every league. Stored comma-joined under
@@ -1503,7 +1531,7 @@ function syncTabCue(){
    The panel is position:fixed, so it clears the body's overflow:hidden; that
    means its position is set from script each time it opens. */
 var NAVOPEN=false;
-var NAVGROUPS=[['Explore','explore'],['Learn','learn']];
+var NAVGROUPS=[['Explore','explore'],['Learn','learn'],['Lab','lab']];
 function renderNavMenu(){
   var host=document.getElementById('navMenu');if(!host)return;
   host.innerHTML=
@@ -1514,7 +1542,11 @@ function renderNavMenu(){
       var items=NAV.filter(function(n){return n[2]===g[1]});
       if(!items.length)return '';
       return '<div class="navmenu-h">'+esc(g[0])+'</div>'+
-        items.map(function(n){return '<a role="menuitem" href="'+n[1]+'">'+esc(n[0])+'</a>'}).join('');
+        items.map(function(n){
+          var here=n[1]===(location.pathname.split('/').pop()||'index.html');
+          return '<a role="menuitem" href="'+n[1]+'"'+(here?' aria-current="page"':'')+'>'+
+                 esc(n[0])+(here?' \u00B7 you are here':'')+'</a>';
+        }).join('');
     }).join('')+'</div>';
   var btn=document.getElementById('navMenuBtn');
   btn.addEventListener('click',function(){setNavMenu(!NAVOPEN,NAVOPEN?null:0)});
