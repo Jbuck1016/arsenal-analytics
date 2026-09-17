@@ -25,7 +25,7 @@ the role token they point at.
 rather than as a mark. The category comes from the name, and it is
 printed, so a wrong row can be spotted.
 
-**0 failures out of 490 measurements.**
+**0 failures out of 500 measurements.**
 
 ## Failures
 
@@ -42,7 +42,7 @@ None.
 
 ## Everything, by scope
 
-### `app` light — 204 measurements, 0 failing
+### `app` light — 209 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -147,7 +147,9 @@ None.
 | `app` light | `--marker-out` | pitch mark | --pitch-fill | `#0066d5` | **4.52** | 4.5 |
 | `app` light | `--xt-high` | pitch mark | --pitch-fill | `#ca2b00` | **4.52** | 4.5 |
 | `app` light | `--list-group-ink` | text | --ground | `#74726d` | **4.53** | 4.5 |
+| `app` light | `--series-alt` | pitch mark | --pitch-fill | `#724edd` | **4.53** | 4.5 |
 | `app` light | `--layer-neutral` | pitch mark | --pitch-fill | `#606b73` | **4.53** | 4.5 |
+| `app` light | `--series-warm` | pitch mark | --pitch-fill | `#ba337b` | **4.53** | 4.5 |
 | `app` light | `--action-other` | pitch mark | --pitch-fill | `#616a79` | **4.54** | 4.5 |
 | `app` light | `--pos-line-sub` | pitch mark | --pitch-fill | `#616a79` | **4.54** | 4.5 |
 | `app` light | `--action-aerial` | pitch mark | --pitch-fill | `#06738d` | **4.54** | 4.5 |
@@ -179,6 +181,7 @@ None.
 | `app` light | `--group-setpieces` | mark | --surface-raised | `#b94d8c` | **4.59** | 3.0 |
 | `app` light | `--pos-line-am` | pitch mark | --pitch-fill | `#4b740c` | **4.59** | 4.5 |
 | `app` light | `--ink-on-accent` | text | --accent-solid | `#fff` | **4.59** | 4.5 |
+| `app` light | `--series-cool` | pitch mark | --pitch-fill | `#0b7383` | **4.60** | 4.5 |
 | `app` light | `--pos-gk-ink` | text | --pos-gk-fill | `#886308` | **4.60** | 4.5 |
 | `app` light | `--pos-fwd-ink` | text | --pos-fwd-fill | `#cd1212` | **4.60** | 4.5 |
 | `app` light | `--shot-fail` | pitch mark | --pitch-fill | `#bf3535` | **4.62** | 4.5 |
@@ -223,11 +226,13 @@ None.
 | `app` light | `--pitch-text-soft` | text | --pitch-fill | `rgba(0,0,0,0.62)` | **5.83** | 4.5 |
 | `app` light | `--plot-share-label` | text | --pitch-fill | `rgba(0,0,0,0.62)` | **5.83** | 4.5 |
 | `app` light | `--rank-bottom` | mark | --ground | `#b52a20` | **5.97** | 3.0 |
+| `app` light | `--accent-ink` | text | --ground | `#C10005` | **6.05** | 4.5 |
 | `app` light | `--timeline-sel-edge` | boundary | --ground | `#c10005` | **6.05** | 3.0 |
 | `app` light | `--ink-tertiary` | text | --ground | `#655e4d` | **6.07** | 4.5 |
 | `app` light | `--gate-ink-soft` | text | --gate-card | `#8794a6` | **6.14** | 4.5 |
 | `app` light | `--rank-bottom` | mark | --surface-raised | `#b52a20` | **6.23** | 3.0 |
 | `app` light | `--plot-pill-ink` | text | --pitch-fill | `#a8140e` | **6.29** | 4.5 |
+| `app` light | `--accent-ink` | text | --surface-raised | `#C10005` | **6.32** | 4.5 |
 | `app` light | `--timeline-sel-edge` | boundary | --surface-raised | `#c10005` | **6.32** | 3.0 |
 | `app` light | `--gate-error` | text | --gate-card | `#ff5f56` | **6.32** | 4.5 |
 | `app` light | `--ink-tertiary` | text | --surface-raised | `#655e4d` | **6.33** | 4.5 |
@@ -251,7 +256,7 @@ None.
 | `app` light | `--label-on-fill` | text | --label-on-fill-halo | `#fff` | **18.58** | 4.5 |
 | `app` light | `--print-ink` | text | --print-paper | `#000` | **21.00** | 4.5 |
 
-### `app` dark — 204 measurements, 0 failing
+### `app` dark — 209 measurements, 0 failing
 
 | scope | token | category | on | value | ratio | needs |
 |---|---|---|---|---|---|---|
@@ -331,11 +336,13 @@ None.
 | `app` dark | `--series-prog` | pitch mark | --pitch-fill | `#2a7fe5` | **4.50** | 4.5 |
 | `app` dark | `--xt-high` | pitch mark | --pitch-fill | `#f23400` | **4.50** | 4.5 |
 | `app` dark | `--layer-neutral` | pitch mark | --pitch-fill | `#75818b` | **4.51** | 4.5 |
+| `app` dark | `--series-cool` | pitch mark | --pitch-fill | `#0e8c9f` | **4.51** | 4.5 |
 | `app` dark | `--action-interception` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
 | `app` dark | `--flow-arrow` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
 | `app` dark | `--pos-line-def` | pitch mark | --pitch-fill | `#457aee` | **4.51** | 4.5 |
 | `app` dark | `--shot-goal` | pitch mark | --pitch-fill | `#d041c8` | **4.51** | 4.5 |
 | `app` dark | `--series-box` | pitch mark | --pitch-fill | `#bf4fd3` | **4.51** | 4.5 |
+| `app` dark | `--series-alt` | pitch mark | --pitch-fill | `#896be3` | **4.51** | 4.5 |
 | `app` dark | `--action-clearance` | pitch mark | --pitch-fill | `#9661f1` | **4.51** | 4.5 |
 | `app` dark | `--pos-fwd-ink` | text | --pos-fwd-fill | `#ef4646` | **4.53** | 4.5 |
 | `app` dark | `--shot-post` | pitch mark | --pitch-fill | `#aa7600` | **4.53** | 4.5 |
@@ -355,6 +362,7 @@ None.
 | `app` dark | `--group-discipline` | mark | --surface-raised | `#e1561c` | **4.56** | 3.0 |
 | `app` dark | `--pos-gk-ink` | text | --pos-gk-fill | `#b8860b` | **4.56** | 4.5 |
 | `app` dark | `--layer-shot` | pitch mark | --pitch-fill | `#d94b8d` | **4.57** | 4.5 |
+| `app` dark | `--series-warm` | pitch mark | --pitch-fill | `#d05395` | **4.58** | 4.5 |
 | `app` dark | `--shot-blocked` | pitch mark | --pitch-fill | `#8a6edd` | **4.58** | 4.5 |
 | `app` dark | `--ink-on-accent` | text | --accent-solid | `#fff` | **4.59** | 4.5 |
 | `app` dark | `--layer-through` | pitch mark | --pitch-fill | `#8a6de3` | **4.60** | 4.5 |
@@ -382,6 +390,7 @@ None.
 | `app` dark | `--group-carrying` | mark | --surface-raised | `#b28407` | **5.09** | 3.0 |
 | `app` dark | `--ink-quaternary` | text | --surface-raised | `#808d9b` | **5.10** | 4.5 |
 | `app` dark | `--layer-quick` | pitch mark | --pitch-fill | `#1f9d5f` | **5.17** | 4.5 |
+| `app` dark | `--accent-ink` | text | --surface-raised | `#FF4A42` | **5.19** | 4.5 |
 | `app` dark | `--timeline-sel-edge` | boundary | --surface-raised | `#ff4a42` | **5.19** | 3.0 |
 | `app` dark | `--pitch-text-soft` | text | --pitch-fill | `rgba(182,194,212,0.68)` | **5.23** | 4.5 |
 | `app` dark | `--positive-ink` | text | --surface-raised | `#16a34a` | **5.24** | 4.5 |
@@ -391,6 +400,7 @@ None.
 | `app` dark | `--group-carrying` | mark | --ground | `#b28407` | **5.54** | 3.0 |
 | `app` dark | `--ink-quaternary` | text | --ground | `#808d9b` | **5.54** | 4.5 |
 | `app` dark | `--plot-frame` | decoration | --pitch-fill | `rgba(170,184,206,0.75)` | **5.54** | 0.0 |
+| `app` dark | `--accent-ink` | text | --ground | `#FF4A42` | **5.64** | 4.5 |
 | `app` dark | `--timeline-sel-edge` | boundary | --ground | `#ff4a42` | **5.64** | 3.0 |
 | `app` dark | `--positive-ink` | text | --ground | `#16a34a` | **5.69** | 4.5 |
 | `app` dark | `--state-negative` | mark | --surface-raised | `#ff5f56` | **5.77** | 3.0 |
