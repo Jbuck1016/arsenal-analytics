@@ -195,6 +195,15 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
         <div class="presets" id="presets"></div>
       </div>
 
+      <!-- THE SAME BUG AS THE ASK BAR, IN THE OTHER HALF OF THE PAGE. STATE
+           had no league and apply() never filtered on one, so a reader could
+           not reproduce "centre backs in the premier league" by hand either,
+           and a search that named a league had nowhere to hand off to. -->
+      <div class="fg">
+        <div class="fl">League</div>
+        <div class="chips" id="leagueChips"></div>
+      </div>
+
       <div class="fg">
         <div class="fl">Position</div>
         <div class="chips" id="poolChips"></div>
@@ -277,11 +286,187 @@ function pname(id,nm){
   if(!id) return '<span class="pn">'+esc(nm)+'</span>';
   return '<a class="pn link" href="players.html?player='+encodeURIComponent(id)+'">'+esc(nm)+'</a>';
 }
+/* =====================================================================
+   WHERE THE LEAGUE CONSTRAINT WAS GOING, AND WHY IT IS PARSED HERE NOW.
+
+   "top 5 centre backs at progressive passing in the premier league" returned
+   five MLS players. It was not lost between parse and query: this page never
+   had a league constraint to lose. Parsing AND querying both happened inside
+   the nl_query database function, and the only filters it hands back are
+   pool, side, foot, max_age and min_nineties -- no league in either
+   direction. The facet UI below was equally league-blind: STATE has no
+   league and apply() never filtered on one.
+
+   The database is out of scope this round, so the fix is to stop asking it to
+   parse. Everything needed to answer a ranking question is already in the
+   browser -- player_search is loaded whole into ROWS, and v_team_directory
+   gives team -> league -- so the question is parsed and answered here, where
+   the league can actually be applied.
+
+   nl_query still answers similarity, which needs a model this page does not
+   have. When it answers, the chips say so.
+
+   EVERY CONSTRAINT APPLIED IS SHOWN, and anything recognised but not
+   applicable is stated rather than dropped. A filter that silently does
+   nothing is worse than one that is unsupported.
+   ===================================================================== */
+const LEAGUE_DISPLAY={'ENG-Premier League':'Premier League','ESP-La Liga':'La Liga',
+ 'GER-Bundesliga':'Bundesliga','ITA-Serie A':'Serie A','FRA-Ligue 1':'Ligue 1','USA-MLS':'MLS'};
+/* Longest phrase first, so "la liga" is not eaten by a shorter match. */
+const LEAGUE_WORDS=[
+ ['premier league','ENG-Premier League'],['premiership','ENG-Premier League'],
+ ['the prem','ENG-Premier League'],['epl','ENG-Premier League'],
+ ['major league soccer','USA-MLS'],['mls','USA-MLS'],
+ ['la liga','ESP-La Liga'],['laliga','ESP-La Liga'],['spain','ESP-La Liga'],['spanish','ESP-La Liga'],
+ ['bundesliga','GER-Bundesliga'],['germany','GER-Bundesliga'],['german','GER-Bundesliga'],
+ ['serie a','ITA-Serie A'],['italy','ITA-Serie A'],['italian','ITA-Serie A'],
+ ['ligue 1','FRA-Ligue 1'],['ligue1','FRA-Ligue 1'],['france','FRA-Ligue 1'],['french','FRA-Ligue 1'],
+ ['england','ENG-Premier League'],['english','ENG-Premier League']
+];
+const POOL_WORDS=[
+ ['centre backs','CB'],['center backs','CB'],['centre back','CB'],['center back','CB'],
+ ['centre-backs','CB'],['centre-back','CB'],['centrebacks','CB'],['defenders','CB'],['cb','CB'],
+ ['full backs','FB'],['fullbacks','FB'],['full back','FB'],['wing backs','FB'],
+ ['wingbacks','FB'],['fb','FB'],
+ ['central midfielders','CM'],['midfielders','CM'],['midfielder','CM'],['eights','CM'],['cm','CM'],
+ ['attacking midfielders','AM'],['attacking midfielder','AM'],['tens','AM'],['am','AM'],
+ ['wingers','W'],['winger','W'],['wide forwards','W'],['wide forward','W'],
+ ['strikers','ST'],['striker','ST'],['number nines','ST'],['nines','ST'],
+ ['forwards','ST'],['forward','ST'],['st','ST']
+];
+const POOL_LABEL={CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',
+ AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
+
+/* Metric phrases -> a field on ROWS, obvious English first. */
+const METRIC_WORDS=[
+ ['progressive passing','prog_cmp_90'],['progressive passes','prog_cmp_90'],
+ ['progressive carries','prog_carries_90'],['ball carrying','carrier'],['carrying','carrier'],
+ ['chance creation','creator'],['creative','creator'],['creativity','creator'],
+ ['key passes','key_pass_90'],['big chances created','bcc_90'],
+ ['expected threat','xt_90'],['expected assists','xa_90'],
+ ['passes into the box','into_box_90'],['passes into box','into_box_90'],
+ ['final third passes','final_third_90'],['through balls','through_90'],['crosses','cross_90'],
+ ['box threat','box_threat'],['finishing','finishing'],['goals','goals_90'],
+ ['shots','shots_90'],['xg per shot','xg_per_shot'],
+ ['defensive actions','def_action_90'],['tackling','tackle_90'],['tackles','tackle_90'],
+ ['interceptions','int_90'],['recoveries','recov_90'],['counterpressures','counterpress_90'],
+ ['aerials','aerial_90'],['aerial duels','aerial_90'],
+ ['dribbling','individual'],['take ons','takeon_90'],['take-ons','takeon_90'],
+ ['build up','initiator'],['build-up','initiator'],['vertical passing','vertical'],
+ ['ball progression','progressor'],['progression','progressor'],['tempo','hold_secs'],
+ ['assists','assist_90'],['xa','xa_90'],['xg','xg_90'],['xt','xt_90']
+];
+
+function metricLabel(k){
+  var l=null;
+  SORTS.forEach(function(g){g[1].forEach(function(m){if(m[0]===k)l=m[1]})});
+  if(!l)TRAITS.forEach(function(t){if(t[0]===k)l=t[1]});
+  return l||k;
+}
+/* The trait fields are chain-role scores, not per-90 metrics, and Rank has no
+   column for them -- so a handoff link is offered only when the metric is one
+   Rank can actually show. */
+function isRankMetric(k){
+  var ok=false;
+  SORTS.forEach(function(g){g[1].forEach(function(m){if(m[0]===k)ok=true})});
+  return ok;
+}
+
+function parseAsk(qRaw){
+  var q=' '+String(qRaw||'').toLowerCase().replace(/[^a-z0-9\s-]/g,' ').replace(/\s+/g,' ')+' ';
+  var used=[],out={league:null,pool:null,metric:null,limit:null,maxAge:null,minN:null,
+                   side:null,foot:null,unparsed:[]};
+  function take(list,key,label){
+    for(var i=0;i<list.length;i++){
+      var w=' '+list[i][0]+' ';
+      if(q.indexOf(w)>=0){out[key]=list[i][1];used.push(label+' "'+list[i][0]+'"');
+        q=q.split(w).join(' ');return true}
+    }
+    return false;
+  }
+  take(LEAGUE_WORDS,'league','league');
+  take(POOL_WORDS,'pool','position');
+  take(METRIC_WORDS,'metric','metric');
+  var m;
+  if((m=q.match(/\b(?:top|best|first)\s+(\d{1,3})\b/)))out.limit=+m[1];
+  else if((m=q.match(/\b(\d{1,3})\s+(?:best|top)\b/)))out.limit=+m[1];
+  if((m=q.match(/\bunder\s+(\d{2})\b/)))out.maxAge=+m[1];
+  if((m=q.match(/\b(?:at least|min|minimum)\s+(\d{1,3})\s*90s?\b/)))out.minN=+m[1];
+  if(q.indexOf(' left foot')>=0||q.indexOf(' left footed')>=0)out.foot='L';
+  if(q.indexOf(' right foot')>=0||q.indexOf(' right footed')>=0)out.foot='R';
+  if(q.indexOf(' left sided')>=0)out.side='L';
+  if(q.indexOf(' right sided')>=0)out.side='R';
+  out.used=used;
+  return out;
+}
+
+/* Answer a ranking from ROWS, honouring every constraint the parse found.
+   The percentile is computed over the population that survives the filters,
+   which is the rule the Rank table follows: the pool is the selection. */
+function answerLocally(p){
+  var minN=p.minN==null?6:p.minN;
+  var applied=[],ignored=[];
+  var pop=ROWS.filter(function(r){
+    if(p.league&&TLG[r.team]!==p.league)return false;
+    if(p.pool&&r.pool!==p.pool)return false;
+    if(p.side&&r.side!==p.side)return false;
+    if((r.nineties||0)<minN)return false;
+    if(p.maxAge!=null&&(r.age_seen==null||r.age_seen>p.maxAge))return false;
+    return r[p.metric]!=null;
+  });
+  if(p.league)applied.push(LEAGUE_DISPLAY[p.league]||p.league);
+  if(p.pool)applied.push(POOL_LABEL[p.pool]||p.pool);
+  if(p.side)applied.push('side '+p.side);
+  if(p.maxAge!=null)applied.push('under '+p.maxAge);
+  applied.push('min '+minN+' 90s');
+  /* foot is in the vocabulary because the examples use it, and player_search
+     carries no footedness column -- so it is NAMED as unapplied rather than
+     quietly doing nothing. */
+  if(p.foot)ignored.push('preferred foot ('+(p.foot==='L'?'left':'right')+') — not a column in the player index');
+  if(p.league&&!Object.keys(TLG).length)ignored.push('league — the team directory did not load');
+  var hib=(p.metric!=='hold_secs');
+  var good=function(r){return hib?+r[p.metric]:-r[p.metric]};
+  var sorted=pop.map(good).sort(function(a,b){return a-b});
+  pop.forEach(function(r){
+    var v=good(r),lo=0,hi=sorted.length;
+    while(lo<hi){var mid=(lo+hi)>>1;if(sorted[mid]<=v)lo=mid+1;else hi=mid}
+    r.__pct=sorted.length>1?Math.round(100*lo/sorted.length):100;
+  });
+  var list=pop.slice().sort(function(a,b){
+    if(b.__pct!==a.__pct)return b.__pct-a.__pct;
+    if(good(b)!==good(a))return good(b)-good(a);
+    return String(a.player_id)<String(b.player_id)?-1:1;
+  });
+  return {intent:'rank',local:true,metric:p.metric,applied:applied,ignored:ignored,
+          population:pop.length,parse:p,
+          results:list.slice(0,p.limit||12).map(function(r,i){
+            return {rk:i+1,player_id:r.player_id,player:r.player,team:r.team,pos:r.pos,
+                    age_seen:r.age_seen,nineties:r.nineties,
+                    value:fmt(r[p.metric],p.metric),pct:r.__pct};
+          })};
+}
+
+/* The handoff. A ranked list is only evidence if you can reach the rest of
+   it, so every local answer links into Rank with the same filters applied. */
+function rankHref(p){
+  var q=['tab=Rank'];
+  if(isRankMetric(p.metric))q.push('metric='+encodeURIComponent(p.metric));
+  if(p.pool)q.push('pool='+encodeURIComponent(p.pool));
+  if(p.league)q.push('league='+encodeURIComponent(p.league));
+  if(p.limit)q.push('n='+p.limit);
+  return 'players.html?'+q.join('&');
+}
+
 function parseLine(d){
   if(d.intent==='similar'){
     const s=d.subject||{};
     return 'Most similar to <b>'+esc(s.player||'')+'</b> ('+esc(s.team||'')+', '+esc(s.pos||'')+')'
       +' · compared on <b>'+esc(d.compared_on||'overall style')+'</b>';
+  }
+  if(d.local){
+    var lb=d.applied.map(function(x){return '<span class="pill">'+esc(x)+'</span>'});
+    return 'Ranked on <b>'+esc(metricLabel(d.metric))+'</b> · '+lb.join('')
+      +'<span class="pill">'+d.population+' in the pool</span>';
   }
   const f=d.filters||{};
   let bits=[];
@@ -306,6 +491,14 @@ function renderAsk(d){
     +(d.intent==='similar'?'Similarity':'Ranking')+'</span>'
     +'<button type="button" class="close" aria-label="Clear this answer and go back to the filters" onclick="clearAsk()">clear ✕</button></div>'
     +'<div class="parse">'+parseLine(d)+'</div>'
+    +(d.local
+       ? '<div class="how">Percentile is computed across the '+d.population+
+         ' players that match these filters, not within a stored pool — '+
+         'so it means "against exactly the list you asked for". '+
+         '<a class="link" href="'+rankHref(d.parse)+'">Open this in the full Rank table →</a></div>'
+       : '')
+    +((d.ignored&&d.ignored.length)
+       ? '<div class="how"><b>Not applied:</b> '+d.ignored.map(esc).join('; ')+'</div>' : '')
     +(d.explain?'<div class="how">'+esc(d.explain)+'</div>':'');
   if(!rows.length){ h+='<div class="empty">nothing matched that</div></div>'; host.innerHTML=h; return; }
 
@@ -346,8 +539,25 @@ async function runAsk(){
   if(!q) return;
   document.getElementById('askOut').innerHTML=
     '<div class="ans"><div class="parse">thinking…</div></div>';
+  /* PARSED HERE FIRST. A ranking this page can answer is answered here,
+     because this is the only place the league constraint can be applied at
+     all. Similarity still goes to the database, which owns that model. */
+  const p=parseAsk(q);
+  const similar=/\bsimilar\b|\blike\b/.test(q.toLowerCase());
+  if(!similar&&p.metric&&ROWS.length){
+    try{ renderAsk(answerLocally(p)); }
+    catch(e){ document.getElementById('askOut').innerHTML=
+      '<div class="ans"><div class="parse">could not run that ('+esc(e.message)+')</div></div>'; }
+    return;
+  }
   try{
     const d=await sbRpc('nl_query',{q:q,p_limit:12});
+    if(d&&!d.error){
+      if(p.league)d.ignored=(d.ignored||[]).concat(
+        [(LEAGUE_DISPLAY[p.league]||p.league)+' — this answer comes from the database, which has no league filter']);
+      if(!similar&&!p.metric)d.ignored=(d.ignored||[]).concat(
+        ['no metric recognised in the question, so this page could not rank it locally']);
+    }
     renderAsk(d);
   }catch(e){
     document.getElementById('askOut').innerHTML=
@@ -389,7 +599,7 @@ const PRESETS=[
   {n:'One-v-one wingers',              q:'best wingers at dribbling'}
 ];
 
-let ROWS=[],PCT={},STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};
+let ROWS=[],PCT={},TLG={},STATE={leagues:[],pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};
 
 /* percentile of every numeric field, computed WITHIN position pool */
 function buildPct(rows){
@@ -432,6 +642,7 @@ function sortLabel(k){
 
 function apply(){
   let out=ROWS.filter(function(r){
+    if(STATE.leagues.length&&STATE.leagues.indexOf(TLG[r.team])<0)return false;
     if(STATE.pools.length&&STATE.pools.indexOf(r.pool)<0)return false;
     if(STATE.sides.length&&STATE.sides.indexOf(r.side)<0)return false;
     if(STATE.age<40&&(r.age_seen==null||r.age_seen>STATE.age))return false;
@@ -477,6 +688,13 @@ function render(rows){
 /* ---------- UI wiring ---------- */
 function chip(label,on){return '<span class="chip'+(on?' on':'')+'" data-v="'+esc(label)+'">'+esc(label)+'</span>'}
 function paintChips(){
+  /* Only the leagues actually present in the loaded index, so the control can
+     never offer a filter that returns nothing. */
+  var present={};ROWS.forEach(function(r){var c=TLG[r.team];if(c)present[c]=true});
+  document.getElementById('leagueChips').innerHTML=Object.keys(present).sort().map(function(c){
+    return '<span class="chip'+(STATE.leagues.indexOf(c)>=0?' on':'')+'" data-v="'+esc(c)+'">'
+      +esc(LEAGUE_DISPLAY[c]||c)+'</span>'}).join('')
+    ||'<span class="hint">team directory unavailable</span>';
   document.getElementById('poolChips').innerHTML=POOLS.map(function(p){return chip(p,STATE.pools.indexOf(p)>=0)}).join('');
   document.getElementById('sideChips').innerHTML=SIDES.map(function(s){
     return '<span class="chip'+(STATE.sides.indexOf(s[0])>=0?' on':'')+'" data-v="'+s[0]+'">'+s[1]+'</span>'}).join('');
@@ -505,6 +723,12 @@ function paintRanges(){
 }
 function paintAll(){paintChips();paintTraits();paintSorts();paintRanges();apply();}
 
+document.getElementById('leagueChips').addEventListener('click',function(e){
+  const c=e.target.closest('.chip'); if(!c)return;
+  const v=c.dataset.v,i=STATE.leagues.indexOf(v);
+  if(i>=0)STATE.leagues.splice(i,1);else STATE.leagues.push(v);
+  paintChips();apply();
+});
 document.getElementById('poolChips').addEventListener('click',function(e){
   const c=e.target.closest('.chip'); if(!c)return;
   const v=c.dataset.v,i=STATE.pools.indexOf(v);
@@ -535,7 +759,7 @@ document.getElementById('minN').addEventListener('input',function(e){
 });
 document.getElementById('sortSel').addEventListener('change',function(e){STATE.sort=e.target.value;apply();});
 document.getElementById('reset').addEventListener('click',function(){
-  STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};paintAll();
+  STATE={leagues:[],pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};paintAll();
 });
 document.getElementById('copy').addEventListener('click',function(){
   const rowsEl=document.querySelectorAll('#results tbody tr');
@@ -575,14 +799,25 @@ async function init(){
         +' onclick="document.getElementById(\'askInput\').value=this.textContent;runAsk()">'
         +esc(x)+'</button>'}).join(' · ')+'</div>');
   try{
-    ROWS=await sbAll('player_search',{select:'*'});
+    /* THE TEAM -> LEAGUE MAP. This page had none, which is the whole of why
+       a league constraint could not be applied here even when it was typed.
+       Its own failure is survivable: without it, a league filter finds nothing
+       and says so, rather than silently matching everything. */
+    var _tl;
+    [ROWS,_tl]=await Promise.all([
+      sbAll('player_search',{select:'*'}),
+      sbAll('v_team_directory',{select:'team,league'}).catch(function(){return []})
+    ]);
+    (_tl||[]).forEach(function(d){TLG[d.team]=d.league});
     PCT=buildPct(ROWS);
     const withAge=ROWS.filter(function(r){return r.age_seen!=null}).length;
     document.getElementById('sysLine').innerHTML=
       '<b>'+ROWS.length+'</b> outfield players · <b>'+withAge+'</b> with age · '
       +'traits ranked within position pool · min 6 nineties by default';
     document.getElementById('foot').textContent=
-      'Percentiles are computed within position pool, not across the whole league. '
+      'Percentiles in this table are computed within position pool. '
+      +'The ask bar above computes them across exactly the population it filtered to, '
+      +'which is why its numbers can differ from these. '
       +'Age is a snapshot at match time, not date of birth.';
     paintAll();
   }catch(err){

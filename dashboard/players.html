@@ -787,8 +787,28 @@ async function init(){
        able to put every view on one page; it is useful on its own for linking
        someone straight at the Rank table. Unknown values are ignored rather
        than left to blank the page. */
-    const qtab=new URLSearchParams(location.search).get('tab');
+    const QS=new URLSearchParams(location.search);
+    const qtab=QS.get('tab');
     if(qtab&&TABS.indexOf(qtab)>=0)TAB=qtab;
+    /* RANK ACCEPTS ITS FILTERS FROM THE URL, so search.html can hand off a
+       parsed question and land the reader on the same population it just
+       showed them rather than on the default view. Every value is validated
+       against what actually exists -- an unknown metric or league is ignored
+       rather than left to render an empty table. */
+    const qmetric=QS.get('metric');
+    if(qmetric&&DEFS.some(function(d){return d.key===qmetric}))RK.metric=qmetric;
+    const qpool=QS.get('pool');
+    if(qpool&&POOL_NAME[qpool])RK.pool=qpool;
+    const qpos=QS.get('pos');
+    if(qpos)RK.pos=qpos;
+    const qn=parseInt(QS.get('n'),10);
+    if(qn>0&&qn<=200)RK.n=qn;
+    const qleague=QS.get('league');
+    if(qleague){
+      const want=qleague.split(',').filter(function(c){
+        return PLEAGUES.some(function(l){return l.league===c})});
+      if(want.length)PLGSEL=want;
+    }
     const qp=new URLSearchParams(location.search).get('player');
     if(qp&&playerOf(qp)&&PLGSEL.length&&!teamInLeague(playerOf(qp).team)){
       const targetLeague=lgOfTeam(playerOf(qp).team);
