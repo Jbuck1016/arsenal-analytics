@@ -580,7 +580,15 @@ function renderTabs(){document.getElementById('tabs').innerHTML=
     return '<button type="button" class="tab'+(TAB===t?' on':'')+'" aria-pressed="'+(TAB===t)+'" '+
       'onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('');
   syncTabCue()}
-function setTab(t){TAB=t;renderTabs();
+/* Panels are decorated after each render rather than inside every renderer:
+   the async ones resolve after setTab returns, so one tick later catches
+   both. Idempotent. */
+function scheduleExportButtons(){
+  decorateExports();
+  setTimeout(decorateExports,260);
+  setTimeout(decorateExports,900);
+}
+function setTab(t){TAB=t;renderTabs();scheduleExportButtons();
   document.getElementById('side').classList.toggle('hide',t==='League Map'||t==='Rankings');
   draw();}
 function renderList(){
@@ -1458,58 +1466,159 @@ function wireTips(){
 function legendHtml(){return '<div class="legend">'+[['var(--elite)','Elite 80+'],['var(--above)','Above 60+'],
   ['var(--avg)','Average 40+'],['var(--below)','Below 20+'],['var(--poor)','Poor']]
   .map(function(a){return '<div class="lg"><div class="dot" style="background:'+a[0]+'"></div>'+a[1]+'</div>'}).join('')+'</div>'}
-async function snap(){
-  const el=document.getElementById('main'),bg=getComputedStyle(document.body).backgroundColor;
-  /* The live main panel scrolls inside a fixed-height flex layout. Capture an
-     expanded off-screen clone so season maps are not clipped at the viewport. */
-  const stage=document.createElement('div'),clone=el.cloneNode(true);
-  stage.style.cssText='position:fixed;left:-100000px;top:0;width:'+el.clientWidth+'px;background:'+bg+';z-index:-1';
-  clone.style.cssText='width:100%;height:auto;max-height:none;overflow:visible;padding:13px 18px';
-  clone.querySelectorAll('.vz-tog,.vz-filters').forEach(function(control){control.remove()});
-  /* PANEL CONTENT ONLY. A .sect whose job is to hold selects is chrome: it
-     says what was asked for, not what the answer is. One that also carries a
-     chart or a table is a panel and stays. */
-  clone.querySelectorAll('.sect').forEach(function(sec){
-    if(sec.querySelector('select')&&!sec.querySelector('svg')&&!sec.querySelector('table'))sec.remove();
+/* =====================================================================
+   ONE EXPORT MECHANISM. Everything downloadable goes through here.
+
+   There were two, and neither did the whole job. The tab-level snap()
+   captured every .sect in the view as a single sheet, so you could not take
+   one table; exportViz() took one pitch panel but built its own stage inline,
+   which meant it did NOT force light, did not use the Phase 3 export-stage
+   styling, and carried a caption hard-coded to the player view.
+
+   exportPanel(el, meta, fmt) is the whole of it now. It takes an element and
+   its metadata, renders it onto the export sheet, and hands back a PNG or a
+   PDF. Every caller is a one-liner over it.
+
+   THE RULES, unchanged and now enforced in one place:
+     always light, whatever the workspace shows
+     panel content only, no chrome, no nav, no controls
+     generous margins, which .export-stage supplies
+     title, subtitle naming the population and filters, legend, and the
+     as-of date -- a chart without a date is not evidence of anything, so
+     the date is not optional and is appended whether or not the panel has
+     one of its own.
+   ===================================================================== */
+function exportAsOf(){
+  var el=document.getElementById('asOf');
+  var t=el?(el.textContent||'').trim():'';
+  return t||('as of '+new Date().toISOString().slice(0,10));
+}
+/* Metadata read off the panel itself, so a new panel is exportable the moment
+   it renders without anyone remembering to register it. An explicit `meta`
+   argument still wins, for the cases where the panel's own title is not the
+   one the sheet should carry. */
+function exportMetaOf(el,meta){
+  meta=meta||{};
+  var q=function(sel){var n=el.querySelector(sel);return n?(n.textContent||'').trim():''};
+  var head=el.querySelector('.sect-h');
+  /* The export buttons are injected INTO .sect-h, so their labels would be
+     read back as the panel's subtitle -- the first version of this produced
+     "PNGPDF" for every panel whose head is a .sect-h. Anything inside the
+     decoration is not part of the panel's metadata. */
+  var headBits=head?[].slice.call(head.querySelectorAll('span'))
+    .filter(function(s){return !s.closest('.export-btn')})
+    .map(function(s){return (s.textContent||'').trim()})
+    .filter(function(t){return t}):[];
+  return {
+    title: meta.title||q('.viz-title')||headBits[0]||'Panel',
+    subtitle: meta.subtitle||q('.viz-sub')||headBits[1]||scopeLabel(),
+    asOf: meta.asOf||exportAsOf(),
+    name: meta.name||((meta.title||q('.viz-title')||headBits[0]||'panel')
+      .replace(/[^\w]+/g,'_').replace(/^_|_$/g,'').toLowerCase())
+  };
+}
+/* Chrome that must never reach the sheet. Controls say what was ASKED for;
+   the sheet is the answer. */
+var EXPORT_STRIP=['.viz-exp','.vz-filters','.vz-tog','.ctrls','.lgtoggle',
+                  '.sect-ctrl','button.btn','.spin','.export-btn'];
+function exportClone(el){
+  var c=el.cloneNode(true);
+  EXPORT_STRIP.forEach(function(sel){
+    [].slice.call(c.querySelectorAll(sel)).forEach(function(n){n.remove()});
   });
-  clone.querySelectorAll('select,input,button').forEach(function(c){c.remove()});
-  const cap=document.createElement('div');
+  /* Anything still interactive is inert on paper. */
+  [].slice.call(c.querySelectorAll('select,input,button')).forEach(function(n){n.remove()});
+  return c;
+}
+async function exportPanel(el,meta,fmt){
+  if(!el){alert('Nothing to export here');return}
+  var m=exportMetaOf(el,meta);
+  var root=document.documentElement,wasDark=root.classList.contains('dark');
+  var stage=document.createElement('div');
+  stage.className='export-stage';
+  var head=document.createElement('div');
+  head.innerHTML='<div class="viz-title">'+esc(m.title)+'</div>'+
+                 '<div class="viz-sub">'+esc(m.subtitle)+'</div>';
+  stage.appendChild(head);
+  stage.appendChild(exportClone(el));
+  var cap=document.createElement('div');
   cap.className='export-cap';
-  cap.textContent=['Team Profiles '+String.fromCharCode(183)+' '+TAB,
-    (SEL?tname(SEL):''),populationNote(null),
-    ((document.getElementById('asOf')||{}).textContent||'')]
-    .filter(Boolean).join('  '+String.fromCharCode(183)+'  ');
-  clone.appendChild(cap);
-  stage.appendChild(clone);document.body.appendChild(stage);
-  /* ALWAYS LIGHT, for the reason players.html gives at length: the same chart
-     exported from the two themes came out as two different pictures.
-     html2canvas reads computed styles off the live DOM and a descendant
-     cannot escape an ancestor's html.dark, so the root class is the lever. */
-  const root=document.documentElement,wasDark=root.classList.contains('dark');
+  cap.textContent=m.asOf;
+  stage.appendChild(cap);
+  document.body.appendChild(stage);
+  /* html2canvas reads computed styles off the live DOM and a descendant
+     cannot escape an ancestor's html.dark, so the class comes off the root
+     for the duration. The page flashes light; there is nowhere else to put
+     the light copy. */
   root.classList.remove('dark');
   try{
-    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-    /* Freeze viewport-relative pitches before html2canvas changes its virtual
-       window height; otherwise calc(100vh - …) expands after h is measured and
-       pushes the legend outside the captured bitmap. */
-    clone.querySelectorAll('.pitch-box').forEach(function(box){
-      box.style.height=Math.max(230,box.getBoundingClientRect().height)+'px';
-      box.style.maxHeight='none';
-    });
-    await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve)})});
-    const w=clone.scrollWidth,h=clone.scrollHeight;
-    return await html2canvas(clone,{backgroundColor:getComputedStyle(document.body).backgroundColor,
-      scale:2,width:w,height:h,windowWidth:w,windowHeight:h});
-  }finally{if(wasDark)root.classList.add('dark');stage.remove()}
+    var bg=getComputedStyle(document.body).backgroundColor;
+    var c=await html2canvas(stage,{backgroundColor:bg,scale:2,useCORS:true,
+      windowWidth:stage.scrollWidth,width:stage.scrollWidth,
+      height:stage.scrollHeight,windowHeight:stage.scrollHeight});
+    if(fmt==='pdf'){
+      var jsPDF=window.jspdf.jsPDF;
+      var landscape=c.width>=c.height;
+      var pdf=new jsPDF({orientation:landscape?'l':'p',unit:'pt',format:'a4'});
+      var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+      var r=Math.min(pw/c.width,ph/c.height)*0.96;
+      pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',
+        (pw-c.width*r)/2,(ph-c.height*r)/2,c.width*r,c.height*r,undefined,'FAST');
+      pdf.save(m.name+'.pdf');
+    }else{
+      var a=document.createElement('a');
+      a.download=m.name+'.png';a.href=c.toDataURL('image/png');a.click();
+    }
+  }catch(e){alert('Export failed: '+e.message)}
+  finally{
+    if(wasDark)root.classList.add('dark');
+    stage.remove();
+  }
 }
-async function exportPNG(){try{const c=await snap();const a=document.createElement('a');
-  a.download=(SEL||'team').replace(/[^\w]+/g,'_')+'.png';a.href=c.toDataURL('image/png');a.click()}catch(e){alert(e.message)}}
-async function exportPDF(){try{const c=await snap();const jsPDF=window.jspdf.jsPDF;
-  const pdf=new jsPDF({orientation:c.width>=c.height?'l':'p',unit:'pt',format:'a4'});
-  const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-  const r=Math.min(pw/c.width,ph/c.height);
-  pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',(pw-c.width*r)/2,20,c.width*r,c.height*r,undefined,'FAST');
-  pdf.save((SEL||'team').replace(/[^\w]+/g,'_')+'.pdf')}catch(e){alert(e.message)}}
+/* EVERY DISCRETE PANEL GETS ITS OWN PAIR OF BUTTONS, injected after render
+   rather than written into each renderer. A panel qualifies if it holds a
+   table or a chart -- a control strip or an empty state is not an artefact. */
+var EXPORT_SEQ=0;
+function decorateExports(root){
+  root=root||document.getElementById('main');
+  if(!root)return;
+  [].slice.call(root.querySelectorAll('.sect')).forEach(function(sec){
+    if(sec.querySelector('.export-btn'))return;
+    if(!sec.querySelector('table,svg,canvas,.rankbar,.bar'))return;
+    var head=sec.querySelector('.viz-head')||sec.querySelector('.sect-h');
+    var id='xp'+(++EXPORT_SEQ);
+    sec.dataset.exportId=id;
+    var box=document.createElement('span');
+    box.className='viz-exp export-btn';
+    box.innerHTML='<button type="button" title="Panel content only, always light"'+
+      ' onclick="exportById(\''+id+'\',\'png\')">PNG</button>'+
+      '<button type="button" title="Panel content only, always light"'+
+      ' onclick="exportById(\''+id+'\',\'pdf\')">PDF</button>';
+    if(head&&head.classList.contains('viz-head'))head.appendChild(box);
+    else if(head)head.appendChild(box);
+    else sec.insertBefore(box,sec.firstChild);
+  });
+}
+function exportById(id,fmt){
+  var el=document.querySelector('[data-export-id="'+id+'"]');
+  exportPanel(el,null,fmt);
+}
+/* The whole-view export the header buttons call: every panel in the view on
+   one sheet, which is a different artefact from any one of them. */
+async function exportPNG(){ await exportView('png') }
+async function exportPDF(){ await exportView('pdf') }
+async function exportView(fmt){
+  var main=document.getElementById('main');
+  var wrap=document.createElement('div');
+  [].slice.call(main.querySelectorAll('.sect')).forEach(function(s){
+    wrap.appendChild(exportClone(s));
+  });
+  if(!wrap.childNodes.length)wrap.appendChild(exportClone(main));
+  await exportPanel(wrap,{title:'Player Fingerprints · '+TAB,
+                          subtitle:populationNote(null,TAB==='Rank'?rankWithin():null),
+                          name:exportName()},fmt);
+}
+
 /* The tab strip only shows an overflow cue when it actually has more bar in
    that direction. Kept in script because CSS cannot see a scroll position. */
 function syncTabCue(){

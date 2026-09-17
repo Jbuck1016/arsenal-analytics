@@ -817,7 +817,7 @@ async function init(){
     renderLeaguePick();
     fillTeamSel();
     updateHdrSub();
-    renderTabs();renderList();
+    renderTabs();scheduleExportButtons();renderList();
     if(qp&&playerOf(qp)){
       const tp=playerOf(qp);
       document.getElementById('teamSel').value=tp.team;
@@ -833,6 +833,15 @@ function renderTabs(){
       return '<button type="button" class="tab'+(TAB===t?' on':'')+'" aria-pressed="'+(TAB===t)+'" '+
         'onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('');
   syncTabCue();
+}
+/* Panels are decorated after each render rather than at the end of every
+   renderer: the async ones resolve after setTab returns, so one tick later
+   catches both. Idempotent -- decorateExports skips a panel that already has
+   its buttons. */
+function scheduleExportButtons(){
+  decorateExports();
+  setTimeout(decorateExports,260);
+  setTimeout(decorateExports,900);
 }
 function setTab(t){
   TAB=t;renderTabs();
@@ -874,61 +883,157 @@ function exportName(){
    than what the answer is, and the header, tab strip and player list are
    navigation. The as-of line is appended because a chart without a date is
    not evidence of anything. */
-function exportCaption(){
-  const asOf=(document.getElementById('asOf')||{}).textContent||'';
-  const bits=['Player Fingerprints \u00B7 '+TAB];
-  if(TAB==='Player'&&SEL){const q=playerOf(SEL);if(q&&q.player_name)bits.push(q.player_name)}
-  bits.push(populationNote(null));
-  if(asOf)bits.push(asOf);
-  return bits.join('  \u00B7  ');
+/* =====================================================================
+   ONE EXPORT MECHANISM. Everything downloadable goes through here.
+
+   There were two, and neither did the whole job. The tab-level snap()
+   captured every .sect in the view as a single sheet, so you could not take
+   one table; exportViz() took one pitch panel but built its own stage inline,
+   which meant it did NOT force light, did not use the Phase 3 export-stage
+   styling, and carried a caption hard-coded to the player view.
+
+   exportPanel(el, meta, fmt) is the whole of it now. It takes an element and
+   its metadata, renders it onto the export sheet, and hands back a PNG or a
+   PDF. Every caller is a one-liner over it.
+
+   THE RULES, unchanged and now enforced in one place:
+     always light, whatever the workspace shows
+     panel content only, no chrome, no nav, no controls
+     generous margins, which .export-stage supplies
+     title, subtitle naming the population and filters, legend, and the
+     as-of date -- a chart without a date is not evidence of anything, so
+     the date is not optional and is appended whether or not the panel has
+     one of its own.
+   ===================================================================== */
+function exportAsOf(){
+  var el=document.getElementById('asOf');
+  var t=el?(el.textContent||'').trim():'';
+  return t||('as of '+new Date().toISOString().slice(0,10));
 }
-async function withExportSurface(fn){
-  const root=document.documentElement,wasDark=root.classList.contains('dark');
-  const main=document.getElementById('main');
-  const stage=document.createElement('div');
+/* Metadata read off the panel itself, so a new panel is exportable the moment
+   it renders without anyone remembering to register it. An explicit `meta`
+   argument still wins, for the cases where the panel's own title is not the
+   one the sheet should carry. */
+function exportMetaOf(el,meta){
+  meta=meta||{};
+  var q=function(sel){var n=el.querySelector(sel);return n?(n.textContent||'').trim():''};
+  var head=el.querySelector('.sect-h');
+  /* The export buttons are injected INTO .sect-h, so their labels would be
+     read back as the panel's subtitle -- the first version of this produced
+     "PNGPDF" for every panel whose head is a .sect-h. Anything inside the
+     decoration is not part of the panel's metadata. */
+  var headBits=head?[].slice.call(head.querySelectorAll('span'))
+    .filter(function(s){return !s.closest('.export-btn')})
+    .map(function(s){return (s.textContent||'').trim()})
+    .filter(function(t){return t}):[];
+  return {
+    title: meta.title||q('.viz-title')||headBits[0]||'Panel',
+    subtitle: meta.subtitle||q('.viz-sub')||headBits[1]||populationNote(null),
+    asOf: meta.asOf||exportAsOf(),
+    name: meta.name||((meta.title||q('.viz-title')||headBits[0]||'panel')
+      .replace(/[^\w]+/g,'_').replace(/^_|_$/g,'').toLowerCase())
+  };
+}
+/* Chrome that must never reach the sheet. Controls say what was ASKED for;
+   the sheet is the answer. */
+var EXPORT_STRIP=['.viz-exp','.vz-filters','.vz-tog','.ctrls','.lgtoggle',
+                  '.sect-ctrl','button.btn','.spin','.export-btn'];
+function exportClone(el){
+  var c=el.cloneNode(true);
+  EXPORT_STRIP.forEach(function(sel){
+    [].slice.call(c.querySelectorAll(sel)).forEach(function(n){n.remove()});
+  });
+  /* Anything still interactive is inert on paper. */
+  [].slice.call(c.querySelectorAll('select,input,button')).forEach(function(n){n.remove()});
+  return c;
+}
+async function exportPanel(el,meta,fmt){
+  if(!el){alert('Nothing to export here');return}
+  var m=exportMetaOf(el,meta);
+  var root=document.documentElement,wasDark=root.classList.contains('dark');
+  var stage=document.createElement('div');
   stage.className='export-stage';
-  main.querySelectorAll('.sect').forEach(function(s){stage.appendChild(s.cloneNode(true))});
-  /* A view with no .sect at all -- an error or empty state -- still exports
-     something rather than a blank sheet. */
-  if(!stage.childNodes.length)stage.appendChild(main.cloneNode(true));
-  const cap=document.createElement('div');
-  cap.className='export-cap';cap.textContent=exportCaption();
+  var head=document.createElement('div');
+  head.innerHTML='<div class="viz-title">'+esc(m.title)+'</div>'+
+                 '<div class="viz-sub">'+esc(m.subtitle)+'</div>';
+  stage.appendChild(head);
+  stage.appendChild(exportClone(el));
+  var cap=document.createElement('div');
+  cap.className='export-cap';
+  cap.textContent=m.asOf;
   stage.appendChild(cap);
   document.body.appendChild(stage);
+  /* html2canvas reads computed styles off the live DOM and a descendant
+     cannot escape an ancestor's html.dark, so the class comes off the root
+     for the duration. The page flashes light; there is nowhere else to put
+     the light copy. */
   root.classList.remove('dark');
   try{
-    return await fn(stage);
-  }finally{
+    var bg=getComputedStyle(document.body).backgroundColor;
+    var c=await html2canvas(stage,{backgroundColor:bg,scale:2,useCORS:true,
+      windowWidth:stage.scrollWidth,width:stage.scrollWidth,
+      height:stage.scrollHeight,windowHeight:stage.scrollHeight});
+    if(fmt==='pdf'){
+      var jsPDF=window.jspdf.jsPDF;
+      var landscape=c.width>=c.height;
+      var pdf=new jsPDF({orientation:landscape?'l':'p',unit:'pt',format:'a4'});
+      var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+      var r=Math.min(pw/c.width,ph/c.height)*0.96;
+      pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',
+        (pw-c.width*r)/2,(ph-c.height*r)/2,c.width*r,c.height*r,undefined,'FAST');
+      pdf.save(m.name+'.pdf');
+    }else{
+      var a=document.createElement('a');
+      a.download=m.name+'.png';a.href=c.toDataURL('image/png');a.click();
+    }
+  }catch(e){alert('Export failed: '+e.message)}
+  finally{
     if(wasDark)root.classList.add('dark');
     stage.remove();
   }
 }
-async function snap(){
-  return await withExportSurface(async function(stage){
-    const bg=getComputedStyle(document.body).backgroundColor;
-    return await html2canvas(stage,{backgroundColor:bg,scale:2,useCORS:true,
-      windowWidth:stage.scrollWidth,width:stage.scrollWidth,
-      height:stage.scrollHeight,windowHeight:stage.scrollHeight});
+/* EVERY DISCRETE PANEL GETS ITS OWN PAIR OF BUTTONS, injected after render
+   rather than written into each renderer. A panel qualifies if it holds a
+   table or a chart -- a control strip or an empty state is not an artefact. */
+var EXPORT_SEQ=0;
+function decorateExports(root){
+  root=root||document.getElementById('main');
+  if(!root)return;
+  [].slice.call(root.querySelectorAll('.sect')).forEach(function(sec){
+    if(sec.querySelector('.export-btn'))return;
+    if(!sec.querySelector('table,svg,canvas,.rankbar,.bar'))return;
+    var head=sec.querySelector('.viz-head')||sec.querySelector('.sect-h');
+    var id='xp'+(++EXPORT_SEQ);
+    sec.dataset.exportId=id;
+    var box=document.createElement('span');
+    box.className='viz-exp export-btn';
+    box.innerHTML='<button type="button" title="Panel content only, always light"'+
+      ' onclick="exportById(\''+id+'\',\'png\')">PNG</button>'+
+      '<button type="button" title="Panel content only, always light"'+
+      ' onclick="exportById(\''+id+'\',\'pdf\')">PDF</button>';
+    if(head&&head.classList.contains('viz-head'))head.appendChild(box);
+    else if(head)head.appendChild(box);
+    else sec.insertBefore(box,sec.firstChild);
   });
 }
-async function exportPNG(){
-  try{
-    const c=await snap();
-    const a=document.createElement('a');a.download=exportName()+'.png';a.href=c.toDataURL('image/png');a.click();
-  }catch(e){alert('Export failed: '+e.message)}
+function exportById(id,fmt){
+  var el=document.querySelector('[data-export-id="'+id+'"]');
+  exportPanel(el,null,fmt);
 }
-async function exportPDF(){
-  try{
-    const c=await snap();
-    const img=c.toDataURL('image/png');
-    const jsPDF=window.jspdf.jsPDF;
-    const landscape=c.width>=c.height;
-    const pdf=new jsPDF({orientation:landscape?'l':'p',unit:'pt',format:'a4'});
-    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-    const r=Math.min(pw/c.width,ph/c.height);
-    pdf.addImage(img,'PNG',(pw-c.width*r)/2,20,c.width*r,c.height*r);
-    pdf.save(exportName()+'.pdf');
-  }catch(e){alert('Export failed: '+e.message)}
+/* The whole-view export the header buttons call: every panel in the view on
+   one sheet, which is a different artefact from any one of them. */
+async function exportPNG(){ await exportView('png') }
+async function exportPDF(){ await exportView('pdf') }
+async function exportView(fmt){
+  var main=document.getElementById('main');
+  var wrap=document.createElement('div');
+  [].slice.call(main.querySelectorAll('.sect')).forEach(function(s){
+    wrap.appendChild(exportClone(s));
+  });
+  if(!wrap.childNodes.length)wrap.appendChild(exportClone(main));
+  await exportPanel(wrap,{title:'Player Fingerprints · '+TAB,
+                          subtitle:populationNote(null,TAB==='Rank'?rankWithin():null),
+                          name:exportName()},fmt);
 }
 
 /* ---------- PLAYER ---------- */
@@ -2276,59 +2381,17 @@ function refreshViz(){
 }
 
 /* ---------- EXPORT A SINGLE MAP ---------- */
+/* The pitch panel export. It used to build its own stage inline, which meant
+   it did not force light, did not use the export-stage styling, and carried a
+   caption hard-coded to the player view. One mechanism now. */
 async function exportViz(fmt){
-  const p=playerOf(SEL);if(!p)return;
-  const src=document.querySelector('.split-r .sect')||document.querySelector('.studio-grid .pitch-viz')||document.querySelector('#main .pitch-viz');
+  var src=document.querySelector('.split-r .sect')||
+          document.querySelector('.studio-grid .pitch-viz')||
+          document.querySelector('#main .pitch-viz');
   if(!src)return;
-  const stage=document.createElement('div');
-  stage.style.cssText='position:fixed;left:-10000px;top:0;width:1020px;padding:26px 28px;'+
-    'background:'+getComputedStyle(document.body).backgroundColor+';font-family:var(--f-body)';
-  const title=(src.querySelector('.viz-title')||{}).textContent||'Pitch view';
-  const clone=src.cloneNode(true);
-  const ctl=clone.querySelector('.vz-filters');if(ctl)ctl.remove();
-  const tg=clone.querySelector('.vz-tog');if(tg)tg.remove();
-  const xp=clone.querySelector('.viz-exp');if(xp)xp.remove();
-  const eb=clone.querySelector('.viz-eyebrow');if(eb)eb.remove();
-  const tt=clone.querySelector('.viz-title');if(tt)tt.remove();
-  const box=clone.querySelector('.pitch-box');if(box){box.style.height='560px'}
-  clone.style.border='none';clone.style.background='transparent';clone.style.padding='0';
-
-  stage.innerHTML=
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;'+
-      'border-bottom:1px solid var(--border);padding-bottom:13px;margin-bottom:14px">'+
-      '<div><div style="font:800 27px/1.08 var(--f-display);letter-spacing:-.025em;color:var(--text)">'+
-        esc(p.player_name)+'</div>'+
-        '<div style="font:500 11.5px/1.6 var(--f-body);color:var(--text2);margin-top:5px">'+
-        esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+minsLabel(p)+
-        ' \u00B7 listed '+esc(p.modal_position||'\u2014')+', plays '+esc(POOL_NAME[p.pool]||p.pool)+'</div></div>'+
-      '<div style="text-align:right"><div style="font:700 9px/1 var(--f-body);letter-spacing:.18em;'+
-        'text-transform:uppercase;color:var(--text3)">'+esc(GRP)+'</div>'+
-        '<div style="font:700 17px/1.2 var(--f-display);letter-spacing:-.02em;margin-top:6px">'+esc(title)+'</div></div>'+
-    '</div>';
-  stage.appendChild(clone);
-  const cap=document.createElement('div');
-  cap.style.cssText='margin-top:12px;padding-top:10px;border-top:1px solid var(--border);'+
-    'font:500 9.5px/1.6 var(--f-body);color:var(--text3);display:flex;justify-content:space-between;gap:14px';
-  cap.innerHTML='<span>Full season, open play unless stated \u00B7 attack left to right</span>'+
-    '<span>data whoscored \u00B7 percentiles within role</span>';
-  stage.appendChild(cap);
-  document.body.appendChild(stage);
-  try{
-    const c=await html2canvas(stage,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2});
-    const base=(p.player_name+'_'+title).replace(/[^\w]+/g,'_');
-    if(fmt==='png'){const a=document.createElement('a');a.download=base+'.png';a.href=c.toDataURL('image/png');a.click()}
-    else{
-      const jsPDF=window.jspdf.jsPDF;
-      const pdf=new jsPDF({orientation:'l',unit:'pt',format:'a4'});
-      const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-      const r=Math.min(pw/c.width,ph/c.height)*0.96;
-      /* The stage has an opaque background, so a high-quality JPEG preserves
-         the visual while avoiding multi-megabyte lossless PNGs inside PDFs. */
-      pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',(pw-c.width*r)/2,(ph-c.height*r)/2,c.width*r,c.height*r,undefined,'FAST');
-      pdf.save(base+'.pdf');
-    }
-  }catch(e){alert('Export failed: '+e.message)}
-  finally{stage.remove()}
+  var p=playerOf(SEL)||{};
+  var who=p.player_name?(p.player_name+' \u00B7 '+tname(p.team)+' \u00B7 '+leagueLabel(p.team)):scopeLabel();
+  await exportPanel(src,{subtitle:who+' \u00B7 attack left to right \u00B7 full season, open play unless stated'},fmt);
 }
 
 /* Value is the measurement, percentile is the ranking. Showing only the second
