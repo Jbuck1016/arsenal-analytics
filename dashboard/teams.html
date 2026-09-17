@@ -817,31 +817,94 @@ function naCell(v,p){
     :'Needs 6+ nineties to be ranked \u2014 this player has '+(+p.nineties).toFixed(1);
   return '<td class="num" style="color:var(--text3)" title="'+esc(why)+'">n/a</td>';
 }
+/* MISSING LOOKS MISSING. An em dash in the muted ink, with a title that says
+   which it is -- not a zero, not a blank that reads as nought, and never a
+   hidden row. Coverage this partial is a fact about the data and belongs on
+   screen rather than being smoothed over. */
+function marketCell(m){
+  if(!m||m.market_value_eur==null)
+    return '<td class="num" style="color:var(--text3)" title="No valuation on file">\u2014</td>';
+  var txt=m.market_value_display;
+  if(!txt){
+    var v=+m.market_value_eur;
+    txt=v>=1e6?('\u20ac'+(v/1e6).toFixed(v>=1e7?0:1)+'m')
+       :v>=1e3?('\u20ac'+Math.round(v/1e3)+'k'):('\u20ac'+v);
+  }
+  var when=m.observed_on?(' \u00b7 as at '+String(m.observed_on).slice(0,10)):'';
+  return '<td class="num" title="Latest recorded valuation'+esc(when)+'">'+esc(txt)+'</td>';
+}
+function contractCell(d){
+  if(!d)return '<td class="num" style="color:var(--text3)" title="No contract date on file">\u2014</td>';
+  var iso=String(d).slice(0,10),yr=iso.slice(0,4),mo=iso.slice(5,7);
+  /* Inside a year of expiry is the thing a reader is actually looking for, so
+     it is marked -- with the state palette, not a colour of its own. */
+  var soon=false;
+  try{ soon=(new Date(iso)-new Date())/86400000 < 365; }catch(e){}
+  return '<td class="num"'+(soon?' style="color:var(--state-negative)"':'')+
+    ' title="Contract expires '+esc(iso)+(soon?' \u00b7 within a year':'')+'">'+
+    esc(mo+'/'+yr)+'</td>';
+}
 async function renderSquad(t){
   try{
     const r=await Promise.all([
       sbAll('mv_player_season',{team:'eq.'+t.team,select:'player_id,player_name,nineties,minutes,starts'}),
       sbAll('mv_player_role',{select:'player_id,pool,modal_position'}),
-      sbAll('mv_player_dna',{select:'player_id,completeness,impact,top_pillar'})
+      sbAll('mv_player_dna',{select:'player_id,completeness,impact,top_pillar'}),
+      /* COVERAGE IS PARTIAL AND MUST LOOK PARTIAL. 1,134 players carry a
+         market value, 344 in the Premier League, and only 273 of those join
+         to player_search -- so roughly a fifth of the matched league is
+         already missing before any other squad is considered. Every one of
+         those is shown as a gap.
+         Both views are optional to the page: a provider outage takes the two
+         columns' CONTENT away, not the squad table. */
+      sbAll('v_player_market_values_latest',
+        {select:'player_id,market_value_eur,market_value_display,observed_on'})
+        .catch(function(){return []}),
+      sbAll('v_player_transfer_history',
+        {select:'player_id,contract_expires,contract_expiry,joined_on'})
+        .catch(function(){return []})
     ]);
     const rm={};r[1].forEach(function(x){rm[x.player_id]=x});
     const dm={};r[2].forEach(function(x){dm[x.player_id]=x});
+    /* Latest value per player. The view is named _latest, but a defensive
+       reduce costs nothing and means a duplicated row cannot silently pick
+       whichever arrived last. */
+    const mv={};(r[3]||[]).forEach(function(x){
+      var cur=mv[x.player_id];
+      if(!cur||String(x.observed_on||'')>String(cur.observed_on||''))mv[x.player_id]=x;
+    });
+    /* The column name for expiry is not certain from here -- the view carries
+       contract_expires on one build and contract_expiry on another -- so both
+       are selected and whichever is present is used. */
+    const tx={};(r[4]||[]).forEach(function(x){
+      var d=x.contract_expires||x.contract_expiry;
+      if(!d)return;
+      var cur=tx[x.player_id];
+      if(!cur||String(d)>String(cur))tx[x.player_id]=d;
+    });
+    const haveMv=Object.keys(mv).length,haveTx=Object.keys(tx).length;
     const rows=r[0].map(function(p){return Object.assign({},p,rm[p.player_id]||{},dm[p.player_id]||{})})
       .sort(function(a,b){return b.nineties-a.nineties});
     let h=teamHead(t)+'<div class="sect"><div style="max-height:calc(100vh - 330px);overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">Player</th><th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
       '<th class="num" style="cursor:default">Starts</th><th class="num" style="cursor:default">Completeness</th>'+
-      '<th class="num" style="cursor:default">Impact</th><th style="cursor:default">Strongest</th></tr></thead><tbody>';
+      '<th class="num" style="cursor:default">Impact</th><th style="cursor:default">Strongest</th>'+
+      '<th class="num" style="cursor:default" title="Latest recorded market value. Blank means no valuation is on file for this player, which is not the same as no value.">Market value</th>'+
+      '<th class="num" style="cursor:default" title="Contract expiry as recorded. Blank means not on file.">Contract</th></tr></thead><tbody>';
     rows.forEach(function(p){
       h+='<tr><td><a href="players.html" style="font-weight:700;color:var(--text);text-decoration:none">'+esc(p.player_name)+'</a></td>'+
         '<td style="color:var(--text2)">'+esc(p.pool||'\u2014')+'</td>'+
         '<td class="num">'+(+p.nineties).toFixed(1)+'</td><td class="num">'+p.starts+'</td>'+
         naCell(p.completeness,p)+naCell(p.impact,p)+
-        '<td style="color:var(--text2)">'+esc(p.top_pillar||'\u2014')+'</td></tr>';
+        '<td style="color:var(--text2)">'+esc(p.top_pillar||'\u2014')+'</td>'+
+        marketCell(mv[p.player_id])+contractCell(tx[p.player_id])+'</tr>';
     });
     h+='</tbody></table></div>'+legendHtml()+
        '<div class="foot">Completeness and Impact are ranked within each player\u2019s role across the league, not within this squad. '+
-       '<b>n/a</b> means the player is under the 6-nineties threshold or is a goalkeeper, who are scored on goalkeeping rather than the outfield pillars \u2014 hover for the reason.</div></div>';
+       '<b>n/a</b> means the player is under the 6-nineties threshold or is a goalkeeper, who are scored on goalkeeping rather than the outfield pillars \u2014 hover for the reason. '+
+       '<b>Market value and Contract are partially covered:</b> '+haveMv+' of '+rows.length+' players in this squad have a valuation on file and '+
+       haveTx+' have a contract date. A blank cell means <b>not on file</b>, which is not the same as zero or as out of contract, '+
+       'and no player is hidden for lacking one.</div></div>';
     document.getElementById('main').innerHTML=h;
   }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
