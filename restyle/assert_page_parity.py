@@ -39,7 +39,19 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import assert_tokens as A  # noqa: E402
 
-BASE = "c855423"  # the branch point: the last commit before the restyle
+# THE BASELINE MOVED WITH PHASE 3. It was c855423, the last commit before the
+# restyle, and the gate asserted "nothing renders differently" -- which Phase 3
+# lifted on purpose, so from ad95b63 onwards that comparison could only fail and
+# a failing gate nobody reads is not a gate.
+#
+# It is now the head of Phase 3: the last commit whose rendering was reviewed.
+# What the gate asserts is unchanged in kind and still worth having -- every
+# token a page reads, and every declaration it expands, resolves to what it
+# resolved to at the baseline -- but the baseline is now "the design as
+# reviewed" rather than "the design before the restyle". A change that alters
+# what renders must therefore move this constant in the same commit, which is
+# the point: it makes an unintended recolour fail and an intended one explicit.
+BASE = "ad95b63"  # Phase 3 head: the design as last reviewed
 USE = re.compile(r"var\(\s*(--[\w-]+)")
 
 
