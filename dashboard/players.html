@@ -2311,6 +2311,13 @@ function outcomeTog(){
 function vizLayers(grp,p){
   const A=PACT||[], C=PCAR||[], R2=PREC||[];
   const G=PAL.ok,R=PAL.fail,AC=PAL.box,B=PAL.prog,Y=PAL.carry,N='var(--text3)';
+  /* The three pass-destination hues. --series-alt, --series-cool and
+     --series-warm were declared and read by nothing; they are in the
+     pitch-mark set, so they clear 4.5:1 on both pitches, and the separability
+     audit puts the closest pair anywhere in that palette at 11.7. Three new
+     layers that needed three distinguishable colours, and three sitting
+     unused that had already been measured against the other six. */
+  const TP='var(--series-alt)',TF='var(--series-cool)',TB='var(--series-warm)';
   const L=function(k,label,color,items,draw,shape){return{k:k,label:label,color:color,items:items,draw:draw,shape:shape||'circle'}};
   const pl=function(c,w,op,dash){return function(a){return line(a,c,w,op,dash)}};
   const cl=function(c,w,op,dash){return function(c2){
@@ -2319,6 +2326,17 @@ function vizLayers(grp,p){
   const mt=function(c,r,op,shape){return function(a){return actionMark({
     x:a.x!=null?a.x:a.start_x,y:a.y!=null?a.y:a.start_y},c,r,op,shape)}};
 
+  /* Pass destination zones, identical to match.html's filters. Opta frame:
+     x runs 0 at own goal to 100 at the opponent's, y runs 0 at the right
+     touchline to 100 at the left. */
+  const passEndsIn=function(a,zone){
+    const ex=a.end_x,ey=a.end_y;
+    if(ex==null||ey==null)return false;
+    if(zone==='ft')return ex>=66;
+    if(zone==='z14')return ex>=66&&ex<=83&&ey>=21&&ey<=79;
+    if(zone==='box')return ex>=83&&ey>=21&&ey<=79;
+    return false;
+  };
   if(grp==='Passing'){
     const all=A.filter(function(a){return a.type==='Pass'&&a.is_open_play&&a.end_x!=null});
     const showAll=VZ.passMode==='all';
@@ -2332,6 +2350,19 @@ function vizLayers(grp,p){
       layers:[
         L('box','Into box',AC,base.filter(function(a){return a.into_box&&a.ok}),pl(AC,0.4,0.92)),
         L('prog','Progressive',B,base.filter(function(a){return a.prog&&a.ok&&!a.into_box}),pl(B,0.3,0.72)),
+        /* THREE PASS DESTINATIONS, each independently toggleable and each with
+           its own count, drawn from `all` rather than `base` so they are not
+           silently emptied by the Progressive/All switch above them -- a
+           toggle that can be on and show nothing is worse than no toggle.
+
+           The geometry is match.html's, to the unit, rather than re-derived:
+           final third end_x>=66; zone 14 end_x 66..83 and end_y 21..79; box
+           end_x>=83 and end_y 21..79. Two pages disagreeing about where zone
+           14 is would be the same class of bug as two disagreeing about what
+           a colour token means. */
+        L('z14','Into zone 14',TP,all.filter(function(a){return a.ok&&passEndsIn(a,'z14')}),pl(TP,0.32,0.8)),
+        L('ft','Into final third',TF,all.filter(function(a){return a.ok&&passEndsIn(a,'ft')}),pl(TF,0.28,0.66)),
+        L('boxend','Ending in box',TB,all.filter(function(a){return a.ok&&passEndsIn(a,'box')}),pl(TB,0.32,0.8)),
         L('other','Other completed',G,showAll?base.filter(function(a){return a.ok&&!a.prog&&!a.into_box}):[],pl(G,0.16,0.28)),
         L('fail','Incomplete · dashed',R,base.filter(function(a){return !a.ok}),pl(R,0.24,0.4,'1.2 .8'))
       ]};
@@ -2483,7 +2514,7 @@ function vizPanel(grp,p){
   if(!PACT)return noData('Loading actions\u2026');
   const cfg=vizLayers(grp,p);
   if(!cfg)return noData('No pitch view for this group yet');
-  if(!VZ.off[grp])VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:(grp==='Defending'?{Clearance:true,BlockedPass:true,Challenge:true,Save:true}:{})));
+  if(!VZ.off[grp])VZ.off[grp]=(grp==='Passing'?{fail:true,z14:true,ft:true,boxend:true}:(grp==='Carrying'?{other:true}:(grp==='Defending'?{Clearance:true,BlockedPass:true,Challenge:true,Save:true}:{})));
   const off=VZ.off[grp];
   const live=cfg.layers.filter(function(l){return l.items.length});
   if(!live.length)return noData();
@@ -2523,7 +2554,7 @@ function tglLayer(grp,k){
   VZ.off[grp][k]=!VZ.off[grp][k];
   refreshViz();
 }
-function allLayers(grp){VZ.off[grp]=(grp==='Passing'?{fail:true}:(grp==='Carrying'?{other:true}:{}));refreshViz()}
+function allLayers(grp){VZ.off[grp]=(grp==='Passing'?{fail:true,z14:true,ft:true,boxend:true}:(grp==='Carrying'?{other:true}:{}));refreshViz()}
 function refreshViz(){
   const p=playerOf(SEL);if(!p)return;
   const el=document.querySelector('.split-r');
