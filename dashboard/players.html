@@ -534,12 +534,24 @@ function scopeLabel(){
    so a player from a weaker league drops without having changed anything;
    that is only fair if the reader can see what the comparison set is. When
    one league is selected the sentence is still there, saying so. */
-function populationNote(n){
-  var a=activeLeagues();
+/* The second half names WHAT THE PERCENTILE IS MEASURED AGAINST, because the
+   number means something different in each case and the difference is the
+   whole of item 3: 100th among strikers and 97th among centre-backs are not
+   comparable, and a table that shows them in one list is claiming they are.
+   `within` is the role or position currently filtered to, or null for the
+   whole selection. */
+function populationNote(n,within){
   var who=scopeLabel()+(n==null?'':' \u00B7 '+n+' player'+(n===1?'':'s'));
-  return who+' \u00B7 '+(a.length>1
-    ? 'pooled as one population, percentiles recomputed across the pool'
-    : 'percentiles within this league');
+  return who+' \u00B7 '+(within
+    ? 'percentiles within '+within+', across the selected leagues'
+    : 'percentiles across every player in the selection, not within role');
+}
+/* What the current Rank filters make the population. A role pool wins over a
+   position because the query is already scoped to it. */
+function rankWithin(){
+  if(RK.pool)return POOL_NAME[RK.pool]||RK.pool;
+  if(RK.pos)return RK.pos;
+  return null;
 }
 /* A single league still filters at the source, which is the cheap path. A
    pooled selection does not: PostgREST in.() needs every league code quoted
@@ -1346,13 +1358,16 @@ async function renderScatter(){
                 x:+v[SC.x].value,y:+v[SC.y].value,
                 px:+v[SC.x].pct,py:+v[SC.y].pct,hi:SC.hi.indexOf(pid)>=0});
     });
-    /* The dot colour is the mean of the two percentiles, so the pooled
-       selection has to recolour as well as relabel. Each axis is repooled on
-       its own metric, which is why this runs twice over the same points. */
-    if(isPooled()&&pts.length){
+    /* The dot colour is the mean of the two percentiles, so the selection has
+       to recolour as well as relabel. Each axis is computed on its own metric,
+       which is why this runs twice over the same points. Always, not only for
+       a multi-league selection: the stored percentile is per (pool, league)
+       and is wrong against any other population, including a single league
+       filtered by position. */
+    if(pts.length){
       [['x','px',SC.x],['y','py',SC.y]].forEach(function(axis){
-        const shadow=pts.map(function(q){return{pool:q.pool,value:q[axis[0]]}});
-        repoolPct(shadow,(defOf(axis[2])||{}).higher_is_better);
+        const shadow=pts.map(function(q){return{value:q[axis[0]]}});
+        pctOverPopulation(shadow,(defOf(axis[2])||{}).higher_is_better);
         shadow.forEach(function(s,i){pts[i][axis[1]]=s.pct});
       });
     }
@@ -1380,7 +1395,7 @@ function scatterSvg(pts){
   const ydir=dy.higher_is_better===false?' (lower is better)':'';
   const chartTitle=(dy.label||SC.y)+' vs '+(dx.label||SC.x);
   const chartSub=POOL_NAME[SC.pool]+(SC.pos?' · listed '+SC.pos:'')+' · '+
-    populationNote(pts.length)+' · raw per-90 values · dashed guides are population medians';
+    populationNote(pts.length,POOL_NAME[SC.pool]||null)+' · raw per-90 values · dashed guides are population medians';
   let s='<div class="sect"><div class="viz-eyebrow">Relationship</div>'+
         '<div class="viz-title" data-chart-title="scatter">'+esc(chartTitle)+'</div>'+
         '<div class="viz-sub">'+esc(chartSub)+'</div>'+
@@ -1660,9 +1675,11 @@ function rankCtrls(){
     '<div class="cfield" style="min-width:130px"><span class="clbl">Order</span><select class="sel" onchange="RK.dir=+this.value;renderRank()">'+
       '<option value="-1"'+(RK.dir===-1?' selected':'')+'>Highest first</option>'+
       '<option value="1"'+(RK.dir===1?' selected':'')+'>Lowest first</option></select></div>'+
-    '</div><div class="foot" style="margin-top:8px">'+esc(populationNote(null))+'. '+
-    'With all roles selected, rank uses each player\u2019s <b>role percentile</b>. '+
-    'With one role selected, rank uses the <b>raw metric value</b> because the units are directly comparable. '+
+    '</div><div class="foot" style="margin-top:8px">'+esc(populationNote(null,rankWithin()))+'. '+
+    '<b>The pool is the selection.</b> Percentiles are computed across every player currently shown, '+
+    'so with no role or position filter a striker is compared with a centre-back — because the table is showing you both. '+
+    'Filter to a role or a position and the percentile is within that, because then it is the population. '+
+    'With one role selected, rank orders on the <b>raw metric value</b> instead, because inside a single role the units are directly comparable. '+
     'Role is the pool a player is judged in; position is what he is listed as, and they are filtered separately. '+
     'Click a player to open their profile.</div></div>';
 }
@@ -1685,23 +1702,50 @@ function rankCtrls(){
    for a pooled selection -- one league still shows the stored number
    untouched -- so the two never appear in the same table. Recorded in
    DECISIONS_NEEDED.md. */
-function repoolPct(rows,higherIsBetter){
-  const groups={};
-  rows.forEach(function(r){(groups[r.pool||'']=groups[r.pool||'']||[]).push(r)});
-  Object.keys(groups).forEach(function(k){
-    const g=groups[k],n=g.length;
-    /* Score in the direction that means "better", so one comparison serves
-       both metric polarities. */
-    const good=function(r){return higherIsBetter===false?-r.value:r.value};
-    const sorted=g.map(good).sort(function(a,b){return a-b});
-    g.forEach(function(r){
-      const v=good(r);
-      /* index of the first element strictly greater than v == how many are
-         at or below it */
-      let lo=0,hi=sorted.length;
-      while(lo<hi){const mid=(lo+hi)>>1;if(sorted[mid]<=v)lo=mid+1;else hi=mid}
-      r.pct=n>1?Math.round(100*lo/n):100;
-    });
+/* THE POOL IS THE SELECTION. One function, one rule, every surface that
+   prints a percentile against a selection.
+
+   WHAT WAS WRONG. Matheus Cunha ranked above Virgil van Dijk on both order
+   and percentile with a raw value of 1.19 against 5.00. Cunha is 100th
+   percentile among strikers and van Dijk 97th among centre-backs, and the
+   table sorted on that while presenting one list. Two defects, one cause:
+
+     1. This function grouped by r.pool before ranking, so it recomputed
+        WITHIN ROLE. A striker was never compared with a centre-back even
+        when the table showed them in the same list.
+     2. It only ran when more than one league was selected. With a single
+        league it did not run at all and the STORED per-(pool, league)
+        percentile was used, which has the same problem and is not even
+        scoped to the current filters.
+
+   THE RULE. Percentiles are computed over the population currently on
+   screen, as one population, always. That makes within-role percentile what
+   you get when you SELECT a role -- because then the population is that role
+   -- rather than something imposed on a mixed list. Select a position and
+   the population is that position. Select nothing and it is every player in
+   the selected leagues.
+
+   WHY IT CANNOT COME FROM THE DATABASE. Every stored percentile is keyed on
+   (pool, league): mv_player_pct, mv_player_percentiles and v_player_pct_all
+   all do it, there is no all-players percentile, and league selection is an
+   arbitrary subset of six, so no stored view could cover every combination.
+   It has to be recomputed here from raw values.
+
+   Callers must filter BEFORE calling this, because the rows passed in are
+   the definition of the population. */
+function pctOverPopulation(rows,higherIsBetter){
+  const n=rows.length;
+  /* Score in the direction that means "better", so one comparison serves
+     both metric polarities. */
+  const good=function(r){return higherIsBetter===false?-r.value:r.value};
+  const sorted=rows.map(good).sort(function(a,b){return a-b});
+  rows.forEach(function(r){
+    const v=good(r);
+    /* index of the first element strictly greater than v == how many are at
+       or below it */
+    let lo=0,hi=sorted.length;
+    while(lo<hi){const mid=(lo+hi)>>1;if(sorted[mid]<=v)lo=mid+1;else hi=mid}
+    r.pct=n>1?Math.round(100*lo/n):100;
   });
   return rows;
 }
@@ -1713,7 +1757,6 @@ async function renderRank(){
     if(RK.pool)q.pool='eq.'+RK.pool;
     const rows=await sbAll('mv_player_percentiles',q);
     const d=defOf(RK.metric)||{};
-    const pooled=isPooled();
     let list=rows.map(function(r){
       const p=playerOf(r.player_id)||{};
       return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
@@ -1742,10 +1785,12 @@ async function renderRank(){
       return String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0;
     }
     if(!list.length){main.innerHTML=rankCtrls()+'<div class="empty">No qualifying players in '+esc(scopeLabel())+' for this role, position and metric</div>';return}
-    /* Recompute BEFORE the sort and before the cut to Top N: the pooled
-       percentile is the sort key, so ordering on the stored one and then
-       relabelling would show a correctly-labelled table in the wrong order. */
-    if(pooled)repoolPct(list,d.higher_is_better);
+    /* ALWAYS, and BEFORE the sort and the cut to Top N. The percentile is the
+       sort key when no role is selected, so ordering on the stored one and
+       relabelling afterwards would show a correctly-labelled table in the
+       wrong order -- which is exactly what it did. `list` is already filtered
+       to league and position here, so it IS the population. */
+    pctOverPopulation(list,d.higher_is_better);
     list=list.sort(rankCmp).slice(0,RK.n);
     /* Which column is doing the ordering is otherwise invisible: this table
        has no clickable headers, and the key switches silently from percentile
@@ -1758,7 +1803,7 @@ async function renderRank(){
     const vrange=(vmax-vmin)||1,zeroPct=((0-vmin)/vrange)*100;
     let h='<div class="sect"><div class="sect-h"><span>'+esc(d.label||RK.metric)+
       (RK.pool?' \u00B7 '+POOL_NAME[RK.pool]:' \u00B7 all roles')+'</span>'+
-      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+esc(populationNote(list.length))+'</span></div>'+
+      '<span style="font-weight:500;text-transform:none;letter-spacing:0">'+esc(populationNote(list.length,rankWithin()))+'</span></div>'+
       '<div style="max-height:calc(100vh - 408px);min-height:260px;overflow:auto"><table><thead><tr>'+
       '<th style="cursor:default">#</th><th style="cursor:default">Player</th><th style="cursor:default">Team</th>'+
       '<th style="cursor:default">Role</th><th class="num" style="cursor:default">90s</th>'+
@@ -1785,7 +1830,7 @@ async function renderRank(){
           '<div class="rankbar-f" style="left:'+left+'%;width:'+w+'%;background:'+t.c+'"></div></div></td>'+
         '<td class="num" style="color:'+t.c+';font-weight:700">'+r.pct+'</td></tr>';
     });
-    h+='</tbody></table></div><div class="foot">'+esc(populationNote(list.length))+' \u00B7 minimum '+MIN90+' nineties \u00B7 '+esc(d.definition||'')+
+    h+='</tbody></table></div><div class="foot">'+esc(populationNote(list.length,rankWithin()))+' \u00B7 minimum '+MIN90+' nineties \u00B7 '+esc(d.definition||'')+
        (d.higher_is_better===false?' <b>Lower is better</b>, so the percentile is inverted.':'')+'</div>'+
        legendHtml()+'</div>';
     main.innerHTML=rankCtrls()+h;

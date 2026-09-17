@@ -491,6 +491,10 @@ function setLeagues(sel){
    database being out of scope; it is only ever applied to a pooled
    selection, so it never sits in the same table as a stored value. Recorded
    in DECISIONS_NEEDED.md. */
+/* The team-side twin of players.html's pctOverPopulation(): percentiles over
+   the rows currently shown, as one population. Teams have no role pools, so
+   this half of the rule was always right -- what was wrong was that it ran
+   only when more than one league was selected. */
 function repoolTeamPct(rows,higherIsBetter){
   var n=rows.length;
   var good=function(r){return higherIsBetter===false?-r.value:r.value};
@@ -1240,8 +1244,12 @@ function renderRankings(){
      select:'*', so if the column is not there the value is undefined, which
      reads as higher-is-better and gives plain descending. */
   const hib=(d.higher_is_better!==false);
-  /* Before the sort, because the pooled percentile IS the sort key. */
-  if(isPooled()&&rows.length)repoolTeamPct(rows,d.higher_is_better);
+  /* Before the sort, because the percentile IS the sort key -- and ALWAYS,
+     not only for a multi-league selection. The stored percentile is computed
+     per league, so it is wrong against any other population, and "one league"
+     is a population the reader chose as much as "three leagues" is. Same rule
+     as pctOverPopulation() on players.html: the pool is the selection. */
+  if(rows.length)repoolTeamPct(rows,d.higher_is_better);
   rows.sort(function(a,b){
     const ap=(a.pct==null?-1:a.pct),bp=(b.pct==null?-1:b.pct);
     if(ap!==bp)return bp-ap;
