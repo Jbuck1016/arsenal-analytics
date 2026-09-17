@@ -119,6 +119,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .row-pct{font:700 11px/1 var(--f-data);text-align:right;font-variant-numeric:tabular-nums}
 .na{color:var(--text3);font:500 10px/1 'Inter'}
 
+/* The scatter's control bar sticks: the plot is sized to the viewport, but a
+   long highlight list can still push the page, and losing the filters while
+   looking at the chart is what made the old fixed height painful. */
+#main .ctrls{position:sticky;top:0;z-index:5;background:var(--bg);
+  padding-top:2px;padding-bottom:8px}
 .ctrls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:12px;box-shadow:var(--shadow)}
 .crow{display:flex;gap:13px;flex-wrap:wrap;align-items:flex-end}
 .cfield{display:flex;flex-direction:column;gap:5px;min-width:170px}
@@ -436,6 +441,16 @@ tbody tr:nth-child(n+4) .pname-link{color:var(--text2)}
 .export-cap{font:400 10.5px/1.6 var(--f-body);color:var(--text3);letter-spacing:.01em;
   border-top:1px solid var(--border);padding-top:14px;margin-top:8px}
 
+.preset-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.preset-btns{display:flex;gap:6px;flex-wrap:wrap}
+.preset-btn{background:var(--surface);border:1px solid var(--border);color:var(--text2);
+  font:500 10px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;
+  padding:7px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s,background-color .15s}
+.preset-btn:hover{color:var(--text);border-color:var(--border2)}
+.preset-btn.on{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent-ink)}
+.preset-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
 @media(max-width:620px){.studio-intro{grid-template-columns:1fr}.pizza-read{grid-template-columns:1fr}.grid{grid-template-columns:minmax(0,1fr)}.sect{min-width:0}.row{grid-template-columns:minmax(112px,1fr) 54px minmax(70px,1fr) 28px;gap:7px}.drill-wrap{padding:8px}.drill-card{padding:16px 12px}.profile-brief,.event-filters{grid-template-columns:1fr}.event-filters .wide{grid-column:auto}.role-glyph{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="gate.js"></script>
@@ -620,7 +635,7 @@ function groupsFor(pool){
   if(pool!=='GK')out.splice(1,0,'Combined');
   return out;
 }
-let SC={pool:'W',pos:'',x:'prog_carries_90',y:'key_pass_90',hi:[]};
+let SC={pool:'W',pos:'',x:'prog_carries_90',y:'key_pass_90',hi:[],preset:null};
 let SK={pool:'W',metrics:[{k:'prog_carries_90',w:3},{k:'key_pass_90',w:3}],sort:{col:'fit',dir:-1},rows:[],show:'both'};
 let CMP={a:null,b:null,pool:'W'};
 
@@ -1474,16 +1489,75 @@ function posMatches(pid,pos){
   const p=playerOf(pid)||{};
   return p.modal_position===pos;
 }
+/* PRESET SCATTERS: one click sets both axes and the role pool together.
+   A preset does NOT touch the league selection -- that is the reader's
+   context, not part of the scouting criterion.
+
+   Each axis is a LIST of candidate metric keys, tried in order against the
+   loaded metric_defs and resolved to the first that exists. The criteria are
+   written in football terms and the database is the authority on which
+   measure is actually there; a preset that names a metric this build does not
+   have then degrades to the nearest one it does, rather than rendering an
+   empty chart. resolvePreset() reports what it picked and scatterCtrls()
+   shows it, so the substitution is never silent. */
+const SCATTER_PRESETS=[
+  {n:'Forward passer who finishes', pool:'AM',
+   x:['prog_cmp_90','hs_prog_90','prog_pass_90','prog_carries_90'],
+   y:['finishing','np_goals_minus_xg_90','goals_minus_xg_90','goals_90']},
+  {n:'Aerial monster with feet', pool:'CB',
+   x:['aerial_win_pct','aerial_pct','aerial_won_pct','aerial_90'],
+   y:['pass_pct','pass_cmp_pct','pass_completion_pct','prog_cmp_90']},
+  {n:'Ball-winner who progresses it', pool:'CM',
+   x:['def_action_90','defensive_actions_90','tackle_90'],
+   y:['prog_carries_90','carry_prog_90','carries_90']},
+  {n:'Creator: volume vs quality', pool:'AM',
+   x:['key_pass_90','kp_90'],
+   y:['bcc_90','big_chances_created_90','xa_90']},
+  {n:'Press-resistant carrier', pool:'W',
+   x:['takeon_pct','take_on_pct','takeon_success_pct','takeon_90'],
+   y:['prog_carries_90','carry_prog_90','carries_90']}
+];
+function firstDef(keys){
+  for(var i=0;i<keys.length;i++){
+    if(DEFS.some(function(d){return d.key===keys[i]}))return keys[i];
+  }
+  return null;
+}
+function resolvePreset(p){
+  var x=firstDef(p.x),y=firstDef(p.y);
+  return {ok:!!(x&&y),x:x,y:y,pool:p.pool,
+          exactX:x===p.x[0],exactY:y===p.y[0]};
+}
+function applyPreset(i){
+  var p=SCATTER_PRESETS[i],r=resolvePreset(p);
+  if(!r.ok)return;
+  SC.pool=r.pool;SC.x=r.x;SC.y=r.y;SC.hi=[];SC.preset=p.n;
+  renderScatter();
+}
+function presetRow(){
+  var bits=SCATTER_PRESETS.map(function(p,i){
+    var r=resolvePreset(p);
+    if(!r.ok)return '';
+    var sub=(!r.exactX||!r.exactY)?' title="Nearest available measure: '+
+      esc(defLabel(r.x))+' vs '+esc(defLabel(r.y))+'"':'';
+    return '<button type="button" class="preset-btn'+(SC.preset===p.n?' on':'')+'"'+sub+
+      ' onclick="applyPreset('+i+')">'+esc(p.n)+'</button>';
+  }).filter(Boolean).join('');
+  if(!bits)return '';
+  return '<div class="preset-row"><span class="clbl">Scouting presets</span>'+
+    '<div class="preset-btns">'+bits+'</div></div>';
+}
+function defLabel(k){var d=defOf(k);return (d&&d.label)||k}
 function scatterCtrls(){
   const pool=PLAYERS.filter(function(p){return p.pool===SC.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
-  let h='<div class="ctrls"><div class="crow">'+
+  let h='<div class="ctrls">'+presetRow()+'<div class="crow">'+
     leagueCtrl()+
-    '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];renderScatter()">'+
+    '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SC.pool=this.value;SC.hi=[];SC.preset=null;renderScatter()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SC.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     positionCtrl(SC.pos,'SC.pos=this.value;renderScatter()')+
-    '<div class="cfield"><span class="clbl">X axis</span><select class="sel" onchange="SC.x=this.value;renderScatter()">'+metricOptions(SC.x)+'</select></div>'+
-    '<div class="cfield"><span class="clbl">Y axis</span><select class="sel" onchange="SC.y=this.value;renderScatter()">'+metricOptions(SC.y)+'</select></div>'+
+    '<div class="cfield"><span class="clbl">X axis</span><select class="sel" onchange="SC.x=this.value;SC.preset=null;renderScatter()">'+metricOptions(SC.x)+'</select></div>'+
+    '<div class="cfield"><span class="clbl">Y axis</span><select class="sel" onchange="SC.y=this.value;SC.preset=null;renderScatter()">'+metricOptions(SC.y)+'</select></div>'+
     '<div class="cfield" style="min-width:220px"><span class="clbl">Highlight player</span>'+
       '<input class="inp" list="scatterPlayers" onchange="scatterPlayerSearch(this.value);this.value=\'\'" placeholder="Search player or team">'+playerChoiceList('scatterPlayers',SC.pool,SC.hi)+'</div></div>';
   if(SC.hi.length){
@@ -1547,13 +1621,21 @@ function scatterSvg(pts){
   const xdir=dx.higher_is_better===false?' (lower is better)':'';
   const ydir=dy.higher_is_better===false?' (lower is better)':'';
   const chartTitle=(dy.label||SC.y)+' vs '+(dx.label||SC.x);
-  const chartSub=POOL_NAME[SC.pool]+(SC.pos?' · listed '+SC.pos:'')+' · '+
+  const chartSub=(SC.preset?SC.preset+' · ':'')+POOL_NAME[SC.pool]+(SC.pos?' · listed '+SC.pos:'')+' · '+
     populationNote(pts.length,POOL_NAME[SC.pool]||null)+' · raw per-90 values · dashed guides are population medians';
   let s='<div class="sect"><div class="viz-eyebrow">Relationship</div>'+
         '<div class="viz-title" data-chart-title="scatter">'+esc(chartTitle)+'</div>'+
         '<div class="viz-sub">'+esc(chartSub)+'</div>'+
         '<svg role="img" aria-label="'+esc(POOL_NAME[SC.pool]+' scatter plot for '+scopeLabel()+': '+(dx.label||SC.x)+' versus '+(dy.label||SC.y))+'." viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" '+
-        'style="width:100%;height:auto;max-height:calc(100vh - 250px);display:block">';
+        /* FIT ONE LANDING VIEW. height:auto made the box width/aspect tall,
+           so on a laptop the bottom axis fell below the fold -- and scrolling
+           to it scrolled the control bar away, which is the part you need in
+           order to change what you are looking at. The plot is given the room
+           that is actually left instead: viewport minus the header, tab strip
+           and control bar, with a floor so it cannot collapse on a short
+           window. preserveAspectRatio already scales the drawing into
+           whatever box it gets. */
+        'style="width:100%;height:clamp(300px,calc(100vh - 335px),640px);display:block">';
   s+='<line x1="'+SX(mx)+'" y1="'+MT+'" x2="'+SX(mx)+'" y2="'+(H-MB)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   s+='<line x1="'+ML+'" y1="'+SY(my)+'" x2="'+(W-MR)+'" y2="'+SY(my)+'" stroke="var(--border2)" stroke-dasharray="4 4"/>';
   /* QUADRANT LABELS COMPETED WITH THE POINTS. They were 9px bold at 72%
