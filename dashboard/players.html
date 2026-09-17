@@ -1301,21 +1301,90 @@ const PIZZA_COLORS={Passing:'var(--group-passing)',Creation:'var(--group-creatio
 function pizzaColor(g,i){const c=PIZZA_COLORS[g]||['var(--group-passing)','var(--group-creation)','var(--group-shooting)','var(--group-carrying)','var(--group-defending)'][i%5];return c}
 function polar(cx,cy,r,a){return{x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r}}
 function ringSlice(cx,cy,r0,r1,a0,a1){const p1=polar(cx,cy,r1,a0),p2=polar(cx,cy,r1,a1),p3=polar(cx,cy,r0,a1),p4=polar(cx,cy,r0,a0),big=a1-a0>Math.PI?1:0;return 'M'+p1.x.toFixed(1)+' '+p1.y.toFixed(1)+'A'+r1+' '+r1+' 0 '+big+' 1 '+p2.x.toFixed(1)+' '+p2.y.toFixed(1)+'L'+p3.x.toFixed(1)+' '+p3.y.toFixed(1)+'A'+r0+' '+r0+' 0 '+big+' 0 '+p4.x.toFixed(1)+' '+p4.y.toFixed(1)+'Z'}
+/* THE PERCENTILE PIZZA.
+
+   It read as a pie chart with numbers on it, and the two tells were exactly
+   the ones to fix: the wedges touched, and the labels fought the rim.
+
+   WHY THE WEDGES TOUCHED. The gap was 0.018rad, about one degree, and the
+   track behind each wedge was stroked 2px in the panel colour to fake a
+   separation the geometry did not have -- while the filled wedge carried its
+   own 1px stroke in its own colour, which put the two fills back within a
+   pixel of each other. The gap is 0.055rad now, the fake stroke is gone, and
+   nothing is stroked in its own hue. A slice is its own shape.
+
+   WHY THE LABELS FOUGHT THE RIM. They sat at R+27 on a 600-wide box with
+   R=182, leaving 91px for a label like "Progressive passes completed". The
+   box is 780 wide with a smaller radius, so a label has real room outside the
+   circle instead of being crowded against it.
+
+   THE RING AT 100 is what every wedge is measured against, so it is drawn as
+   a ring rather than as the last of four identical gridlines: solid, in the
+   strong rule, while 25/50/75 are faint dashes behind the data.
+
+   THE NUMBER IS INSIDE THE WEDGE, SMALL AND QUIET -- 10px at 500 rather than
+   13px at 800. It is a reference, not the point; the length of the wedge is
+   the point. It keeps the halo, because that pair is what the contrast audit
+   measured and it is the only thing making the digit legible on twelve
+   different fills.
+
+   COLOUR GROUPS METRIC FAMILIES AND DOES NOT INDICATE QUALITY. Unchanged,
+   and the footnote already says so. */
 function pizzaSvg(keys,title){
   const defs=keys.map(defOf).filter(Boolean),N=defs.length;
   if(N<3)return '<div class="studio-empty">Choose at least three metrics to make a useful pizza.</div>';
-  const W=600,H=600,cx=300,cy=300,R0=50,R=182,TAU=Math.PI*2,gap=.018;
+  const W=780,H=620,cx=390,cy=304,R0=52,R=158,TAU=Math.PI*2,gap=.055;
   let s='<svg class="pizza-svg" role="img" aria-label="'+esc(title)+' segmented percentile pizza" viewBox="0 0 '+W+' '+H+'">';
-  [25,50,75,100].forEach(function(v){s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R0+(R-R0)*v/100)+'" fill="none" stroke="var(--border2)" stroke-width="1"'+(v<100?' stroke-dasharray="3 3"':'')+'/>'});
-  defs.forEach(function(d,i){
-    const a0=-Math.PI/2+TAU*i/N+gap,a1=-Math.PI/2+TAU*(i+1)/N-gap,mid=(a0+a1)/2,pct=Math.max(0,Math.min(100,+PMCACHE[d.key].pct)),rv=R0+(R-R0)*pct/100,c=pizzaColor(d.grp,i);
-    s+='<path d="'+ringSlice(cx,cy,R0,R,a0,a1)+'" fill="var(--surface2)" stroke="var(--bg2)" stroke-width="2"/>'+
-      '<path d="'+ringSlice(cx,cy,R0,rv,a0,a1)+'" fill="'+c+'" fill-opacity=".82" stroke="'+c+'" stroke-width="1"/>';
-    const vp=polar(cx,cy,Math.max(R0+16,rv-17),mid);s+='<text x="'+vp.x.toFixed(1)+'" y="'+(vp.y+4).toFixed(1)+'" text-anchor="middle" fill="var(--label-on-fill)" font-size="13" font-weight="800" stroke="var(--label-on-fill-halo)" stroke-width="2" paint-order="stroke">'+Math.round(pct)+'</text>';
-    const lp=polar(cx,cy,R+27,mid),anchor=Math.cos(mid)>.18?'start':(Math.cos(mid)<-.18?'end':'middle');
-    s+='<text x="'+lp.x.toFixed(1)+'" y="'+(lp.y+4).toFixed(1)+'" text-anchor="'+anchor+'" fill="var(--text2)" font-size="11" font-weight="700">'+esc(d.label)+'</text>';
+  /* Gridlines behind the data, the 100 ring in front of it and heavier. */
+  [25,50,75].forEach(function(v){
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R0+(R-R0)*v/100).toFixed(1)+'" fill="none" '+
+       'stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>';
   });
-  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R0-3)+'" fill="var(--bg2)" stroke="var(--border2)" stroke-width="2"/><text x="'+cx+'" y="'+(cy-3)+'" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="800">PERCENTILE</text><text x="'+cx+'" y="'+(cy+15)+'" text-anchor="middle" fill="var(--text3)" font-size="9">ROLE PEERS</text></svg>';
+  defs.forEach(function(d,i){
+    const a0=-Math.PI/2+TAU*i/N+gap/2,a1=-Math.PI/2+TAU*(i+1)/N-gap/2,mid=(a0+a1)/2;
+    const pct=Math.max(0,Math.min(100,+PMCACHE[d.key].pct));
+    const rv=R0+(R-R0)*pct/100,c=pizzaColor(d.grp,i);
+    s+='<path d="'+ringSlice(cx,cy,R0,R,a0,a1)+'" fill="var(--surface2)"/>'+
+       '<path d="'+ringSlice(cx,cy,R0,rv,a0,a1)+'" fill="'+c+'"/>';
+    /* The digit sits just inside the end of its own wedge, and is pushed out
+       to the track when the wedge is too short to hold it. */
+    const vr=pct>=16?Math.max(R0+13,rv-13):R0+13;
+    const vp=polar(cx,cy,vr,mid);
+    s+='<text x="'+vp.x.toFixed(1)+'" y="'+(vp.y+3.5).toFixed(1)+'" text-anchor="middle" '+
+       'fill="var(--label-on-fill)" font-size="10" font-weight="500" '+
+       'stroke="var(--label-on-fill-halo)" stroke-width="2.4" paint-order="stroke">'+Math.round(pct)+'</text>';
+  });
+  /* The reference ring, drawn after the wedges so nothing overlaps it. */
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="var(--border2)" stroke-width="1.5"/>';
+  s+='<text x="'+cx+'" y="'+(cy-R-9)+'" text-anchor="middle" fill="var(--text3)" '+
+     'font-size="8.5" font-weight="500" letter-spacing="1.6" font-family="JetBrains Mono, monospace">100</text>';
+  /* Labels OUTSIDE the circle, in the chrome voice: they orient, they do not
+     inform. Two lines where a label is long, so the ring keeps its room. */
+  defs.forEach(function(d,i){
+    const mid=-Math.PI/2+TAU*(i+.5)/N;
+    const lp=polar(cx,cy,R+16,mid);
+    const cos=Math.cos(mid);
+    const anchor=cos>.25?'start':(cos<-.25?'end':'middle');
+    const words=String(d.label||'').split(' ');
+    let l1=d.label,l2='';
+    if(d.label&&d.label.length>17&&words.length>1){
+      let half=0,acc=0;
+      words.forEach(function(w,k){if(acc<d.label.length/2){acc+=w.length+1;half=k+1}});
+      l1=words.slice(0,half).join(' ');l2=words.slice(half).join(' ');
+    }
+    const dy=l2?-4:3.5;
+    s+='<text x="'+lp.x.toFixed(1)+'" y="'+(lp.y+dy).toFixed(1)+'" text-anchor="'+anchor+'" '+
+       'fill="var(--text2)" font-size="10" font-weight="500" letter-spacing=".01em">'+esc(l1)+'</text>';
+    if(l2)s+='<text x="'+lp.x.toFixed(1)+'" y="'+(lp.y+8).toFixed(1)+'" text-anchor="'+anchor+'" '+
+       'fill="var(--text2)" font-size="10" font-weight="500" letter-spacing=".01em">'+esc(l2)+'</text>';
+  });
+  /* The hub names the comparison, quietly. It was PERCENTILE at 14px/800,
+     which was the loudest thing in the chart and said the least. */
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R0-4)+'" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>'+
+     '<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" fill="var(--text3)" font-size="8" '+
+     'font-weight="500" letter-spacing="1.4" font-family="JetBrains Mono, monospace">PCT VS</text>'+
+     '<text x="'+cx+'" y="'+(cy+10)+'" text-anchor="middle" fill="var(--text2)" font-size="8" '+
+     'font-weight="500" letter-spacing="1.4" font-family="JetBrains Mono, monospace">ROLE PEERS</text></svg>';
   return s;
 }
 function pizzaPanel(keys,title){
