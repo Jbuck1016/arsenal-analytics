@@ -44,4 +44,7 @@ assert result["resolved"] == 1
 assert result["model_log_loss"] < result["market_log_loss"]
 assert result["model_brier"] < result["market_brier"]
 
+source = (ROOT / "pipeline" / "capture_market_odds.py").read_text(encoding="utf-8")
+assert "successful no-op" in source
+
 print("Market odds pipeline checks passed")

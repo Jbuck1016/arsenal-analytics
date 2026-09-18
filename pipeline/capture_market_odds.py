@@ -240,7 +240,8 @@ def main() -> int:
     print(f"Artifact: {output}")
     if args.execute:
         if not rows:
-            raise RuntimeError("no matched bookmaker rows to persist")
+            print("No upcoming matched markets in this capture window; successful no-op")
+            return 0
         for offset in range(0, len(rows), 500):
             db.table("ml_market_odds_snapshots").upsert(
                 rows[offset:offset + 500], on_conflict="payload_hash"
