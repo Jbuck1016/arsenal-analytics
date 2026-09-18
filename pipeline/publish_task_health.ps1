@@ -49,6 +49,17 @@ foreach ($taskName in $mapping.Keys) {
     }
 }
 
+# This task necessarily observes itself as Running. Treat reaching the publish
+# boundary as its successful heartbeat; a failed RPC leaves the prior success
+# untouched and the database staleness check will alert.
+$selfRecord = $records | Where-Object { $_.pipeline_name -eq "pipeline_health_publisher" }
+if ($selfRecord) {
+    $selfRecord.status = "success"
+    $selfRecord.observed_at = [DateTimeOffset]::UtcNow.ToString("o")
+    $selfRecord.error = $null
+    $selfRecord.detail["self_reported"] = $true
+}
+
 Push-Location $repoRoot
 try {
     $json = $records | ConvertTo-Json -Depth 5 -Compress
