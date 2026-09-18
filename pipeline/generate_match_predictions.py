@@ -153,8 +153,12 @@ def main() -> int:
             raise RuntimeError("fixture snapshot season does not match --season")
         active_provider_ids = {
             str(row["game_id"]) for row in fixture_payload.get("fixtures", [])
+            if str(row.get("league")) in leagues
         }
-        completed_provider = list(fixture_payload.get("completed_fixtures", []))
+        completed_provider = [
+            row for row in fixture_payload.get("completed_fixtures", [])
+            if str(row.get("league")) in leagues
+        ]
         fixture_manifest_digest = hashlib.sha256(args.fixtures_file.read_bytes()).hexdigest()
     matches = baseline.fetch_pages(
         db.table("matches").select("game_id,season,league,date,kickoff_at,home_team,away_team,home_score,away_score")

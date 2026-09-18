@@ -3,6 +3,7 @@ param(
     [string]$Season = "2627",
     [int]$ModelRunId = 4,
     [string]$Artifact = "artifacts\models\v2-field-tilt-box-entries-poisson-2324-2425-2526-20260914t205131z.pkl",
+    [string]$Python = "$env:USERPROFILE\anaconda3\python.exe",
     [int]$Simulations = 10000,
     [switch]$Execute,
     [switch]$PublishSite
@@ -25,6 +26,7 @@ $leagues = @(
 
 Push-Location $repoRoot
 try {
+    $pythonExe = (Resolve-Path -LiteralPath $Python).Path
     if (-not $AsOf) {
         $now = [DateTimeOffset]::UtcNow
         $daysSinceThursday = (([int]$now.DayOfWeek - [int][DayOfWeek]::Thursday) + 7) % 7
@@ -50,16 +52,16 @@ try {
     $driftReviewPath = Join-Path $repoRoot "pipeline\reviewed_model_feature_drift_policy_v2.json"
     $scorePath = Join-Path $repoRoot "artifacts\model_reports\shadow_history_${Season}.json"
 
-    & python pipeline\sync_future_fixtures.py --season $Season --output $fixturePath --execute
+    & $pythonExe pipeline\sync_future_fixtures.py --season $Season --output $fixturePath --execute
     if ($LASTEXITCODE -ne 0) { throw "fixture sync failed" }
-    & python pipeline\archive_history.py --season $Season --execute
+    & $pythonExe pipeline\archive_history.py --season $Season --execute
     if ($LASTEXITCODE -ne 0) { throw "current match archive failed" }
-    & python pipeline\build_ml_features.py --season $Season `
+    & $pythonExe pipeline\build_ml_features.py --season $Season `
         --observation-schema-version 2 --feature-schema-version 2 --execute
     if ($LASTEXITCODE -ne 0) { throw "current model feature refresh failed" }
-    & python pipeline\audit_live_ingestion.py
+    & $pythonExe pipeline\audit_live_ingestion.py
     if ($LASTEXITCODE -ne 0) { throw "live ingestion coverage audit failed" }
-    & python pipeline\audit_model_feature_drift.py `
+    & $pythonExe pipeline\audit_model_feature_drift.py `
         --current-season $Season --artifact $artifactPath --output $driftPath
     if ($LASTEXITCODE -ne 0) { throw "feature drift audit failed" }
 
@@ -97,38 +99,38 @@ try {
         }
         Write-Host "Reusing immutable frozen snapshot: $predictionPath"
     } else {
-        & python pipeline\generate_match_predictions.py `
+        & $pythonExe pipeline\generate_match_predictions.py `
             --artifact $artifactPath --season $Season --as-of $asOfUtc `
             --forecast-kind $forecastKind --fixtures-file $fixturePath --output $predictionPath
         if ($LASTEXITCODE -ne 0) { throw "local frozen prediction generation failed" }
     }
 
     foreach ($league in $leagues) {
-        & python pipeline\run_league_simulation.py `
+        & $pythonExe pipeline\run_league_simulation.py `
             --model-run-id $ModelRunId --predictions-file $predictionPath `
             --league $league --season $Season --as-of $asOfUtc `
             --forecast-kind $forecastKind --simulations $Simulations
         if ($LASTEXITCODE -ne 0) { throw "local simulation failed for $league" }
     }
-    & python pipeline\audit_forecast_readiness.py `
+    & $pythonExe pipeline\audit_forecast_readiness.py `
         --predictions-file $predictionPath --simulations-dir artifacts\simulations --output $readinessPath
     if ($LASTEXITCODE -ne 0) { throw "forecast readiness audit failed" }
     $readiness = Get-Content -LiteralPath $readinessPath -Raw | ConvertFrom-Json
     if (-not $readiness.ready_for_private_review -or -not $readiness.ready_for_persistence) {
         throw "forecast bundle did not pass private persistence readiness"
     }
-    & python pipeline\build_model_review_dashboard.py `
+    & $pythonExe pipeline\build_model_review_dashboard.py `
         --predictions-file $predictionPath --readiness-report $readinessPath `
         --output dashboard\model-review-data.js
     if ($LASTEXITCODE -ne 0) { throw "local model review page failed" }
 
     if ($Execute) {
-        & python pipeline\generate_match_predictions.py `
+        & $pythonExe pipeline\generate_match_predictions.py `
             --artifact $artifactPath --model-run-id $ModelRunId --season $Season --as-of $asOfUtc `
             --forecast-kind $forecastKind --fixtures-file $fixturePath --output $predictionPath --reuse-output --execute
         if ($LASTEXITCODE -ne 0) { throw "private frozen prediction persistence failed" }
         foreach ($league in $leagues) {
-            & python pipeline\run_league_simulation.py `
+            & $pythonExe pipeline\run_league_simulation.py `
                 --model-run-id $ModelRunId --predictions-file $predictionPath `
                 --league $league --season $Season --as-of $asOfUtc `
                 --forecast-kind $forecastKind --simulations $Simulations --execute
@@ -144,11 +146,11 @@ try {
             $scoreArgs += @("--predictions-file", $file.FullName)
         }
         $scoreArgs += @("--output", $scorePath)
-        & python @scoreArgs
+        & $pythonExe @scoreArgs
         if ($LASTEXITCODE -ne 0) { throw "shadow history scoring failed" }
     }
 
-    & python pipeline\build_model_lab_dashboard.py `
+    & $pythonExe pipeline\build_model_lab_dashboard.py `
         --artifact $artifactPath --predictions-file $predictionPath --drift-report $driftPath `
         --shadow-report $scorePath --output dashboard\model-lab-data.js
     if ($LASTEXITCODE -ne 0) { throw "model lab bundle failed" }
@@ -170,6 +172,9 @@ try {
     Write-Host "Weekly shadow cycle complete: $predictionPath"
     Write-Host "Persistence enabled: $($Execute.IsPresent)"
     Write-Host "Site publication enabled: $($PublishSite.IsPresent)"
+} catch {
+    Write-Error ("Weekly shadow cycle failed: " + ($_ | Out-String))
+    throw
 } finally {
     Pop-Location
     Stop-Transcript | Out-Null

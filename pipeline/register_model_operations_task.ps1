@@ -4,12 +4,14 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $weeklyScript = Join-Path $PSScriptRoot "run_shadow_weekly.ps1"
 $scoreScript = Join-Path $PSScriptRoot "refresh_shadow_scorecard.ps1"
+$ledgerScript = Join-Path $PSScriptRoot "refresh_prediction_ledger.ps1"
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $today = [DateTime]::Today
 $nextThursday = $today.AddDays((([int][DayOfWeek]::Thursday - [int]$today.DayOfWeek) + 7) % 7).AddHours(5)
 if ($nextThursday -le [DateTime]::Now) { $nextThursday = $nextThursday.AddDays(7) }
 $nextTuesday = $today.AddDays((([int][DayOfWeek]::Tuesday - [int]$today.DayOfWeek) + 7) % 7).AddHours(5)
 if ($nextTuesday -le $nextThursday) { $nextTuesday = $nextTuesday.AddDays(7) }
+$nextDaily = $today.AddDays(1).AddHours(1).AddMinutes(30)
 
 $definitions = @(
     @{
@@ -25,6 +27,13 @@ $definitions = @(
         Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scoreScript`" -PublishSite"
         Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday -At $nextTuesday
         Description = "Scores resolved frozen forecasts and refreshes the private model lab. Never activates a model."
+    },
+    @{
+        Name = "FutScout Daily Prediction Ledger"
+        Script = $ledgerScript
+        Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ledgerScript`""
+        Trigger = New-ScheduledTaskTrigger -Daily -At $nextDaily
+        Description = "Scores every persisted pre-kickoff model call against newly ingested canonical results. Diagnostic only; never activates a model."
     }
 )
 

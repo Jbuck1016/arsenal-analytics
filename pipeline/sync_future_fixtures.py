@@ -205,7 +205,15 @@ def provider_score(match: dict[str, Any], side: str) -> int | None:
 
 
 def is_completed_fixture(match: dict[str, Any]) -> bool:
-    return provider_score(match, "home") is not None and provider_score(match, "away") is not None
+    # football-data.org can leave a placeholder 0-0 score on postponed rows.
+    # Treating those placeholders as results creates a false canonical/event
+    # coverage gap and can block an otherwise healthy forecast run.
+    status = str(match.get("status") or "").upper()
+    return (
+        status in {"FINISHED", "AWARDED"}
+        and provider_score(match, "home") is not None
+        and provider_score(match, "away") is not None
+    )
 
 
 def database_row(row: dict[str, Any]) -> dict[str, Any]:
