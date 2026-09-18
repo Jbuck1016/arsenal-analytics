@@ -38,6 +38,7 @@ ALIASES = {
     "hellas verona": "Verona",
     "1 koeln": "FC Koln",
     "rc deportivo la coruna": "Deportivo de A Coruna",
+    "deportivo la coruna": "Deportivo de A Coruna",
     "rcd espanyol de barcelona": "Espanyol",
     "borussia monchengladbach": "Borussia M.Gladbach",
     "bayern munchen": "Bayern Munich",
