@@ -20,6 +20,20 @@ def parse_instant(value: str) -> datetime:
     return parsed.astimezone(UTC)
 
 
+def parse_fixture_instant(value: str) -> datetime:
+    """Parse stored fixture times, tolerating legacy date-only midnight rows.
+
+    A small number of manually ingested cup/league fixtures predate the
+    timezone-aware ``kickoff_at`` contract. They must not block persistence of
+    an unrelated seven-day slate; treating their naive timestamp as UTC keeps
+    their ordering deterministic until the exact kickoff is reconciled.
+    """
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
 def select_fixtures(season_matches: list[dict], as_of: datetime,
                     active_provider_ids: set[str] | None) -> list[dict]:
     """Select future fixtures, treating the provider snapshot as lifecycle truth."""
@@ -77,7 +91,7 @@ def persistence_horizon(
     """
     return [
         row for row in rows
-        if as_of < parse_instant(str(row["date"])) <= evaluation_through
+        if as_of < parse_fixture_instant(str(row["date"])) <= evaluation_through
     ]
 
 
