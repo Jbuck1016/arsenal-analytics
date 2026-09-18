@@ -1,5 +1,8 @@
+param([switch]$Interactive)
+$ErrorActionPreference = "Stop"
+
 # =====================================================================
-#  Register the scheduled scrape: Saturday, Sunday and Monday nights.
+#  Register the scheduled scrape every night in the stable backend worktree.
 #
 #  Run this ONCE, in an ADMINISTRATOR PowerShell window.
 #  (Right-click PowerShell -> Run as administrator)
@@ -13,7 +16,7 @@
 # =====================================================================
 
 $TaskName = "MLS-Euro Analytics Scrape"
-$Script   = Join-Path $HOME "arsenal-analytics\pipeline\weekly_scrape.bat"
+$Script   = Join-Path $PSScriptRoot "weekly_scrape.bat"
 $RunAt    = "11:30PM"        # late enough that Sunday evening games have finished
 
 if (-not (Test-Path $Script)) {
@@ -27,9 +30,7 @@ Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Silent
 
 $action  = New-ScheduledTaskAction -Execute $Script
 
-$trigger = New-ScheduledTaskTrigger -Weekly `
-             -DaysOfWeek Saturday,Sunday,Monday `
-             -At $RunAt
+$trigger = New-ScheduledTaskTrigger -Daily -At $RunAt
 
 $settings = New-ScheduledTaskSettingsSet `
              -WakeToRun `
@@ -39,17 +40,18 @@ $settings = New-ScheduledTaskSettingsSet `
              -ExecutionTimeLimit (New-TimeSpan -Hours 4) `
              -MultipleInstances IgnoreNew
 
-$principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
+$logonType = if ($Interactive) { "Interactive" } else { "S4U" }
+$principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType $logonType -RunLevel Limited
 
 Register-ScheduledTask -TaskName $TaskName `
   -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-  -Description "Scrapes all active leagues and rebuilds the analytics layers." | Out-Null
+  -Description "Scrapes all active leagues and rebuilds the analytics layers." -Force | Out-Null
 
 Write-Host ""
 Write-Host "Registered '$TaskName'" -ForegroundColor Green
-Write-Host "  Runs   : Saturday, Sunday and Monday at $RunAt"
+Write-Host "  Runs   : every day at $RunAt"
 Write-Host "  Script : $Script"
-Write-Host "  Logs   : $HOME\arsenal-analytics\logs\"
+Write-Host "  Logs   : $(Join-Path (Split-Path -Parent $PSScriptRoot) 'logs')\"
 Write-Host ""
 Write-Host "Test it now without waiting for the weekend:" -ForegroundColor Yellow
 Write-Host "  Start-ScheduledTask -TaskName '$TaskName'"

@@ -6,8 +6,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $now = Get-Date
-$allowedDays = @([DayOfWeek]::Friday, [DayOfWeek]::Saturday, [DayOfWeek]::Sunday, [DayOfWeek]::Monday)
-if (-not $Force -and ($allowedDays -notcontains $now.DayOfWeek -or $now.Hour -lt 3 -or $now.Hour -ge 16)) {
+$startHour = 3
+$endHour = 16
+if (-not $Force -and ($now.Hour -lt $startHour -or $now.Hour -ge $endHour)) {
     Write-Host "Outside the European result-watch window; successful no-op"
     exit 0
 }

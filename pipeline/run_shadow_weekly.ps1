@@ -6,7 +6,8 @@ param(
     [string]$Python = "$env:USERPROFILE\anaconda3\python.exe",
     [int]$Simulations = 10000,
     [switch]$Execute,
-    [switch]$PublishSite
+    [switch]$PublishSite,
+    [switch]$SkipDashboard
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,6 +17,7 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $operationLog = Join-Path $logDir ("shadow_weekly_" + [DateTimeOffset]::UtcNow.ToString("yyyyMMdd") + ".log")
 Start-Transcript -Path $operationLog -Append | Out-Null
 $forecastKind = "thursday_frozen"
+if ($SkipDashboard -and $PublishSite) { throw "-SkipDashboard cannot be combined with -PublishSite" }
 $leagues = @(
     "ENG-Premier League",
     "ESP-La Liga",
@@ -30,7 +32,10 @@ try {
     if (-not $AsOf) {
         $now = [DateTimeOffset]::UtcNow
         $daysSinceThursday = (([int]$now.DayOfWeek - [int][DayOfWeek]::Thursday) + 7) % 7
-        $thursday = $now.Date.AddDays(-$daysSinceThursday).AddHours(12)
+        # DateTimeOffset.Date returns DateTime; keep both sides of the
+        # comparison explicitly UTC DateTimeOffset values.
+        $utcNoon = [DateTimeOffset]::new($now.UtcDateTime.Date.AddHours(12))
+        $thursday = $utcNoon.AddDays(-$daysSinceThursday)
         if ($thursday -gt $now) { $thursday = $thursday.AddDays(-7) }
         $AsOf = ([DateTimeOffset]$thursday).ToString("yyyy-MM-ddTHH:mm:ssZ")
     }
@@ -46,6 +51,7 @@ try {
     $artifactPath = (Resolve-Path -LiteralPath $Artifact).Path
     $artifactMeta = Get-Content -LiteralPath ([System.IO.Path]::ChangeExtension($artifactPath, ".json")) -Raw | ConvertFrom-Json
     $fixturePath = Join-Path $repoRoot "artifacts\fixtures\${Season}_football_data.json"
+    $immutableFixturePath = Join-Path $repoRoot "artifacts\fixtures\${Season}_football_data_${stamp}.json"
     $predictionPath = Join-Path $repoRoot "artifacts\predictions\${Season}_${forecastKind}_${stamp}.json"
     $readinessPath = Join-Path $repoRoot "artifacts\data_quality\forecast_readiness_${Season}_${forecastKind}_${stamp}.json"
     $driftPath = Join-Path $repoRoot "artifacts\data_quality\model_feature_drift_${Season}.json"
@@ -54,10 +60,24 @@ try {
 
     & $pythonExe pipeline\sync_future_fixtures.py --season $Season --output $fixturePath --execute
     if ($LASTEXITCODE -ne 0) { throw "fixture sync failed" }
+    if (Test-Path -LiteralPath $predictionPath) {
+        $existingPrediction = Get-Content -LiteralPath $predictionPath -Raw | ConvertFrom-Json
+        $forecastFixturePath = if ($existingPrediction.fixture_manifest) {
+            [string]$existingPrediction.fixture_manifest
+        } else {
+            $fixturePath
+        }
+    } else {
+        if (-not (Test-Path -LiteralPath $immutableFixturePath)) {
+            Copy-Item -LiteralPath $fixturePath -Destination $immutableFixturePath
+        }
+        $forecastFixturePath = $immutableFixturePath
+    }
     & $pythonExe pipeline\archive_history.py --season $Season --execute
     if ($LASTEXITCODE -ne 0) { throw "current match archive failed" }
     & $pythonExe pipeline\build_ml_features.py --season $Season `
-        --observation-schema-version 2 --feature-schema-version 2 --execute
+        --observation-schema-version 2 --feature-schema-version 2 `
+        --defer-unverified-results --execute
     if ($LASTEXITCODE -ne 0) { throw "current model feature refresh failed" }
     & $pythonExe pipeline\audit_live_ingestion.py
     if ($LASTEXITCODE -ne 0) { throw "live ingestion coverage audit failed" }
@@ -101,7 +121,7 @@ try {
     } else {
         & $pythonExe pipeline\generate_match_predictions.py `
             --artifact $artifactPath --season $Season --as-of $asOfUtc `
-            --forecast-kind $forecastKind --fixtures-file $fixturePath --output $predictionPath
+            --forecast-kind $forecastKind --fixtures-file $forecastFixturePath --output $predictionPath
         if ($LASTEXITCODE -ne 0) { throw "local frozen prediction generation failed" }
     }
 
@@ -119,15 +139,17 @@ try {
     if (-not $readiness.ready_for_private_review -or -not $readiness.ready_for_persistence) {
         throw "forecast bundle did not pass private persistence readiness"
     }
-    & $pythonExe pipeline\build_model_review_dashboard.py `
-        --predictions-file $predictionPath --readiness-report $readinessPath `
-        --output dashboard\model-review-data.js
-    if ($LASTEXITCODE -ne 0) { throw "local model review page failed" }
+    if (-not $SkipDashboard) {
+        & $pythonExe pipeline\build_model_review_dashboard.py `
+            --predictions-file $predictionPath --readiness-report $readinessPath `
+            --output dashboard\model-review-data.js
+        if ($LASTEXITCODE -ne 0) { throw "local model review page failed" }
+    }
 
     if ($Execute) {
         & $pythonExe pipeline\generate_match_predictions.py `
             --artifact $artifactPath --model-run-id $ModelRunId --season $Season --as-of $asOfUtc `
-            --forecast-kind $forecastKind --fixtures-file $fixturePath --output $predictionPath --reuse-output --execute
+            --forecast-kind $forecastKind --fixtures-file $forecastFixturePath --output $predictionPath --reuse-output --execute
         if ($LASTEXITCODE -ne 0) { throw "private frozen prediction persistence failed" }
         foreach ($league in $leagues) {
             & $pythonExe pipeline\run_league_simulation.py `
@@ -150,10 +172,12 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "shadow history scoring failed" }
     }
 
-    & $pythonExe pipeline\build_model_lab_dashboard.py `
-        --artifact $artifactPath --predictions-file $predictionPath --drift-report $driftPath `
-        --shadow-report $scorePath --output dashboard\model-lab-data.js
-    if ($LASTEXITCODE -ne 0) { throw "model lab bundle failed" }
+    if (-not $SkipDashboard) {
+        & $pythonExe pipeline\build_model_lab_dashboard.py `
+            --artifact $artifactPath --predictions-file $predictionPath --drift-report $driftPath `
+            --shadow-report $scorePath --output dashboard\model-lab-data.js
+        if ($LASTEXITCODE -ne 0) { throw "model lab bundle failed" }
+    }
 
     if ($PublishSite) {
         & git add -- dashboard/model-review-data.js dashboard/model-lab-data.js

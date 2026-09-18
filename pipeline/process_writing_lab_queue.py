@@ -335,6 +335,7 @@ def main() -> int:
     sb = get_supabase()
 
     handled = 0
+    failed = 0
     while True:
         project = claim_next(sb)
         if project:
@@ -342,11 +343,12 @@ def main() -> int:
                 process(sb, project, headless=args.headless)
             except Exception as exc:  # noqa: BLE001 - persist a useful queue error
                 fail(sb, project, exc)
+                failed += 1
             handled += 1
             continue
         if not args.watch:
             print(f"Writing Lab queue empty · processed {handled}", flush=True)
-            return 0
+            return 1 if failed else 0
         time.sleep(max(5, args.poll_seconds))
 
 

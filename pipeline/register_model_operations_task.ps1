@@ -1,4 +1,4 @@
-param([switch]$Execute)
+param([switch]$Execute, [switch]$Interactive)
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -43,7 +43,8 @@ foreach ($definition in $definitions) {
     if (-not $Execute) { continue }
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $definition.Arguments -WorkingDirectory $repoRoot
     $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3)
-    $principal = New-ScheduledTaskPrincipal -UserId $identity -LogonType Interactive -RunLevel Limited
+    $logonType = if ($Interactive) { "Interactive" } else { "S4U" }
+    $principal = New-ScheduledTaskPrincipal -UserId $identity -LogonType $logonType -RunLevel Limited
     Register-ScheduledTask -TaskName $definition.Name -Action $action -Trigger $definition.Trigger -Settings $settings -Principal $principal -Description $definition.Description -Force | Out-Null
 }
 

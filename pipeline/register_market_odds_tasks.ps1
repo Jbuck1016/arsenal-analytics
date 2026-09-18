@@ -1,4 +1,4 @@
-param([switch]$Execute)
+param([switch]$Execute, [switch]$Interactive)
 
 $ErrorActionPreference = "Stop"
 $script = Join-Path $PSScriptRoot "refresh_market_odds.ps1"
@@ -17,13 +17,13 @@ $definitions = @(
     @{
         Name = "FutScout Early Pre-Kickoff Market Snapshot"
         Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`" -SnapshotKind pre_kickoff -WindowHours 8 -Execute"
-        Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday,Saturday,Sunday,Monday -At "03:00"
-        Description = "Captures auditable pre-kickoff 1X2 odds for European match windows."
+        Trigger = New-ScheduledTaskTrigger -Daily -At "03:00"
+        Description = "Captures auditable pre-kickoff 1X2 odds for every European matchday, including midweek fixtures."
     },
     @{
         Name = "FutScout Late Pre-Kickoff Market Snapshot"
         Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`" -SnapshotKind pre_kickoff -WindowHours 8 -Execute"
-        Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday,Saturday,Sunday,Monday -At "11:00"
+        Trigger = New-ScheduledTaskTrigger -Daily -At "11:00"
         Description = "Captures a later auditable 1X2 snapshot; the report applies a strict closing-eligibility clock."
     }
 )
@@ -32,8 +32,9 @@ foreach ($definition in $definitions) {
     Write-Host "$($definition.Name): $($definition.Trigger.StartBoundary)"
     if (-not $Execute) { continue }
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $definition.Arguments
-    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
-    $principal = New-ScheduledTaskPrincipal -UserId $identity -LogonType Interactive -RunLevel Limited
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
+    $logonType = if ($Interactive) { "Interactive" } else { "S4U" }
+    $principal = New-ScheduledTaskPrincipal -UserId $identity -LogonType $logonType -RunLevel Limited
     Register-ScheduledTask -TaskName $definition.Name -Action $action -Trigger $definition.Trigger `
         -Settings $settings -Principal $principal -Description $definition.Description -Force | Out-Null
 }

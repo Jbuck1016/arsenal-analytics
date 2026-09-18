@@ -11,7 +11,7 @@ REM  VERIFY the conda path below matches the output of: conda info --base
 REM ===================================================================
 
 setlocal
-set "REPO=%USERPROFILE%\arsenal-analytics"
+for %%I in ("%~dp0..") do set "REPO=%%~fI"
 set "LOGDIR=%REPO%\logs"
 if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
@@ -39,13 +39,27 @@ if errorlevel 1 (
   exit /b 1
 )
 
+REM Refresh the independent fixture manifest first. This lets the audit detect
+REM missing matches even when WhoScored's schedule cache is stale.
+python pipeline\sync_future_fixtures.py --season 2627 --execute >> "%LOG%" 2>&1
+if errorlevel 1 (
+  echo ERROR: fixture manifest refresh failed; scrape not started >> "%LOG%"
+  exit /b 1
+)
+
 REM --all : every league marked active in the leagues registry.
+REM --refresh-schedule : never infer completeness from an old local schedule.
 REM NOT --headless: WhoScored's Incapsula anti-bot tends to crash the
 REM undetected-chromedriver session in headless mode, so the scheduled run
 REM opens a real browser window. It runs at 11:30pm on a sleeping machine,
 REM so nothing is stealing focus from anyone.
-python pipeline\scrape_league.py --all >> "%LOG%" 2>&1
+python pipeline\scrape_league.py --all --refresh-schedule >> "%LOG%" 2>&1
 set "RC=%ERRORLEVEL%"
+
+if "%RC%"=="0" (
+  python pipeline\audit_live_ingestion.py --strict >> "%LOG%" 2>&1
+  set "RC=%ERRORLEVEL%"
+)
 
 echo. >> "%LOG%"
 echo Finished %DATE% %TIME% with exit code %RC% >> "%LOG%"

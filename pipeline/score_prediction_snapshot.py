@@ -22,6 +22,14 @@ MIN_OVERALL_SAMPLE = 100
 MIN_LEAGUE_SAMPLE = 20
 
 
+def parse_utc_datetime(value: Any) -> datetime:
+    """Normalize stored ISO timestamps so mixed provider formats compare safely."""
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
 def evaluate(predictions: list[dict[str, Any]], matches: list[dict[str, Any]]) -> dict[str, Any]:
     prediction_by_id = {str(row["game_id"]): row for row in predictions}
     if len(prediction_by_id) != len(predictions):
@@ -90,17 +98,17 @@ def evaluate(predictions: list[dict[str, Any]], matches: list[dict[str, Any]]) -
 
 
 def evaluation_predictions(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
-    as_of = datetime.fromisoformat(str(payload["as_of"]).replace("Z", "+00:00"))
+    as_of = parse_utc_datetime(payload["as_of"])
     through_text = payload.get("evaluation_through")
     through = (
-        datetime.fromisoformat(str(through_text).replace("Z", "+00:00"))
+        parse_utc_datetime(through_text)
         if through_text else as_of + timedelta(days=7)
     )
     if through <= as_of:
         raise RuntimeError("evaluation_through must be later than prediction as_of")
     eligible = []
     for row in payload.get("predictions", []):
-        kickoff = datetime.fromisoformat(str(row["date"]).replace("Z", "+00:00"))
+        kickoff = parse_utc_datetime(row["date"])
         if as_of < kickoff <= through:
             eligible.append(row)
     return eligible, through.isoformat()

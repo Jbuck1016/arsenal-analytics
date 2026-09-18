@@ -141,6 +141,14 @@ def main() -> int:
         action="store_true",
         help="Resume a schema-v2 run after all typed observation rows are complete.",
     )
+    parser.add_argument(
+        "--defer-unverified-results",
+        action="store_true",
+        help=(
+            "For live-season refreshes, defer score-only results until their "
+            "verified raw event archive arrives. Historical builds remain strict by default."
+        ),
+    )
     args = parser.parse_args()
     if args.observation_schema_version not in {1, 2}:
         raise ValueError("--observation-schema-version must be 1 or 2")
@@ -155,8 +163,23 @@ def main() -> int:
     unknown_exclusions = excluded - set(matches)
     if unknown_exclusions:
         raise RuntimeError(f"source exceptions do not match canonical matches: {sorted(unknown_exclusions)}")
-    model_matches = {game_id: row for game_id, row in matches.items() if game_id not in excluded}
     verified = fetch_verified_games(db, args.season)
+    eligible_ids = set(matches) - excluded
+    pending_results = sorted(eligible_ids - set(verified))
+    if pending_results and not args.defer_unverified_results:
+        raise RuntimeError(
+            "completed results are missing verified raw event archives: "
+            + ", ".join(pending_results)
+        )
+    if pending_results:
+        print(
+            f"Deferring {len(pending_results)} score-only result(s) until event archives arrive: "
+            + ", ".join(pending_results)
+        )
+    model_matches = {
+        game_id: row for game_id, row in matches.items()
+        if game_id in eligible_ids and (not args.defer_unverified_results or game_id in verified)
+    }
     root = (args.cache_root or cache_root()).expanduser().resolve()
     rows = build_rows(root, args.season, model_matches, verified)
 

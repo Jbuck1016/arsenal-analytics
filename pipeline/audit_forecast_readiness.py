@@ -30,6 +30,25 @@ def match_instant(row: dict[str, Any]) -> datetime:
     return instant(row.get("kickoff_at") or f"{row['date']}T12:00:00+00:00")
 
 
+def legacy_manifest_identity_matches(
+    manifest_rows: list[dict[str, Any]], predictions: list[dict[str, Any]]
+) -> bool:
+    """Validate old snapshots whose manifest path was mutable after results landed."""
+    prediction_by_id = {str(row["game_id"]): row for row in predictions}
+    for fixture in manifest_rows:
+        prediction = prediction_by_id.get(str(fixture["game_id"]))
+        if prediction is None:
+            return False
+        if (
+            str(fixture.get("league")) != str(prediction.get("league"))
+            or str(fixture.get("home_team")) != str(prediction.get("home_team"))
+            or str(fixture.get("away_team")) != str(prediction.get("away_team"))
+            or match_instant(fixture) != instant(str(prediction["date"]))
+        ):
+            return False
+    return True
+
+
 def finding(name: str, passed: bool, detail: str) -> dict[str, Any]:
     return {"name": name, "passed": passed, "detail": detail}
 
@@ -62,13 +81,21 @@ def main() -> int:
     if payload.get("fixture_manifest"):
         manifest_path = Path(str(payload["fixture_manifest"]))
         manifest_digest = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
-        manifest_ok = manifest_digest == payload.get("fixture_manifest_sha256")
+        digest_matches = manifest_digest == payload.get("fixture_manifest_sha256")
         manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest_rows = list(manifest_payload.get("fixtures", []))
         active_provider_ids = {
-            str(row["game_id"]) for row in manifest_payload.get("fixtures", [])
+            str(row["game_id"]) for row in manifest_rows
         }
         completed_provider = list(manifest_payload.get("completed_fixtures", []))
-        manifest_detail = f"active={len(active_provider_ids)} digest_match={manifest_ok}"
+        legacy_identity_match = (
+            not digest_matches and legacy_manifest_identity_matches(manifest_rows, predictions)
+        )
+        manifest_ok = digest_matches or legacy_identity_match
+        manifest_detail = (
+            f"active={len(active_provider_ids)} digest_match={digest_matches} "
+            f"legacy_identity_match={legacy_identity_match}"
+        )
     checks: list[dict[str, Any]] = []
     checks.append(finding("fixture manifest integrity", manifest_ok, manifest_detail))
     expected = {}
