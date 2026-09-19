@@ -62,6 +62,7 @@ def main() -> int:
     quick_worker = (ROOT / "pipeline" / "process_writing_lab_queue.py").read_text(encoding="utf-8")
     shadow_wrapper = (ROOT / "pipeline" / "run_shadow_weekly.ps1").read_text(encoding="utf-8")
     feature_builder = (ROOT / "pipeline" / "build_ml_features.py").read_text(encoding="utf-8")
+    prediction_builder = (ROOT / "pipeline" / "generate_match_predictions.py").read_text(encoding="utf-8")
     migration = (ROOT / "supabase" / "migrations" / "20260918202920_pipeline_run_health.sql").read_text(encoding="utf-8")
 
     require("allowedDays" not in result_wrapper, "result watcher covers midweek league fixtures")
@@ -76,6 +77,8 @@ def main() -> int:
             "Thursday snapshot calculation keeps UTC values type-compatible")
     require("$immutableFixturePath" in shadow_wrapper and "Copy-Item" in shadow_wrapper,
             "new Thursday snapshots preserve an immutable fixture manifest")
+    require('provider_fixture_ids.update(str(row["game_id"]) for row in completed_provider)' in prediction_builder,
+            "forecast recovery retains provider-completed fixtures after the frozen cutoff")
     require("--defer-unverified-results" in shadow_wrapper and "pending_results" in feature_builder,
             "live feature refresh defers score-only matches until events are verified")
     require("pipeline_name text primary key" in migration and "check_pipeline_health_alerts" in migration,

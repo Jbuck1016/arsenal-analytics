@@ -35,7 +35,7 @@ def parse_fixture_instant(value: str) -> datetime:
 
 
 def select_fixtures(season_matches: list[dict], as_of: datetime,
-                    active_provider_ids: set[str] | None) -> list[dict]:
+                    provider_fixture_ids: set[str] | None) -> list[dict]:
     """Select future fixtures, treating the provider snapshot as lifecycle truth."""
     fixtures = []
     for row in season_matches:
@@ -43,8 +43,8 @@ def select_fixtures(season_matches: list[dict], as_of: datetime,
             continue
         game_id = str(row["game_id"])
         scored_after_cutoff = row.get("home_score") is not None and row.get("away_score") is not None
-        provider_row_is_active = active_provider_ids is None or game_id in active_provider_ids
-        if scored_after_cutoff or not game_id.startswith("fd-") or provider_row_is_active:
+        provider_row_is_known = provider_fixture_ids is None or game_id in provider_fixture_ids
+        if scored_after_cutoff or not game_id.startswith("fd-") or provider_row_is_known:
             fixtures.append(row)
     return fixtures
 
@@ -158,14 +158,14 @@ def main() -> int:
         else:
             print("Dry run only; no Supabase rows written")
         return 0
-    active_provider_ids: set[str] | None = None
+    provider_fixture_ids: set[str] | None = None
     completed_provider: list[dict] = []
     fixture_manifest_digest: str | None = None
     if args.fixtures_file is not None:
         fixture_payload = json.loads(args.fixtures_file.read_text(encoding="utf-8"))
         if str(fixture_payload.get("season")) != args.season:
             raise RuntimeError("fixture snapshot season does not match --season")
-        active_provider_ids = {
+        provider_fixture_ids = {
             str(row["game_id"]) for row in fixture_payload.get("fixtures", [])
             if str(row.get("league")) in leagues
         }
@@ -173,13 +173,14 @@ def main() -> int:
             row for row in fixture_payload.get("completed_fixtures", [])
             if str(row.get("league")) in leagues
         ]
+        provider_fixture_ids.update(str(row["game_id"]) for row in completed_provider)
         fixture_manifest_digest = hashlib.sha256(args.fixtures_file.read_bytes()).hexdigest()
     matches = baseline.fetch_pages(
         db.table("matches").select("game_id,season,league,date,kickoff_at,home_team,away_team,home_score,away_score")
         .in_("league", leagues).order("date").order("game_id")
     )
     season_matches = [row for row in matches if row["season"] == args.season]
-    fixtures = select_fixtures(season_matches, as_of, active_provider_ids)
+    fixtures = select_fixtures(season_matches, as_of, provider_fixture_ids)
     if not fixtures:
         raise RuntimeError(f"no upcoming {args.season} fixtures are loaded after {as_of.isoformat()}")
     observations = baseline.fetch_pages(

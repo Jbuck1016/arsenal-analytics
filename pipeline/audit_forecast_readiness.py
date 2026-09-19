@@ -74,7 +74,7 @@ def main() -> int:
         .order("date")
         .order("game_id")
     )
-    active_provider_ids: set[str] | None = None
+    provider_fixture_ids: set[str] | None = None
     completed_provider: list[dict[str, Any]] = []
     manifest_ok = True
     manifest_detail = "not supplied"
@@ -84,16 +84,17 @@ def main() -> int:
         digest_matches = manifest_digest == payload.get("fixture_manifest_sha256")
         manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest_rows = list(manifest_payload.get("fixtures", []))
-        active_provider_ids = {
+        provider_fixture_ids = {
             str(row["game_id"]) for row in manifest_rows
         }
         completed_provider = list(manifest_payload.get("completed_fixtures", []))
+        provider_fixture_ids.update(str(row["game_id"]) for row in completed_provider)
         legacy_identity_match = (
             not digest_matches and legacy_manifest_identity_matches(manifest_rows, predictions)
         )
         manifest_ok = digest_matches or legacy_identity_match
         manifest_detail = (
-            f"active={len(active_provider_ids)} digest_match={digest_matches} "
+            f"provider_known={len(provider_fixture_ids)} digest_match={digest_matches} "
             f"legacy_identity_match={legacy_identity_match}"
         )
     checks: list[dict[str, Any]] = []
@@ -104,8 +105,8 @@ def main() -> int:
             continue
         game_id = str(row["game_id"])
         scored_after_cutoff = row.get("home_score") is not None and row.get("away_score") is not None
-        provider_row_is_active = active_provider_ids is None or game_id in active_provider_ids
-        if scored_after_cutoff or not game_id.startswith("fd-") or provider_row_is_active:
+        provider_row_is_known = provider_fixture_ids is None or game_id in provider_fixture_ids
+        if scored_after_cutoff or not game_id.startswith("fd-") or provider_row_is_known:
             expected[game_id] = row
     prediction_ids = [str(row["game_id"]) for row in predictions]
     predicted = set(prediction_ids)
