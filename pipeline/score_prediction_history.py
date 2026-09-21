@@ -11,7 +11,10 @@ import score_prediction_snapshot as scoring
 import train_match_baselines as baseline
 
 
-MIN_COMPLETE_FROZEN_WEEKENDS = 4
+# V2 began with the 17 September slate. The agreed review point is that
+# initial slate plus two further complete frozen weekends (29 September and
+# 6 October scorecards), alongside the 100-overall/20-per-league sample gate.
+MIN_COMPLETE_FROZEN_WEEKENDS = 3
 
 
 def combine_snapshots(payloads: list[dict]) -> tuple[list[dict], int]:

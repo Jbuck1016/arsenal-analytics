@@ -20,7 +20,7 @@ assert "Out-of-sample family reliance" in page and "Historical table backtests" 
 assert "Cross-season feature gate" in page and "What team strength currently means" in page
 assert "Hybrid versus tactical" in page and "A five-minute route through Model Lab" in page
 assert "parse_utc_datetime(row[\"date\"])" in builder
-assert "MIN_COMPLETE_FROZEN_WEEKENDS = 4" in history
+assert "MIN_COMPLETE_FROZEN_WEEKENDS = 3" in history
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():
