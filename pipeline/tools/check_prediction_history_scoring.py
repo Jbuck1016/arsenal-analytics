@@ -5,7 +5,11 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pipeline"))
-from score_prediction_history import combine_snapshots, complete_frozen_weekends  # noqa: E402
+from score_prediction_history import (  # noqa: E402
+    combine_snapshots,
+    complete_frozen_weekends,
+    frozen_weekend_coverage,
+)
 
 
 def payload(as_of: str, game_id: str, kickoff: str, probability: float,
@@ -35,6 +39,29 @@ complete = {
         ))
     ],
 }
-assert complete_frozen_weekends([complete]) == 1
-assert complete_frozen_weekends([earlier]) == 0
+completed_matches = [
+    {
+        "game_id": row["game_id"],
+        "date": "2026-09-12",
+        "kickoff_at": row["date"],
+        "league": row["league"],
+        "home_score": 1,
+        "away_score": 0,
+    }
+    for row in complete["predictions"]
+]
+assert complete_frozen_weekends([complete], completed_matches) == 1
+assert complete_frozen_weekends([earlier], completed_matches) == 0
+
+late_discovered = {
+    "game_id": "late",
+    "date": "2026-09-12",
+    "kickoff_at": "2026-09-12T00:00:00+00:00",
+    "league": "ENG-Premier League",
+    "home_score": 2,
+    "away_score": 1,
+}
+coverage = frozen_weekend_coverage([complete], completed_matches + [late_discovered])
+assert coverage[0]["complete"] is False
+assert coverage[0]["missing_completed_fixture_ids"] == ["late"]
 print("Prediction history scoring checks passed")

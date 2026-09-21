@@ -11,9 +11,9 @@ import score_prediction_snapshot as scoring
 import train_match_baselines as baseline
 
 
-# V2 began with the 17 September slate. The agreed review point is that
-# initial slate plus two further complete frozen weekends (29 September and
-# 6 October scorecards), alongside the 100-overall/20-per-league sample gate.
+# Require three genuinely complete frozen weekends, alongside the
+# 100-overall/20-per-league sample gate. A weekend discovered later to have
+# omitted completed fixtures does not count and is never backfilled.
 MIN_COMPLETE_FROZEN_WEEKENDS = 3
 
 
@@ -32,15 +32,47 @@ def combine_snapshots(payloads: list[dict]) -> tuple[list[dict], int]:
     return list(chosen.values()), repeats
 
 
-def complete_frozen_weekends(payloads: list[dict]) -> int:
-    """Count frozen windows that contain at least one eligible call in every league."""
-    required = set(baseline.TOP_FIVE)
-    complete = 0
+def frozen_weekend_coverage(
+    payloads: list[dict], matches: list[dict]
+) -> list[dict]:
+    """Reconcile each frozen slate with fixtures later verified as completed.
+
+    A provider schedule can be incomplete at forecast time.  The immutable call
+    must not be backfilled after kickoff, but the weekend also must not count as
+    complete once the canonical result ledger proves that a fixture was missed.
+    """
+    required_leagues = set(baseline.TOP_FIVE)
+    coverage = []
     for payload in payloads:
-        eligible, _ = scoring.evaluation_predictions(payload)
-        if {row["league"] for row in eligible} == required:
-            complete += 1
-    return complete
+        as_of = scoring.parse_utc_datetime(payload["as_of"])
+        eligible, through_text = scoring.evaluation_predictions(payload)
+        through = scoring.parse_utc_datetime(through_text)
+        predicted_ids = {str(row["game_id"]) for row in eligible}
+        canonical_rows = [
+            row for row in matches
+            if row.get("home_score") is not None
+            and row.get("away_score") is not None
+            and as_of < scoring.parse_utc_datetime(
+                row.get("kickoff_at") or f"{row['date']}T12:00:00+00:00"
+            ) <= through
+        ]
+        canonical_ids = {str(row["game_id"]) for row in canonical_rows}
+        canonical_leagues = {str(row["league"]) for row in canonical_rows}
+        missing_ids = sorted(canonical_ids - predicted_ids)
+        coverage.append({
+            "as_of": as_of.isoformat(),
+            "evaluation_through": through.isoformat(),
+            "predicted_calls": len(predicted_ids),
+            "canonical_completed_fixtures": len(canonical_ids),
+            "missing_completed_fixture_ids": missing_ids,
+            "complete": not missing_ids and canonical_leagues == required_leagues,
+        })
+    return coverage
+
+
+def complete_frozen_weekends(payloads: list[dict], matches: list[dict]) -> int:
+    """Count immutable windows covering every later-verified completed fixture."""
+    return sum(row["complete"] for row in frozen_weekend_coverage(payloads, matches))
 
 
 def main() -> int:
@@ -58,13 +90,17 @@ def main() -> int:
     db = baseline.db_client()
     matches = baseline.fetch_pages(
         db.table("matches")
-        .select("game_id,season,league,home_score,away_score")
+        .select(
+            "game_id,season,league,date,kickoff_at,home_team,away_team,"
+            "home_score,away_score"
+        )
         .eq("season", seasons[0])
         .in_("league", list(baseline.TOP_FIVE))
         .order("game_id")
     )
     evaluated = scoring.evaluate(predictions, matches)
-    complete_weekends = complete_frozen_weekends(payloads)
+    weekend_coverage = frozen_weekend_coverage(payloads, matches)
+    complete_weekends = sum(row["complete"] for row in weekend_coverage)
     sample_gate = evaluated["sample_gate"]
     sample_gate["minimum_complete_frozen_weekends"] = MIN_COMPLETE_FROZEN_WEEKENDS
     sample_gate["complete_frozen_weekends"] = complete_weekends
@@ -86,6 +122,7 @@ def main() -> int:
         "snapshot_count": len(payloads),
         "duplicate_game_forecasts_ignored": repeats,
         "selection_policy": "earliest_evaluation_eligible_thursday_frozen_prediction_per_game",
+        "frozen_weekend_coverage": weekend_coverage,
         "snapshots": [str(path) for path in args.predictions_file],
         **evaluated,
     }
