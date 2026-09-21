@@ -163,6 +163,20 @@ def aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def market_loss_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    if not rows:
+        return {"matches": 0, "frozen_model_log_loss": None, "market_log_loss": None,
+                "model_delta_vs_market_log_loss": None}
+    model_loss = sum(row["frozen_model_log_loss"] for row in rows) / len(rows)
+    market_loss = sum(row["market_log_loss"] for row in rows) / len(rows)
+    return {
+        "matches": len(rows),
+        "frozen_model_log_loss": model_loss,
+        "market_log_loss": market_loss,
+        "model_delta_vs_market_log_loss": model_loss - market_loss,
+    }
+
+
 def markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     lines = [
@@ -317,20 +331,13 @@ def main() -> int:
         for league in baseline.TOP_FIVE
     }
     market_rows = [row["market"] for row in rows if row.get("market")]
+    closing_rows = [row for row in market_rows if row["closing_eligible"]]
     market_summary = {
-        "matches": len(market_rows),
-        "closing_eligible": sum(row["closing_eligible"] for row in market_rows),
-        "frozen_model_log_loss": (
-            sum(row["frozen_model_log_loss"] for row in market_rows) / len(market_rows)
-            if market_rows else None
-        ),
-        "market_log_loss": (
-            sum(row["market_log_loss"] for row in market_rows) / len(market_rows)
-            if market_rows else None
-        ),
+        "all_pre_kickoff": market_loss_summary(market_rows),
+        "closing_eligible": market_loss_summary(closing_rows),
         "note": (
             "Market prices are contextual benchmarks captured at different pre-kickoff times; "
-            "only rows marked closing_eligible approximate a closing comparison."
+            "the closing-eligible subset is the controlled comparison and remains a small sample."
         ),
     }
     driver_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)

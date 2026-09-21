@@ -39,4 +39,11 @@ assert review.interpretation(scored, tactical) == "plausible_alternate_outcome"
 summary = review.aggregate([{**scored, "home_goal_error": -1.7, "away_goal_error": 0.2}])
 assert summary["matches"] == 1
 assert summary["observed_outcome_share"]["A"] == 1.0
+
+market = review.market_loss_summary([
+    {"frozen_model_log_loss": 0.8, "market_log_loss": 0.7},
+    {"frozen_model_log_loss": 1.0, "market_log_loss": 1.1},
+])
+assert market["matches"] == 2
+assert abs(market["model_delta_vs_market_log_loss"]) < 1e-12
 print("Shadow weekend analysis checks passed")
