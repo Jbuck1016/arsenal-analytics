@@ -44,7 +44,7 @@ try {
             $stamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMddTHHmmssZ")
             & git commit --only -m "Refresh shadow scorecard $stamp" -- dashboard/model-lab-data.js
             if ($LASTEXITCODE -ne 0) { throw "scorecard commit failed" }
-            & git push origin main
+            & git push origin HEAD:main
             if ($LASTEXITCODE -ne 0) { throw "scorecard push failed" }
         }
     }

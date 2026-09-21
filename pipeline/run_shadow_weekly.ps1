@@ -186,7 +186,7 @@ try {
         if ($changed.Count -gt 0) {
             & git commit --only -m "Refresh weekly shadow forecasts $stamp" -- dashboard/model-review-data.js dashboard/model-lab-data.js
             if ($LASTEXITCODE -ne 0) { throw "dashboard data commit failed" }
-            & git push origin main
+            & git push origin HEAD:main
             if ($LASTEXITCODE -ne 0) { throw "dashboard data push failed" }
         } else {
             Write-Host "Dashboard data is unchanged; no deployment commit needed"

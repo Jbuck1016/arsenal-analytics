@@ -16,6 +16,7 @@ assert "v2-field-tilt-box-entries-poisson" in weekly
 assert "--observation-schema-version 2 --feature-schema-version 2" in weekly
 assert "--reuse-output --execute" in weekly and "--reuse-output" in generator
 assert "promote_model_candidate" not in weekly and "activate" not in weekly.lower()
+assert "git push origin HEAD:main" in weekly and "git push origin HEAD:main" in score
 assert "snapshot.model_version -eq" in score
 assert "FutScout Thursday Shadow Forecast" in register
 assert "FutScout Tuesday Shadow Scorecard" in register
