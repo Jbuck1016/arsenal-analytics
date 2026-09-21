@@ -78,6 +78,8 @@ def main() -> int:
             "Thursday snapshot calculation keeps UTC values type-compatible")
     require("$immutableFixturePath" in shadow_wrapper and "Copy-Item" in shadow_wrapper,
             "new Thursday snapshots preserve an immutable fixture manifest")
+    require("pipeline\\audit_live_ingestion.py --strict" in shadow_wrapper,
+            "Thursday persistence is blocked by incomplete event coverage")
     require('provider_fixture_ids.update(str(row["game_id"]) for row in completed_provider)' in prediction_builder,
             "forecast recovery retains provider-completed fixtures after the frozen cutoff")
     require("--defer-unverified-results" in shadow_wrapper and "pending_results" in feature_builder,

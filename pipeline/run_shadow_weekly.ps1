@@ -79,7 +79,7 @@ try {
         --observation-schema-version 2 --feature-schema-version 2 `
         --defer-unverified-results --execute
     if ($LASTEXITCODE -ne 0) { throw "current model feature refresh failed" }
-    & $pythonExe pipeline\audit_live_ingestion.py
+    & $pythonExe pipeline\audit_live_ingestion.py --strict
     if ($LASTEXITCODE -ne 0) { throw "live ingestion coverage audit failed" }
     & $pythonExe pipeline\audit_model_feature_drift.py `
         --current-season $Season --artifact $artifactPath --output $driftPath
