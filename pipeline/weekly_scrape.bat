@@ -58,7 +58,14 @@ set "RC=%ERRORLEVEL%"
 
 if "%RC%"=="0" (
   python pipeline\audit_live_ingestion.py --strict >> "%LOG%" 2>&1
-  set "RC=%ERRORLEVEL%"
+  REM Percent-expanded ERRORLEVEL inside this block is evaluated before the
+  REM audit runs. Test the live error level instead so a skipped league cannot
+  REM be published as a successful nightly run.
+  if errorlevel 1 (
+    set "RC=1"
+  ) else (
+    set "RC=0"
+  )
 )
 
 echo. >> "%LOG%"

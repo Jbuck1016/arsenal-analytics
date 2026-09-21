@@ -100,21 +100,31 @@ def get_team_schedule(ws: sd.WhoScored, team: str) -> pd.DataFrame:
     return schedule[mask].copy()
 
 
-def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> str:
-    game_id = str(sched_row["game_id"])
+def match_payload(
+    sched_row: pd.Series,
+    league: str,
+    season: str,
+    *,
+    game_id: str | None = None,
+) -> dict[str, Any]:
+    """Build the canonical matches row shared by event and schedule ingestion."""
+    source_game_id = str(sched_row["game_id"])
     date_val = sched_row.get("date")
     try:
         date_str = pd.to_datetime(date_val).date().isoformat() if date_val is not None else None
     except Exception:
         date_str = str(date_val) if date_val is not None else None
-    payload = {
+    game_id = game_id or source_game_id
+    home_team = _str_or_none(sched_row.get("home_team"))
+    away_team = _str_or_none(sched_row.get("away_team"))
+    return {
         "game_id": game_id,
         "season": season,
         "competition": league,
         "league": league,
         "date": date_str,
-        "home_team": _str_or_none(sched_row.get("home_team")),
-        "away_team": _str_or_none(sched_row.get("away_team")),
+        "home_team": home_team,
+        "away_team": away_team,
         "home_score": _int_or_none(sched_row.get("home_score")),
         "away_score": _int_or_none(sched_row.get("away_score")),
         "matchday": _int_or_none(
@@ -124,8 +134,35 @@ def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> 
         ),
         "venue": _str_or_none(sched_row.get("venue")),
     }
+
+
+def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> str:
+    payload = match_payload(sched_row, league, season)
+    date_str = payload["date"]
+    home_team = payload["home_team"]
+    away_team = payload["away_team"]
+    if date_str and home_team and away_team:
+        reserved = (
+            sb.table("matches")
+            .select("game_id")
+            .eq("season", season)
+            .eq("league", league)
+            .eq("date", date_str)
+            .eq("home_team", home_team)
+            .eq("away_team", away_team)
+            .like("game_id", "fd-%")
+            .execute()
+            .data
+            or []
+        )
+        if len(reserved) > 1:
+            raise RuntimeError(
+                f"multiple reserved fixture rows for {home_team} vs {away_team} on {date_str}"
+            )
+        if reserved:
+            payload["game_id"] = str(reserved[0]["game_id"])
     sb.table("matches").upsert(payload, on_conflict="game_id").execute()
-    return game_id
+    return str(payload["game_id"])
 
 
 def cached_event_json_path(ws: sd.WhoScored, game_id: str, league: str, season: str) -> Path:
@@ -384,9 +421,10 @@ def process_match(
                 )
                 return "", 0
 
+    source_game_id = str(sched_row["game_id"])
     game_id = upsert_match(sb, sched_row, league, season)
     print(f"  -> match row upserted (game_id={game_id})")
-    game_data = ensure_event_json(ws, game_id, league, season)
+    game_data = ensure_event_json(ws, source_game_id, league, season)
     print(f"  -> loaded raw json ({len(game_data.get('events', []))} events)")
     upsert_players_and_lineups(
         sb,

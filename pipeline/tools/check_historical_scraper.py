@@ -11,6 +11,7 @@ PIPELINE = ROOT / "pipeline"
 sys.path.insert(0, str(PIPELINE))
 
 import scrape_history  # noqa: E402
+import scrape_league  # noqa: E402
 from scrape_and_load import upsert_players_and_lineups  # noqa: E402
 
 
@@ -44,6 +45,23 @@ class FakeClient:
 
     def table(self, name):
         return FakeQuery(self, name)
+
+
+class FakeRpcResponse:
+    def __init__(self, data):
+        self.data = data
+
+    def execute(self):
+        return self
+
+
+class FakeRpcClient:
+    def __init__(self):
+        self.calls = []
+
+    def rpc(self, name, params):
+        self.calls.append((name, params))
+        return FakeRpcResponse([{"game_id": "101"}, {"game_id": 202}])
 
 
 def main() -> int:
@@ -94,8 +112,28 @@ def main() -> int:
     require('"historical_loaded_game_ids"' in league and
             '"p_league": league, "p_season": season' in league,
             "historical resume detection uses its scoped service-only RPC")
-    require('.range(offset, offset + page - 1)' in league,
-            "live resume set still paginates beyond the Data API row limit")
+    require('table("v_loaded_games")' not in league,
+            "live resume detection avoids the global loaded-games scan")
+    rpc = FakeRpcClient()
+    loaded = scrape_league.loaded_game_ids(rpc, league="USA-MLS", season="2627")
+    require(loaded == {"101", "202"} and rpc.calls == [(
+        "historical_loaded_game_ids",
+        {"p_league": "USA-MLS", "p_season": "2627"},
+    )], "live resume lookup is scoped to league and season")
+    attempted = []
+    def fake_scrape(_sb, _args, league_id, _season):
+        attempted.append(league_id)
+        if league_id == "ENG-Premier League":
+            raise RuntimeError("simulated lookup timeout")
+        return 1, 0, 0, 1207
+    totals = scrape_league.scrape_targets(
+        None,
+        object(),
+        [("ENG-Premier League", "2627"), ("USA-MLS", "2627")],
+        scrape_fn=fake_scrape,
+    )
+    require(attempted == ["ENG-Premier League", "USA-MLS"] and totals == (1, 1, 1, 1207),
+            "one league failure cannot block later league targets")
     require('parser.add_argument("--execute"' in history,
             "database writes require an explicit execute flag")
     require("historical schedule has no played fixtures" in league and

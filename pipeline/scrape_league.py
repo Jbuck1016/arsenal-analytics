@@ -241,22 +241,23 @@ def exhausted_game_ids(sb) -> set[str]:
         return set()
 
 
-def scrape_targets(sb, args, targets, scrape_fn=None) -> tuple[int, int, int]:
-    """Run every target even if one league raises an unexpected exception."""
+def scrape_targets(sb, args, targets, scrape_fn=None) -> tuple[int, int, int, int]:
+    """Run every target and return loaded, failed, remaining, and written events."""
     if scrape_fn is None:
         scrape_fn = scrape_one_league
-    total_ok = total_failed = total_remaining = 0
+    total_ok = total_failed = total_remaining = total_events = 0
     for league, season in targets:
         try:
-            ok, failed, remaining = scrape_fn(sb, args, league, season)
+            ok, failed, remaining, events = scrape_fn(sb, args, league, season)
         except Exception as e:  # noqa: BLE001 - isolate leagues in scheduled runs
             msg = str(e).strip().splitlines()[0] if str(e).strip() else repr(e)
             print(f"  !! {league} {season} aborted: {msg}", file=sys.stderr, flush=True)
-            ok, failed, remaining = 0, 1, 1
+            ok, failed, remaining, events = 0, 1, 1, 0
         total_ok += ok
         total_failed += failed
         total_remaining += remaining
-    return total_ok, total_failed, total_remaining
+        total_events += events
+    return total_ok, total_failed, total_remaining, total_events
 
 
 def purge_null_cache(ws, game_id: str, league: str, season: str) -> None:
@@ -349,8 +350,8 @@ def choose_leagues(sb, args) -> list[tuple[str, str]]:
     return out
 
 
-def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int]:
-    """Scrape every missing played match for one league. Returns (ok, failed, remaining)."""
+def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int, int]:
+    """Scrape one league and return loaded, failed, remaining, and written events."""
     print(f"\n{'=' * 62}", flush=True)
     print(f"  {league}  season {season}", flush=True)
     print(f"{'=' * 62}", flush=True)
@@ -366,7 +367,7 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
               file=sys.stderr, flush=True)
         if getattr(args, "historical", False):
             raise RuntimeError(f"could not open historical target {league} {season}") from e
-        return 0, 0, 0
+        return 0, 0, 0, 0
 
     if getattr(args, "refresh_schedule", False):
         removed = purge_schedule_cache(ws, league, season)
@@ -381,7 +382,7 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
               file=sys.stderr, flush=True)
         if getattr(args, "historical", False):
             raise RuntimeError(f"could not read historical schedule {league} {season}") from e
-        return 0, 0, 0
+        return 0, 0, 0, 0
 
     if not getattr(args, "historical", False):
         written = upsert_full_schedule(sb, sched, league, season)
@@ -450,12 +451,13 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
             print(todo[cols].to_string(index=False), flush=True)
         else:
             print("  nothing to do.", flush=True)
-        return 0, 0, missing_total
+        return 0, 0, missing_total, 0
     if n == 0:
         print("  nothing to do — all played matches already loaded.", flush=True)
-        return 0, 0, 0
+        return 0, 0, 0, 0
 
     succeeded = failed = consecutive = 0
+    events = 0
     for i, (_, row) in enumerate(todo.iterrows(), start=1):
         stop_at = getattr(args, "stop_at_monotonic", None)
         if stop_at is not None and time.monotonic() >= stop_at:
@@ -466,7 +468,7 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
               f"(game_id={gid})", flush=True)
         purge_null_cache(ws, gid, league, season)
         try:
-            game_id, _ = process_match(
+            game_id, n_events = process_match(
                 sb,
                 ws,
                 row,
@@ -478,6 +480,7 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
                 raise RuntimeError("match was rejected before ingestion")
             print("  -> success", flush=True)
             succeeded += 1
+            events += int(n_events or 0)
             consecutive = 0
         except Exception as e:  # noqa: BLE001
             print(f"  !! failed: {e}", file=sys.stderr, flush=True)
@@ -498,8 +501,8 @@ def scrape_one_league(sb, args, league: str, season: str) -> tuple[int, int, int
 
     remaining = max(0, missing_total - succeeded)
     print(f"  {league}: {succeeded} loaded, {failed} failed, "
-          f"{remaining} remaining", flush=True)
-    return succeeded, failed, remaining
+          f"{remaining} remaining, {events} events", flush=True)
+    return succeeded, failed, remaining, events
 
 
 def main() -> int:
@@ -590,8 +593,11 @@ def main() -> int:
         except Exception:  # noqa: BLE001
             traceback.print_exc()
 
-        total_ok, total_failed, total_remaining = scrape_targets(sb, args, targets)
+        total_ok, total_failed, total_remaining, total_events = scrape_targets(
+            sb, args, targets
+        )
         hb.record(matches_attempted=total_ok + total_failed, matches_written=total_ok,
+                  events_written=total_events,
                   matches_failed=total_failed, matches_remaining=total_remaining)
 
     print("\n=== Summary ===", flush=True)
@@ -599,6 +605,7 @@ def main() -> int:
     print(f"  succeeded: {total_ok}", flush=True)
     print(f"  failed:    {total_failed}", flush=True)
     print(f"  remaining: {total_remaining}", flush=True)
+    print(f"  events:    {total_events}", flush=True)
     if total_remaining > 0 and not args.list:
         print("  (re-run to resume — it only scrapes what's still missing)", flush=True)
 

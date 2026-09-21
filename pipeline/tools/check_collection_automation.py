@@ -63,6 +63,7 @@ def main() -> int:
     shadow_wrapper = (ROOT / "pipeline" / "run_shadow_weekly.ps1").read_text(encoding="utf-8")
     feature_builder = (ROOT / "pipeline" / "build_ml_features.py").read_text(encoding="utf-8")
     prediction_builder = (ROOT / "pipeline" / "generate_match_predictions.py").read_text(encoding="utf-8")
+    nightly_wrapper = (ROOT / "pipeline" / "weekly_scrape.bat").read_text(encoding="utf-8")
     migration = (ROOT / "supabase" / "migrations" / "20260918202920_pipeline_run_health.sql").read_text(encoding="utf-8")
 
     require("allowedDays" not in result_wrapper, "result watcher covers midweek league fixtures")
@@ -83,6 +84,11 @@ def main() -> int:
             "live feature refresh defers score-only matches until events are verified")
     require("pipeline_name text primary key" in migration and "check_pipeline_health_alerts" in migration,
             "central health uses bounded rows and existing webhook alerts")
+    require("python pipeline\\audit_live_ingestion.py --strict" in nightly_wrapper,
+            "nightly ingestion verifies independent completed-fixture coverage")
+    audit_tail = nightly_wrapper.split("python pipeline\\audit_live_ingestion.py --strict", 1)[1]
+    require("if errorlevel 1" in audit_tail and 'set "RC=%ERRORLEVEL%"' not in audit_tail,
+            "nightly audit failures propagate to Windows Task Scheduler")
     return 0
 
 

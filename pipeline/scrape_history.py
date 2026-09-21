@@ -100,7 +100,7 @@ def main() -> int:
                 stop_at_monotonic=None,
             )
             try:
-                ok, failed, remaining = scrape_one_league(
+                ok, failed, remaining, _events = scrape_one_league(
                     sb, worker_args, league, season
                 )
             except Exception as exc:  # noqa: BLE001 - continue to the next target
