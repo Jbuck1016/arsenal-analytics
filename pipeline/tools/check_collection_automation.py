@@ -65,6 +65,7 @@ def main() -> int:
     prediction_builder = (ROOT / "pipeline" / "generate_match_predictions.py").read_text(encoding="utf-8")
     nightly_wrapper = (ROOT / "pipeline" / "weekly_scrape.bat").read_text(encoding="utf-8")
     migration = (ROOT / "supabase" / "migrations" / "20260918202920_pipeline_run_health.sql").read_text(encoding="utf-8")
+    rebuild_guard = (ROOT / "supabase" / "migrations" / "20260921172500_defer_rebuild_during_active_scrape.sql").read_text(encoding="utf-8")
 
     require("allowedDays" not in result_wrapper, "result watcher covers midweek league fixtures")
     require(market_tasks.count("New-ScheduledTaskTrigger -Daily") >= 2,
@@ -91,6 +92,9 @@ def main() -> int:
     audit_tail = nightly_wrapper.split("python pipeline\\audit_live_ingestion.py --strict", 1)[1]
     require("if errorlevel 1" in audit_tail and 'set "RC=%ERRORLEVEL%"' not in audit_tail,
             "nightly audit failures propagate to Windows Task Scheduler")
+    require("status = 'running'" in rebuild_guard and "finished_at is null" in rebuild_guard and
+            "skipped: scraper still running" in rebuild_guard,
+            "analytics rebuild enqueue waits for active ingestion to finish")
     return 0
 
 
