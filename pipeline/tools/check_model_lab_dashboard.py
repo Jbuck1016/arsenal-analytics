@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 page = (ROOT / "dashboard" / "model-lab.html").read_text(encoding="utf-8")
 builder = (ROOT / "pipeline" / "build_model_lab_dashboard.py").read_text(encoding="utf-8")
+history = (ROOT / "pipeline" / "score_prediction_history.py").read_text(encoding="utf-8")
 for label in ("overview", "validation", "legitimacy", "research", "features", "matches", "monitoring", "guide"):
     assert f'id="{label}"' in page
 assert "gate.js" in page and "model-lab-data.js" in page
@@ -18,6 +19,8 @@ assert "weights are not a league table" in page
 assert "Out-of-sample family reliance" in page and "Historical table backtests" in page
 assert "Cross-season feature gate" in page and "What team strength currently means" in page
 assert "Hybrid versus tactical" in page and "A five-minute route through Model Lab" in page
+assert "parse_utc_datetime(row[\"date\"])" in builder
+assert "MIN_COMPLETE_FROZEN_WEEKENDS = 4" in history
 
 payload_path = ROOT / "dashboard" / "model-lab-data.js"
 if payload_path.is_file():

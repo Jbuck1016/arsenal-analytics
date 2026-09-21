@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,14 @@ def load_json(path: Path, required: bool = True) -> dict[str, Any]:
             raise RuntimeError(f"missing model-lab source: {path}")
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def parse_utc_datetime(value: Any) -> datetime:
+    """Normalize provider timestamps before comparing frozen forecast windows."""
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def feature_family(name: str) -> str:
@@ -135,15 +143,15 @@ def main() -> int:
         drift_rows.append({"feature": name, **metric})
     drift_rows.sort(key=lambda row: (0 if row["severity"] == "severe" else 1 if row["severity"] == "moderate" else 2, row["feature"]))
 
-    as_of = datetime.fromisoformat(str(prediction_payload["as_of"]).replace("Z", "+00:00"))
-    evaluation_through = datetime.fromisoformat(
-        str(prediction_payload.get("evaluation_through") or (as_of + timedelta(days=7)).isoformat()).replace("Z", "+00:00")
+    as_of = parse_utc_datetime(prediction_payload["as_of"])
+    evaluation_through = parse_utc_datetime(
+        prediction_payload.get("evaluation_through") or (as_of + timedelta(days=7)).isoformat()
     )
     predictions = []
     for row in prediction_payload.get("predictions", []):
         if not row.get("explanation"):
             continue
-        kickoff = datetime.fromisoformat(str(row["date"]).replace("Z", "+00:00"))
+        kickoff = parse_utc_datetime(row["date"])
         if not as_of < kickoff <= evaluation_through:
             continue
         predictions.append({key: row[key] for key in (
