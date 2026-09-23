@@ -245,7 +245,7 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
 function tname(t){return TEAM_DISPLAY[t]||t||''}
-const TPAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
+const TPAL={ok:'var(--viz-positive)',fail:'var(--viz-negative)',pass:'var(--viz-positive)',prog:'var(--viz-progress)',carry:'var(--viz-carry)',box:'var(--viz-box)'};
 let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
 
@@ -724,7 +724,7 @@ function shotMark(x,y,r,c,op,oc){
   return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+c+'" fill-opacity="'+op+'"/>';
 }
 function shotOutcomeLegend(counts,forTeam){
-  const colours={goal:TPAL.box,saved:forTeam?TPAL.ok:TPAL.fail,blocked:'#a78bfa',post:TPAL.carry,off:forTeam?TPAL.ok:TPAL.fail};
+  const colours={goal:TPAL.box,saved:forTeam?TPAL.ok:TPAL.fail,blocked:'var(--viz-neutral)',post:TPAL.carry,off:forTeam?TPAL.ok:TPAL.fail};
   const labels={goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'};
   const glyph={
     goal:function(c){return '<svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+c+'" stroke-opacity=".55"/><circle cx="8" cy="8" r="3.7" fill="'+c+'"/></svg>'},
@@ -917,7 +917,7 @@ async function renderMaps(t){
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
         const rr=0.26+Math.sqrt(xg)*0.92;
         const oc=a.outcome||(a.is_goal?'goal':'off');if(oc!=='goal')ocn[oc]=(ocn[oc]||0)+1;
-        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'#a78bfa':(oc==='post'?Y:(forTeam?G:R))));
+        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'var(--viz-neutral)':(oc==='post'?Y:(forTeam?G:R))));
         inner+=shotMark(a.x,a.y,rr,oc_c,a.is_goal?1:0.5,oc)+
                '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
                '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+

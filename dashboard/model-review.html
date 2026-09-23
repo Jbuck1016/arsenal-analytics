@@ -23,6 +23,19 @@ html.dark{--bg:#0b1017;--paper:#141a23;--ink:#f3f5f8;--muted:#aeb9c8;--faint:#77
 .table-wrap{border:1px solid var(--line);background:var(--paper);overflow:auto}table{border-collapse:collapse;width:100%;font:500 11px/1.2 var(--mono)}th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);position:sticky;top:0;background:var(--paper)}th:nth-child(2),td:nth-child(2){text-align:left;font-family:var(--body)}tr:hover td{background:color-mix(in srgb,var(--gold) 5%,transparent)}.rank{color:var(--faint)}.note{color:var(--muted);font:500 10px/1.7 var(--mono);margin:10px 0 0}.empty{grid-column:1/-1;border:1px dashed var(--line);padding:30px;text-align:center;color:var(--muted)}
 @media(max-width:980px){.fixtures{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.wrap{padding:16px 12px 50px}.top{display:block}.actions{margin-top:14px}.status{grid-template-columns:1fr}.stamp{text-align:left}.section-head{align-items:flex-start;flex-direction:column}.filters{margin-left:0;justify-content:flex-start}.fixtures{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:no-preference){.match{animation:rise .35s ease both}.match:nth-child(2n){animation-delay:.035s}.match:nth-child(3n){animation-delay:.07s}@keyframes rise{from{opacity:0;transform:translateY(6px)}}}
+/* Keep the forecast reading scale aligned with the match and research pages. */
+:root{--bg:#faf8f3;--paper:#fffdf8;--ink:#1b222b;--muted:#536170;--faint:#63707e;--line:#d5d0c5;--gold:#865715;--gold2:#b48742}
+html.dark{--bg:#0e1219;--paper:#1a2029;--ink:#eef3f7;--muted:#b6c4d0;--faint:#a0afbd;--line:#35404d;--gold:#e8bc74;--gold2:#866838}
+body{background-image:radial-gradient(circle at 10% -12%,color-mix(in srgb,var(--gold) 9%,transparent),transparent 38%)}
+.eyebrow,.action,.section-head span,.stamp,.chip,.note{font-size:12px}
+.status p{font-size:14px;line-height:1.5}.status strong{font-size:13px}
+.match{padding:16px;min-height:190px}.meta{font-size:11px;color:var(--muted)}
+.team{font-size:16px}.xg{font-size:17px}.xg:after{font-size:10px;color:var(--muted)}
+.prob{padding:9px}.prob b{font-size:17px}.prob small{font-size:11px;color:var(--muted);line-height:1.3}
+.why summary,.driver-head{font-size:11px}.why-copy{font-size:14px;line-height:1.6}
+.driver p{font-size:12px;line-height:1.55}.scope,.evidence{font-size:11px}.evidence b{font-size:10px;color:var(--muted)}
+table{font-size:12px}th{font-size:11px;color:var(--muted)}th,td{padding:11px 12px}.empty{font-size:14px}
+.action:focus-visible,.chip:focus-visible,.why summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 </style>
 <script src="site-tools.js" defer></script>
 </head>

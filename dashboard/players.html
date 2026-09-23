@@ -379,7 +379,7 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
  'Seattle':'Seattle Sounders FC','Toronto':'Toronto FC','Vancouver':'Vancouver Whitecaps',
  'L.A. Galaxy':'LA Galaxy'};
 function tname(t){return TEAM_DISPLAY[t]||t||''}
-const PAL={ok:'#22e39a',fail:'#ff5a5a',pass:'#22e39a',prog:'#4d9fff',carry:'#ffc93c',box:'#f0a5ff'};
+const PAL={ok:'var(--viz-positive)',fail:'var(--viz-negative)',pass:'var(--viz-positive)',prog:'var(--viz-progress)',carry:'var(--viz-carry)',box:'var(--viz-box)'};
 /* Which metric groups make sense for which role. A winger has no goalkeeping
    panel; a keeper has no half-space panel. */
 const GRP_HIDE={GK:['Creation','Shooting','Carrying','Half-Spaces','Hold-Up','Tempo'],
@@ -944,7 +944,7 @@ function eventContextControls(){
     '<div class="event-filter-note">Showing '+shown+' of '+all.length+' event records. Hover an individual mark for fixture, minute, phase and score-state context. Pattern mode summarizes the filtered evidence.</div></div>';
 }
 function plotLayers(){
-  const A=filterContext(PACT||[]),C=filterContext(PCAR||[]),R2=filterContext(PREC||[]),G=PAL.ok,R=PAL.fail,B=PAL.prog,AC=PAL.box,Y=PAL.carry,N='#cbd5e1';
+  const A=filterContext(PACT||[]),C=filterContext(PCAR||[]),R2=filterContext(PREC||[]),G=PAL.ok,R=PAL.fail,B=PAL.prog,AC=PAL.box,Y=PAL.carry,N='var(--viz-neutral)';
   const P=function(k,l,c,it,draw,move,shape){return{k:k,label:l,color:c,items:it,draw:draw,movement:!!move,shape:shape||'circle'}};
   const pl=function(c,w,op,dash){return function(a){return line(a,c,w,op,dash)}};
   const cl=function(c,w,op,dash){return function(a){return line(Object.assign({},a,{x:a.start_x,y:a.start_y}),c,w,op,dash)}};
@@ -955,7 +955,7 @@ function plotLayers(){
     P('prog','Progressive passes',B,A.filter(function(a){return a.prog&&a.ok&&a.end_x!=null}),pl(B,.34,.82),true),
     P('box','Passes into box',AC,A.filter(function(a){return a.into_box&&a.ok&&a.end_x!=null}),pl(AC,.4,.92),true),
     P('key','Key passes',G,A.filter(function(a){return a.keypass&&a.end_x!=null}),pl(G,.4,.88),true,'diamond'),
-    P('through','Through balls','#a78bfa',A.filter(function(a){return a.through&&a.end_x!=null}),pl('#a78bfa',.4,.88,'1.2 .8'),true),
+    P('through','Through balls',AC,A.filter(function(a){return a.through&&a.end_x!=null}),pl(AC,.4,.88,'1.2 .8'),true),
     P('carry','Carries',N,C,cl(N,.18,.3,'.35 .75'),true),
     P('progc','Progressive carries',Y,C.filter(function(a){return a.is_progressive}),cl(Y,.34,.82,'1.8 .7'),true),
     P('carrybox','Carries into box',AC,C.filter(function(a){return a.into_box}),cl(AC,.42,.95),true),

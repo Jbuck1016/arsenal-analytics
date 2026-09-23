@@ -159,6 +159,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 /* Content */
 .content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.match-essentials{display:none;flex:0 0 auto;padding:14px 18px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.match-essentials.ready{display:block}
+.essentials-kicker{font:700 11px/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:9px}
+.essentials-grid{display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(3,minmax(95px,1fr));gap:8px}
+.essentials-result{font:800 20px/1.25 var(--f-display);letter-spacing:-.025em;align-self:center}
+.essentials-result small{display:block;font:500 12px/1.3 var(--f-body);color:var(--text3);margin-top:3px}
+.essentials-metric{border-left:1px solid var(--border2);padding:3px 10px}
+.essentials-metric b{display:block;font:700 15px/1.25 var(--f-mono);font-variant-numeric:tabular-nums}
+.essentials-metric span{display:block;font:600 11px/1.3 var(--f-body);color:var(--text3);margin-top:4px}
+@media(max-width:920px){.essentials-grid{grid-template-columns:repeat(3,1fr)}.essentials-result{grid-column:1/-1}.match-essentials{padding:10px 12px}}
+@media(max-width:620px){.essentials-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.essentials-metric{padding:2px 6px}.essentials-metric b{font-size:12px}}
 .view-team-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 12px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:0}
 .view-team-bar:empty{display:none}
 .vt-label{font:600 9px/1 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
@@ -704,6 +715,7 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
       </div>
     </div>
     <div class="content">
+      <div class="match-essentials" id="matchEssentials" aria-live="polite"></div>
       <div class="view-team-bar" id="viewTeamBar"></div>
       <div class="timeline hidden" id="timeline"></div>
       <div class="tw-panel hidden" id="twPanel"></div>
@@ -871,10 +883,10 @@ function CT(){
   const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
   return d?{pitch:'#111722',line:'rgba(182,194,212,0.22)',lineStrong:'rgba(226,184,119,0.52)',
             band:'rgba(90,169,255,0.018)',text:'rgba(242,245,250,0.90)',textSoft:'rgba(182,194,212,0.48)',
-            chipBg:'rgba(14,18,25,0.92)',chipText:'#f2f5fa',passOk:'#3ddc97',passFail:'#ff6b63'}
+            chipBg:'rgba(14,18,25,0.92)',chipText:'#f2f5fa',passOk:'#59cbb3',passFail:'#ff826f'}
           :{pitch:'#f0ead6',line:'#888',lineStrong:'#666',
             band:'rgba(0,0,0,0.012)',text:'#333',textSoft:'rgba(0,0,0,0.40)',
-            chipBg:'rgba(25,28,34,0.90)',chipText:'#fff',passOk:'#12855a',passFail:'#cc4038'};
+            chipBg:'rgba(25,28,34,0.90)',chipText:'#fff',passOk:'#0f806d',passFail:'#c04c3d'};
 }
 function syncCanvasTheme(){const c=CT();PASS_OK=c.passOk;PASS_FAIL=c.passFail;}
 const PM=20; // pitch margin - MUST match drawPitch
@@ -917,7 +929,33 @@ async function loadMatch(gid){const area=document.getElementById('pitchArea');ar
   const hv=m?evName(m.home_team):null, av=m?evName(m.away_team):null;
   S.matchTeams=m?[hv,av]:[];
   const mine=(m&&(hv===tn||av===tn))?tn:hv;
-  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';const bgr=document.getElementById('btnGenReport');if(bgr)bgr.style.display='block';}
+  S.viewTeam=mine;S.oppTeam=m?(hv===mine?av:hv):null;renderMatchEssentials(m,hv,av);renderTeamViewToggle();renderPlayerList();updateStats();buildTimeline();renderAll();updateMatchInfo();document.getElementById('btnExpAll').style.display=S.activeVizs.length>1?'block':'none';const bgr=document.getElementById('btnGenReport');if(bgr)bgr.style.display='block';}
+
+function renderMatchEssentials(match,homeName,awayName){
+  const host=document.getElementById('matchEssentials');
+  if(!match){host.classList.remove('ready');host.replaceChildren();return;}
+  const summary=name=>{
+    const events=S.events.filter(e=>e.team===name);
+    const shots=events.filter(e=>e.is_shot);
+    const known=shots.map(e=>e.xg==null?null:Number(e.xg)).filter(Number.isFinite);
+    const box=events.filter(e=>e.type==='Pass'&&e.outcome_type==='Successful'&&e.end_x>=83&&e.end_y>=21&&e.end_y<=79).length;
+    return {shots:shots.length,xg:known.length?known.reduce((sum,value)=>sum+value,0).toFixed(2):'—',xgKnown:known.length,box};
+  };
+  const home=summary(homeName),away=summary(awayName);
+  const result=document.createElement('div');result.className='essentials-result';
+  result.textContent=match.home_team+' '+match.home_score+'–'+match.away_score+' '+match.away_team;
+  const detail=document.createElement('small');detail.textContent='Full-match event snapshot · '+match.competition;result.appendChild(detail);
+  host.replaceChildren();
+  const kicker=document.createElement('div');kicker.className='essentials-kicker';kicker.textContent='Match at a glance';host.appendChild(kicker);
+  const grid=document.createElement('div');grid.className='essentials-grid';grid.appendChild(result);
+  [['Shots',home.shots,away.shots],['xG · '+home.xgKnown+'/'+home.shots+' & '+away.xgKnown+'/'+away.shots+' shots covered',home.xg,away.xg],['Completed passes into box',home.box,away.box]].forEach(([label,left,right])=>{
+    const item=document.createElement('div');item.className='essentials-metric';
+    const values=document.createElement('b');values.textContent=left+' — '+right;
+    const caption=document.createElement('span');caption.textContent=label+' · home / away';
+    item.append(values,caption);grid.appendChild(item);
+  });
+  host.appendChild(grid);host.classList.add('ready');
+}
 
 function getFiltered(vizType){
   const vt=VT();let evts=S.events.filter(e=>e.team===vt);
@@ -1095,9 +1133,9 @@ function shotPalette(forTeam){
   /* EXP_LIGHT for the same reason CT() honours it: an export is always the light
      document, so the marker colours cannot depend on the workspace theme. */
   const d=!EXP_LIGHT&&document.documentElement.classList.contains('dark');
-  const ok=d?'#22e39a':'#0f7a52',fail=d?'#ff5a5a':'#bf3535';
-  return {goal:d?'#f0a5ff':'#a1279b',saved:forTeam?ok:fail,blocked:d?'#a78bfa':'#6641cf',
-          post:d?'#ffc93c':'#9a6b00',off:forTeam?ok:fail};
+  const ok=d?'#59cbb3':'#0f806d',fail=d?'#ff826f':'#c04c3d';
+  return {goal:d?'#ca9fdf':'#86529b',saved:forTeam?ok:fail,blocked:d?'#aab7c6':'#596674',
+          post:d?'#e8c477':'#966817',off:forTeam?ok:fail};
 }
 /* Same five shapes as teams.html shotMark(): goal is a filled disc inside a
    thin ring, saved a filled disc, blocked a diamond, post and off target are

@@ -2,21 +2,23 @@
   'use strict';
 
   var DESTINATIONS = [
-    ['Explore', [
+    ['Explore matches', [
       ['Home', 'index.html'],
       ['Match analysis', 'match.html'],
+      ['Possession sequences', 'sequences.html'],
+      ['Quick ingest', 'quick-ingest.html']
+    ]],
+    ['Scout players & teams', [
       ['Player fingerprints', 'players.html'],
       ['Team profiles', 'teams.html'],
       ['Scouting insights', 'insights.html'],
-      ['Possession sequences', 'sequences.html'],
-      ['Player search', 'search.html']
+      ['Player search', 'search.html'],
+      ['Market values', 'market-values.html']
     ]],
-    ['Private tools', [
+    ['Forecast & investigate', [
       ['Domestic forecasts', 'model-review.html'],
       ['Model laboratory', 'model-lab.html'],
-      ['Market values', 'market-values.html'],
-      ['Writing lab', 'writing-lab.html'],
-      ['Quick ingest', 'quick-ingest.html']
+      ['Writing lab', 'writing-lab.html']
     ]],
     ['Learn', [
       ['Field guide', 'guide.html'],
@@ -56,6 +58,37 @@
   function currentFile() {
     var name = location.pathname.split('/').pop();
     return name || 'index.html';
+  }
+
+  function groupHomeNavigation() {
+    if (currentFile() !== 'index.html') return;
+    var modules = document.querySelector('.mods');
+    if (!modules || modules.classList.contains('enhanced')) return;
+    var groups = [
+      ['Explore matches', 'Start with a fixture, its events, or a newly completed game.',
+        ['match.html', 'sequences.html', 'quick-ingest.html']],
+      ['Scout players & teams', 'Move from a profile to comparisons, patterns, and market context.',
+        ['players.html', 'teams.html', 'insights.html', 'search.html', 'market-values.html']],
+      ['Forecast & write', 'Review the next slate, interrogate the model, or assemble an article.',
+        ['model-review.html', 'model-lab.html', 'writing-lab.html']],
+      ['Learn the data', 'Definitions and reading guides for every analysis surface.',
+        ['glossary.html', 'guide.html']]
+    ];
+    var cards = Array.from(modules.querySelectorAll(':scope > .mod'));
+    var byHref = new Map(cards.map(function (card) { return [card.getAttribute('href'), card]; }));
+    if (groups.some(function (group) { return group[2].some(function (href) { return !byHref.has(href); }); })) return;
+    groups.forEach(function (group, index) {
+      var section = document.createElement('section');
+      section.className = 'nav-cluster';
+      section.setAttribute('aria-labelledby', 'nav-cluster-' + index);
+      section.innerHTML = '<div class="nav-cluster-head"><div><span class="nav-cluster-index">0' + (index + 1) + ' / FUTSCOUT</span><h2 id="nav-cluster-' + index + '">' + esc(group[0]) + '</h2></div><p>' + esc(group[1]) + '</p></div>';
+      var grid = document.createElement('div');
+      grid.className = 'nav-cluster-grid';
+      group[2].forEach(function (href) { grid.appendChild(byHref.get(href)); });
+      section.appendChild(grid);
+      modules.appendChild(section);
+    });
+    modules.classList.add('enhanced');
   }
 
   function gotoHost() {
@@ -229,6 +262,7 @@
 
   function init() {
     addStyles();
+    groupHomeNavigation();
     installGoto();
     enhanceExports();
     if (document.body) {
