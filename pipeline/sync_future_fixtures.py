@@ -31,6 +31,13 @@ COMPETITIONS = {
     "GER-Bundesliga": "BL1",
     "FRA-Ligue 1": "FL1",
 }
+EXPECTED_LEAGUE_FIXTURES = {
+    "ENG-Premier League": 380,
+    "ESP-La Liga": 380,
+    "ITA-Serie A": 380,
+    "GER-Bundesliga": 306,
+    "FRA-Ligue 1": 306,
+}
 ALIASES = {
     "paris saint germain": "Paris Saint-Germain",
     "internazionale milano": "Inter",
@@ -222,6 +229,34 @@ def database_row(row: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in row.items() if not key.startswith("provider_")}
 
 
+def fixture_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
+    """A league season has one fixture for each ordered team pairing."""
+    return (str(row["league"]), str(row["season"]), str(row["home_team"]), str(row["away_team"]))
+
+
+def existing_fixtures(db: Client, league: str, season: str) -> dict[tuple[str, str, str, str], dict[str, Any]]:
+    rows = (
+        db.table("matches")
+        .select("game_id,season,league,home_team,away_team,home_score,away_score")
+        .eq("league", league)
+        .eq("season", season)
+        .execute()
+        .data
+        or []
+    )
+    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(fixture_key(row), []).append(row)
+    canonical = {}
+    for key, candidates in grouped.items():
+        who_scored = [row for row in candidates if not str(row["game_id"]).startswith("fd-")]
+        if len(who_scored) > 1 or (not who_scored and len(candidates) > 1):
+            raise RuntimeError(f"ambiguous canonical fixture identity for {key}: "
+                               f"{[row['game_id'] for row in candidates]}")
+        canonical[key] = (who_scored or candidates)[0]
+    return canonical
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", default="2627")
@@ -241,12 +276,20 @@ def main() -> int:
     selected = args.league or list(COMPETITIONS)
     all_rows: list[dict[str, Any]] = []
     completed_rows: list[dict[str, Any]] = []
+    provider_match_counts: dict[str, int] = {}
     now = datetime.now(UTC)
     for league in selected:
         teams = canonical_teams(db, league, args.season)
+        known_fixtures = existing_fixtures(db, league, args.season)
         if not teams:
             raise RuntimeError(f"no canonical {args.season} teams found for {league}")
         matches = fetch_api_matches(token, COMPETITIONS[league], api_start_year(args.season))
+        provider_match_counts[league] = len(matches)
+        if len(matches) != EXPECTED_LEAGUE_FIXTURES[league]:
+            raise RuntimeError(
+                f"{league} provider schedule has {len(matches)} matches; expected "
+                f"{EXPECTED_LEAGUE_FIXTURES[league]}. Refusing a partial fixture manifest."
+            )
         future = [match for match in matches if is_future_fixture(match, now)]
         completed = [match for match in matches if is_completed_fixture(match)]
         provider_names = {
@@ -266,8 +309,17 @@ def main() -> int:
                 + ", ".join(repr(name) for name in unmapped)
             )
         rows = []
+        provider_keys: set[tuple[str, str, str, str]] = set()
         for match in future:
             row = build_row(match, league, args.season, teams)
+            key = fixture_key(row)
+            if key in provider_keys:
+                raise RuntimeError(f"provider returned duplicate league fixture {key}")
+            provider_keys.add(key)
+            existing = known_fixtures.get(key)
+            if existing and str(existing["game_id"]) != row["game_id"]:
+                row["provider_game_id"] = row["game_id"]
+                row["game_id"] = str(existing["game_id"])
             row["provider_status"] = match.get("status")
             row["provider_updated_at"] = match.get("lastUpdated")
             rows.append(row)
@@ -288,6 +340,7 @@ def main() -> int:
         "generated_at": datetime.now(UTC).isoformat(),
         "provider": "football-data.org",
         "season": args.season,
+        "provider_match_counts": provider_match_counts,
         "fixtures": all_rows,
         "completed_fixtures": completed_rows,
     }

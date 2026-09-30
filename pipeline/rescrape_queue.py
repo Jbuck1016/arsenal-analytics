@@ -28,10 +28,13 @@ import traceback
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+import pandas as pd
+
 from scrape_and_load import (
     cached_event_json_path,
     get_scraper,
     get_supabase,
+    upsert_match,
     upsert_events,
     upsert_players_and_lineups,
 )
@@ -89,6 +92,126 @@ def _fixture_scope(client: Any, game_id: str) -> tuple[str, str]:
     return str(rows[0]["league"]), str(rows[0]["season"])
 
 
+def _queued_fixture_scope(client: Any, source_id: str) -> tuple[str, str]:
+    """A failed source ID can precede the canonical match-row upsert."""
+    queue = (
+        client.table("rescrape_queue")
+        .select("league")
+        .eq("game_id", source_id)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not queue:
+        raise ValueError(f"no queued scope for source game {source_id}")
+    league = str(queue[0]["league"])
+    registry = (
+        client.table("leagues")
+        .select("season")
+        .eq("league", league)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not registry or not registry[0].get("season"):
+        raise ValueError(f"no registered season for queued source game {source_id}")
+    return league, str(registry[0]["season"])
+
+
+def _canonicalize_missing_fixture(
+    client: Any, game_data: dict, source_id: str, league: str, season: str
+) -> str:
+    """Match the direct match-centre payload to exactly one scheduled fixture."""
+    home = game_data.get("home") or {}
+    away = game_data.get("away") or {}
+    date = str(game_data.get("startDate") or game_data.get("startTime") or "")[:10]
+    home_name, away_name = home.get("name"), away.get("name")
+    if not date or not home_name or not away_name:
+        raise ValueError(f"match-centre metadata is incomplete for {source_id}")
+    rows = (
+        client.table("matches")
+        .select("game_id,home_team,away_team")
+        .eq("league", league)
+        .eq("season", season)
+        .eq("date", date)
+        .execute()
+        .data
+        or []
+    )
+    aliases = (
+        client.table("team_names")
+        .select("match_name,event_name,display_name")
+        .eq("league", league)
+        .execute()
+        .data
+        or []
+    )
+
+    def same_team(left: str, right: str) -> bool:
+        if not left or not right:
+            return False
+        a, b = str(left).strip().casefold(), str(right).strip().casefold()
+        if a == b:
+            return True
+        return any(
+            a in names and b in names
+            for row in aliases
+            if (names := {
+                str(value).strip().casefold()
+                for value in (row.get("match_name"), row.get("event_name"), row.get("display_name"))
+                if value
+            })
+        )
+
+    matches = [
+        row for row in rows
+        if same_team(home_name, row.get("home_team"))
+        and same_team(away_name, row.get("away_team"))
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected one canonical fixture for source {source_id}; found {len(matches)}"
+        )
+    canonical_id = str(matches[0]["game_id"])
+
+    def score(side: dict) -> int | None:
+        scores = side.get("scores") or {}
+        value = scores.get("fulltime", scores.get("running"))
+        return int(value) if value is not None else None
+
+    fixture = pd.Series({
+        "game_id": canonical_id,
+        "date": date,
+        "home_team": matches[0]["home_team"],
+        "away_team": matches[0]["away_team"],
+        "home_score": score(home),
+        "away_score": score(away),
+        "week": None,
+        "venue": game_data.get("venueName"),
+    })
+    upsert_match(client, fixture, league, season)
+    return canonical_id
+
+
+def _fetch_event_payload(scraper: Any, source_id: str, league: str, season: str) -> dict:
+    """Fetch one WhoScored match without refreshing its season calendar."""
+    path = cached_event_json_path(scraper, source_id, league, season)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    reader = scraper.get(
+        f"https://www.whoscored.com/Matches/{source_id}/Live",
+        path,
+        var="require.config.params['args'].matchCentreData",
+        no_cache=True,
+    )
+    reader.seek(0)
+    payload = json.load(reader)
+    if not isinstance(payload, dict) or not payload.get("events"):
+        raise ValueError(f"provider returned no usable event payload for {source_id}")
+    return payload
+
+
 def _last_event_minute(game_data: dict) -> int:
     minutes = []
     for event in game_data.get("events", []):
@@ -122,14 +245,22 @@ def _prune_stale_events(
 
 def _refresh_canonical_fixture(
     client: Any, game_id: str, *, reuse_cache: bool = False
-) -> int:
+) -> tuple[int, str]:
     """Fetch a fresh provider feed and retain the existing canonical identity."""
-    league, season = _fixture_scope(client, game_id)
-    source_id = _source_game_id(client, game_id)
     scraper = None
     try:
-        # live=True bypasses the truncated cache. read_events still writes the
-        # refreshed raw payload to soccerdata's deterministic cache path.
+        try:
+            league, season = _fixture_scope(client, game_id)
+            canonical_id = game_id
+            source_id = _source_game_id(client, game_id)
+        except ValueError:
+            if not game_id.isdigit():
+                raise
+            league, season = _queued_fixture_scope(client, game_id)
+            source_id = game_id
+            canonical_id = None
+        # A direct match-centre fetch works even when the provider's season
+        # calendar is unavailable. A fresh request bypasses the truncated cache.
         if reuse_cache:
             path = (
                 Path.home()
@@ -140,12 +271,11 @@ def _refresh_canonical_fixture(
                 / f"{league}_{season}"
                 / f"{source_id}.json"
             )
+            with path.open(encoding="utf-8") as handle:
+                game_data = json.load(handle)
         else:
             scraper = get_scraper(league, season, headless=False)
-            scraper.read_events(match_id=int(source_id), live=True, output_fmt="raw")
-            path = cached_event_json_path(scraper, source_id, league, season)
-        with path.open(encoding="utf-8") as handle:
-            game_data = json.load(handle)
+            game_data = _fetch_event_payload(scraper, source_id, league, season)
         provider_events = game_data.get("events", [])
         event_count = len(provider_events)
         provider_event_ids = {
@@ -158,17 +288,22 @@ def _refresh_canonical_fixture(
                 f"provider feed remains truncated: {event_count} events, "
                 f"last minute {last_minute}"
             )
-        upsert_players_and_lineups(client, game_data, game_id, league)
-        written = upsert_events(client, game_data, game_id, league)
+        if canonical_id is None:
+            canonical_id = _canonicalize_missing_fixture(
+                client, game_data, source_id, league, season
+            )
+            print(f"    -> mapped source {source_id} to canonical {canonical_id}")
+        upsert_players_and_lineups(client, game_data, canonical_id, league)
+        written = upsert_events(client, game_data, canonical_id, league)
         if written != unique_event_count:
             raise ValueError(
                 "event write count mismatch: "
                 f"provider_unique={unique_event_count}, written={written}"
             )
-        pruned = _prune_stale_events(client, game_id, provider_event_ids)
+        pruned = _prune_stale_events(client, canonical_id, provider_event_ids)
         if pruned:
             print(f"    -> removed {pruned} stale event row(s)")
-        return written
+        return written, canonical_id
     finally:
         driver = getattr(scraper, "_driver", None) if scraper is not None else None
         if driver is not None:
@@ -206,10 +341,13 @@ def drain_rescrape_queue(
         print(f"  refetching {game_id} (attempt {attempts})")
         ok, err = False, None
         try:
-            written = _refresh_canonical_fixture(
+            written, canonical_id = _refresh_canonical_fixture(
                 client, game_id, reuse_cache=reuse_cache
             )
-            print(f"    -> refreshed {written} events under canonical id {game_id}")
+            print(
+                f"    -> refreshed {written} events for queued source {game_id} "
+                f"under canonical {canonical_id}"
+            )
             ok = True
         except Exception as exc:  # noqa: BLE001
             err = f"{type(exc).__name__}: {exc}"
@@ -217,8 +355,13 @@ def drain_rescrape_queue(
 
         try:
             result = client.rpc(
-                "record_rescrape_result",
-                {"p_game_id": game_id, "p_ok": ok, "p_error": err},
+                "record_rescrape_result_canonical",
+                {
+                    "p_game_id": game_id,
+                    "p_canonical_game_id": canonical_id if ok else game_id,
+                    "p_ok": ok,
+                    "p_error": err,
+                },
             ).execute()
             print(f"    -> {result.data}")
             if ok:

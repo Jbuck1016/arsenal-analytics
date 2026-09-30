@@ -280,8 +280,8 @@ tbody tr:hover td{background:var(--panel2)}
 
   <div class="foot" id="foot">
     <span>data · whoscored</span><span class="sep">/</span>
-    <span>xg · fitted on this season, r=0.975 vs opta</span><span class="sep">/</span>
-    <span>percentiles · within role, 6+ nineties</span>
+    <span>xG · empirical model; external validation not established</span><span class="sep">/</span>
+    <span>player percentiles · within role, 3+ nineties</span>
   </div>
 </div>
 
@@ -376,6 +376,7 @@ async function init(){
             x.classList.toggle('on',x.dataset.lg===LG_SCOPE);
             x.setAttribute('aria-pressed',String(x.dataset.lg===LG_SCOPE));});
           if(typeof renderTable==='function')renderTable();
+          if(typeof loadLeaders==='function')loadLeaders();
         };
       }catch(e){
         document.getElementById('sysLine').innerHTML=
@@ -386,7 +387,11 @@ async function init(){
     document.getElementById('nMatch').textContent=MATCHES.length+' fixtures';
     document.getElementById('nPlayer').textContent=PLAYERS.length+' players';
     document.getElementById('nTeam').textContent=TEAMS.length+' clubs';
-    document.getElementById('nMetric').textContent='89 metrics';
+    sbAll('metric_defs',{select:'key'}).then(function(defs){
+      document.getElementById('nMetric').textContent=defs.length+' metrics';
+    }).catch(function(){
+      document.getElementById('nMetric').textContent='metric reference';
+    });
     // insights + sequences counters (head requests, non-blocking)
     (async function(){
       try{
@@ -564,7 +569,7 @@ function renderTable(){
 
 /* ---------- leaders ---------- */
 const LDS=[
- {k:'xg_90',          l:'xG',      d:'Expected goals per 90, open play'},
+ {k:'xg_90',          l:'xG',      d:'Expected goals per 90, including penalties; non-penalty xG is under review'},
  {k:'xt_90',          l:'xT',      d:'Expected Threat added per 90 by passing and carrying'},
  {k:'prog_carries_90',l:'Carries', d:'Progressive carries per 90'},
  {k:'key_pass_90',    l:'Key P',   d:'Passes that created a shot, per 90'},
@@ -579,9 +584,9 @@ async function loadLeaders(){
       const pm={};PLAYERS.forEach(function(p){pm[p.id]=p});
       LEAD[LD]=rows.map(function(r){const p=pm[r.player_id]||{};
         return{id:r.player_id,name:p.name,team:p.team,pool:r.pool,v:+r.value,pct:+r.pct}})
-        .filter(function(r){return r.name}).sort(function(a,b){return b.v-a.v}).slice(0,12);
+        .filter(function(r){return r.name}).sort(function(a,b){return b.v-a.v});
     }
-    let rows=LEAD[LD].slice();
+    let rows=LEAD[LD].filter(function(r){return teamInScope(r.team)}).slice();
     if(LSORT.col){
       const c=LSORT.col;
       rows.sort(function(a,b){
@@ -594,9 +599,10 @@ async function loadLeaders(){
         if(av>bv)return LSORT.dir===1?-1:1;
         return 0;});
     }
-    const mx=Math.max.apply(null,LEAD[LD].map(function(r){return r.v}))||1;
+    rows=rows.slice(0,12);
+    const mx=Math.max.apply(null,rows.map(function(r){return r.v}))||1;
     const meta=LDS.filter(function(l){return l.k===LD})[0]||{};
-    let h='<div class="tbl-cap">'+esc(meta.d||'')+'. Top 12 across the league, any role.</div>'+
+    let h='<div class="tbl-cap">'+esc(meta.d||'')+'. Top 12 '+(LG_SCOPE==='ALL'?'across all leagues':'in the selected league')+', any role.</div>'+
       '<div style="max-height:372px;overflow:auto"><table><thead><tr>'+
       '<th class="rk">#</th>'+
       '<th onclick="sortLd(\'name\')" title="Click to sort">Player'+arrow(LSORT,'name',false)+'</th>'+

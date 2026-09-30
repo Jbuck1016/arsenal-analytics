@@ -23,6 +23,8 @@ import soccerdata as sd
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
+from event_phase import event_is_open_play
+
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
@@ -142,7 +144,7 @@ def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> 
     home_team = payload["home_team"]
     away_team = payload["away_team"]
     if date_str and home_team and away_team:
-        reserved = (
+        same_fixture = (
             sb.table("matches")
             .select("game_id")
             .eq("season", season)
@@ -150,17 +152,18 @@ def upsert_match(sb: Client, sched_row: pd.Series, league: str, season: str) -> 
             .eq("date", date_str)
             .eq("home_team", home_team)
             .eq("away_team", away_team)
-            .like("game_id", "fd-%")
             .execute()
             .data
             or []
         )
-        if len(reserved) > 1:
+        numeric = [row for row in same_fixture if str(row["game_id"]).isdigit()]
+        reserved = [row for row in same_fixture if str(row["game_id"]).startswith("fd-")]
+        if len(numeric) > 1 or (not numeric and len(reserved) > 1):
             raise RuntimeError(
-                f"multiple reserved fixture rows for {home_team} vs {away_team} on {date_str}"
+                f"ambiguous fixture identity for {home_team} vs {away_team} on {date_str}"
             )
-        if reserved:
-            payload["game_id"] = str(reserved[0]["game_id"])
+        if numeric or reserved:
+            payload["game_id"] = str((numeric or reserved)[0]["game_id"])
     sb.table("matches").upsert(payload, on_conflict="game_id").execute()
     return str(payload["game_id"])
 
@@ -299,6 +302,7 @@ def build_event_row(
         "is_goal": bool(ev.get("isGoal", False)),
         "card_type": _display_name(ev.get("cardType")),
         "qualifiers": ev.get("qualifiers") or [],
+        "is_open_play": event_is_open_play(ev.get("qualifiers")),
     }
 
 

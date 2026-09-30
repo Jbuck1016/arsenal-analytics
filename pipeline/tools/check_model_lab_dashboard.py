@@ -49,6 +49,11 @@ if payload_path.is_file():
     assert "progression" in stability["gate"]["research_only_families"]
     assert stability["elo_dependency"]["decision"] == "retain_as_benchmark_and_test_residual_tactical_lift"
     research = payload["challenger_research"]
-    assert research["coverage"]["decision"]["trainable_now"] == ["territory"]
+    eligible = {
+        row["family"] for row in research["coverage"]["families"]
+        if row["historical_ready"] and row["current_ready"]
+    }
+    assert set(research["coverage"]["decision"]["trainable_now"]) == eligible
+    assert research["league_coverage"]["repair_queue"] == []
     assert research["scoring_readiness"]["ready"] is True
 print("Model lab dashboard checks passed")

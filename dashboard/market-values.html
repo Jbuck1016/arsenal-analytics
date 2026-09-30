@@ -49,6 +49,7 @@ a{color:inherit}.shell{max-width:1320px;margin:auto;padding:24px 24px 70px}.top{
     <select id="role" class="ctrl" onchange="filtersChanged()"><option value="ALL">All roles</option><option>GK</option><option>CB</option><option>FB</option><option>CM</option><option>AM</option><option>W</option><option>ST</option><option value="UNCLASSIFIED">Unclassified</option></select>
   </section>
   <section id="leagueStrip" class="league-strip"></section>
+  <p class="note" id="coverageNote" role="status">Checking valuation coverage…</p>
   <section class="grid">
     <article class="panel"><div class="ph"><div><h2>Squad value board</h2><p>Linked current-season players; coverage guards against false precision.</p></div><span class="tag">team context</span></div><div class="body" id="squads"><div class="loading">loading</div></div></article>
     <article class="panel"><div class="ph"><div><h2>Value × usage</h2><p>Current-season nineties against estimated market value.</p></div><span class="tag">not a quality score</span></div><div class="body chart-wrap" id="chart"><div class="loading">loading</div></div><div class="note">Upper-right: valuable, heavily used core players. Upper-left: valuable players with limited current minutes. Minutes can reflect availability and selection—not performance.</div></article>
@@ -80,6 +81,11 @@ async function init(){
     const sm={},rm={};SEASON.forEach(function(p){sm[p.player_id]=p});data[2].forEach(function(r){rm[r.player_id]=r.pool});VALUES.forEach(function(v){if(v.team&&v.league)TEAM_LEAGUE[v.team]=v.league});
     ROWS=VALUES.map(function(v){const p=sm[v.player_id]||{};return{id:v.player_id,name:p.player_name||v.player_name,team:p.team||v.team,league:v.league||TEAM_LEAGUE[p.team],role:rm[v.player_id]||'',n90:+p.nineties||0,apps:+p.apps||0,value:+v.market_value_eur||0,date:v.observed_on,confidence:+v.confidence||0}});
     const leagues=Array.from(new Set(ROWS.map(function(r){return r.league}).filter(Boolean))).sort();
+    const missing=Object.keys(LEAGUE_NAME).filter(function(l){return leagues.indexOf(l)<0});
+    document.getElementById('coverageNote').textContent='Valuation coverage: '+leagues.length+' of '+Object.keys(LEAGUE_NAME).length+
+      ' site leagues ('+leagues.map(function(l){return LEAGUE_NAME[l]||l}).join(', ')+'). '+
+      (missing.length?'No linked valuation records yet for '+missing.map(function(l){return LEAGUE_NAME[l]||l}).join(', ')+'. ':'')+
+      'Squad totals include linked players only; missing players and stale observations can understate value.';
     document.getElementById('league').innerHTML='<option value="ALL">All leagues</option>'+leagues.map(function(l){return'<option value="'+esc(l)+'">'+esc(LEAGUE_NAME[l]||l)+'</option>'}).join('');
     try{const saved=localStorage.getItem('leagueScope');if(saved&&saved!=='GER-Bundesliga'&&(saved==='ALL'||leagues.indexOf(saved)>=0))SCOPE=saved}catch(e){}
     document.getElementById('league').value=SCOPE;

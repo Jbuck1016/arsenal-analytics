@@ -21,6 +21,7 @@ def day(value: Any) -> date:
 def audit_league(
     registry: dict[str, Any], matches: list[dict[str, Any]], loaded_ids: set[str], today: date,
     provider_completed: list[dict[str, Any]] | None = None,
+    rescrape_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     played = [row for row in matches if row.get("home_score") is not None and row.get("away_score") is not None]
     future = [row for row in matches if row.get("home_score") is None or row.get("away_score") is None]
@@ -77,6 +78,26 @@ def audit_league(
             f"independent provider knows {len(provider_completed)} completed fixture(s), "
             f"but only {provider_with_events} are canonical with events"
         )
+    unresolved_queue = [
+        row for row in (rescrape_rows or [])
+        if row.get("league") == registry["league"]
+        and row.get("status") in {"queued", "in_progress", "exhausted"}
+    ]
+    aged_queue = [
+        row for row in unresolved_queue
+        if row.get("status") == "exhausted"
+        or (row.get("queued_at") and (today - day(row["queued_at"])).days >= 1)
+    ]
+    blocked_queue = [
+        row for row in unresolved_queue
+        if row in aged_queue or int(row.get("attempts") or 0) > 0
+    ]
+    if blocked_queue:
+        warnings.append(
+            f"{len(blocked_queue)} rescrape fixture(s) failed an attempt, are exhausted, "
+            "or have been queued over a day; "
+            "inspect rescrape_queue before declaring coverage healthy"
+        )
     return {
         "league": registry["league"],
         "season": str(registry["season"]),
@@ -92,6 +113,9 @@ def audit_league(
         "provider_completed_fixtures": len(provider_completed),
         "provider_completed_with_events": provider_with_events,
         "provider_completion_gaps": provider_gaps,
+        "unresolved_rescrape_games": [str(row["game_id"]) for row in unresolved_queue],
+        "blocked_rescrape_games": [str(row["game_id"]) for row in blocked_queue],
+        "aged_rescrape_games": [str(row["game_id"]) for row in aged_queue],
         "warnings": warnings,
         "healthy": not warnings,
     }
@@ -125,6 +149,11 @@ def main() -> int:
         row for row in registry_rows
         if row.get("is_active") or row.get("league") in baseline.TOP_FIVE
     ]
+    rescrape_rows = baseline.fetch_pages(
+        db.table("rescrape_queue")
+        .select("game_id,league,status,queued_at,attempts")
+        .in_("status", ["queued", "in_progress", "exhausted"])
+    )
     results = []
     for league in registry:
         matches = baseline.fetch_pages(
@@ -142,6 +171,7 @@ def main() -> int:
         results.append(audit_league(
             league, matches, {str(row["game_id"]) for row in loaded}, today,
             provider_by_league.get(str(league["league"]), []),
+            rescrape_rows,
         ))
     payload = {
         "as_of": today.isoformat(),

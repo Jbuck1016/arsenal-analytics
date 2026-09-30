@@ -1,3 +1,16 @@
 {
-  "outputDirectory": "dashboard"
+  "outputDirectory": "dashboard",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ],
+  "redirects": [
+    { "source": "/index_current.html", "destination": "/index.html", "permanent": true },
+    { "source": "/index_v1.html", "destination": "/index.html", "permanent": true },
+    { "source": "/players_current.html", "destination": "/players.html", "permanent": true },
+    { "source": "/teams_current.html", "destination": "/teams.html", "permanent": true },
+    { "source": "/glossary_current.html", "destination": "/glossary.html", "permanent": true }
+  ]
 }

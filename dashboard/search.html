@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Search · MLS 2026</title>
+<title>Player search · FutScout</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
 (function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}})();
@@ -135,6 +135,7 @@ button.btn.askbtn{width:auto;flex:0 0 auto;margin-top:0;padding:0 28px;
 .mh-n{font:600 10px/1 var(--f-mono);color:var(--dim)}
 .mh-n b{color:var(--text)}
 .sortsel{width:auto;min-width:190px;margin-left:auto}
+#leagueSel{width:100%;min-width:0;margin-left:0}
 table{width:100%;border-collapse:collapse}
 th{font:700 8.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);
   text-align:right;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel2)}
@@ -169,7 +170,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="sys">
     <div class="sys-top">
       <span class="dot"></span>
-      <span class="sys-title">MLS 2026 · <b>Player search</b></span>
+      <span class="sys-title">FutScout · <b>Player search</b></span>
       <span class="spacer"></span>
       <nav class="nav">
         <a href="index.html">Home</a>
@@ -191,6 +192,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       placeholder="Ask in plain English, e.g. ten players most similar to Cade Cowell in expected threat creation">
     <button class="btn askbtn" id="askGo">Ask</button>
   </div>
+  <p class="hint">Plain-English answers search all covered leagues. Use the competition filter below for a league-specific shortlist.</p>
   <div id="askOut"></div>
 
   <div class="layout" id="facetLayout">
@@ -198,6 +200,11 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <div class="fg">
         <div class="fl">Shortcuts</div>
         <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl" for="leagueSel">Competition</label>
+        <select class="sortsel" id="leagueSel"><option value="ALL">All covered leagues</option></select>
       </div>
 
       <div class="fg">
@@ -221,8 +228,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <div class="fg">
         <div class="fl">Minutes <span class="hint">min 90s</span></div>
         <div class="row">
-          <input type="range" id="minN" min="0" max="25" value="6">
-          <span class="val" id="minNV">6</span>
+          <input type="range" id="minN" min="0" max="25" value="3">
+          <span class="val" id="minNV">3</span>
         </div>
       </div>
 
@@ -394,7 +401,8 @@ const PRESETS=[
   {n:'One-v-one wingers',              q:'best wingers at dribbling'}
 ];
 
-let ROWS=[],PCT={},STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};
+const LEAGUE_LABELS={'ENG-Premier League':'Premier League','ESP-La Liga':'La Liga','GER-Bundesliga':'Bundesliga','ITA-Serie A':'Serie A','FRA-Ligue 1':'Ligue 1','USA-MLS':'MLS'};
+let ROWS=[],PCT={},STATE={league:'ALL',pools:[],sides:[],age:40,minN:3,traits:{},sort:'xt_90'};
 
 /* percentile of every numeric field, computed WITHIN position pool */
 function buildPct(rows){
@@ -437,6 +445,7 @@ function sortLabel(k){
 
 function apply(){
   let out=ROWS.filter(function(r){
+    if(STATE.league!=='ALL'&&r.league!==STATE.league)return false;
     if(STATE.pools.length&&STATE.pools.indexOf(r.pool)<0)return false;
     if(STATE.sides.length&&STATE.sides.indexOf(r.side)<0)return false;
     if(STATE.age<40&&(r.age_seen==null||r.age_seen>STATE.age))return false;
@@ -459,7 +468,7 @@ function render(rows){
   if(!rows.length){host.innerHTML='<div class="empty">no players match these filters<br>try widening age, minutes, or trait thresholds</div>';return;}
   const s=STATE.sort;
   let h='<table><thead><tr>'
-    +'<th class="l">#</th><th class="l">Player</th><th class="l">Team</th><th>Pos</th>'
+    +'<th class="l">#</th><th class="l">Player</th><th class="l">Team</th><th class="l">League</th><th>Pos</th>'
     +'<th>Age</th><th>90s</th><th>'+esc(sortLabel(s))+'</th><th>Pool pct</th></tr></thead><tbody>';
   rows.slice(0,60).forEach(function(r,i){
     const p=pctOf(r,s);
@@ -467,6 +476,7 @@ function render(rows){
       +'<td class="l rk">'+(i+1)+'</td>'
       +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
       +'<td class="l tm">'+esc(r.team)+'</td>'
+      +'<td class="l tm">'+esc(LEAGUE_LABELS[r.league]||r.league||'—')+'</td>'
       +'<td>'+esc(r.pos)+'</td>'
       +'<td>'+(r.age_seen==null?'—':r.age_seen)+'</td>'
       +'<td>'+(r.nineties==null?'—':(+r.nineties).toFixed(1))+'</td>'
@@ -539,15 +549,17 @@ document.getElementById('minN').addEventListener('input',function(e){
   STATE.minN=+e.target.value;document.getElementById('minNV').textContent=STATE.minN;apply();
 });
 document.getElementById('sortSel').addEventListener('change',function(e){STATE.sort=e.target.value;apply();});
+document.getElementById('leagueSel').addEventListener('change',function(e){STATE.league=e.target.value;apply();});
 document.getElementById('reset').addEventListener('click',function(){
-  STATE={pools:[],sides:[],age:40,minN:6,traits:{},sort:'xt_90'};paintAll();
+  STATE={league:'ALL',pools:[],sides:[],age:40,minN:3,traits:{},sort:'xt_90'};
+  document.getElementById('leagueSel').value='ALL';paintAll();
 });
 document.getElementById('copy').addEventListener('click',function(){
   const rowsEl=document.querySelectorAll('#results tbody tr');
   let txt='';
   rowsEl.forEach(function(tr){
     const c=tr.querySelectorAll('td');
-    txt+=[c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText,c[6].innerText].join('\t')+'\n';
+    txt+=[c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText,c[5].innerText,c[7].innerText].join('\t')+'\n';
   });
   navigator.clipboard.writeText(txt).then(function(){
     const b=document.getElementById('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy shortlist'},1400);
@@ -585,12 +597,16 @@ async function init(){
   try{
     ROWS=await sbAll('player_search',{select:'*'});
     PCT=buildPct(ROWS);
+    const leagues=[...new Set(ROWS.map(function(r){return r.league}).filter(Boolean))].sort();
+    document.getElementById('leagueSel').innerHTML='<option value="ALL">All covered leagues</option>'+
+      leagues.map(function(l){return '<option value="'+esc(l)+'">'+esc(LEAGUE_LABELS[l]||l)+'</option>'}).join('');
     const withAge=ROWS.filter(function(r){return r.age_seen!=null}).length;
     document.getElementById('sysLine').innerHTML=
       '<b>'+ROWS.length+'</b> outfield players · <b>'+withAge+'</b> with age · '
-      +'traits ranked within position pool · min 6 nineties by default';
+      +'traits ranked within position pool · min 3 nineties by default';
     document.getElementById('foot').textContent=
-      'Percentiles are computed within position pool, not across the whole league. '
+      'Percentiles are computed within position pool across all covered leagues; the competition filter does not rebase them. '
+      +'Three nineties is an early-season minimum, not a guarantee of stable rankings. '
       +'Age is a snapshot at match time, not date of birth.';
     paintAll();
   }catch(err){

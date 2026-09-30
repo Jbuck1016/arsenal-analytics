@@ -18,6 +18,23 @@ from simulate_league_table import HEAD_TO_HEAD_LEAGUES, LEAGUE_RULES, simulate_l
 
 
 RULES_VERSION = 4
+EXPECTED_2627_FIXTURES = {
+    "ENG-Premier League": 380,
+    "ESP-La Liga": 380,
+    "ITA-Serie A": 380,
+    "GER-Bundesliga": 306,
+    "FRA-Ligue 1": 306,
+}
+
+
+def validate_schedule_identity(matches: list[dict[str, Any]], league: str, season: str) -> None:
+    """Reject phantom fixtures before they can inflate expected points or positions."""
+    directed_pairs = [(str(row["home_team"]), str(row["away_team"])) for row in matches]
+    if len(set(directed_pairs)) != len(directed_pairs):
+        raise RuntimeError(f"{league} {season} contains a duplicate home/away fixture")
+    expected = EXPECTED_2627_FIXTURES.get(league) if season == "2627" else None
+    if expected is not None and len(matches) != expected:
+        raise RuntimeError(f"{league} {season} has {len(matches)} fixtures; expected {expected}")
 
 
 def parse_instant(value: str) -> datetime:
@@ -133,8 +150,10 @@ def main() -> int:
     matches = baseline.fetch_pages(
         db.table("matches")
         .select("game_id,date,kickoff_at,home_team,away_team,home_score,away_score")
-        .eq("season", args.season).eq("league", args.league).order("date").order("game_id")
+        .eq("season", args.season).eq("league", args.league)
+        .eq("is_live_scope", True).order("date").order("game_id")
     )
+    validate_schedule_identity(matches, args.league, args.season)
     if args.predictions_file is not None:
         payload = json.loads(args.predictions_file.read_text(encoding="utf-8"))
         if payload.get("season") != args.season or payload.get("forecast_kind") != args.forecast_kind:

@@ -666,7 +666,7 @@ function setPlayerLeague(v){
 function renderList(){
   const t=document.getElementById('teamSel').value,pl=document.getElementById('poolSel').value;
   const q=document.getElementById('search').value.toLowerCase().trim();
-  let rows=PLAYERS;
+  let rows=PLAYERS.filter(function(p){return teamInLeague(p.team)});
   if(t)rows=rows.filter(function(p){return p.team===t});
   if(pl)rows=rows.filter(function(p){return p.pool===pl});
   if(q)rows=rows.filter(function(p){return (p.player_name||'').toLowerCase().indexOf(q)>=0});
@@ -799,7 +799,7 @@ function renderPlayer(p,pcts,pillars,dna){
     else h+='<div class="split"><div class="split-l">'+metricCard(GRP,pm)+'</div>'+
        '<div class="split-r">'+vizPanel(GRP,p)+'</div></div>';
   }
-  h+='<div class="foot">Percentiles are within role pool, open play only. Role is assigned from where a player actually operates, not from the team sheet.</div>';
+  h+='<div class="foot">Percentiles are within role pool. Most event measures use open play; xG per 90 includes penalties until a separate non-penalty measure is published. Role is assigned from where a player actually operates, not from the team sheet.</div>';
   // legend sits ABOVE the content: it explains the colours you are about to read, and at
   // the bottom of a tall page it was below the fold on landing
   h = legendHtml() + h;
@@ -1308,7 +1308,7 @@ function renderGlossary(){
   const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
   let h='<div class="sect" style="margin-bottom:12px"><div style="font:800 17px/1.2 Inter">Glossary</div>'+
     '<div class="foot" style="margin-top:6px">Every metric, defined. These drive the tooltips throughout the app. '+
-    'Percentiles are computed within each player\u2019s league and role pool, open play only unless stated.</div></div>';
+    'Percentiles are computed within each player\u2019s league and role pool. Most event measures use open play; xG per 90 includes penalties.</div></div>';
   groups.forEach(function(g){
     h+='<div class="sect" style="margin-bottom:12px"><div class="sect-h"><span>'+esc(g)+'</span></div><table><thead><tr>'+
        '<th style="width:200px;cursor:default">Metric</th><th style="width:56px;cursor:default">Unit</th><th style="cursor:default">Definition</th></tr></thead><tbody>';

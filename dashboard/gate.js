@@ -45,7 +45,7 @@
     wrap.id = 'siteGate';
     wrap.innerHTML =
       '<div class="gate-card">' +
-        '<div class="gate-mark">MLS 2026</div>' +
+        '<div class="gate-mark">FutScout</div>' +
         '<div class="gate-title">Analytics</div>' +
         '<div class="gate-sub">This is a private working build. Enter the password to continue.</div>' +
         '<input id="gatePw" type="password" autocomplete="current-password" ' +

@@ -201,7 +201,7 @@ const TYPES=[['ended_shot','Produces a shot'],['ended_goal','Produces a goal'],[
  ['wide_triangles','Wide triangles'],['hold_up','Hold-up'],['very_short','Very short'],['long_ball','Long'],
  ['ends_opp_half','Ends opp half'],['end_around_box','Around the box'],['finds_central','Finds central'],['finds_wide','Finds wide']];
 
-let TEAMS=[],MATCHES={},MODE='type',TAG='ended_shot',TEAMSEL=null,CANDS=[],PICK=null,NB=[],OVERLAY=null;
+let TEAMS=[],MATCHES={},MODE='type',TAG='ended_shot',TEAMSEL=null,CANDS=[],PICK=null,NB=[],OVERLAY=null,SIM_ERROR=null;
 
 async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
   while(true){const u=new URL(SB+'/rest/v1/'+t);
@@ -408,12 +408,12 @@ function renderBrowse(){
     h+=cardHtml(s,{action:'Find sequences similar to',onclick:'choosePick('+i+')'});
   });
   h+='</div></div><div class="foot">Each card is one open-play possession, drawn start (hollow ring) to finish, attacking left to right. '+
-     'A star marks the shot. Dotted segments are movement the feed does not record as an event, such as a carry or a flick. Pick one and the tool finds the most similar sequences elsewhere in the league.</div>';
+     'A star marks the shot. Dotted segments are movement the feed does not record as an event, such as a carry or a flick. Pick one and the tool finds the most similar sequences across the current data pool.</div>';
   main.innerHTML=h;
 }
 
 async function choosePick(i){
-  PICK=CANDS[i];OVERLAY=null;
+  PICK=CANDS[i];OVERLAY=null;SIM_ERROR=null;
   const main=document.getElementById('main');
   main.innerHTML=controls()+'<div class="sect"><div class="spin"></div>'+
     '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Finding similar sequences\u2026</div></div>';
@@ -426,7 +426,10 @@ async function choosePick(i){
     NB=hits.map(function(h){return Object.assign({},pm[h.seq_uid]||{},{dist:h.dist})})
            .filter(function(x){return x.path});
     renderPick();
-  }catch(e){main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){
+    NB=[];SIM_ERROR=String(e.message||e);
+    renderPick();
+  }
 }
 
 function renderPick(){
@@ -446,11 +449,12 @@ function renderPick(){
       '</div></div>'+
     '<div class="sect"><div class="sect-h"><span>How to read it</span></div>'+
       '<div class="viz-sub">This is the sequence you picked. The cards on the right are the '+NB.length+
-      ' most similar open-play sequences anywhere else in the league, by trajectory shape, length, zones and threat. '+
+      ' most similar open-play sequences across the current data pool, by trajectory shape, length, zones and threat. '+
       'Lower distance is a closer match. Click any of them to overlay the two on one pitch.</div>'+
       '<div class="viz-leg"><span><i style="background:var(--accent)"></i><b>Picked</b></span>'+
       '<span><i style="background:var(--nb)"></i><b>Comparison</b></span>'+
       '<span>\u2605 ended in a shot</span></div></div></div>';
+  if(SIM_ERROR)h+='<div class="empty" role="alert">Similarity search is temporarily unavailable ('+esc(SIM_ERROR)+'). Your selected sequence is still shown. <button class="back" onclick="choosePick(CANDS.indexOf(PICK))">Retry search</button></div>';
   h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span>'+
      '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">across other matches &amp; teams</span></div><div class="sgrid">';
   NB.forEach(function(s,i){h+=cardHtml(s,{action:'Overlay',color:'var(--nb)',onclick:'openOverlay('+i+')'})});

@@ -299,7 +299,7 @@ function readLine(d,best,worst,med,unit){
 /* Honest notes where a metric has a real limitation */
 function caveat(k){
   const C={
-    xg_90:'The model is fitted on this season only and validated against Opta at r=0.975 across the 30 teams. It cannot see defenders, keeper position, or whether the shot was first-time, so two shots from the same spot get the same value unless the big-chance flag separates them.',
+    xg_90:'This empirical shot model is fitted on the current-season event data. The earlier external Opta correlation claim was withdrawn because it could not be reproduced. The model cannot see defenders, keeper position, or whether a shot was first-time; two shots from the same spot receive the same value unless the big-chance flag separates them. The current xG per 90 aggregate includes penalties.',
     xg_per_shot:'Driven heavily by where a player shoots from. A poacher will beat a midfielder here without being the better finisher.',
     finishing:'Over a partial season this is mostly noise. It takes several hundred shots before over- or under-performance means much.',
     sot_90:'The provider files a defender\u2019s block as a save. Those are excluded here, which is why this reads lower than most public sources.',

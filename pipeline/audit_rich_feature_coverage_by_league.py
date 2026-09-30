@@ -46,6 +46,10 @@ def main() -> int:
         "--aggregate-csv", type=Path,
         help="Optional direct-SQL aggregate export; bypasses the unavailable Data API.",
     )
+    parser.add_argument(
+        "--output", type=Path,
+        help="Write a versioned report without overwriting an earlier audit.",
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     if args.aggregate_csv:
@@ -111,7 +115,8 @@ def main() -> int:
         ],
         "policy": "A family is withheld from cross-season training if any required season-league block is below 99.5%.",
     }
-    output = root / "artifacts" / "data_quality" / "rich_feature_coverage_by_league.json"
+    output = args.output or root / "artifacts" / "data_quality" / "rich_feature_coverage_by_league.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"Rows audited: {row_count}")
     print(f"Repair queue blocks: {len(report['repair_queue'])}")

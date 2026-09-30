@@ -581,7 +581,7 @@ async function renderSquad(t){
       '<th class="num" style="cursor:default">Starts</th><th class="num" style="cursor:default">Completeness</th>'+
       '<th class="num" style="cursor:default">Impact</th><th style="cursor:default">Strongest</th></tr></thead><tbody>';
     rows.forEach(function(p){
-      h+='<tr><td><a href="players.html" style="font-weight:700;color:var(--text);text-decoration:none">'+esc(p.player_name)+'</a></td>'+
+      h+='<tr><td><a href="players.html?player='+encodeURIComponent(p.player_id)+'" style="font-weight:700;color:var(--text);text-decoration:none">'+esc(p.player_name)+'</a></td>'+
         '<td style="color:var(--text2)">'+esc(p.pool||'\u2014')+'</td>'+
         '<td class="num">'+(+p.nineties).toFixed(1)+'</td><td class="num">'+p.starts+'</td>'+
         naCell(p.completeness,p)+naCell(p.impact,p)+
