@@ -69,7 +69,7 @@
         ['match.html', 'sequences.html', 'quick-ingest.html']],
       ['Scout players & teams', 'Move from a profile to comparisons, patterns, and market context.',
         ['players.html', 'teams.html', 'insights.html', 'search.html', 'market-values.html']],
-      ['Forecast & write', 'Review the next slate, interrogate the model, or assemble an article.',
+      ['Forecast & write', 'Review frozen forecasts, interrogate the model, or assemble an article.',
         ['model-review.html', 'model-lab.html', 'writing-lab.html']],
       ['Learn the data', 'Definitions and reading guides for every analysis surface.',
         ['glossary.html', 'guide.html']]
