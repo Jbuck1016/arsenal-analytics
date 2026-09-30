@@ -13,6 +13,12 @@ assert "scoreline_distribution" not in builder
 assert '"publication_allowed": False' in builder
 assert '"review_ready": review_ready' in builder
 assert "model-review-data.js" in page
+assert "model-review-archive-data.js" in page
+assert "LATEST RESEARCH · NOT FROZEN" in page
+assert "FROZEN ARCHIVE · NOT UPCOMING" in page
+assert "?view=archive" in page
+assert "MODEL_REVIEW_ARCHIVE_DATA" in builder
+assert "def parse_instant" in builder
 assert 'ROOT / "artifacts" / "model-review"' in builder
 assert "BLOCKED · STALE INPUT" in page
 print("Model review dashboard safety checks passed")

@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def parse_instant(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return (parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed).astimezone(UTC)
 
 
 def main() -> int:
@@ -18,12 +23,17 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts" / "model-review" / "model-review-data.js")
     parser.add_argument("--page-template", type=Path, default=ROOT / "dashboard" / "model-review.html")
     parser.add_argument("--readiness-report", type=Path)
+    parser.add_argument(
+        "--global-name", choices=("MODEL_REVIEW_DATA", "MODEL_REVIEW_ARCHIVE_DATA"),
+        default="MODEL_REVIEW_DATA",
+        help="Use the archive binding when building a preserved frozen slate beside the latest view.",
+    )
     args = parser.parse_args()
 
     source = json.loads(args.predictions_file.read_text(encoding="utf-8"))
-    as_of = datetime.fromisoformat(str(source["as_of"]).replace("Z", "+00:00"))
-    evaluation_through = datetime.fromisoformat(
-        str(source.get("evaluation_through") or (as_of + timedelta(days=7)).isoformat()).replace("Z", "+00:00")
+    as_of = parse_instant(str(source["as_of"]))
+    evaluation_through = parse_instant(
+        str(source.get("evaluation_through") or (as_of + timedelta(days=7)).isoformat())
     )
     predictions = [
         {key: row[key] for key in (
@@ -32,7 +42,7 @@ def main() -> int:
             "draw_probability", "away_win_probability", "explanation",
         )}
         for row in source.get("predictions", [])
-        if as_of < datetime.fromisoformat(str(row["date"]).replace("Z", "+00:00")) <= evaluation_through
+        if as_of < parse_instant(str(row["date"])) <= evaluation_through
     ]
     if not predictions:
         raise RuntimeError("prediction artifact contains no fixtures")
@@ -70,7 +80,7 @@ def main() -> int:
             readiness = candidate
     review_ready = bool(readiness and readiness.get("ready_for_private_review"))
     blockers = [
-        check["detail"] for check in (readiness or {}).get("checks", [])
+        f"{check['name']}: {check['detail']}" for check in (readiness or {}).get("checks", [])
         if not check.get("passed") and check.get("name") != "publication approval"
     ]
     payload = {
@@ -92,12 +102,12 @@ def main() -> int:
     }
     encoded = json.dumps(payload, separators=(",", ":"), sort_keys=True).replace("<", "\\u003c")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(f"window.MODEL_REVIEW_DATA={encoded};\n", encoding="utf-8")
+    args.output.write_text(f"window.{args.global_name}={encoded};\n", encoding="utf-8", newline="\n")
     page_output = args.output.parent / "model-review.html"
     page = args.page_template.read_text(encoding="utf-8")
     if page_output.parent.resolve() != (ROOT / "dashboard").resolve():
         page = page.replace('src="gate.js"', 'src="../../dashboard/gate.js"')
-    page_output.write_text(page, encoding="utf-8")
+    page_output.write_text(page, encoding="utf-8", newline="\n")
     print(
         f"Model review bundle: fixtures={len(predictions)} leagues={len(simulations)} "
         f"page={page_output}"
