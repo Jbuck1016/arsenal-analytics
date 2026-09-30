@@ -367,7 +367,7 @@ const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'
  ['Match','match.html','explore'],['Teams','teams.html','explore'],['Sequences','sequences.html','explore'],
  ['Guide','guide.html','learn'],['Method','methodology.html','learn'],['Reference','glossary.html','learn']];
 
-let PLAYERS=[],DEFS=[],POOLC={},SEL=null,GRP=(function(){try{return localStorage.getItem('playerCategory')||'All'}catch(e){return'All'}})(),TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820,MARKET_VALUES={};
+let PLAYERS=[],DEFS=[],SEL=null,GRP=(function(){try{return localStorage.getItem('playerCategory')||'All'}catch(e){return'All'}})(),TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820,MARKET_VALUES={};
 let EVIDENCE_PID=null,PB={mode:'pizza',group:'Passing',metrics:[],layers:['prog','box','key'],pattern:true,query:'',ready:false};
 let EVF={game:'',score:'',phase:'',min:'',max:''},CONTEXT_READY=false;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
@@ -547,7 +547,6 @@ async function init(){
     PLAYERS=season.map(function(s){return Object.assign({},s,rmap[s.player_id]||{})})
       .filter(function(p){return +(p.apps||0)>0||+(p.minutes||0)>0});
     PLAYERS.sort(function(a,b){return b.nineties-a.nineties});
-    POOLC={};PLAYERS.filter(function(p){return p.nineties>=MIN90}).forEach(function(p){POOLC[p.pool]=(POOLC[p.pool]||0)+1});
     (res[4]||[]).forEach(function(d){PLG[d.team]=d.league});
     const presentLeagues={};PLAYERS.forEach(function(p){const league=PLG[p.team];if(league)presentLeagues[league]=true});
     PLEAGUES=Object.keys(presentLeagues).sort().map(function(league){return{league:league,display_name:LEAGUE_DISPLAY[league]||league}});
@@ -730,7 +729,9 @@ async function pick(pid){
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
-  const n=POOLC[p.pool]||0,low=p.nineties<MIN90||!p.pool;
+  const playerLeague=lgOfTeam(p.team);
+  const n=PLAYERS.filter(function(peer){return peer.pool===p.pool&&+peer.nineties>=MIN90&&lgOfTeam(peer.team)===playerLeague}).length;
+  const low=p.nineties<MIN90||!p.pool;
   const wmap=(WEIGHTS&&WEIGHTS[p.pool])||{};
   const mv=MARKET_VALUES[p.player_id]||null;
   const mvText=mv&&mv.market_value_eur!=null?formatEuro(+mv.market_value_eur):'Not available';
@@ -743,9 +744,9 @@ function renderPlayer(p,pcts,pillars,dna){
     '<span class="chip acc">Plays: '+esc(poolLabel(p.pool))+'</span>'+
     (p.reassigned?'<span class="chip warn">Reassigned from '+esc(p.listed_pool)+'</span>':'')+
     '<span class="chip">Fit confidence: '+esc(p.confidence||'\u2014')+'</span></div></div>'+
-    '<div class="pcard-r"><div class="pool-lbl">Ranked against</div>'+
+    '<div class="pcard-r"><div class="pool-lbl">Eligible role cohort</div>'+
     '<div class="pool-val">'+esc(poolLabel(p.pool))+'</div>'+
-    '<div class="pool-sub">'+esc(leagueLabel(p.team))+' \u00B7 '+n+' players \u00B7 '+MIN90+'+ nineties</div></div>'+
+    '<div class="pool-sub">'+esc(leagueLabel(p.team))+' \u00B7 '+n+' eligible role peers \u00B7 '+MIN90+'+ nineties; metric samples vary</div></div>'+
     '<div class="pcard-r value-card"><div class="pool-lbl">Market value</div>'+
     '<div class="pool-val">'+esc(mvText)+'</div>'+
     '<div class="pool-sub">'+(mv?'Transfermarkt estimate'+(mvDate?' \u00B7 observed '+esc(mvDate):''):'No linked valuation yet')+'</div></div></div>';

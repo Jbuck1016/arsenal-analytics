@@ -52,6 +52,8 @@ def main() -> int:
             "players.html: substitute appearances qualify for the directory")
     require(not re.search(r"\.filter\([^\n]{0,160}starts[^\n]{0,80}>\s*0", players),
             "players.html: directory is not filtered to starters")
+    require("lgOfTeam(peer.team)===playerLeague" in players and "eligible role peers" in players,
+            "players.html: displayed comparison cohort is limited to the player's league and role")
 
     # WhoScored y=0 is the right touchline. SVG y grows downward, so this
     # transform puts right-sided actions at the bottom of the displayed pitch.
