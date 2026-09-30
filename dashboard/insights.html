@@ -54,6 +54,7 @@ a{color:inherit;text-decoration:none}
 .filter button.on{background:var(--amber-dim);color:var(--amber)}
 .controls{display:flex;gap:10px;align-items:center;margin:0 0 18px;flex-wrap:wrap}
 .controls .filter{margin:0}
+.sample-note{margin:-6px 0 17px;color:var(--dim);font:400 13px/1.55 var(--f-body);max-width:76ch}
 #lgSel,#teamSel{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:3px;
   padding:8px 10px;font:600 10px/1 var(--f-mono);letter-spacing:.04em;cursor:pointer;min-width:190px}
 #teamSel:focus{outline:none;border-color:var(--amber-line)}
@@ -139,6 +140,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
     <select id="lgSel"></select>
     <select id="teamSel"><option value="all">All teams</option></select>
   </div>
+
+  <p class="sample-note">Insight cards require at least six completed team matches. Some also require enough eligible actions. If a club has no card yet, its sample may still be too small; that is not evidence the behaviour is absent.</p>
 
   <div id="content"><div class="load">loading…</div></div>
 
