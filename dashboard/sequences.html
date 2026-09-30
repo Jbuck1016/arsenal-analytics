@@ -93,6 +93,15 @@ select option{background:var(--bg2);color:var(--text)}
 .ov-stat .v{font:700 16px/1 'JetBrains Mono',monospace;margin-top:5px;font-variant-numeric:tabular-nums}
 .split{display:grid;grid-template-columns:1.35fr .65fr;gap:12px;align-items:start}
 @media(max-width:1000px){.split{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .hdr{height:auto;min-height:52px;flex-wrap:wrap;padding:9px 12px;gap:8px}
+  .tabs{order:4;flex:1 1 100%;min-width:0;max-width:100%;margin-left:0;overflow-x:auto}
+  .tabs .tab{flex-shrink:0}
+  .tbtn{margin-left:auto}
+  .ctrl .fld{min-width:0;flex:1 1 100%}
+  .main{min-width:0;padding:12px}
+}
+@media(max-width:500px){.sgrid{grid-template-columns:1fr}}
 
 .tbtn{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);border-radius:3px;
   width:30px;height:26px;display:grid;place-items:center;color:var(--dim);font-size:13px;
