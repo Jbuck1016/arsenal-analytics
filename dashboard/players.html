@@ -17,7 +17,7 @@
    it; the percentile tier ramp and shadow stay page level. */
 :root{
   --accent-dim:rgba(239,1,7,0.07);--accent-glow:rgba(239,1,7,0.18);
-  --elite:#16a34a;--above:#4ade80;--avg:#d4a017;--below:#f97316;--poor:#dc2626;
+  --elite:#086b3c;--above:#197647;--avg:#8b5e00;--below:#a3480b;--poor:#a32626;
   --shadow:0 1px 3px rgba(0,0,0,0.07);
 }
 html.dark{
@@ -157,7 +157,7 @@ tr:hover td{background:var(--surface)}
   .hdr-right{flex-wrap:wrap;justify-content:flex-end;row-gap:5px}
   .wrap{display:block;overflow:visible}.side{width:100%;height:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--border)}
   .side-top{display:grid;grid-template-columns:1fr 1fr}.side-top .inp{grid-column:1/-1}.plist{max-height:25vh}
-  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pcard-r.value-card{display:block;min-width:0;flex:1}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/74}
+  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pcard-r.value-card{display:block;min-width:0;flex:1}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/78}
   .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
   .player-overview>summary{display:flex}.player-overview:not([open]){margin-bottom:10px}.player-overview .dna{margin-top:9px}
 }
@@ -251,7 +251,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 .studio-intro p{font:500 12px/1.6 var(--f-body);color:var(--text2);margin-top:5px;max-width:78ch}
 .studio-modes{display:flex;gap:4px;background:var(--surface);border-radius:7px;padding:3px}
 .studio-grid{display:grid;grid-template-columns:minmax(250px,320px) minmax(480px,1fr);gap:12px;align-items:start}
-.studio-controls{max-height:calc(100vh - 220px);overflow:auto}
+.studio-controls{min-width:0;max-height:calc(100vh - 220px);overflow-y:auto;overflow-x:hidden}
 .studio-help{font:500 11px/1.55 var(--f-body);color:var(--text2);padding:9px 10px;border-left:3px solid var(--accent);background:var(--accent-dim);margin-bottom:12px}
 .studio-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
 .check-group{display:grid;gap:5px;margin-bottom:12px}
@@ -288,7 +288,34 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 .pizza-category-key span{display:inline-flex;gap:5px;align-items:center;color:var(--text3);font:600 9px/1 var(--f-body)}
 .pizza-category-key i{width:8px;height:8px;border-radius:2px}
 .event-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px;margin:9px 0;background:var(--surface);border:1px solid var(--border);border-radius:7px}
+.event-filters .cfield,.event-filters .sel,.event-filters .inp{min-width:0}
 .event-filters .wide{grid-column:1/-1}.event-filter-note{grid-column:1/-1;color:var(--text3);font:500 9.5px/1.45 var(--f-body)}
+.scout-controls,.scout-results,.scout-chart{max-width:1480px;margin-left:auto;margin-right:auto}
+.scout-controls .clbl{color:var(--text2);font-size:10.5px;letter-spacing:.08em}
+.scout-controls .foot{font-size:12px;line-height:1.55;color:var(--text2);max-width:110ch}
+.scout-results{padding:14px 16px}
+.scout-result-head{display:flex;justify-content:space-between;align-items:end;gap:16px;padding:2px 0 12px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.scout-result-head h2{font:800 19px/1.2 var(--f-display);letter-spacing:-.02em;color:var(--text)}
+.scout-result-head p{font:500 12px/1.45 var(--f-body);color:var(--text2);margin-top:4px}
+.scout-result-count{font:700 11px/1.3 var(--f-data);color:var(--text2);white-space:nowrap}
+.scout-results table{font:600 12.5px/1.4 var(--f-body)}
+.scout-results th{font:750 10.5px/1.2 var(--f-body);letter-spacing:.06em;color:var(--text2);padding:10px 12px;border-bottom:2px solid var(--border2)}
+.scout-results td{padding:10px 12px;color:var(--text);border-bottom:1px solid var(--border)}
+.scout-results .scout-team,.scout-results .scout-rank{color:var(--text2)}
+.scout-results tbody tr:nth-child(even) td{background:var(--surface)}
+.scout-results tbody tr:hover td{background:var(--accent-dim)}
+.scout-results .pname-link{font-size:13px;font-weight:750;border-bottom-color:currentColor}
+.scout-results .c-val{font-size:13px;font-weight:750}
+.scout-results .c-pct{font-size:11px;font-weight:800;opacity:1}
+.scout-results .fit{font-size:14px;font-weight:800}
+.scout-results .num{font-variant-numeric:tabular-nums}
+.scout-results .fit{min-width:3ch}
+.scout-results .c-pct{display:inline-block;min-width:2.5ch}
+html:not(.dark) .scout-results th{color:#273039}
+html:not(.dark) .scout-results .pname-link{color:#121820}
+html:not(.dark) .scout-results .scout-team{color:#36414b}
+html:not(.dark) .scout-results .scout-rank{color:#57616c}
+@media(max-width:620px){.scout-result-head{flex-direction:column;align-items:flex-start}.scout-result-count{white-space:normal}}
 .chain-core th:first-child,.chain-core td:first-child{position:sticky;left:0;z-index:2;background:var(--bg2)}
 .chain-details td{padding:0 9px 9px}.role-glyph{display:grid;grid-template-columns:repeat(6,minmax(72px,1fr));gap:5px;padding:8px;background:var(--surface);border-radius:6px}
 .role-glyph span{font:500 9px/1.35 var(--f-body);color:var(--text3)}.role-glyph b{display:block;color:var(--text2);font:700 10px/1.3 var(--f-data)}
@@ -350,7 +377,7 @@ const MIN90=3;
 const POOLS=['GK','CB','FB','CM','AM','W','ST'];
 const POOL_NAME={GK:'Goalkeeper',CB:'Centre-back',FB:'Full-back / wing-back',CM:'Central midfield',AM:'Attacking midfield',W:'Wide forward',ST:'Striker'};
 const LEAGUE_DISPLAY={'ENG-Premier League':'Premier League','ESP-La Liga':'La Liga','GER-Bundesliga':'Bundesliga','ITA-Serie A':'Serie A','FRA-Ligue 1':'Ligue 1','USA-MLS':'MLS'};
-const TABS=['Player','Chain roles','Rank','Scatter','Scout','Compare','Plot studio'];
+const TABS=['Player','Rank','Scatter','Scout','Compare','Plot studio'];
 var PLG={}, PLEAGUES=[],
     PLGSCOPE=(function(){try{return localStorage.getItem('leagueScope')||'ALL'}catch(e){return 'ALL'}})();
 function lgOfTeam(t){return PLG[t]||null}
@@ -386,7 +413,7 @@ const GRP_HIDE={GK:['Creation','Shooting','Carrying','Half-Spaces','Hold-Up','Te
   _outfield:['Goalkeeping']};
 function groupsFor(pool){
   const hide=(pool==='GK')?GRP_HIDE.GK:GRP_HIDE._outfield;
-  const out=[];DEFS.forEach(function(d){if(out.indexOf(d.grp)<0&&hide.indexOf(d.grp)<0)out.push(d.grp)});
+  const out=[];DEFS.forEach(function(d){if(d.grp!=='Chain roles'&&out.indexOf(d.grp)<0&&hide.indexOf(d.grp)<0)out.push(d.grp)});
   if(pool!=='GK')out.splice(1,0,'Combined');
   return out;
 }
@@ -420,24 +447,24 @@ const CHAIN_ROLES=[['initiator','Initiator'],['controller','Controller'],['bridg
 function tempoLabel(h){if(h==null)return '\u2014';if(h>=3.3)return 'Holds';if(h<=2.5)return 'Quick release';return 'Balanced';}
 function compareChainPlayer(id,pos){if(!id)return;CMP.pool=pos||((playerOf(SEL)||{}).pool)||'CM';CMP.a=SEL;CMP.b=String(id);setTab('Compare')}
 async function renderChainRoles(pid){
-  const p=playerOf(pid),main=document.getElementById('main');main.innerHTML=loadingPanel('Building chain-role profile','Loading involvement roles and comparable players.');
+  const p=playerOf(pid),main=document.getElementById('chainRoleContent');
+  if(!main)return;
+  main.innerHTML=loadingPanel('Building chain-role profile','Loading involvement roles and comparable players.');
   try{
     const res=await Promise.all([
-      sbAll('player_chain_pct',{player_id:'eq.'+pid,select:'role,raw,pct'}),
+      sbAll('player_chain_pct',{player_id:'eq.'+pid,select:'role,raw,pct,pool,league'}),
       sbAll('player_chain_roles',{player_id:'eq.'+pid,select:'*'}),
       sbRpc('similar_players_chain',{p_id:pid,p_n:13})
     ]);
+    if(SEL!==pid||GRP!=='Chain roles'||document.getElementById('chainRoleContent')!==main)return;
     const pm={};res[0].forEach(function(r){pm[r.role]=r});
     const cr=res[1][0];
     if(!cr){main.innerHTML='<div class="empty">No chain-role profile for '+esc(p?p.player_name:'this player')+' \u2014 outfield players with 120+ possession involvements only.</div>';return}
     const sims=res[2]||[];
-    let h='<div class="pcard"><div class="pcard-l">'+
-      '<div class="pname">'+esc(p?p.player_name:cr.player)+'</div>'+
-      '<div class="pmeta">'+esc(tname(cr.team))+' \u00B7 '+esc(cr.pos)+' \u00B7 '+cr.inv+' involvements \u00B7 xT '+(+cr.player_xt).toFixed(2)+' \u00B7 '+tempoLabel(cr.hold_secs)+'</div>'+
-      '<div class="chips"><span class="chip acc">Chain roles</span><span class="chip">Hold '+(+cr.hold_secs).toFixed(2)+'s</span></div></div>'+
-      '<div class="pcard-r"><div class="pool-lbl">Ranked against</div><div class="pool-val">'+esc(cr.pos)+'</div>'+
-      '<div class="pool-sub">'+esc(leagueLabel(cr.team))+' \u00B7 by position</div></div></div>';
-    h+='<div class="sect"><div class="sect-h"><span>Chain roles \u2014 percentile vs position</span></div>';
+    const cohort=res[0][0]||{},cohortPool=cohort.pool||((p||{}).pool)||cr.pos;
+    const cohortLeague=cohort.league?LEAGUE_DISPLAY[cohort.league]||cohort.league:leagueLabel(cr.team);
+    let h='<div class="simhelp">'+cr.inv+' possession involvements · '+(+cr.player_xt).toFixed(2)+' total xT · '+tempoLabel(cr.hold_secs)+' · Hold '+(+cr.hold_secs).toFixed(2)+'s. Percentiles compare '+esc(POOL_NAME[cohortPool]||cohortPool)+' peers in '+esc(cohortLeague)+'; similar-player matches can come from other leagues.</div>';
+    h+='<div class="sect"><div class="sect-h"><span>Chain roles \u2014 percentile vs league and role pool</span></div>';
     CHAIN_ROLES.forEach(function(rr){
       const r=pm[rr[0]],pct=r?+r.pct:null,t=tier(pct);
       const rawtxt=r?(rr[0]==='controller'?(+r.raw).toFixed(2)+'s':(+r.raw).toFixed(0)+'%'):'\u2014';
@@ -448,8 +475,8 @@ async function renderChainRoles(pid){
     });
     h+='</div>';
     h+='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Most similar players</span>'+
-       '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">cosine on z-scored role profile, same position</span></div>'+
-       '<div class="simhelp">Each row is another player in the same position, ranked by how '+
+       '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">cosine on z-scored role profile, same role pool</span></div>'+
+       '<div class="simhelp">Each row is another player in the same role pool, ranked by how '+
        'closely his <b>role profile</b> matches. The role columns are the share of his '+
        'involvements that look like that behaviour, so they describe <b>what he does</b>, '+
        'not how well he does it. Hover any heading for a definition.</div>'+
@@ -477,7 +504,7 @@ async function renderChainRoles(pid){
     });
     h+='</tbody></table></div><div class="foot">'+
        '<b>How this is calculated.</b> Every player is described by eleven role percentages, '+
-       'each standardised against others in his position so the comparison is like for like. '+
+       'each standardised against others in his role pool so the comparison is like for like. '+
        'Similarity is the angle between those two profiles, which means it measures the '+
        '<i>shape</i> of a player rather than his volume: a low-minutes player can match a '+
        'regular closely if he does the same things in the same proportions.<br><br>'+
@@ -486,7 +513,7 @@ async function renderChainRoles(pid){
        'on few touches is less stable, so read the Touches column before trusting a high '+
        'similarity score.</div></div>';
     main.innerHTML=h;
-  }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(document.getElementById('chainRoleContent')===main&&SEL===pid)main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function tier(p){
   if(p==null)return{c:'var(--text3)'};
@@ -579,9 +606,8 @@ function renderTabs(){
 }
 function setTab(t){
   TAB=t;renderTabs();
-  document.getElementById('side').classList.toggle('hide',t!=='Player'&&t!=='Chain roles');
+  document.getElementById('side').classList.toggle('hide',t!=='Player');
   if(t==='Player'){ if(SEL){pick(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
-  else if(t==='Chain roles'){ if(SEL){renderChainRoles(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
   else if(t==='Rank')renderRank();
   else if(t==='Scatter')renderScatter();
   else if(t==='Scout')renderScout();
@@ -710,7 +736,6 @@ async function loadEvidenceLayers(pid){
   return{actions:res[0].rows,carries:res[1].rows,receipts:res[2].rows};
 }
 async function pick(pid){
-  if(TAB==='Chain roles'){SEL=pid;renderTabs();document.getElementById('side').classList.remove('hide');renderList();return renderChainRoles(pid);}
   SEL=pid;TAB='Player';renderTabs();
   document.getElementById('side').classList.remove('hide');
   renderList();
@@ -723,9 +748,10 @@ async function pick(pid){
       sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'}),
       loadEvidenceLayers(pid)
     ]);
+    if(SEL!==pid||TAB!=='Player'||!teamInLeague((playerOf(pid)||{}).team))return;
     PACT=res[3].actions;PCAR=res[3].carries;PREC=res[3].receipts;EVIDENCE_PID=pid;
     renderPlayer(p,res[0],res[1],res[2][0]||null);
-  }catch(e){main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(SEL===pid&&TAB==='Player')main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
@@ -775,7 +801,8 @@ function renderPlayer(p,pcts,pillars,dna){
   }
 
   const groups=groupsFor(p.pool);
-  if(GRP!=='All'&&groups.indexOf(GRP)<0)GRP='All';
+  const categoryTabs=['All'].concat(groups,p.pool==='GK'?[]:['Chain roles']);
+  if(categoryTabs.indexOf(GRP)<0)GRP='All';
   const groupReads=groups.filter(function(g){return g!=='Combined'}).map(function(g){
     const vals=groupMetricsFrom(g,pm);return {g:g,n:vals.length,avg:vals.length?Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length):null};
   }).filter(function(x){return x.avg!=null}).sort(function(a,b){return b.avg-a.avg});
@@ -786,15 +813,17 @@ function renderPlayer(p,pcts,pillars,dna){
       '<div class="brief-card"><div class="brief-k">Review question</div><div class="brief-v">'+esc(lo.g)+' · '+lo.avg+'</div><div class="brief-p">Lowest relative category in this role comparison—not automatically a weakness or tactical problem.</div></div>'+
       '<div class="brief-card"><div class="brief-k">Evidence base</div><div class="brief-v">'+(+p.nineties).toFixed(1)+' nineties</div><div class="brief-p">'+actionCount.toLocaleString()+' plotted actions and inferred carries · '+pcts.length+' percentile measures.</div></div></div>';
   }
-  h+='<div class="gtabs">'+['All'].concat(groups).map(function(g){
+  h+='<div class="gtabs">'+categoryTabs.map(function(g){
      return '<button class="gtab'+(GRP===g?' on':'')+'" aria-pressed="'+(GRP===g)+'" onclick="setGrp(\''+g+'\')">'+g+'</button>'}).join('')+'</div>';
   h+='<div class="studio-actions"><button class="btn sec" onclick="setTab(\'Plot studio\')">Build a custom player plot</button>'+(
-    GRP!=='All'&&GRP!=='Combined'&&defaultPizzaMetrics(GRP).length>=3?'<button class="btn sec" onclick="openCategoryPizza(\''+GRP+'\')">Generate '+esc(GRP)+' pizza</button>':'')+'</div>';
+    GRP!=='All'&&GRP!=='Combined'&&GRP!=='Chain roles'&&defaultPizzaMetrics(GRP).length>=3?'<button class="btn sec" onclick="openCategoryPizza(\''+GRP+'\')">Generate '+esc(GRP)+' pizza</button>':'')+'</div>';
 
   if(GRP==='All'){
     h+='<div class="grid">';
     groups.forEach(function(g){ if(g!=='Combined')h+=metricCard(g,pm) });
     h+='</div>';
+  } else if(GRP==='Chain roles'){
+    h+='<div id="chainRoleContent"></div>';
   } else {
     if(GRP==='Combined'){ h+=vizPanel(GRP,p); }
     else h+='<div class="split"><div class="split-l">'+metricCard(GRP,pm)+'</div>'+
@@ -806,6 +835,7 @@ function renderPlayer(p,pcts,pillars,dna){
   h = legendHtml() + h;
   document.getElementById('main').innerHTML=h;
   wireTips();
+  if(GRP==='Chain roles')renderChainRoles(p.player_id);
 }
 function groupMetricsFrom(g,pm){const vals=[];DEFS.filter(function(d){return d.grp===g}).forEach(function(d){const r=pm[d.key];if(r&&r.pct!=null)vals.push(+r.pct)});return vals}
 
@@ -942,20 +972,20 @@ function eventContextControls(){
     '<div class="cfield"><span class="clbl">Phase</span><select class="sel" onchange="setEventFilter(\'phase\',this.value)"><option value="">All phases</option><option value="open"'+(EVF.phase==='open'?' selected':'')+'>Open play</option><option value="set"'+(EVF.phase==='set'?' selected':'')+'>Set piece</option></select></div>'+
     '<div class="cfield"><span class="clbl">From minute</span><input class="inp" type="number" min="0" max="130" value="'+esc(EVF.min)+'" placeholder="0" onchange="setEventFilter(\'min\',this.value)"></div>'+
     '<div class="cfield"><span class="clbl">Through minute</span><input class="inp" type="number" min="0" max="130" value="'+esc(EVF.max)+'" placeholder="120" onchange="setEventFilter(\'max\',this.value)"></div>'+
-    '<div class="event-filter-note">Showing '+shown+' of '+all.length+' event records. Hover an individual mark for fixture, minute, phase and score-state context. Pattern mode summarizes the filtered evidence.</div></div>';
+    '<div class="event-filter-note">'+shown+' of '+all.length+' source records match these filters. The layer selections determine which actions are plotted; overlapping layers are shown once, in their most specific selected category. Hover a mark for match context.</div></div>';
 }
 function plotLayers(){
   const A=filterContext(PACT||[]),C=filterContext(PCAR||[]),R2=filterContext(PREC||[]),G=PAL.ok,R=PAL.fail,B=PAL.prog,AC=PAL.box,Y=PAL.carry,N='var(--viz-neutral)';
   const P=function(k,l,c,it,draw,move,shape){return{k:k,label:l,color:c,items:it,draw:draw,movement:!!move,shape:shape||'circle'}};
-  const pl=function(c,w,op,dash){return function(a){return line(a,c,w,op,dash)}};
+  const pl=function(c,w,op,dash,headShape,strong){return function(a){return line(a,c,w,op,dash,headShape,strong)}};
   const cl=function(c,w,op,dash){return function(a){return line(Object.assign({},a,{x:a.start_x,y:a.start_y}),c,w,op,dash)}};
   const mk=function(c,shape){return function(a){return actionMark({x:a.x!=null?a.x:a.start_x,y:a.y!=null?a.y:a.start_y},c,.95,.82,shape)}};
   return [
-    P('pass','Completed passes',G,A.filter(function(a){return a.type==='Pass'&&a.ok&&a.is_open_play&&a.end_x!=null}),pl(G,.18,.28),true),
+    P('pass','Completed passes',G,A.filter(function(a){return a.type==='Pass'&&a.ok&&a.is_open_play&&a.end_x!=null}),pl(G,.29,1,null,null,true),true),
     P('fail','Incomplete passes',R,A.filter(function(a){return a.type==='Pass'&&!a.ok&&a.is_open_play&&a.end_x!=null}),pl(R,.22,.4,'1.2 .8'),true),
     P('prog','Progressive passes',B,A.filter(function(a){return a.prog&&a.ok&&a.end_x!=null}),pl(B,.34,.82),true),
     P('box','Passes into box',AC,A.filter(function(a){return a.into_box&&a.ok&&a.end_x!=null}),pl(AC,.4,.92),true),
-    P('key','Key passes',G,A.filter(function(a){return a.keypass&&a.end_x!=null}),pl(G,.4,.88),true,'diamond'),
+    P('key','Key passes','var(--viz-key)',A.filter(function(a){return a.keypass&&a.end_x!=null}),pl('var(--viz-key)',.4,.95,null,'diamond'),true,'diamond'),
     P('through','Through balls',AC,A.filter(function(a){return a.through&&a.end_x!=null}),pl(AC,.4,.88,'1.2 .8'),true),
     P('carry','Carries',N,C,cl(N,.18,.3,'.35 .75'),true),
     P('progc','Progressive carries',Y,C.filter(function(a){return a.is_progressive}),cl(Y,.34,.82,'1.8 .7'),true),
@@ -970,12 +1000,14 @@ function plotLayers(){
 function studioEventPlot(){
   const layers=plotLayers(),active=layers.filter(function(l){return PB.layers.indexOf(l.k)>=0});
   if(!active.length)return '<div class="sect studio-empty">Select one or more event layers. Dense combinations are easier to read in Pattern mode.</div>';
-  let inner='';active.forEach(function(l){if(PB.pattern&&l.movement)inner+=flowPattern(l.items,l.color,7);else l.items.forEach(function(a){inner+=l.draw(a)})});
-  const legend=active.map(function(l){return lg(l.color,l.label,l.items.length,l.shape)+' <b>'+l.items.length+'</b>'}).join('')+
-    (active.some(function(l){return l.movement})?movementKey(PB.pattern):'')+
+  const owner=new Map();active.forEach(function(l){l.items.forEach(function(a){owner.set(a,l.k)})});
+  const shown=active.map(function(l){return Object.assign({},l,{items:l.items.filter(function(a){return owner.get(a)===l.k})})});
+  let inner='';shown.forEach(function(l){if(PB.pattern&&l.movement)inner+=flowPattern(l.items,l.color,7);else l.items.forEach(function(a){inner+=l.draw(a)})});
+  const legend=shown.map(function(l){return lg(l.color,l.label,l.items.length,l.shape)+' <b>'+l.items.length+'</b>'}).join('')+
+    (shown.some(function(l){return l.movement})?movementKey(PB.pattern):'')+
     (PB.pattern?'<span>Movement layers are aggregated into repeated zone flows; point events remain exact.</span>':'');
   const ctrl='<div class="vz-tog"><button class="vzb'+(PB.pattern?' on':'')+'" aria-pressed="'+PB.pattern+'" onclick="PB.pattern=true;renderPlotStudio()">Pattern</button><button class="vzb'+(!PB.pattern?' on':'')+'" aria-pressed="'+(!PB.pattern)+'" onclick="PB.pattern=false;renderPlotStudio()">Events</button></div>';
-  return pitchWrap('Custom event map','Every selected layer uses a distinct colour or shape. Use Pattern for structure and Events for individual evidence.',inner,legend,ctrl);
+  return pitchWrap('Custom event map',owner.size+' distinct actions plotted. Overlapping categories use the most specific selected layer. Pattern groups movements; Events shows individual actions.',inner,legend,ctrl);
 }
 function renderPlotStudio(){
   const main=document.getElementById('main');
@@ -1009,6 +1041,7 @@ function legendHtml(){
 function metricOptions(sel){
   let out='',g='';
   DEFS.forEach(function(d){
+    if(d.grp==='Chain roles')return; // these live in the separate chain-role data view
     if(d.grp!==g){if(g)out+='</optgroup>';out+='<optgroup label="'+esc(d.grp)+'">';g=d.grp}
     out+='<option value="'+d.key+'"'+(sel===d.key?' selected':'')+'>'+esc(d.label)+'</option>';
   });
@@ -1134,11 +1167,11 @@ function wireTips(){
 function scoutCtrls(){
   const chosen={};SK.metrics.forEach(function(m){chosen[m.k]=1});
   let opts='',g='';
-  DEFS.filter(function(d){return !chosen[d.key]}).forEach(function(d){
+  DEFS.filter(function(d){return d.grp!=='Chain roles'&&!chosen[d.key]}).forEach(function(d){
     if(d.grp!==g){if(g)opts+='</optgroup>';opts+='<optgroup label="'+esc(d.grp)+'">';g=d.grp}
     opts+='<option value="'+d.key+'">'+esc(d.label)+'</option>';});
   if(g)opts+='</optgroup>';
-  let h='<div class="ctrls"><div class="crow">'+
+  let h='<div class="ctrls scout-controls"><div class="crow">'+
     '<div class="cfield"><span class="clbl">Role pool</span><select class="sel" onchange="SK.pool=this.value;renderScout()">'+
       POOLS.map(function(p){return '<option value="'+p+'"'+(SK.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></div>'+
     '<div class="cfield" style="min-width:250px"><span class="clbl">Add metric (up to 10)</span>'+
@@ -1207,7 +1240,7 @@ function drawScout(){
   }
   const ar=function(c){return SK.sort.col===c?(SK.sort.dir===-1?' \u2193':' \u2191'):''};
   const cls=function(c){return SK.sort.col===c?' class="sorted"':''};
-  let h='<div class="sect"><div style="max-height:calc(100vh - 360px);overflow:auto"><table><thead><tr>'+
+  let h='<div class="sect scout-results"><div class="scout-result-head"><div><h2>Who fits this profile?</h2><p>Ranked by your weighted, role-relative metric selections—not overall player quality. Check playing time before trusting a high fit.</p></div><div class="scout-result-count">Top '+rows.length+' of '+SK.rows.length+' qualifying players</div></div><div style="max-height:calc(100vh - 360px);overflow:auto"><table><thead><tr>'+
     '<th>#</th><th'+cls('name')+' onclick="sortScout(\'name\')">Player'+ar('name')+'</th>'+
     '<th'+cls('team')+' onclick="sortScout(\'team\')">Team'+ar('team')+'</th>'+
     '<th class="num"'+(SK.sort.col==='n90'?' style="color:var(--accent)"':'')+' onclick="sortScout(\'n90\')">90s'+ar('n90')+'</th>'+
@@ -1219,9 +1252,9 @@ function drawScout(){
              esc(d.label||m.k)+u+ar(m.k)+'</th>'}).join('')+
     '</tr></thead><tbody>';
   rows.forEach(function(r,i){
-    h+='<tr><td class="num" style="color:var(--text3)">'+(i+1)+'</td>'+
+    h+='<tr><td class="num scout-rank">'+(i+1)+'</td>'+
        '<td><button type="button" class="pname-link" aria-label="Show '+esc(r.name)+' profile" onclick="pick(\''+r.id+'\')">'+esc(r.name)+'</button></td>'+
-       '<td style="color:var(--text2)">'+esc(tname(r.team))+'</td>'+
+       '<td class="scout-team">'+esc(tname(r.team))+'</td>'+
        '<td class="num">'+r.n90.toFixed(1)+'</td>'+
        '<td class="num fit" style="color:'+tier(r.fit).c+'">'+Math.round(r.fit)+'</td>'+
        SK.metrics.map(function(m){return cell(r.v[m.k],m.k)}).join('')+'</tr>';
@@ -1234,7 +1267,7 @@ function drawScout(){
 function scoutChart(rows){
   if(!rows.length)return'';
   const W=1100,BH=22,MT=30,ML=170,H=MT+rows.length*BH+22;
-  let s='<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Fit \u2014 top '+rows.length+'</span></div>'+
+  let s='<div class="sect scout-chart" style="margin-top:12px"><div class="sect-h"><span>Fit \u2014 top '+rows.length+'</span></div>'+
         '<svg role="img" aria-label="Top '+rows.length+' '+esc(POOL_NAME[SK.pool])+' scout fits for '+esc(scopeLabel())+'." viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">';
   [0,25,50,75,100].forEach(function(v){
     const x=ML+(v/100)*(W-ML-30);
@@ -1423,7 +1456,7 @@ function pitchMarks(){
     '<rect x="105" y="30.34" width="1.3" height="7.32" '+st+'/>';
 }
 function pitchWrap(title,sub,inner,legend,ctrl){
-  const viewBox=arguments[5]||'-3 -3 111.5 74';
+  const viewBox=arguments[5]||'-3 -3 111.5 78';
   return '<div class="sect pitch-viz"><div class="viz-head">'+
     '<div><div class="viz-eyebrow">Pitch view</div>'+
     '<div class="viz-title">'+esc(title)+'</div></div>'+
@@ -1460,15 +1493,17 @@ function eventSvg(a,markup){const tip=eventTip(a);return tip?'<g><title>'+esc(ti
 /* Origin ring: hollow circle where the ball starts, hairline through the middle,
    solid dot where it arrives. Reads as a journey rather than a vector, and keeps
    both ends legible when lines overlap. */
-function line(a,c,w,op,dash){
+function line(a,c,w,op,dash,headShape,strong){
   const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
   const W=w||0.34, o=(op==null?0.75:op);
   const shaft='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
-    '" stroke-width="'+(W*0.62).toFixed(3)+'" stroke-opacity="'+(o*0.55).toFixed(3)+
+    '" stroke-width="'+(W*0.62).toFixed(3)+'" stroke-opacity="'+(o*(strong?0.92:0.55)).toFixed(3)+
     '" stroke-linecap="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
   const ring='<circle cx="'+x1+'" cy="'+y1+'" r="'+(W*1.12).toFixed(3)+'" fill="none" stroke="'+c+
     '" stroke-width="'+(W*0.52).toFixed(3)+'" stroke-opacity="'+(o*0.8).toFixed(3)+'"/>';
-  const head='<circle cx="'+x2+'" cy="'+y2+'" r="'+(W*1.15).toFixed(3)+'" fill="'+c+
+  const radius=W*1.5;
+  const head=headShape==='diamond'?'<path d="M'+x2+' '+(y2-radius)+'L'+(x2+radius)+' '+y2+'L'+x2+' '+(y2+radius)+'L'+(x2-radius)+' '+y2+'Z" fill="'+c+'" fill-opacity="'+Math.min(1,o*1.15).toFixed(3)+'"/>':
+    '<circle cx="'+x2+'" cy="'+y2+'" r="'+(W*1.15).toFixed(3)+'" fill="'+c+
     '" fill-opacity="'+Math.min(1,o*1.15).toFixed(3)+'"/>';
   return eventSvg(a,shaft+ring+head);
 }
@@ -2020,7 +2055,7 @@ function drill(key){
     '<div class="viz-title">'+esc(d.label||key)+' \u2014 '+esc(p.player_name)+'</div>'+
     '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b> per 90 \u00B7 '+ordinal(r.pct)+' percentile among '+
       (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+eventContextControls()+
-    '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 74" preserveAspectRatio="xMidYMid meet" '+
+    '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 78" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+
     '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
     '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+

@@ -72,7 +72,7 @@
 .hdr-right .lnk{display:inline-flex;align-items:center;gap:5px;
   background:transparent;border:1px solid var(--border);color:var(--text2);
   font:600 10.5px/1 'Inter',system-ui,sans-serif;letter-spacing:.02em;
-  padding:7px 11px;border-radius:7px;text-decoration:none;white-space:nowrap;cursor:pointer;
+  min-height:29px;padding:0 10px;border-radius:7px;text-decoration:none;white-space:nowrap;cursor:pointer;
   transition:color .15s,background-color .15s,border-color .15s}
 .hdr-right .lnk:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
 .hdr-right .lnk.acc{color:var(--accent);border-color:var(--accent-glow);background:var(--accent-dim)}
