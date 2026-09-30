@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,16 @@ def audit_league(
     expected = int(registry.get("expected_teams") or 0)
     warnings = []
     active = registry.get("is_active") is not False
+    if registry["league"] in baseline.TOP_FIVE and expected:
+        season_total = expected * (expected - 1)
+        if len(matches) != season_total:
+            warnings.append(
+                f"live fixture schedule has {len(matches)}/{season_total} expected matches"
+            )
+        pair_counts = Counter((str(row["home_team"]), str(row["away_team"])) for row in matches)
+        duplicates = [pair for pair, count in pair_counts.items() if count > 1]
+        if duplicates:
+            warnings.append(f"live fixture schedule has {len(duplicates)} duplicate home/away pairing(s)")
     if not active and provider_completed:
         warnings.append(
             f"league is inactive although the provider knows {len(provider_completed)} completed fixture(s)"
@@ -161,6 +172,7 @@ def main() -> int:
             .select("game_id,date,home_team,away_team,home_score,away_score")
             .eq("league", league["league"])
             .eq("season", league["season"])
+            .eq("is_live_scope", True)
             .order("date")
             .order("game_id")
         )

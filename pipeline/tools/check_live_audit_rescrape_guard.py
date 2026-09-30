@@ -28,6 +28,17 @@ def main() -> None:
     assert audit([dict(fresh, status="exhausted")])["blocked_rescrape_games"] == ["1"]
     assert audit([dict(fresh, queued_at="2026-09-29T08:00:00Z")])["blocked_rescrape_games"] == ["1"]
     assert audit([dict(fresh, status="done", attempts=3)])["healthy"]
+
+    small_league = dict(registry, expected_teams=2)
+    home = {"game_id": "home", "home_team": "A", "away_team": "B",
+            "date": "2026-10-01", "home_score": None, "away_score": None}
+    away = dict(home, game_id="away", home_team="B", away_team="A")
+    assert audit_league(small_league, [home, away], set(), today)["healthy"]
+    incomplete = audit_league(small_league, [home], set(), today)
+    assert not incomplete["healthy"]
+    assert "1/2 expected matches" in " ".join(incomplete["warnings"])
+    duplicated = audit_league(small_league, [home, dict(home, game_id="duplicate")], set(), today)
+    assert "duplicate home/away" in " ".join(duplicated["warnings"])
     print("Nightly rescrape completion gate checks passed")
 
 
