@@ -7,7 +7,8 @@ page = (ROOT / "dashboard" / "model-review.html").read_text(encoding="utf-8")
 builder = (ROOT / "pipeline" / "build_model_review_dashboard.py").read_text(encoding="utf-8")
 assert "SUPABASE_SERVICE_KEY" not in page
 assert "SHADOW · PRIVATE" in page
-assert "Password-gated review output" in page
+assert "Experimental review output" in page
+assert "Password-gated review output" not in page
 assert "scoreline_distribution" not in builder
 assert '"publication_allowed": False' in builder
 assert '"review_ready": review_ready' in builder
