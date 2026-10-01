@@ -5,9 +5,9 @@ Started 2026-10-01 05:03 UTC. Production baseline 2b46b4f89314838953bc739ff53676
 ## Progress
 
 - [x] Historical shot-estimate prior-date formula and team-observation reconciliation; descriptive prequential calibration measured. Further provenance limitations below.
-- [x] Score-state/time-window match review implemented and synthetic/local-browser tested; deployment pending.
-- [x] Expanded raw-source identity sample and player population discrepancy traced; wording fix pending deployment.
-- [x] Representative browser/export regression and fixes (explicit sample below; final deployment smoke pending).
+- [x] Score-state/time-window match review implemented, tested and deployed.
+- [x] Expanded raw-source identity sample and player population discrepancy traced; wording fix deployed.
+- [x] Representative browser/export regression and fixes (explicit sample below); production smoke passed.
 - [x] Bounded sequence-similarity benchmark and optimization proposal (deployment requires separate database-change approval).
 
 ## 1. Historical xG
@@ -76,3 +76,13 @@ Items1,2,3,5 investigated; item4 mobile/dark/PDF/bespoke export verification and
 ## Approval boundary
 
 Only remaining proposed database change is replacing similar_sequences with exact-expression topN-before-window version, after tied-distance order verification; requires explicit approval for that named function replacement. No rebuild, refresh, new index, model adjustment or schedule change is included. xG recalibration is a research suggestion only, not performed or necessary to deploy these UI fixes.
+
+## Final delivery
+
+Application/evidence commit **be04f7f6ade51d7338f0070855a835f40aaa0002**, parent verified production baseline2b46b4f89314838953bc739ff536762071f9ef3e. Built a selective GitHub tree with18 scoped files, not the dirty local checkout. Remote reviewed file differences match this work; existing review payload compared identical after removing the added score_states field. No raw event sample dump published.
+
+Vercel **READY / production**, deployment **dpl_EXcQz9sr28pnzsEmMinBGALouSBr**, URL https://arsenal-analytics-ai7d5o217-jbuck1016s-projects.vercel.app ; live https://futscout.xyz/match-review.html?game=fd-560586&v=be04f7f . Static HTML/JS Git integration. Production browser confirmed all five windows, level-state30m32s/4vs1shots, and no captured console errors on review. Production guide confirmed corrected2916/2915 populations and Barraza explanation. Runtime log/drain audit was not performed; do not interpret page-console results as complete infrastructure observability.
+
+All five requested workstreams are complete at the stated audit/sample scope. DB optimization is proposal-only, approval required; no other workstream waits on that approval. No live model, frozen predictions, auth, scraper, schedules, DB definitions/rebuilds or paid API credits changed. Local QA server is to be stopped before turn end; heartbeat to be deleted after final verification. Historical/model methodology followed sports-analytics guidance; frontend-design preserved the existing editorial design, PDF skill guided actual rendered export inspection, and deployment skill guided selective integration/READY verification.
+
+Final cleanup confirmed: local QA server10846 stopped; temporary browser tabs closed and viewport reset. Production player pizza also confirmed player/cohort header and89.9% without per90. Overnight heartbeat deleted successfully. Earlier resume/checkpoint notes are historical, not outstanding work.
