@@ -325,6 +325,7 @@ html:not(.dark) .scout-results .scout-rank{color:#57616c}
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
 <script src="site-tools.js" defer></script>
+<link rel="stylesheet" href="site-polish.css?v=20261001">
 </head>
 <body>
 
@@ -605,10 +606,24 @@ function renderTabs(){
         'onclick="setTab(\''+t+'\')">'+t+'</button>'}).join('');
   syncTabCue();
 }
+function renderPlayerStart(){
+  document.getElementById('main').innerHTML=`<section class="player-start" aria-labelledby="player-start-title">
+    <div class="eyebrow">Player fingerprints / start an investigation</div>
+    <h1 id="player-start-title">Find the player. Understand the profile.</h1>
+    <p>Choose a player from the list or search by name. Use the league, team and role filters to narrow your starting pool.</p>
+    <div class="player-start-grid">
+      <article class="player-start-card"><h2>Understand one player</h2><p>Explore strengths, role-relative percentiles and the events behind the numbers.</p><button type="button" onclick="document.getElementById('search').focus()">Search for a player</button></article>
+      <article class="player-start-card"><h2>Find a particular skill set</h2><p>Choose the metrics that matter to your question, then inspect the shortlist and sample sizes.</p><button type="button" onclick="setTab('Scout')">Open scouting shortlist</button></article>
+      <article class="player-start-card"><h2>Compare two measures</h2><p>Use a scatter plot to inspect relationships and outliers within the selected population.</p><button type="button" onclick="setTab('Scatter')">Explore a scatter plot</button></article>
+      <article class="player-start-card"><h2>Build an article-ready graphic</h2><p>Create a percentile pizza or an event map with the measures and layers you choose.</p><button type="button" onclick="setTab('Plot studio')">Open plot studio</button></article>
+    </div>
+    <p class="player-start-note">Percentiles describe a comparison group, not absolute quality. Check the league, role, minutes and data date before comparing players.</p>
+  </section>`;
+}
 function setTab(t){
   TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t!=='Player');
-  if(t==='Player'){ if(SEL){pick(SEL)} else {document.getElementById('main').innerHTML='<div class="empty">Select a player</div>'} }
+  if(t==='Player'){ if(SEL){pick(SEL)} else {renderPlayerStart()} }
   else if(t==='Rank')renderRank();
   else if(t==='Scatter')renderScatter();
   else if(t==='Scout')renderScout();
