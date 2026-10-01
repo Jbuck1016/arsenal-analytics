@@ -161,7 +161,7 @@ tr:hover td{background:var(--surface)}
   .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
   .player-overview>summary{display:flex}.player-overview:not([open]){margin-bottom:10px}.player-overview .dna{margin-top:9px}
 }
-.player-overview{border:0}.player-overview>summary{display:none;cursor:pointer;align-items:center;justify-content:space-between;
+.player-overview{border:0}.player-overview>summary{display:flex;cursor:pointer;align-items:center;justify-content:space-between;
   padding:10px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);
   color:var(--text2);font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
 .player-overview>summary::after{content:'Show'}.player-overview[open]>summary::after{content:'Hide'}
@@ -321,10 +321,12 @@ html:not(.dark) .scout-results .scout-rank{color:#57616c}
 .role-glyph span{font:500 9px/1.35 var(--f-body);color:var(--text3)}.role-glyph b{display:block;color:var(--text2);font:700 10px/1.3 var(--f-data)}
 @media(max-width:980px){.studio-grid{grid-template-columns:1fr}.studio-controls{max-height:none}.pizza-shell{grid-template-columns:1fr}.pizza-read{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.studio-intro{grid-template-columns:1fr}.pizza-read{grid-template-columns:1fr}.grid{grid-template-columns:minmax(0,1fr)}.sect{min-width:0}.row{grid-template-columns:minmax(112px,1fr) 54px minmax(70px,1fr) 28px;gap:7px}.drill-wrap{padding:8px}.drill-card{padding:16px 12px}.profile-brief,.event-filters{grid-template-columns:1fr}.event-filters .wide{grid-column:auto}.role-glyph{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.attack-direction{display:flex;justify-content:center;align-items:center;gap:12px;padding:6px 0 9px;font:700 12px/1.4 var(--f-body);letter-spacing:.12em;color:var(--text2)}.attack-direction span{font-size:23px;line-height:1}.pitch-box{height:clamp(210px,calc(100dvh - 490px),540px)}
+.dcard{cursor:pointer;text-align:left;color:var(--text)}.dcard:hover,.dcard:focus-visible{border-color:var(--accent);outline:2px solid var(--accent);outline-offset:1px}.pillar-row{display:grid;grid-template-columns:minmax(170px,1fr) minmax(120px,2fr) 48px;gap:16px;padding:11px 8px;border-bottom:1px solid var(--border);align-items:center}.pillar-row small{display:block;color:var(--text2);font-size:12px;margin-top:3px}.pillar-row.selected{background:var(--accent-dim);border-left:4px solid var(--accent)}.pillar-track{height:12px;background:var(--surface2)}.pillar-track span{display:block;height:100%;background:var(--viz-progress)}.pillar-row.selected .pillar-track span{background:var(--accent)}.pillar-axis{display:flex;justify-content:space-between;color:var(--text2);font-size:12px;padding:12px 8px}.pillar-comparison h2{margin:0;font-size:22px}.pillar-comparison .pname-link{font-size:14px}.pillar-comparison b{font-variant-numeric:tabular-nums}.ctrl label{display:inline-flex;align-items:center;gap:8px}
 </style>
 <script src="gate.js"></script>
 <meta name="robots" content="noindex,nofollow">
-<script src="site-tools.js" defer></script>
+<script src="site-tools.js?v=20261001-density" defer></script>
 <link rel="stylesheet" href="site-polish.css?v=20261001">
 </head>
 <body>
@@ -395,7 +397,7 @@ const NAV=[['Home','index.html','explore'],['Insights','insights.html','explore'
  ['Match','match.html','explore'],['Teams','teams.html','explore'],['Sequences','sequences.html','explore'],
  ['Guide','guide.html','learn'],['Method','methodology.html','learn'],['Reference','glossary.html','learn']];
 
-let PLAYERS=[],DEFS=[],SEL=null,GRP=(function(){try{return localStorage.getItem('playerCategory')||'All'}catch(e){return'All'}})(),TAB='Player',WEIGHTS=null,OVOPEN=window.innerWidth>820,MARKET_VALUES={};
+let PLAYERS=[],DEFS=[],SEL=null,GRP=(function(){try{return localStorage.getItem('playerCategory')||'All'}catch(e){return'All'}})(),TAB='Player',WEIGHTS=null,OVOPEN=false,MARKET_VALUES={};
 let EVIDENCE_PID=null,PB={mode:'pizza',group:'Passing',metrics:[],layers:['prog','box','key'],pattern:true,query:'',ready:false};
 let EVF={game:'',score:'',phase:'',min:'',max:''},CONTEXT_READY=false;
 let RK={metric:'hs_prog_90',pool:'',n:25,dir:-1};
@@ -779,7 +781,7 @@ function renderPlayer(p,pcts,pillars,dna){
   let h='<div class="pcard"><div class="pcard-l">'+
     '<div class="pname">'+esc(p.player_name)+'</div>'+
     '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+minsLabel(p)+' \u00B7 '+startsLabel(p)+
-      (isUnusedSub(p)?' \u00B7 named but not used':'')+'</div>'+
+      (isUnusedSub(p)?' \u00B7 named but not used':'')+' · '+((PACT||[]).length+(PCAR||[]).length).toLocaleString()+' actions · '+pcts.length+' measures</div>'+
     '<div class="chips"><span class="chip">Listed: '+esc(p.modal_position||'\u2014')+'</span>'+
     '<span class="chip acc">Plays: '+esc(poolLabel(p.pool))+'</span>'+
     (p.reassigned?'<span class="chip warn">Reassigned from '+esc(p.listed_pool)+'</span>':'')+
@@ -797,10 +799,10 @@ function renderPlayer(p,pcts,pillars,dna){
     h+='<details class="player-overview" '+(OVOPEN?'open ':'')+'ontoggle="OVOPEN=this.open"><summary>Player overview</summary><div class="dna">';
     pillars.forEach(function(pl){
       const t=tier(+pl.score),w=wmap[pl.pillar];
-      h+='<div class="dcard"><div class="dcard-l"><span>'+esc(pl.pillar)+'</span>'+
+      h+='<button type="button" class="dcard" aria-label="Compare '+esc(pl.pillar)+' across players" onclick="openPillar(\''+esc(pl.pillar)+'\')"><div class="dcard-l"><span>'+esc(pl.pillar)+'</span>'+
          (w!=null?'<span class="dtag" title="Weight in this role\u2019s completeness score">w'+w+'</span>':'')+'</div>'+
          '<div class="dcard-v" style="color:'+t.c+'">'+(+pl.score).toFixed(1)+'</div>'+
-         '<div class="dcard-b"><span style="width:'+pl.score+'%;background:'+t.c+'"></span></div></div>';
+         '<div class="dcard-b"><span style="width:'+pl.score+'%;background:'+t.c+'"></span></div></button>';
     });
     if(dna){
       h+='<div class="ocard"><div class="dcard-l"><span>Completeness</span></div>'+
@@ -817,16 +819,6 @@ function renderPlayer(p,pcts,pillars,dna){
   const groups=groupsFor(p.pool);
   const categoryTabs=['All'].concat(groups,p.pool==='GK'?[]:['Chain roles']);
   if(categoryTabs.indexOf(GRP)<0)GRP='All';
-  const groupReads=groups.filter(function(g){return g!=='Combined'}).map(function(g){
-    const vals=groupMetricsFrom(g,pm);return {g:g,n:vals.length,avg:vals.length?Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length):null};
-  }).filter(function(x){return x.avg!=null}).sort(function(a,b){return b.avg-a.avg});
-  if(groupReads.length){
-    const hi=groupReads[0],lo=groupReads[groupReads.length-1],actionCount=(PACT||[]).length+(PCAR||[]).length;
-    h+='<div class="profile-brief">'+
-      '<div class="brief-card"><div class="brief-k">Start here · relative strength</div><div class="brief-v">'+esc(hi.g)+' · '+hi.avg+'</div><div class="brief-p">Highest average percentile across '+hi.n+' available measures. Open the category or its pizza to inspect the evidence.</div></div>'+
-      '<div class="brief-card"><div class="brief-k">Review question</div><div class="brief-v">'+esc(lo.g)+' · '+lo.avg+'</div><div class="brief-p">Lowest relative category in this role comparison—not automatically a weakness or tactical problem.</div></div>'+
-      '<div class="brief-card"><div class="brief-k">Evidence base</div><div class="brief-v">'+(+p.nineties).toFixed(1)+' nineties</div><div class="brief-p">'+actionCount.toLocaleString()+' plotted actions and inferred carries · '+pcts.length+' percentile measures.</div></div></div>';
-  }
   h+='<div class="gtabs">'+categoryTabs.map(function(g){
      return '<button class="gtab'+(GRP===g?' on':'')+'" aria-pressed="'+(GRP===g)+'" onclick="setGrp(\''+g+'\')">'+g+'</button>'}).join('')+'</div>';
   h+='<div class="studio-actions"><button class="btn sec" onclick="setTab(\'Plot studio\')">Build a custom player plot</button>'+(
@@ -1394,7 +1386,46 @@ function rankCtrls(){
     '</div><div class="foot" style="margin-top:8px">With all roles selected, rank uses each player\u2019s <b>league-and-role percentile</b>. '+
     'With one role selected, rank uses the <b>raw metric value</b> because the units are directly comparable. The league picker above controls the population. Click a player to open their profile.</div></div>';
 }
+let PILLAR=null,pillarRequest=0;
+function openPillar(name){
+  const p=playerOf(SEL);if(!p)return;
+  PILLAR={name:name,pool:p.pool,league:lgOfTeam(p.team)||'ALL',selected:String(p.player_id)};
+  setTab('Rank');
+}
+function pillarControls(){
+  return '<div class="ctrl"><button class="btn sec" onclick="PILLAR=null;setTab(\'Player\')">← Player profile</button> '+
+    '<label>League <select class="sel" aria-label="Pillar league" onchange="PILLAR.league=this.value;renderPillarRank()">'+
+    '<option value="ALL"'+(PILLAR.league==='ALL'?' selected':'')+'>All leagues</option>'+PLEAGUES.map(function(l){return '<option value="'+esc(l.league)+'"'+(PILLAR.league===l.league?' selected':'')+'>'+esc(l.display_name)+'</option>'}).join('')+'</select></label> '+
+    '<label>Role <select class="sel" aria-label="Pillar role" onchange="PILLAR.pool=this.value;renderPillarRank()">'+POOLS.map(function(p){return '<option value="'+p+'"'+(PILLAR.pool===p?' selected':'')+'>'+POOL_NAME[p]+'</option>'}).join('')+'</select></label> '+
+    '<button class="btn sec" onclick="PILLAR=null;renderRank()">Individual metric rankings</button></div>';
+}
+function pillarRows(rows,peers){
+  const byId=new Map(peers.map(function(p){return[String(p.player_id),p]}));
+  return rows.filter(function(r){return r.score!=null&&Number.isFinite(+r.score)&&byId.has(String(r.player_id))}).map(function(r){return{p:byId.get(String(r.player_id)),score:+r.score}}).sort(function(a,b){return b.score-a.score||a.p.player_name.localeCompare(b.p.player_name)});
+}
+async function renderPillarRank(){
+  const token=++pillarRequest,state=Object.assign({},PILLAR),main=document.getElementById('main');
+  main.innerHTML=pillarControls()+'<div class="spin"></div>';
+  try{
+    const peers=PLAYERS.filter(function(p){return p.pool===state.pool&&+p.nineties>=MIN90&&(state.league==='ALL'||lgOfTeam(p.team)===state.league)});
+    let rows=[];
+    for(let i=0;i<peers.length;i+=100){
+      const q={pillar:'eq.'+state.name,pool:'eq.'+state.pool,player_id:'in.('+peers.slice(i,i+100).map(function(p){return p.player_id}).join(',')+')',select:'player_id,score,league'};
+      if(state.league!=='ALL')q.league='eq.'+state.league;
+      const batch=await sbAll('mv_player_pillars',q);rows=rows.concat(batch.filter(function(r){const p=playerOf(r.player_id);return p&&r.league===lgOfTeam(p.team)}));
+      if(token!==pillarRequest||TAB!=='Rank'||!PILLAR)return;
+    }
+    const list=pillarRows(rows,peers),title=state.name+' · '+POOL_NAME[state.pool];
+    let h='<section class="sect pillar-comparison"><div class="sect-h"><h2>'+esc(title)+'</h2><span>'+list.length+' of '+peers.length+' eligible players</span></div>'+
+      '<p class="foot">Composite score / 100 · minimum '+MIN90+' nineties. Scores retain their original league-and-role reference; all-leagues view is not a league-strength adjustment.</p>'+
+      '<div class="pillar-axis"><span>Player / team / 90s</span><span>0 — Composite score — 100</span></div>';
+    if(!list.length)h+='<div class="empty">No pillar scores available for this league and role.</div>';
+    list.forEach(function(r,i){const selected=String(r.p.player_id)===state.selected;h+='<div class="pillar-row'+(selected?' selected':'')+'"><div><button class="pname-link" onclick="PILLAR=null;pick(\''+r.p.player_id+'\')">'+(i+1)+'. '+esc(r.p.player_name)+(selected?' · selected':'')+'</button><small>'+esc(tname(r.p.team))+' · '+(+r.p.nineties).toFixed(1)+' 90s</small></div><div class="pillar-track"><span style="width:'+Math.max(0,Math.min(100,r.score))+'%"></span></div><b>'+r.score.toFixed(1)+'</b></div>'});
+    main.innerHTML=pillarControls()+h+'</section>';
+  }catch(e){if(token===pillarRequest&&PILLAR)main.innerHTML=pillarControls()+'<div class="empty">Could not load pillar scores: '+esc(e.message)+'</div>'}
+}
 async function renderRank(){
+  if(PILLAR)return renderPillarRank();
   const main=document.getElementById('main');
   main.innerHTML=rankCtrls()+'<div class="spin"></div>';
   try{
@@ -1475,6 +1506,7 @@ function pitchMarks(){
     '<rect x="105" y="30.34" width="1.3" height="7.32" '+st+'/>';
 }
 function pitchWrap(title,sub,inner,legend,ctrl){
+  requestAnimationFrame(fitPlayerPitches);
   const viewBox=arguments[5]||'-3 -3 111.5 78';
   return '<div class="sect pitch-viz"><div class="viz-head">'+
     '<div><div class="viz-eyebrow">Pitch view</div>'+
@@ -1486,10 +1518,16 @@ function pitchWrap(title,sub,inner,legend,ctrl){
     '<div class="orient-note">Orientation · attack left → right · team right = bottom edge</div>'+
     '<div class="pitch-box"><svg role="img" aria-label="'+esc(title)+' pitch visualization. Attack is left to right; the attacking team’s right side is the bottom edge." viewBox="'+viewBox+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">'+
     pitchMarks()+inner+
-    '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
-    '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
-    '<path d="M68.8 70.2L67.2 69.35L67.2 71.05Z" fill="var(--text3)"/></svg></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
+    '</svg></div><div class="attack-direction" aria-label="Attacking left to right">ATTACKING <span aria-hidden="true">→</span></div>'+(legend?'<div class="viz-leg">'+legend+'</div>':'')+'</div>';
 }
+function fitPlayerPitches(){
+  if(window.innerWidth<821)return;
+  document.querySelectorAll('.pitch-viz .pitch-box').forEach(function(box){
+    const top=box.getBoundingClientRect().top;
+    box.style.height=Math.max(180,Math.min(540,window.innerHeight-top-86))+'px';
+  });
+}
+window.addEventListener('resize',function(){requestAnimationFrame(fitPlayerPitches)});
 function markerKey(shape,c){
   shape=shape||'circle';
   const p={circle:'<circle cx="8" cy="8" r="4.5"',square:'<rect x="3.5" y="3.5" width="9" height="9"',
@@ -1514,9 +1552,9 @@ function eventSvg(a,markup){const tip=eventTip(a);return tip?'<g><title>'+esc(ti
    both ends legible when lines overlap. */
 function line(a,c,w,op,dash,headShape,strong){
   const x1=PX(a.x),y1=PY(a.y),x2=PX(a.end_x),y2=PY(a.end_y);
-  const W=w||0.34, o=(op==null?0.75:op);
+  const W=Math.max(w||0.34,0.28), o=Math.max(op==null?0.85:op,0.85);
   const shaft='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+
-    '" stroke-width="'+(W*0.62).toFixed(3)+'" stroke-opacity="'+(o*(strong?0.92:0.55)).toFixed(3)+
+    '" stroke-width="'+(W*0.85).toFixed(3)+'" stroke-opacity="'+(o).toFixed(3)+
     '" stroke-linecap="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
   const ring='<circle cx="'+x1+'" cy="'+y1+'" r="'+(W*1.12).toFixed(3)+'" fill="none" stroke="'+c+
     '" stroke-width="'+(W*0.52).toFixed(3)+'" stroke-opacity="'+(o*0.8).toFixed(3)+'"/>';
@@ -2085,9 +2123,7 @@ function drill(key,context){
       (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+eventContextControls(ctx)+
     '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 78" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+
-    '<text x="43" y="71.2" fill="var(--text3)" font-size="2.7" font-weight="700" letter-spacing=".35">ATTACKING</text>'+
-    '<line x1="60" y1="70.2" x2="68" y2="70.2" stroke="var(--text3)" stroke-width=".35"/>'+
-    '<path d="M68.8 70.2L67.2 69.35L67.2 71.05Z" fill="var(--text3)"/></svg></div>'+
+    '</svg></div><div class="attack-direction" aria-label="Attacking left to right">ATTACKING <span aria-hidden="true">→</span></div>'+
     '<div class="viz-leg">'+leg+'</div>';
   document.getElementById('drillWrap').style.display='flex';
   document.querySelector('#drillWrap .drill-x').focus();
@@ -2210,3 +2246,4 @@ fetch(SB+'/rest/v1/v_analytics_as_of?select=*',{headers:HD})
 </script>
 </body>
 </html>
+

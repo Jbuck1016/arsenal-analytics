@@ -645,7 +645,7 @@ html:not(.dark) .ps-hl-card,html:not(.dark) .sb-group,html:not(.dark) .mom-chart
 </style>
 <script src="gate.js?v=20260901"></script>
 <meta name="robots" content="noindex,nofollow">
-<script src="site-tools.js" defer></script>
+<script src="site-tools.js?v=20261001-density" defer></script>
 </head>
 <body>
 <div class="app">
@@ -972,61 +972,7 @@ function renderMatchEssentials(match,homeName,awayName){
     item.append(values,caption);grid.appendChild(item);
   });
   host.appendChild(grid);host.classList.add('ready');
-  renderMatchEvidence(host,match,homeName,awayName,home,away);
-}
-
-function renderMatchEvidence(host,match,homeName,awayName,home,away){
-  const section=document.createElement('section');section.className='match-evidence';
-  const heading=document.createElement('h2');heading.className='evidence-heading';heading.textContent='Questions to investigate';section.appendChild(heading);
-  const grid=document.createElement('div');grid.className='evidence-grid';
-  const addCard=(question,answer,label,viz,team)=>{
-    const card=document.createElement('article');card.className='evidence-card';
-    const q=document.createElement('h3');q.className='evidence-question';q.textContent=question;
-    const a=document.createElement('p');a.className='evidence-answer';a.textContent=answer;
-    const b=document.createElement('button');b.className='evidence-inspect';b.type='button';b.textContent='Inspect current team’s '+label+' →';
-    b.onclick=()=>{
-      S.viewTeam=[homeName,awayName].includes(VT())?VT():team;S.compareMode=false;S.selPlayer=null;S.plotSlots=1;S.activeVizs=[viz];
-      syncVizSelectionUi();renderTeamViewToggle();renderPlayerList();updateStats();renderAll();
-      document.getElementById('pitchArea').scrollIntoView({behavior:'smooth',block:'start'});
-    };
-    card.append(q,a,b);grid.appendChild(card);
-  };
-  const shotLead=home.shots>=away.shots?homeName:awayName;
-  const leadShots=Math.max(home.shots,away.shots),otherShots=Math.min(home.shots,away.shots);
-  const fullXg=home.xgKnown===home.shots&&away.xgKnown===away.shots&&home.shots+away.shots>0;
-  addCard('Who created more shot opportunities?',
-    shotLead+' recorded '+leadShots+' shots to '+otherShots+'. '+(fullXg?'Full-match xG was '+home.xg+'–'+away.xg+' (home–away).':'xG coverage is incomplete; do not compare chance quality from this feed alone.'),
-    'shot map','shots',shotLead);
-  const boxLead=home.box>=away.box?homeName:awayName;
-  addCard('Who entered the box by pass?',
-    homeName+' completed '+home.box+' passes into the box; '+awayName+' completed '+away.box+'. This counts completed passes, not every box entry or carry.',
-    'box-pass map','box_passes',boxLead);
-
-  const xtFor=team=>{
-    const passes=S.events.filter(e=>e.team===team&&e.type==='Pass'&&e.outcome_type==='Successful'&&e.is_open_play===true&&[e.x,e.y,e.end_x,e.end_y].every(Number.isFinite));
-    const carries=S.carries.filter(e=>e.team===team&&[e.start_x,e.start_y,e.end_x,e.end_y].every(Number.isFinite));
-    const positive=(items,startX,startY)=>items.reduce((sum,e)=>sum+Math.max(0,getXT(e.end_x,e.end_y)-getXT(e[startX],e[startY])),0);
-    return {pass:positive(passes,'x','y'),passN:passes.length,carry:positive(carries,'start_x','start_y'),carryN:carries.length};
-  };
-  const rows=[[homeName,xtFor(homeName)],[awayName,xtFor(awayName)]];
-  const card=document.createElement('article');card.className='evidence-card';
-  const q=document.createElement('h3');q.className='evidence-question';q.textContent='Was threat advanced by passing or carrying?';card.appendChild(q);
-  const desc=document.createElement('p');desc.className='evidence-answer';desc.textContent=S.carriesAvailable?'Separate positive xT gain from completed open-play passes and inferred carries. The same grid is applied to both.':'Carry records are unavailable for this match; pass xT is shown without treating missing carry data as zero.';card.appendChild(desc);
-  const table=document.createElement('div');table.className='xt-split';table.setAttribute('role','group');table.setAttribute('aria-label','Positive expected threat by pass and inferred carry');
-  const max=Math.max(.001,...rows.flatMap(([,v])=>[v.pass,v.carry]));
-  [['Team','Pass xT','Carry xT'],...rows.map(([name,v])=>[name,v.pass,v.carry])].forEach((row,i)=>row.forEach((value,j)=>{
-    const cell=document.createElement('div');
-    if(!i){cell.className='xt-head';cell.textContent=value;}
-    else if(!j){cell.className='xt-team';cell.textContent=value;cell.title=value;}
-    else if(j===2&&!S.carriesAvailable){cell.className='xt-meter carry';cell.textContent='Unavailable';}
-    else if(j===2&&rows[i-1][1].carryN===0){cell.className='xt-meter carry';cell.textContent='No carry records';}
-    else{const n=rows[i-1][1][j===1?'passN':'carryN'];cell.className='xt-meter'+(j===2?' carry':'');cell.textContent='+'+value.toFixed(3)+' · '+n+' actions';const bar=document.createElement('i');bar.style.width=Math.max(1,value/max*100)+'%';cell.appendChild(bar);}
-    table.appendChild(cell);
-  }));card.appendChild(table);
-  const method=document.createElement('p');method.className='evidence-method';method.textContent='Descriptive only · table includes every positive gain; maps show only gains above +0.02, so map totals will be lower · borrowed 12×8 grid, not externally validated · carries inferred from receipts/releases';card.appendChild(method);
-  const inspect=document.createElement('button');inspect.className='evidence-inspect';inspect.type='button';inspect.textContent='Inspect current team’s passing threat →';inspect.onclick=()=>{S.viewTeam=[homeName,awayName].includes(VT())?VT():homeName;S.compareMode=false;S.selPlayer=null;S.plotSlots=1;S.activeVizs=['xt'];syncVizSelectionUi();renderTeamViewToggle();renderPlayerList();updateStats();renderAll();document.getElementById('pitchArea').scrollIntoView({behavior:'smooth',block:'start'});};card.appendChild(inspect);grid.appendChild(card);
-  if(S.carriesAvailable){const carryInspect=document.createElement('button');carryInspect.className='evidence-inspect';carryInspect.type='button';carryInspect.style.marginLeft='12px';carryInspect.textContent='Inspect current team’s carrying threat →';carryInspect.onclick=()=>{S.viewTeam=[homeName,awayName].includes(VT())?VT():homeName;S.compareMode=false;S.selPlayer=null;S.plotSlots=1;S.activeVizs=['xt_carry'];syncVizSelectionUi();renderTeamViewToggle();renderPlayerList();updateStats();renderAll();document.getElementById('pitchArea').scrollIntoView({behavior:'smooth',block:'start'});};card.appendChild(carryInspect);}
-  section.appendChild(grid);host.appendChild(section);
+  // Keep the match workspace focused on its existing stats and plot controls.
 }
 
 function getFiltered(vizType){
@@ -3417,3 +3363,4 @@ init();
 </script>
 </body>
 </html>
+
