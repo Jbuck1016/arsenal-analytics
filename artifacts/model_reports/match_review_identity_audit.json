@@ -1,0 +1,9 @@
+{
+  "game_id": "fd-560586",
+  "source_game_id": "1983575",
+  "status": "raw_archive_identity_verified",
+  "events_verified": 1495,
+  "players_in_source": 40,
+  "compressed_sha256": "8cf3f17c757edcdbf7ef3261b10db300ecc895aafa4d4edd1711d60be4755128",
+  "scope": "Matches retained WhoScored archive and verified storage manifest; not independent second-provider verification."
+}

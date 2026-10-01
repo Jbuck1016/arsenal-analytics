@@ -25,6 +25,14 @@ def build():
         assert sum(s['is_goal'] for s in events) == match[f'{side}_score']
         assert all(s['xg'] is not None and 0 <= float(s['xg']) <= 1 for s in events)
     payload = {
+        'identity_audit': json.loads((REPORT / 'match_review_identity_audit.json').read_text(encoding='utf-8')),
+        'metric_reconciliation': {
+            'net_completed_pass_xt_all_phases': {'Brighton': 2.997, 'Arsenal': 3.431},
+            'positive_completed_pass_xt_open_play': {'Brighton': 3.073, 'Arsenal': 4.405},
+            'verified_on': '2026-09-30',
+            'xt_definition': 'Net signed successful-pass xT across all phases reconciles to saved sequence totals. Positive open-play pass xT discards negative changes and set pieces; it is a different measure.',
+            'xg_definition': 'Live mv_shot_xg uses mv_xg_bins, fitted from all available non-penalty shots with 20-shot base-rate smoothing. Refreshing that fitting pool can change historical shot values. Archived report values remain unchanged.'
+        },
         'match': match, 'shots': shots['shots'],
         'provenance': {k: report.get(k) for k in ('as_of', 'generated_at', 'model_version')},
         'report_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
