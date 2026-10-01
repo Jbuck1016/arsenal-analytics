@@ -240,13 +240,14 @@ details p:last-child{margin-bottom:0}
 
   <div class="box" id="popBox">
   <h5>Three player counts, three different populations</h5>
-  <p>These count different source populations. A mismatch is a data-quality question, not proof that one is a subset of another.</p>
+  <p>These count different source populations. An event can be a card or substitution, not necessarily a touch. A playing-minutes record is not the same as a squad listing.</p>
   <ul>
-    <li><b><span class="lv" data-k="players_touched_ball">…</span> touched the ball</b>,
-      recorded at least one event in a scraped match.</li>
-    <li><b><span class="lv" data-k="players_in_matchday_squads">…</span> named in a matchday squad</b>,
-      including <b><span class="lv" data-k="players_named_never_involved">…</span> unused
-      substitutes</b> who never touched the ball. This count does not reconcile the two source totals by itself.</li>
+    <li><b><span class="lv" data-k="players_touched_ball">…</span> recorded in the event feed</b>,
+      with at least one event of any type, including non-touch events.</li>
+    <li><b><span class="lv" data-k="players_in_matchday_squads">…</span> in the playing-minutes population</b>,
+      drawn from the season minutes view, which excludes substitutes who never entered.
+      <b><span class="lv" data-k="players_named_never_involved">…</span></b> of these have no event-feed record;
+      that is not a count of unused substitutes.</li>
     <li><b><span class="lv" data-k="players_profiled_outfield">…</span> profiled outfield players</b>,
       those clearing the involvement and minutes thresholds, so eligible for percentiles,
       search and insights. This is the number that governs almost everything on the site.</li>
@@ -1025,8 +1026,8 @@ paintThemeBtn();
       var touched=+d.players_touched_ball, squads=+d.players_in_matchday_squads;
       gap.textContent=Number.isFinite(touched)&&Number.isFinite(squads)&&touched!==squads
         ?'Current source totals differ by '+Math.abs(touched-squads).toLocaleString()+
-          ' player'+(Math.abs(touched-squads)===1?'':'s')+'. That difference is not explained by the unused-substitute count; identity and coverage need checking.'
-        :'The touched-ball and squad totals currently match. Unused substitutes are counted separately.';
+          ' player'+(Math.abs(touched-squads)===1?'':'s')+'. These populations are not equivalent. The 30 September audit traced the one-player difference to Luis Barraza (376150): a non-touch card event, with no playing-minutes row. Future differences require a fresh ID check.'
+        :'The event-feed and playing-minutes totals currently match. Equal counts do not establish identical membership.';
     }
     var g=document.getElementById('gAsOf');
     if(g)g.textContent='as of '+d.as_of_match_date;

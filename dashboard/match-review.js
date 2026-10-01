@@ -26,14 +26,17 @@ for(const [i,team] of ['Brighton','Arsenal'].entries()){
 }
 map+='<text x="25" y="447" font-size="14">Circle area = fitted xG · filled = goal · hollow = other attempt · both teams attack right</text>';
 $('shotmaps').innerHTML=svg(1090,488,'Shot maps: Brighton 17 attempts, Arsenal 11. Both teams attack right.',map);
-let timeline='';const x=t=>55+t/96*960,y=v=>280-v/2*210;
+const elapsedShots=data.shots.map((s,i)=>({...s,elapsed:(data.score_states?.shot_elapsed_seconds[i] ?? (s.minute*60+s.second))/60})).sort((a,b)=>a.elapsed-b.elapsed);
+const duration=(data.score_states?.duration_seconds ?? 5760)/60;
+let timeline='';const x=t=>55+t/duration*960,y=v=>280-v/2*210;
 for(let value=0;value<=2;value+=.5)timeline+=`<path d="M55 ${y(value)}H1015" stroke="var(--line)"/><text x="40" y="${y(value)+5}" text-anchor="end" font-size="14">${value}</text>`;
-for(const minute of [0,15,30,45,60,75,90,96])timeline+=`<text x="${x(minute)}" y="305" text-anchor="middle" font-size="14">${minute}′</text>`;
+for(const minute of [0,15,30,45,60,75,90])timeline+=`<text x="${x(minute)}" y="305" text-anchor="middle" font-size="14">${minute}′</text>`;
+timeline+='<text x="535" y="328" text-anchor="middle" font-size="13">Elapsed match minutes · added time included · halftime excluded</text>';
 timeline+='<text x="55" y="25" font-size="18" font-weight="700">Cumulative fitted xG</text><text x="690" y="25" font-size="16" style="fill:var(--home)">Brighton —</text><text x="865" y="25" font-size="16" style="fill:var(--away)">Arsenal - -</text>';
 for(const [i,team] of ['Brighton','Arsenal'].entries()){
 let total=0,d=`M${x(0)} ${y(0)}`,goals='';
-for(const s of data.shots.filter(s=>s.team===team)){const t=s.minute+s.second/60;d+=`H${x(t)}V${y(total+=Number(s.xg))}`;if(s.is_goal)goals+=`<circle cx="${x(t)}" cy="${y(total)}" r="6" fill="var(--home)"><title>${esc(markTitle(s))}</title></circle><text x="${x(t)}" y="${y(total)-14}" text-anchor="middle" font-size="14">Goal ${s.minute+1}′</text>`;}
-d+=`H${x(96)}`;timeline+=`<path d="${d}" fill="none" stroke="var(--${i?'away':'home'})" stroke-width="3" ${i?'stroke-dasharray="8 5"':''}/>${goals}`;
+for(const s of elapsedShots.filter(s=>s.team===team)){const t=s.elapsed;d+=`H${x(t)}V${y(total+=Number(s.xg))}`;if(s.is_goal)goals+=`<circle cx="${x(t)}" cy="${y(total)}" r="6" fill="var(--${i?'away':'home'})"><title>${esc(markTitle(s))}</title></circle><text x="${x(t)}" y="${y(total)-14}" text-anchor="middle" font-size="14">Goal ${s.minute+1}′</text>`;}
+d+=`H${x(duration)}`;timeline+=`<path d="${d}" fill="none" stroke="var(--${i?'away':'home'})" stroke-width="3" ${i?'stroke-dasharray="8 5"':''}/>${goals}`;
 }
 $('timeline').innerHTML=svg(1060,360,'Cumulative fitted xG and goal timing. Brighton scored in minutes 31, 45 and 57.',timeline);
 $('shots').innerHTML=data.shots.map(s=>`<tr><td>${esc(s.team)}</td><td>${esc(s.player)}</td><td>${s.minute}:${String(s.second).padStart(2,'0')}</td><td>${num(s.xg,4)}</td><td>${s.is_goal?'Goal':'Other attempt'}</td></tr>`).join('');

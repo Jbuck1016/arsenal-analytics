@@ -1,8 +1,10 @@
 """Build a reproducible, read-only editorial review from saved evidence."""
 import hashlib
+import gzip
 import json
 import math
 from pathlib import Path
+from match_review_states import build_states
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / 'artifacts/model_reports'
@@ -24,7 +26,11 @@ def build():
         assert len(events) == match['tactical'][side]['shots']
         assert sum(s['is_goal'] for s in events) == match[f'{side}_score']
         assert all(s['xg'] is not None and 0 <= float(s['xg']) <= 1 for s in events)
+    raw_bytes = (Path.home() / 'soccerdata/data/WhoScored/events/ENG-Premier League_2627/1983575.json').read_bytes()
+    if hashlib.sha256(gzip.compress(raw_bytes, compresslevel=9, mtime=0)).hexdigest() != '8cf3f17c757edcdbf7ef3261b10db300ecc895aafa4d4edd1711d60be4755128':
+        raise ValueError('Review archive checksum differs from verified source')
     payload = {
+        'score_states': build_states(json.loads(raw_bytes), shots['shots']),
         'identity_audit': json.loads((REPORT / 'match_review_identity_audit.json').read_text(encoding='utf-8')),
         'metric_reconciliation': {
             'net_completed_pass_xt_all_phases': {'Brighton': 2.997, 'Arsenal': 3.431},

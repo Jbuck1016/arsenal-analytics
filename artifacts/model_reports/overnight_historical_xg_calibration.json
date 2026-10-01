@@ -1,0 +1,171 @@
+{
+  "audit_date": "2026-10-01",
+  "read_only": true,
+  "rows": [
+    {
+      "season": "2324",
+      "league": "ENG-Premier League",
+      "shots": 10382,
+      "scored": 10382,
+      "goals": 1101,
+      "xg": "1051.728",
+      "brier": "0.078867",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2324",
+      "league": "ESP-La Liga",
+      "shots": 9200,
+      "scored": 9200,
+      "goals": 897,
+      "xg": "912.216",
+      "brier": "0.072132",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2324",
+      "league": "FRA-Ligue 1",
+      "shots": 7667,
+      "scored": 7667,
+      "goals": 713,
+      "xg": "724.561",
+      "brier": "0.069272",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2324",
+      "league": "GER-Bundesliga",
+      "shots": 8396,
+      "scored": 8396,
+      "goals": 882,
+      "xg": "830.437",
+      "brier": "0.076862",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2324",
+      "league": "ITA-Serie A",
+      "shots": 9570,
+      "scored": 9570,
+      "goals": 866,
+      "xg": "856.959",
+      "brier": "0.069967",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2425",
+      "league": "ENG-Premier League",
+      "shots": 9767,
+      "scored": 9767,
+      "goals": 1013,
+      "xg": "1035.894",
+      "brier": "0.077789",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2425",
+      "league": "ESP-La Liga",
+      "shots": 8909,
+      "scored": 8909,
+      "goals": 863,
+      "xg": "882.241",
+      "brier": "0.072028",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2425",
+      "league": "FRA-Ligue 1",
+      "shots": 7515,
+      "scored": 7515,
+      "goals": 792,
+      "xg": "827.014",
+      "brier": "0.076506",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2425",
+      "league": "GER-Bundesliga",
+      "shots": 7852,
+      "scored": 7852,
+      "goals": 873,
+      "xg": "828.769",
+      "brier": "0.081132",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2425",
+      "league": "ITA-Serie A",
+      "shots": 9109,
+      "scored": 9109,
+      "goals": 856,
+      "xg": "866.374",
+      "brier": "0.071850",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2526",
+      "league": "ENG-Premier League",
+      "shots": 9411,
+      "scored": 9411,
+      "goals": 928,
+      "xg": "974.333",
+      "brier": "0.074729",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2526",
+      "league": "ESP-La Liga",
+      "shots": 9352,
+      "scored": 9352,
+      "goals": 896,
+      "xg": "926.102",
+      "brier": "0.072122",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2526",
+      "league": "FRA-Ligue 1",
+      "shots": 7480,
+      "scored": 7480,
+      "goals": 758,
+      "xg": "772.189",
+      "brier": "0.074195",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2526",
+      "league": "GER-Bundesliga",
+      "shots": 8001,
+      "scored": 8001,
+      "goals": 884,
+      "xg": "857.089",
+      "brier": "0.082052",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    },
+    {
+      "season": "2526",
+      "league": "ITA-Serie A",
+      "shots": 9253,
+      "scored": 9253,
+      "goals": 819,
+      "xg": "877.709",
+      "brier": "0.067508",
+      "min_version": "asof_bin_v1_prior20_base010",
+      "max_version": "asof_bin_v1_prior20_base010"
+    }
+  ]
+}

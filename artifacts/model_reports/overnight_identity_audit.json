@@ -1,0 +1,98 @@
+{
+  "scope": "Four additional current-season fixtures, one per other modeled league; source consistency, not independent provider verification.",
+  "events_checked": 5996,
+  "results": [
+    {
+      "game_id": "fd-558608",
+      "source_game_id": "1980949",
+      "league": "ITA-Serie A",
+      "events_checked": 1573,
+      "source_players": 47,
+      "raw_team_ids": {
+        "home": 2889,
+        "away": 87
+      },
+      "fixture_names": {
+        "home": {
+          "raw": "Sassuolo",
+          "database": "Sassuolo"
+        },
+        "away": {
+          "raw": "Juventus",
+          "database": "Juventus"
+        }
+      },
+      "compressed_sha256": "e832a8eb0dc6f1aa2020e9ad30c6d96f3556847c0de8ef2ee645f7caf5e563ef",
+      "errors": []
+    },
+    {
+      "game_id": "fd-559692",
+      "source_game_id": "1984274",
+      "league": "FRA-Ligue 1",
+      "events_checked": 1584,
+      "source_players": 40,
+      "raw_team_ids": {
+        "home": 2832,
+        "away": 228
+      },
+      "fixture_names": {
+        "home": {
+          "raw": "Paris FC",
+          "database": "Paris FC"
+        },
+        "away": {
+          "raw": "Lyon",
+          "database": "Lyon"
+        }
+      },
+      "compressed_sha256": "d750771618eb396f6401c8c8910e2a8d8a2354fdb7d0a797eb41760b9d4fea6e",
+      "errors": []
+    },
+    {
+      "game_id": "fd-564697",
+      "source_game_id": "1994154",
+      "league": "ESP-La Liga",
+      "events_checked": 1429,
+      "source_players": 44,
+      "raw_team_ids": {
+        "home": 819,
+        "away": 69
+      },
+      "fixture_names": {
+        "home": {
+          "raw": "Getafe",
+          "database": "Getafe"
+        },
+        "away": {
+          "raw": "Malaga",
+          "database": "Malaga"
+        }
+      },
+      "compressed_sha256": "4c2a82a61304bf330b4f44e07ff6f9574f7a4f3e2ba36c05ec21a47cf7168fd3",
+      "errors": []
+    },
+    {
+      "game_id": "fd-565811",
+      "source_game_id": "1995436",
+      "league": "GER-Bundesliga",
+      "events_checked": 1410,
+      "source_players": 40,
+      "raw_team_ids": {
+        "home": 45,
+        "away": 50
+      },
+      "fixture_names": {
+        "home": {
+          "raw": "Eintracht Frankfurt",
+          "database": "Eintracht Frankfurt"
+        },
+        "away": {
+          "raw": "Freiburg",
+          "database": "Freiburg"
+        }
+      },
+      "compressed_sha256": "65b263de2541970ad8f1c5cb1813b3b93a5358e180114be108921aa527b7291f",
+      "errors": []
+    }
+  ]
+}

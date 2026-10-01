@@ -521,6 +521,7 @@ function tier(p){
   if(p>=40)return{c:'var(--avg)'};if(p>=20)return{c:'var(--below)'};
   return{c:'var(--poor)'};
 }
+function metricRateSuffix(d){return /_90$/.test(d.key||'')?' per 90':'';}
 function fmt(v,unit){
   if(v==null)return'\u2014';
   return (+v).toLocaleString(undefined,{maximumFractionDigits:2})+(unit==='%'?'%':(unit==='m'?' m':(unit==='s'?' s':'')));
@@ -900,9 +901,11 @@ function pizzaSvg(keys,title){
 }
 function pizzaPanel(keys,title){
   const defs=keys.map(defOf).filter(Boolean);
-  return '<div class="sect"><div class="sect-h"><span>'+esc(title)+'</span><span>'+defs.length+' metrics</span></div>'+(
+  const subject=playerOf(SEL)||{};
+  return '<div class="sect"><div class="sect-h"><span>'+esc(title)+'</span><span>'+defs.length+' metrics</span></div>'+
+    '<p class="foot" style="color:var(--text);font-size:15px"><b>'+esc(subject.player_name||'Player unavailable')+'</b> · '+esc(subject.team||'')+' · '+esc(leagueLabel(subject.team))+' · '+esc(poolLabel(subject.pool))+' role peers</p>'+(
     defs.length<3?'<div class="studio-empty">Choose at least three metrics.</div>':'<div class="pizza-shell">'+pizzaSvg(keys,title)+
-    '<div class="pizza-read">'+defs.map(function(d,i){const r=PMCACHE[d.key],c=pizzaColor(d.grp,i);return '<div title="'+esc(d.definition||'')+'"><i style="background:'+c+'"></i><span>'+esc(d.label)+'<small style="display:block;color:var(--text3);margin-top:2px">'+esc(fmt(r.value,d.unit))+' per 90 · '+esc(d.grp)+'</small></span><b style="color:'+c+'">'+r.pct+'</b></div>'}).join('')+'</div></div>')+
+    '<div class="pizza-read">'+defs.map(function(d,i){const r=PMCACHE[d.key],c=pizzaColor(d.grp,i);return '<div title="'+esc(d.definition||'')+'"><i style="background:'+c+'"></i><span>'+esc(d.label)+'<small style="display:block;color:var(--text3);margin-top:2px">'+esc(fmt(r.value,d.unit))+metricRateSuffix(d)+' · '+esc(d.grp)+'</small></span><b style="color:var(--text)">'+r.pct+'</b></div>'}).join('')+'</div></div>')+
     '<div class="pizza-category-key">'+Array.from(new Set(defs.map(function(d){return d.grp}))).map(function(g){return '<span><i style="background:'+pizzaColor(g,0)+'"></i>'+esc(g)+'</span>'}).join('')+'</div>'+
     '<div class="foot">Each wedge is a percentile against '+esc(poolLabel((playerOf(SEL)||{}).pool))+'s in '+esc(leagueLabel((playerOf(SEL)||{}).team))+'. A longer filled wedge means a higher relative rank; colour identifies the metric family, not quality.</div></div>';
 }
@@ -2063,7 +2066,7 @@ function drill(key,context){
   document.getElementById('drillBody').innerHTML=
     '<div class="viz-eyebrow">Behind the number</div>'+
     '<div class="viz-title">'+esc(d.label||key)+' \u2014 '+esc(p.player_name)+'</div>'+
-    '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b> per 90 \u00B7 '+ordinal(r.pct)+' percentile among '+
+    '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b>'+metricRateSuffix(d)+' \u00B7 '+ordinal(r.pct)+' percentile among '+
       (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+eventContextControls(ctx)+
     '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 78" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+

@@ -1,0 +1,132 @@
+{
+  "audit_date": "2026-10-01",
+  "read_only": true,
+  "rows": [
+    {
+      "season": "2324",
+      "probability_bin": 0,
+      "n": 37137,
+      "predicted": "0.048826",
+      "observed": "0.046746"
+    },
+    {
+      "season": "2324",
+      "probability_bin": 1,
+      "n": 1315,
+      "predicted": "0.125485",
+      "observed": "0.138403"
+    },
+    {
+      "season": "2324",
+      "probability_bin": 2,
+      "n": 2329,
+      "predicted": "0.256725",
+      "observed": "0.275655"
+    },
+    {
+      "season": "2324",
+      "probability_bin": 3,
+      "n": 3066,
+      "predicted": "0.361652",
+      "observed": "0.384866"
+    },
+    {
+      "season": "2324",
+      "probability_bin": 4,
+      "n": 481,
+      "predicted": "0.423375",
+      "observed": "0.455301"
+    },
+    {
+      "season": "2324",
+      "probability_bin": 5,
+      "n": 887,
+      "predicted": "0.549347",
+      "observed": "0.563698"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 0,
+      "n": 35587,
+      "predicted": "0.048111",
+      "observed": "0.047630"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 1,
+      "n": 157,
+      "predicted": "0.163444",
+      "observed": "0.178344"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 2,
+      "n": 2602,
+      "predicted": "0.262778",
+      "observed": "0.264028"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 3,
+      "n": 3275,
+      "predicted": "0.375412",
+      "observed": "0.366107"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 4,
+      "n": 581,
+      "predicted": "0.437883",
+      "observed": "0.425129"
+    },
+    {
+      "season": "2425",
+      "probability_bin": 5,
+      "n": 950,
+      "predicted": "0.563007",
+      "observed": "0.569474"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 0,
+      "n": 36022,
+      "predicted": "0.047458",
+      "observed": "0.045694"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 1,
+      "n": 164,
+      "predicted": "0.161053",
+      "observed": "0.128049"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 2,
+      "n": 2479,
+      "predicted": "0.264281",
+      "observed": "0.260589"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 3,
+      "n": 3192,
+      "predicted": "0.374172",
+      "observed": "0.382206"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 4,
+      "n": 666,
+      "predicted": "0.419901",
+      "observed": "0.370871"
+    },
+    {
+      "season": "2526",
+      "probability_bin": 5,
+      "n": 974,
+      "predicted": "0.556768",
+      "observed": "0.518480"
+    }
+  ]
+}

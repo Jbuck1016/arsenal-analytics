@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-01",
+  "read_only": true,
+  "repetitions": 1,
+  "rows": [
+    {
+      "id": "1983549-73",
+      "original_ms": 1552.875,
+      "cast_candidate_ms": 2449.241,
+      "exact_top_n_ms": 1283.503,
+      "differing_rows": 0
+    },
+    {
+      "id": "1995397-92",
+      "original_ms": 1481.496,
+      "cast_candidate_ms": 2440.729,
+      "exact_top_n_ms": 1253.675,
+      "differing_rows": 0
+    },
+    {
+      "id": "1980894-238",
+      "original_ms": 1536.016,
+      "cast_candidate_ms": 2477.64,
+      "exact_top_n_ms": 1292.526,
+      "differing_rows": 0
+    }
+  ],
+  "scope": "Three seed sequences, 12 neighbours, warm-cache SQL execution; not an API latency distribution."
+}

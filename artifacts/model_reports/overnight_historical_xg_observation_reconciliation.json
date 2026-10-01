@@ -1,0 +1,24 @@
+{
+  "audit_date": "2026-10-01",
+  "read_only": true,
+  "rows": [
+    {
+      "season": "2324",
+      "team_matches": 3502,
+      "mismatches": 0,
+      "max_difference": "0.000000"
+    },
+    {
+      "season": "2425",
+      "team_matches": 3504,
+      "mismatches": 0,
+      "max_difference": "0.000000"
+    },
+    {
+      "season": "2526",
+      "team_matches": 3504,
+      "mismatches": 0,
+      "max_difference": "0.000000"
+    }
+  ]
+}
