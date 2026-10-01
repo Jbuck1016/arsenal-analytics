@@ -67,23 +67,54 @@ if(!D)document.body.innerHTML='<div class="empty">Model lab data is unavailable.
 function boot(){
  const m=D.model,s=D.shadow,dr=D.drift; document.getElementById('rail').innerHTML=[['SHADOW','lifecycle','good'],[m.feature_count,'model inputs',''],[m.training_match_count.toLocaleString(),'training matches',''],[s.resolved||0,'live calls scored',s.sample_gate?.ready?'good':'warn'],[dr.current_matches||0,'current matches monitored',dr.sample_ready?'good':'warn']].map(x=>`<div class="stat"><b class="${x[2]}">${x[0]}</b><span>${x[1]}</span></div>`).join('');
  const coverageAt=D.challenger_research?.coverage?.created_at;
- document.getElementById('bundleDates').textContent='Frozen-forecast research snapshot: '+new Date(D.as_of).toLocaleDateString()+(coverageAt?' · rich-feature coverage audited '+new Date(coverageAt).toLocaleDateString():'')+'. Counts above are not a live feed.';
+ const dateLabel=value=>value?new Date(value).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}):'date unavailable';
+ document.getElementById('bundleDates').textContent='Mixed-date research bundle · example forecasts '+dateLabel(D.as_of)+' · original model tournament '+dateLabel(D.model_tournament?.created_at)+' · rich-feature coverage '+dateLabel(coverageAt)+' · input drift '+dateLabel(D.drift?.checked_at)+'. Counts above are snapshots, not a live feed.';
  const views=[['overview','Start here'],['matches','Explain a match'],['validation','Compare models'],['legitimacy','Trust tests'],['research','Challenger desk'],['features','Feature evidence'],['monitoring','Data health'],['guide','Reading guide']],requested=new URLSearchParams(location.search).get('tab'),initial=views.some(v=>v[0]===requested)?requested:'overview';document.getElementById('tabs').innerHTML=views.map(v=>`<button class="tab ${v[0]===initial?'on':''}" data-view="${v[0]}">${v[1]}</button>`).join('');document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id===initial));document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.view').forEach(e=>e.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.view).classList.add('on');const u=new URL(location);u.searchParams.set('tab',b.dataset.view);history.replaceState(null,'',u)});
  document.getElementById('theme').onclick=()=>{document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light')}catch(e){}};
  const sizes=['standard','large','xlarge'];let size=localStorage.getItem('labTextSize')||'standard';setSize(size);document.getElementById('textSize').onclick=()=>{size=sizes[(sizes.indexOf(size)+1)%sizes.length];setSize(size)};
- renderOverview();renderValidation();renderLegitimacy();renderFeatureStability();enhanceExternalBenchmark();renderResearch();renderFeatures();refreshResearchCopy();renderMatches();renderMonitoring();renderGuide();
+ renderOverview();renderValidation();renderLegitimacy();renderFeatureStability();enhanceExternalBenchmark();renderResearch();renderFeatures();renderMatches();renderMonitoring();renderGuide();refreshResearchCopy();
 }
 function setSize(size){document.documentElement.classList.remove('large','xlarge');if(size!=='standard')document.documentElement.classList.add(size);document.getElementById('textSize').textContent='text: '+size.replace('xlarge','extra large');try{localStorage.setItem('labTextSize',size)}catch(e){}}
 function refreshResearchCopy(){
- const R=D.challenger_research||{},V=R.coverage||{},ready=(V.decision?.backfill_before_training||[]).length===0;
+ const R=D.challenger_research||{},V=R.coverage||{},L=R.league_coverage||{},ready=!!V.created_at&&(V.decision?.backfill_before_training||[]).length===0;
+ const dateLabel=value=>value?new Date(value).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}):'date unavailable';
+ const panelWithTitle=(view,title)=>[...document.querySelectorAll(`#${view} .panel`)].find(e=>e.querySelector('h2')?.textContent===title);
+ const tournamentPanel=panelWithTitle('validation','Model tournament');
+ if(tournamentPanel){
+   tournamentPanel.querySelector('.ph span').textContent='original '+dateLabel(D.model_tournament?.created_at)+' test';
+   tournamentPanel.insertAdjacentHTML('beforeend',`<p class="copy"><strong>Scope:</strong> These rankings are preserved from the original ${esc(dateLabel(D.model_tournament?.created_at))} tournament. Newly backfilled xT, chance-quality and sequence families were not in that comparison; eligibility in a later audit does not retroactively change these scores.</p>`);
+ }
+ const excluded=panelWithTitle('validation','What we cannot test fairly yet');
+ if(excluded&&ready){
+   excluded.querySelector('h2').textContent='Original tournament exclusions';
+   excluded.querySelector('.ph span').textContent='historical, not current coverage';
+   const names=Object.keys(D.model_tournament?.unavailable_families||{}).map(x=>esc(x.replaceAll('_',' '))).join(', ');
+   excluded.innerHTML=excluded.querySelector('.ph').outerHTML+`<div class="explain"><strong>Then:</strong> The ${esc(dateLabel(D.model_tournament?.created_at))} tournament omitted ${names} because its pre-backfill source could not support a fair three-season test.</div><p class="copy"><strong>Now:</strong> The ${esc(dateLabel(V.created_at))} team-match audit marks chance quality, xT, possession sequences and territory eligible across ${L.groups?.length??'all required'} league-season blocks, with ${L.repair_queue?.length??'unknown'} blocks awaiting repair. A new chronological tournament must actually test them before we can claim predictive lift. The older result above remains valid only for the candidates it compared.</p>`;
+ }
  const waiting=[...document.querySelectorAll('#research .callout')].find(e=>e.textContent.includes('Waiting for the live tactical snapshot'));
  if(waiting&&!R.comparison?.fixtures_compared){
    waiting.innerHTML='<strong>No same-cutoff tactical comparison is attached to this archived slate.</strong><br>The previous comparison predates this freeze. Generate a separate research-only challenger at a future cutoff; do not replace historical frozen calls.';
  }
- const featureCopy=[...document.querySelectorAll('#features .copy')].find(e=>e.textContent.includes('Research means we do not yet have'));
+ const featureCopy=[...document.querySelectorAll('#features .copy')].find(e=>e.textContent.includes('sufficiently complete, comparable data'));
  if(featureCopy&&ready){
-   featureCopy.textContent='The fresh league-by-league audit now finds historical and current coverage for xT, chance quality, possession sequences and territory. Research labels here mean these inputs have not yet earned a place in the shadow model through repeated out-of-season and live tests—not that the data is missing.';
+   featureCopy.textContent='The '+dateLabel(V.created_at)+' audit finds the four rich families represented in historical and current team-match rows. This is a family-level non-null check, not proof that every listed metric is ready at every pre-match cutoff or that it improves unseen forecasts. “Research” means not in the registered V2 artifact; it no longer means those families are missing.';
  }
+ const coveragePanel=panelWithTitle('research','Rich-feature coverage');
+ if(coveragePanel&&ready){
+   coveragePanel.querySelector('.ph span').textContent='audited '+dateLabel(V.created_at);
+   coveragePanel.querySelectorAll('.metric').forEach(row=>{const value=row.querySelector('b');if(value?.textContent==='trainable now')value.textContent='eligible for trial'});
+   coveragePanel.insertAdjacentHTML('beforeend',`<p class="copy">${L.groups?.length??'Required'} league-season blocks checked at the team-match observation grain; minimum required non-null rate ${pct(L.required_non_null_rate??.995)}. Coverage is an entry gate, not evidence of out-of-season skill or authorization to change the shadow model.</p>`);
+ }
+ const external=panelWithTitle('legitimacy','External and live proof');
+ if(external){
+   const original=[...external.querySelectorAll('.metric')].find(e=>e.querySelector('span')?.textContent==='Frozen live forecasts scored');
+   if(original)original.querySelector('span').textContent='Scored in original trust-suite snapshot';
+   external.insertAdjacentHTML('beforeend',`<div class="metric"><span>Latest bundled scorecard · ${esc(dateLabel(D.shadow?.generated_at))}</span><b>${D.shadow?.resolved??'—'} scored · gate ${esc(D.shadow?.sample_gate?.decision||'unknown')}</b></div><p class="copy">The older trust-suite count is retained for provenance; use the latest scorecard for current sample size. Neither is an activation decision.</p>`);
+ }
+ const uncertainty=panelWithTitle('research','Table uncertainty calibration');
+ if(uncertainty&&R.table_uncertainty?.created_at)uncertainty.insertAdjacentHTML('beforeend',`<p class="copy">Research-only test from ${esc(dateLabel(R.table_uncertainty.created_at))}. The selected team-strength shock has not been approved as the live table-simulation default.</p>`);
+ const driftPanel=panelWithTitle('monitoring','Current-season drift');
+ if(driftPanel&&D.drift?.checked_at)driftPanel.insertAdjacentHTML('beforeend',`<p class="copy">Checked ${esc(dateLabel(D.drift.checked_at))}. The current bundled alert includes rest-day and Elo terms. It calls for investigation and shadow monitoring, not an automatic conclusion that match forecasts are wrong.</p>`);
  const operations=[...document.querySelectorAll('#research .panel')].find(e=>e.querySelector('h2')?.textContent==='Operations freshness');
  if(operations&&R.operations_freshness?.created_at){
    const note=document.createElement('p');note.className='copy';
