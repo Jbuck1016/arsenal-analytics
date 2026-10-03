@@ -113,7 +113,7 @@ tbody tr:last-child td{border-bottom:none}
         <a href="index.html">Home</a><a href="guide.html">Guide</a>
         <a href="validation.html">Validation</a><a href="glossary.html">Reference</a>
       </nav>
-      <div class="tbtn" id="themeBtn">&#9790;</div>
+      <button class="tbtn" id="themeBtn" type="button" aria-label="Toggle light/dark theme">&#9790;</button>
     </div>
     <div class="sys-line">
       Event-metric definitions, thresholds and evidence. Forecast-model artifacts and diagnostics are in the <a href="model-lab.html?tab=guide">Model Lab guide</a>. <span id="mAsOf">as of —</span>.
@@ -144,6 +144,8 @@ tbody tr:last-child td{border-bottom:none}
   </aside>
 
   <main class="doc">
+  <h1>Methodology</h1>
+  <p>Definitions describe specific data contracts, not a guarantee that every deployed view shares the same filters. See <a href="evidence-contracts.html#eligibility">eligibility by source</a>. Historical examples and diagnostics must not be read as current coverage.</p>
 
   <!-- ================= TIERS ================= -->
   <h2 id="tiers">How much to trust what</h2>
@@ -188,7 +190,7 @@ tbody tr:last-child td{border-bottom:none}
     <p><strong>Say this before someone finds it.</strong> The model is fitted on the same shots it
     is currently assessed against, so its aggregate agreement with observed goals is largely
     guaranteed by construction and is not predictive validation. It also compresses chance quality
-    into a narrow range, capped at 0.53, and a share of its lookup bins hold fewer than twenty
+    into discrete bands, and some lookup bins may hold fewer than twenty
     shots. It is transparent and directionally useful, but its per-shot estimates, especially at
     the extremes, are not yet externally validated. A temporal holdout has since been run and is
     reported below; it does not establish agreement with an external reference series.</p>
@@ -290,15 +292,11 @@ angle    = degrees( atan( 7.32 * ((100 - x) * 1.05)
     <tr><td>Angle</td><td>&lt;12&deg;, &lt;25&deg;, 25&deg;+</td></tr>
     <tr><td>Flags</td><td>header, big chance, open play</td></tr>
   </table>
-  <p>xG for a shot is the observed conversion rate of its bin. Penalties are excluded from every
-  xG figure reported on the site, because a fixed 0.76 tells you nothing about a player&rsquo;s
-  open-play threat.</p>
+  <p>Live shot xG uses a smoothed bin estimate; penalties use 0.76. Player xG per 90 includes penalties unless explicitly labelled non-penalty. Open-play pitch filters and historical saved model features have separate scopes. Do not compare them as identical totals; see <a href="evidence-contracts.html">Evidence definitions</a> for fitted-version and snapshot caveats.</p>
   <div class="box warn">
     <h5>Why a binned model</h5>
     <p>It is transparent and checkable: you can point at a bin and count the goals. The cost is
-    granularity. A logistic model would smooth the bands and would not carry the 0.53 ceiling, but
-    it would be harder to defend line by line. That trade has not been re-examined since the
-    compression was measured.</p>
+    granularity. Sparse cells need smoothing and diagnostics. The current fitted range belongs to its snapshot, not a permanent 0.53 ceiling; penalties use their separate 0.76 rule. A different estimator would require its own out-of-time comparison.</p>
   </div>
   <p><b>Predictive check.</b> A live temporal holdout now fits the same feature family on the first
   80% of current-season matches and scores it on the final 20%. Sparse cells fall back to broader
@@ -403,10 +401,10 @@ pct = 100 - pct</code></pre>
     enormously by position.</li>
     <li><strong>Within league</strong>, so a 60th-percentile progressor in one competition is not
     silently equated with another.</li>
-    <li><strong>Minimum 6 full matches</strong> before a player enters any ranking.</li>
+    <li><strong>Eligibility depends on the source.</strong> The committed <code>mv_player_percentiles</code> definition uses six nineties; the distinct <code>mv_player_pct</code> definition uses three. Frontend cohort settings are not proof of the deployed SQL gate. Chain roles and team insights have separate exposure rules. See <a href="evidence-contracts.html#eligibility">the source contracts</a>.</li>
   </ul>
   <p>So &ldquo;80th percentile finisher&rdquo; means precisely: his finishing rate is higher than
-  80% of players in his position pool in his league, among those with at least six matches. It is
+  80% of eligible players in his position pool in his league. It is
   a statement about ranking, not about quality in the abstract.</p>
   <p>Pooling several leagues is offered separately. <strong>Pooling is not translation.</strong>
   It answers where a player sits among a chosen set, not how he would perform elsewhere.</p>
@@ -458,14 +456,7 @@ leverage        = share of his on-pitch minutes
     starter flag is unreliable: it defaults to true when the field is absent, which produced 8.4
     starters per team-game and more than eleven in 96 cases. A starter is now defined as a player
     who appeared with no substitution-on event, which returns exactly eleven per side.</p>
-    <p><strong>Unused substitutes are present, and carry fabricated minutes.</strong> An earlier
-    version of this page claimed they were invisible. That was wrong. They appear in matchday
-    squads with position <code>Sub</code>, and the season aggregate credits 90 minutes for every
-    lineup row regardless of whether the player was used, so an unused backup keeper can read as
-    630 minutes across seven appearances. <span id="mSubs">The affected count is read live.</span>
-    Any figure derived from those minutes for such players is wrong. This is tracked as a known
-    defect, and the player-facing layers exclude them because they require a minimum number of
-    ball involvements, which an unused substitute cannot reach.</p>
+    <p><strong>Unused substitutes are not playing-time observations.</strong> The 14 September 2026 minutes-check migration records a correction: participation is derived from listed position rather than the unreliable starter flag, excluding unused bench rows. Earlier saved aggregates could credit fabricated minutes. <span id="mSubs">Current check status is retrieved separately.</span> Residual named starters without match events indicate missing ingestion, not proof that they were unused substitutes.</p>
   </div>
 
   <!-- ================= SIM ================= -->
@@ -487,7 +478,7 @@ similarity % = 100 - distance</code></pre>
   <table>
     <tr><th>Question</th><th>Honest answer</th></tr>
     <tr><td>&ldquo;Are the goals right?&rdquo;</td><td>Measurement. Reconciled against the published scoreline by an automated invariant; <span id="mGoals2">current result read live</span>.</td></tr>
-    <tr><td>&ldquo;Is the xG right?&rdquo;</td><td>Measurement. Calibrated in-sample against actual goals, with known compression: no value above 0.53 is ever assigned. Live figures on the Validation page.</td></tr>
+    <tr><td>&ldquo;Is the xG right?&rdquo;</td><td>Measurement. In-sample agreement is a diagnostic, not predictive proof. The Validation page reports the available temporal holdout and fitted support; neither establishes external provider agreement.</td></tr>
     <tr><td>&ldquo;Is the 80th percentile right?&rdquo;</td><td>Arithmetic. It is definitionally correct; the real question is the input metric.</td></tr>
     <tr><td>&ldquo;Is the counter-attack stat right?&rdquo;</td><td><strong>Definition.</strong> Here is exactly how it is defined and why those thresholds were chosen. It is not validated because there is nothing to validate it against.</td></tr>
   </table>
@@ -540,7 +531,7 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
     if(bad)el.className=(el.className+' unavail').trim();}
   var SUMMARY_IDS  = ['mShots','mPred','mAct','mErr','mChecks','mSubs'];
   var INVARIANT_IDS= ['mGoals','mGoals2','mPoss','mOrphan'];
-  var SUPPORT_IDS  = ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'];
+  var SUPPORT_IDS  = ['msShots','msBins','msDistinct','msRange','msSparse'];
   function markUnavailable(ids){ids.forEach(function(i){set(i,'unavailable',true)});}
   function summaryUnavailable(){
     markUnavailable(SUMMARY_IDS);
@@ -558,7 +549,7 @@ function paintThemeBtn(){var b=document.getElementById('themeBtn');
       var err=(d.xg_predicted-d.goals_actual)/d.goals_actual*100;
       set('mErr', (err>0?'+':'\u2212')+Math.abs(err).toFixed(1)+'%');
       set('mChecks', d.checks_error+' error checks and '+d.checks_warn+' warnings currently run.');
-      set('mSubs', n(d.players_named_never_involved)+' players are affected.');
+      set('mSubs', n(d.players_named_never_involved)+' players are in the summary’s named-without-event population; this count alone does not identify fabricated minutes.');
       set('mAsOf','as of '+d.as_of_match_date);
     })
     .catch(summaryUnavailable);

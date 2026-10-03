@@ -18,11 +18,12 @@
    any token a page's dark block happens not to redeclare. html:not(.dark)
    (0,2,0) outranks a page :root (0,1,0) in light and cannot match at all in
    dark, so a page's :root value survives as its dark value where it was already
-   serving as one. Dark mode is therefore untouched by this file.
+   serving as one. Both themes now explicitly pair surface and foreground tokens;
+   dark aliases below prevent terminal pages inheriting a light overlay.
    A page that genuinely needs to differ in light overrides at html:not(.dark)
    or higher.
 
-   FONT TOKENS are theme independent, so they sit at root scope and apply to
+   FONT TOKENS are theme independent, with explicit theme specificity, and apply to
    both modes. teams.html declared none of them while using them in ten font:
    shorthands; an unresolved var() invalidates the whole declaration, so weight,
    size and line-height were being dropped along with the family and those rules
@@ -50,7 +51,18 @@
   --viz-key:#965018;
 }
 
-html.dark{
+html.dark:root{
+  color-scheme:dark;
+  --bg:#111820;--bg2:#19232e;--bg3:#23313f;
+  --surface:#19232e;--surface2:#293746;
+  --border:#405063;--border2:#687c91;
+  --text:#f2f5fa;--text2:#d0d9e5;--text3:#aab8ca;--text4:#aab8ca;
+  --panel:var(--bg2);--panel2:var(--bg3);--paper:var(--bg2);
+  --ink:var(--text);--muted:var(--text2);--dim:var(--text2);--dim2:var(--text3);
+  --line:var(--border);--line2:var(--border2);
+  --overlay:#19232e;--overlay-text:#f2f5fa;
+  --selection:#304963;--selection-text:#fff;--focus:#9cc8ff;
+  --accent:#ff8d88;--red:#ff8d88;--red-bright:#ff8d88;--green:#59cbb3;--amber:#e8c477;
   --viz-positive:#59cbb3;
   --viz-negative:#ff826f;
   --viz-progress:#83b4f0;
@@ -61,6 +73,10 @@ html.dark{
 }
 
 html:not(.dark){
+  color-scheme:light;
+  --overlay:#fffdf8;--overlay-text:#16191f;
+  --selection:#dce8f5;--selection-text:#132b43;--focus:#145bbb;
+  --paper:var(--bg2);--ink:var(--text);--muted:var(--text2);
   --bg:#faf8f3;          /* page canvas */
   --bg2:#f4f1e9;         /* raised surface: header, cards */
   --bg3:#eceadf;         /* recessed surface: pitch fill */
@@ -70,8 +86,8 @@ html:not(.dark){
   --border2:#b9b2a1;
   --text:#16191f;        /* primary */
   --text2:#4a5262;       /* secondary, body */
-  --text3:#6b7280;       /* labels, legible at 10px */
-  --text4:#9aa0aa;       /* captions and decorative only */
+  --text3:#596170;
+  --text4:#596170;
   --green:#0f7a52;
   --red-bright:#c23b34;
   --accent:#EF0107;
@@ -94,3 +110,18 @@ html:not(.dark){
   --dim2:var(--text3);
   --red:var(--red-bright);
 }
+
+html:not(.dark),html.dark:root{
+  --f-display:'Archivo','Inter',system-ui,sans-serif;
+  --f-body:'Inter',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --f-disp:var(--f-display);--f-data:var(--f-mono);
+  --sans:var(--f-body);--mono:var(--f-mono);--serif:Georgia,serif;
+}
+
+/* Shared interaction semantics; plot series retain their own role tokens. */
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+button,input,select,textarea{color:var(--text);font-family:var(--f-body)}
+select option{background:var(--overlay);color:var(--overlay-text)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(max-width:640px){pre{max-width:100%;overflow:auto}main{min-width:0}table{max-width:100%}}

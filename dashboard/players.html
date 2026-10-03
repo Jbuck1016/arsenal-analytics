@@ -64,7 +64,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 
 .pcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:flex-start;border-left:4px solid var(--accent);margin-bottom:14px;flex-wrap:wrap}
 .pcard-l{flex:1;min-width:240px}
-.pname{font:800 27px/1.08 var(--f-display);letter-spacing:-.025em}
+.pname{font:800 27px/1.08 var(--f-display);letter-spacing:-.025em;margin:0}
 .pmeta{font:500 11px/1.5 'Inter';color:var(--text2);margin-top:5px}
 .chips{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
 .chip{font:600 10px/1 'Inter';padding:5px 9px;border-radius:5px;background:var(--surface2);color:var(--text2)}
@@ -153,11 +153,12 @@ tr:hover td{background:var(--surface)}
 @media(max-width:1180px){.split{grid-template-columns:1fr}.split-r{order:-1}}
 .pitch-box{height:calc(100vh - 452px);min-height:230px;max-height:640px}
 @media(max-width:820px){
+  .pcard-l{min-width:0;width:100%;flex:1 0 100%}.hdr>div{min-width:0;max-width:100%}.directory-toggle{display:block!important;width:100%;padding:10px;text-align:left}.side.compact-directory .side-top,.side.compact-directory .plist{display:none}.cmp-row{gap:4px}.cmp-row .bar{max-width:50px}
   body{overflow:auto}.hdr{height:auto;min-height:52px;flex-wrap:wrap;padding:8px 10px}.tabs{order:3;width:100%;overflow-x:auto;margin-left:0}
   .hdr-right{flex-wrap:wrap;justify-content:flex-end;row-gap:5px}
   .wrap{display:block;overflow:visible}.side{width:100%;height:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--border)}
   .side-top{display:grid;grid-template-columns:1fr 1fr}.side-top .inp{grid-column:1/-1}.plist{max-height:25vh}
-  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start}.pcard-r{display:none}.pcard-r.value-card{display:block;min-width:0;flex:1}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/78}
+  .main{overflow:visible;padding:10px}.pcard{align-items:flex-start;flex-wrap:wrap}.pcard-r{display:block;min-width:0;flex:1 1 140px}.pcard-r.value-card{display:block;min-width:0;flex:1 1 140px}.pitch-box{height:auto;min-height:0;aspect-ratio:111.5/78}
   .vz-filters,.groups{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lchip,.gbtn{flex:0 0 auto;min-height:36px}
   .player-overview>summary{display:flex}.player-overview:not([open]){margin-bottom:10px}.player-overview .dna{margin-top:9px}
 }
@@ -349,18 +350,19 @@ html:not(.dark) .scout-results .scout-rank{color:#57616c}
 
 <div class="wrap">
   <div class="side" id="side">
+    <button type="button" class="directory-toggle lnk" style="display:none" aria-expanded="true" onclick="const closed=document.getElementById('side').classList.toggle('compact-directory');this.setAttribute('aria-expanded',!closed)">Choose player / directory filters</button>
     <div class="side-top">
-      <select class="sel" id="teamSel" onchange="renderList()"><option value="">All teams</option></select>
-      <select class="sel" id="poolSel" onchange="renderList()">
+      <select aria-label="Directory team" class="sel" id="teamSel" onchange="renderList()"><option value="">All teams</option></select>
+      <select aria-label="Directory role" class="sel" id="poolSel" onchange="renderList()">
         <option value="">All roles</option>
         <option value="GK">GK</option><option value="CB">CB</option><option value="FB">FB</option>
         <option value="CM">CM</option><option value="AM">AM</option><option value="W">W</option><option value="ST">ST</option>
       </select>
-      <input class="inp" id="search" placeholder="Search player&hellip;" oninput="renderList()">
+      <input aria-label="Search player directory" class="inp" id="search" placeholder="Search player&hellip;" oninput="renderList()">
     </div>
     <div class="plist" id="plist"></div>
   </div>
-  <div class="main" id="main"><div class="empty">Loading&hellip;</div></div>
+  <main class="main" id="main"><div class="empty">Loading&hellip;</div></main>
 </div>
 <div class="tip" id="tip"></div>
 <div class="drill-wrap" id="drillWrap" role="dialog" aria-modal="true" aria-label="Metric pitch evidence">
@@ -597,6 +599,7 @@ async function init(){
       document.getElementById('teamSel').value=tp.team;
       renderList();pick(qp);
     } else setTab('Player');
+    restorePlayerState();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 /* Page tabs only. Site nav moved to the header menu, so this strip holds six
@@ -623,15 +626,16 @@ function renderPlayerStart(){
   </section>`;
 }
 function setTab(t){
+  viewGeneration++;
   TAB=t;renderTabs();
   document.getElementById('side').classList.toggle('hide',t!=='Player');
-  if(t==='Player'){ if(SEL){pick(SEL)} else {renderPlayerStart()} }
-  else if(t==='Rank')renderRank();
-  else if(t==='Scatter')renderScatter();
-  else if(t==='Scout')renderScout();
-  else if(t==='Compare')renderCompare();
-  else if(t==='Plot studio')renderPlotStudio();
-  else if(t==='Glossary')renderGlossary();
+  if(t==='Player'){ if(SEL){return pick(SEL)} else {return renderPlayerStart()} }
+  else if(t==='Rank')return renderRank();
+  else if(t==='Scatter')return renderScatter();
+  else if(t==='Scout')return renderScout();
+  else if(t==='Compare')return renderCompare();
+  else if(t==='Plot studio')return renderPlotStudio();
+  else if(t==='Glossary')return renderGlossary();
 }
 
 /* ---------- EXPORT ---------- */
@@ -645,12 +649,14 @@ async function snap(){
   return await html2canvas(el,{backgroundColor:bg,scale:2,useCORS:true,windowWidth:el.scrollWidth,height:el.scrollHeight,windowHeight:el.scrollHeight});
 }
 async function exportPNG(){
+  if(window.FutScoutExports)return window.FutScoutExports.capture(document.getElementById('main'),'png');
   try{
     const c=await snap();
     const a=document.createElement('a');a.download=exportName()+'.png';a.href=c.toDataURL('image/png');a.click();
   }catch(e){alert('Export failed: '+e.message)}
 }
 async function exportPDF(){
+  if(window.FutScoutExports)return window.FutScoutExports.capture(document.getElementById('main'),'pdf');
   try{
     const c=await snap();
     const img=c.toDataURL('image/png');
@@ -713,9 +719,9 @@ function renderList(){
   if(t)rows=rows.filter(function(p){return p.team===t});
   if(pl)rows=rows.filter(function(p){return p.pool===pl});
   if(q)rows=rows.filter(function(p){return (p.player_name||'').toLowerCase().indexOf(q)>=0});
-  const el=document.getElementById('plist');
+  const el=document.getElementById('plist'),scroll=el.scrollTop;
   if(!rows.length){el.innerHTML='<div style="padding:16px;color:var(--text3);font:500 11px/1 Inter">No players</div>';return}
-  el.innerHTML=rows.slice(0,300).map(function(p){
+  el.innerHTML='<div class="foot" role="status">'+rows.length+' matching players · all shown</div>'+rows.map(function(p){
     const mv=MARKET_VALUES[p.player_id];
     return '<button type="button" class="pitem'+(SEL===p.player_id?' on':'')+'"'+
       (SEL===p.player_id?' aria-current="true"':'')+
@@ -726,6 +732,7 @@ function renderList(){
         (isUnusedSub(p)?'unused sub':(+p.nineties).toFixed(1)+' \u00D7 90 \u00B7 '+startsLabel(p))+
         (mv&&mv.market_value_eur!=null?' \u00B7 '+esc(formatEuro(+mv.market_value_eur)):'')+'</div></div>'+
       '<div class="badge">'+esc(p.pool||'SUB')+'</div></button>'}).join('');
+  el.scrollTop=scroll;
 }
 /* These caches belong to the selected Player/Plot studio subject. Rank modal
    evidence lives in DRILL_CONTEXT instead; mixing the two caused filter redraws
@@ -750,6 +757,8 @@ async function loadEvidenceLayers(pid){
     contextReady:res.every(function(x){return x.context})};
 }
 async function pick(pid){
+  const request=++viewGeneration;
+  document.getElementById('side').classList.add('compact-directory');document.querySelector('.directory-toggle').setAttribute('aria-expanded','false');
   if(EVIDENCE_PID!==pid)EVF={game:'',score:'',phase:'',min:'',max:''};
   SEL=pid;TAB='Player';renderTabs();
   document.getElementById('side').classList.remove('hide');
@@ -763,11 +772,11 @@ async function pick(pid){
       sbAll('mv_player_dna',{player_id:'eq.'+pid,select:'*'}),
       loadEvidenceLayers(pid)
     ]);
-    if(SEL!==pid||TAB!=='Player'||!teamInLeague((playerOf(pid)||{}).team))return;
+    if(request!==viewGeneration||SEL!==pid||TAB!=='Player'||!teamInLeague((playerOf(pid)||{}).team))return;
     PACT=res[3].actions;PCAR=res[3].carries;PREC=res[3].receipts;
     CONTEXT_READY=res[3].contextReady;EVIDENCE_PID=pid;
     renderPlayer(p,res[0],res[1],res[2][0]||null);
-  }catch(e){if(SEL===pid&&TAB==='Player')main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&SEL===pid&&TAB==='Player')main.innerHTML='<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function renderPlayer(p,pcts,pillars,dna){
   const pm={};pcts.forEach(function(r){pm[r.metric]=r});PMCACHE=pm;
@@ -779,7 +788,7 @@ function renderPlayer(p,pcts,pillars,dna){
   const mvText=mv&&mv.market_value_eur!=null?formatEuro(+mv.market_value_eur):'Not available';
   const mvDate=mv&&mv.observed_on?new Date(mv.observed_on+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'';
   let h='<div class="pcard"><div class="pcard-l">'+
-    '<div class="pname">'+esc(p.player_name)+'</div>'+
+    '<h1 class="pname">'+esc(p.player_name)+'</h1>'+
     '<div class="pmeta">'+esc(tname(p.team))+' \u00B7 '+esc(leagueLabel(p.team))+' \u00B7 '+minsLabel(p)+' \u00B7 '+startsLabel(p)+
       (isUnusedSub(p)?' \u00B7 named but not used':'')+' · '+((PACT||[]).length+(PCAR||[]).length).toLocaleString()+' actions · '+pcts.length+' measures</div>'+
     '<div class="chips"><span class="chip">Listed: '+esc(p.modal_position||'\u2014')+'</span>'+
@@ -923,16 +932,18 @@ function openCategoryPizza(g){
   document.getElementById('drillWrap').style.display='flex';document.querySelector('#drillWrap .drill-x').focus();
 }
 async function loadStudioPlayer(pid){
+  const request=++viewGeneration;
   SEL=pid;const main=document.getElementById('main');main.innerHTML=loadingPanel('Opening Plot studio','Loading percentiles and pitch evidence for the selected player.');
   try{
     const res=await Promise.all([
       sbAll('mv_player_percentiles',{player_id:'eq.'+pid,select:'metric,value,pct'}),
       loadEvidenceLayers(pid)
     ]);
+    if(request!==viewGeneration||TAB!=='Plot studio'||SEL!==pid)return;
     PMCACHE={};res[0].forEach(function(r){PMCACHE[r.metric]=r});PACT=res[1].actions;PCAR=res[1].carries;PREC=res[1].receipts;
     CONTEXT_READY=res[1].contextReady;EVIDENCE_PID=pid;
     PB.metrics=[];PB.ready=false;EVF={game:'',score:'',phase:'',min:'',max:''};renderPlotStudio();
-  }catch(e){main.innerHTML='<div class="empty">Could not load plot data: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&TAB==='Plot studio')main.innerHTML='<div class="empty">Could not load plot data: '+esc(e.message)+'</div>'}
 }
 function studioPlayerOptions(){return PLAYERS.filter(function(p){return teamInLeague(p.team)}).sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')}).map(function(p){return '<option value="'+p.player_id+'"'+(p.player_id===SEL?' selected':'')+'>'+esc(p.player_name)+' \u00B7 '+esc(tname(p.team))+'</option>'}).join('')}
 function playerChoice(p){return (p.player_name||'')+' \u00B7 '+tname(p.team)}
@@ -953,7 +964,7 @@ function selectedMetricTray(){
   if(!PB.metrics.length)return '<div class="selection-tray"><span class="na">No metrics selected yet.</span></div>';
   return '<div class="selection-tray">'+PB.metrics.map(function(k){const d=defOf(k);if(!d)return'';return '<span class="selection-chip"><i style="background:'+pizzaColor(d.grp,0)+'"></i>'+esc(d.label)+'<button aria-label="Remove '+esc(d.label)+'" onclick="togglePBMetric(\''+k+'\')">&times;</button></span>'}).join('')+'</div>';
 }
-function setEventFilter(k,v){EVF[k]=v;const w=document.getElementById('drillWrap');if(w&&w.style.display==='flex'&&DRILL_KEY)drill(DRILL_KEY,DRILL_CONTEXT);else renderPlotStudio()}
+function setEventFilter(k,v){const active=document.activeElement,controls=Array.from(document.querySelectorAll('#drillBody input,#drillBody select')),index=controls.indexOf(active);EVF[k]=v;const w=document.getElementById('drillWrap');if(w&&w.style.display==='flex'&&DRILL_KEY){drill(DRILL_KEY,DRILL_CONTEXT);const next=document.querySelectorAll('#drillBody input,#drillBody select')[index];if(next)next.focus()}else renderPlotStudio();savePlayerState(true)}
 function filterContext(rows,contextReady){
   if(contextReady===undefined)contextReady=CONTEXT_READY;
   if(!contextReady)return rows||[];
@@ -1078,12 +1089,14 @@ function scatterCtrls(){
 function addHi(id){if(id&&SC.hi.indexOf(id)<0){SC.hi.push(id);renderScatter()}}
 function delHi(i){SC.hi.splice(i,1);renderScatter()}
 async function renderScatter(){
+  const request=++viewGeneration;
   const main=document.getElementById('main');
   main.innerHTML=scatterCtrls()+loadingPanel('Building scatter plot','Loading both selected measures for the role pool.');
   try{
     const rows=await sbAll('mv_player_percentiles',scopeQuery(
       {pool:'eq.'+SC.pool,metric:'in.('+SC.x+','+SC.y+')',select:'player_id,metric,value,pct,league'}));
-    const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
+    if(request!==viewGeneration||TAB!=='Scatter')return;
+    const by={};rows.forEach(function(r){if(r.value==null||!Number.isFinite(+r.value))return;if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
     const pts=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid];if(!v[SC.x]||!v[SC.y])return;
@@ -1091,10 +1104,13 @@ async function renderScatter(){
       pts.push({id:pid,name:p.player_name||'?',team:p.team||'',x:+v[SC.x].value,y:+v[SC.y].value,
                 px:+v[SC.x].pct,py:+v[SC.y].pct,hi:SC.hi.indexOf(pid)>=0});
     });
-    main.innerHTML=scatterCtrls()+scatterSvg(pts);
+    main.innerHTML=scatterCtrls()+scatterSvg(pts)+scatterData(pts);
     wireTips();
-  }catch(e){main.innerHTML=scatterCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&TAB==='Scatter')main.innerHTML=scatterCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
+let viewGeneration=0;
+function metricUnit(key){const d=defOf(key)||{};return d.unit||(/_90$/.test(key)?'per 90':'raw value')}
+function scatterData(pts){return '<details class="sect"><summary>Exact values · '+pts.length+' players</summary><div role="region" aria-label="Scatter data" tabindex="0" style="overflow:auto"><table><thead><tr><th>Player</th><th>Team</th><th>'+esc((defOf(SC.x)||{}).label||SC.x)+' ('+esc(metricUnit(SC.x))+')</th><th>'+esc((defOf(SC.y)||{}).label||SC.y)+' ('+esc(metricUnit(SC.y))+')</th></tr></thead><tbody>'+pts.map(function(p){return '<tr><td><a href="players.html?player='+encodeURIComponent(p.id)+'">'+esc(p.name)+'</a></td><td>'+esc(tname(p.team))+'</td><td>'+p.x+'</td><td>'+p.y+'</td></tr>'}).join('')+'</tbody></table></div></details>'}
 function scatterSvg(pts){
   if(!pts.length)return'<div class="empty">No data for that combination</div>';
   const W=1100,H=470,MT=18,MR=26,MB=46,ML=62;
@@ -1114,7 +1130,7 @@ function scatterSvg(pts){
   const xdir=dx.higher_is_better===false?' (lower is better)':'';
   const ydir=dy.higher_is_better===false?' (lower is better)':'';
   const chartTitle=(dy.label||SC.y)+' vs '+(dx.label||SC.x);
-  const chartSub=POOL_NAME[SC.pool]+' · '+scopeLabel()+' · raw per-90 values · dashed guides are population medians';
+  const chartSub=POOL_NAME[SC.pool]+' · '+scopeLabel()+' · '+pts.length+' players · X: '+metricUnit(SC.x)+'; Y: '+metricUnit(SC.y)+' · dashed guides are population medians';
   let s='<div class="sect"><div class="viz-eyebrow">Relationship</div>'+
         '<div class="viz-title" data-chart-title="scatter">'+esc(chartTitle)+'</div>'+
         '<div class="viz-sub">'+esc(chartSub)+'</div>'+
@@ -1218,6 +1234,7 @@ function scoutFit(v){
   return required&&found===required&&used?acc/used:null;
 }
 async function renderScout(){
+  const request=++viewGeneration;
   const main=document.getElementById('main');
   main.innerHTML=scoutCtrls()+'<div class="spin"></div>';
   if(!SK.metrics.length){main.innerHTML=scoutCtrls()+'<div class="empty">Add at least one metric</div>';return}
@@ -1226,6 +1243,7 @@ async function renderScout(){
     const rows=await sbAll('mv_player_percentiles',scopeQuery(
       {pool:'eq.'+SK.pool,metric:'in.('+keys+')',select:'player_id,metric,value,pct,league'}));
     const by={};rows.forEach(function(r){if(!by[r.player_id])by[r.player_id]={};by[r.player_id][r.metric]=r});
+    if(request!==viewGeneration||TAB!=='Scout')return;
     SK.rows=[];
     Object.keys(by).forEach(function(pid){
       const v=by[pid],fit=scoutFit(v);if(fit==null)return;
@@ -1233,7 +1251,7 @@ async function renderScout(){
       SK.rows.push({id:pid,name:p.player_name,team:p.team,n90:+p.nineties,fit:fit,v:v});
     });
     drawScout();
-  }catch(e){main.innerHTML=scoutCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&TAB==='Scout')main.innerHTML=scoutCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 function drawScout(){
   const rows=SK.rows.slice().sort(function(a,b){
@@ -1297,6 +1315,7 @@ function scoutChart(rows){
 
 /* ---------- COMPARE ---------- */
 async function renderCompare(){
+  const request=++viewGeneration;
   const main=document.getElementById('main');
   const pool=PLAYERS.filter(function(p){return p.pool===CMP.pool&&p.nineties>=MIN90&&teamInLeague(p.team)})
                     .sort(function(a,b){return (a.player_name||'').localeCompare(b.player_name||'')});
@@ -1315,6 +1334,7 @@ async function renderCompare(){
       sbAll('mv_player_percentiles',{player_id:'eq.'+CMP.a,select:'metric,value,pct'}),
       sbAll('mv_player_percentiles',{player_id:'eq.'+CMP.b,select:'metric,value,pct'})
     ]);
+    if(request!==viewGeneration||TAB!=='Compare')return;
     const A={},B={};res[0].forEach(function(r){A[r.metric]=r});res[1].forEach(function(r){B[r.metric]=r});
     const pa=playerOf(CMP.a),pb=playerOf(CMP.b);
     const groups=[];DEFS.forEach(function(d){if(groups.indexOf(d.grp)<0)groups.push(d.grp)});
@@ -1333,19 +1353,19 @@ async function renderCompare(){
         const av=(a&&a.pct!=null)?+a.pct:0,bv=(b&&b.pct!=null)?+b.pct:0;
         h+='<div class="cmp-row">'+
           '<div style="display:flex;align-items:center;gap:7px;justify-content:flex-end">'+
-            '<span style="font:600 10px/1 Inter;color:'+tier(av).c+'">'+(a?fmt(a.value,d.unit):'\u2014')+'</span>'+
+            '<span style="font:600 10px/1 Inter;color:'+tier(av).c+'">'+(a?fmt(a.value,d.unit):'\u2014')+' · '+(a&&a.pct!=null?a.pct+' pct':'pct unavailable')+'</span>'+
             '<div class="bar" style="width:96px"><div class="bar-f" style="width:'+av+'%;background:'+tier(av).c+';margin-left:auto"></div></div></div>'+
           '<div class="cmp-lbl" title="'+esc(d.definition||'')+'">'+esc(d.label)+'</div>'+
           '<div style="display:flex;align-items:center;gap:7px">'+
             '<div class="bar" style="width:96px"><div class="bar-f" style="width:'+bv+'%;background:'+tier(bv).c+'"></div></div>'+
-            '<span style="font:600 10px/1 Inter;color:'+tier(bv).c+'">'+(b?fmt(b.value,d.unit):'\u2014')+'</span></div>'+
+            '<span style="font:600 10px/1 Inter;color:'+tier(bv).c+'">'+(b?fmt(b.value,d.unit):'\u2014')+' · '+(b&&b.pct!=null?b.pct+' pct':'pct unavailable')+'</span></div>'+
           '</div>';
       });
       h+='</div>';
     });
-    h+='</div>'+legendHtml();
+    h+='</div><p class="foot">Bars show each player’s own league-and-role percentile, not a league-strength adjustment. Hover or inspect the numeric labels for percentile values; raw values retain their stated units. Minimum '+MIN90+' nineties.</p>'+legendHtml();
     main.innerHTML=h;
-  }catch(e){main.innerHTML=ctrl+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&TAB==='Compare')main.innerHTML=ctrl+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
 /* ---------- GLOSSARY ---------- */
@@ -1422,9 +1442,10 @@ async function renderPillarRank(){
     if(!list.length)h+='<div class="empty">No pillar scores available for this league and role.</div>';
     list.forEach(function(r,i){const selected=String(r.p.player_id)===state.selected;h+='<div class="pillar-row'+(selected?' selected':'')+'"><div><button class="pname-link" onclick="PILLAR=null;pick(\''+r.p.player_id+'\')">'+(i+1)+'. '+esc(r.p.player_name)+(selected?' · selected':'')+'</button><small>'+esc(tname(r.p.team))+' · '+(+r.p.nineties).toFixed(1)+' 90s</small></div><div class="pillar-track"><span style="width:'+Math.max(0,Math.min(100,r.score))+'%"></span></div><b>'+r.score.toFixed(1)+'</b></div>'});
     main.innerHTML=pillarControls()+h+'</section>';
-  }catch(e){if(token===pillarRequest&&PILLAR)main.innerHTML=pillarControls()+'<div class="empty">Could not load pillar scores: '+esc(e.message)+'</div>'}
+  }catch(e){if(token===pillarRequest&&TAB==='Rank'&&PILLAR)main.innerHTML=pillarControls()+'<div class="empty">Could not load pillar scores: '+esc(e.message)+'</div>'}
 }
 async function renderRank(){
+  const request=++viewGeneration;
   if(PILLAR)return renderPillarRank();
   const main=document.getElementById('main');
   main.innerHTML=rankCtrls()+'<div class="spin"></div>';
@@ -1432,8 +1453,9 @@ async function renderRank(){
     const q=scopeQuery({metric:'eq.'+RK.metric,select:'player_id,pool,value,pct,league'});
     if(RK.pool)q.pool='eq.'+RK.pool;
     const rows=await sbAll('mv_player_percentiles',q);
+    if(request!==viewGeneration||TAB!=='Rank'||PILLAR)return;
     const d=defOf(RK.metric)||{};
-    const list=rows.map(function(r){
+    const list=rows.filter(function(r){return r.value!=null&&r.pct!=null&&Number.isFinite(+r.value)&&Number.isFinite(+r.pct)}).map(function(r){
       const p=playerOf(r.player_id)||{};
       return{id:r.player_id,name:p.player_name,team:p.team,n90:+p.nineties,pool:r.pool,value:+r.value,pct:+r.pct};
     }).filter(function(r){return r.name&&teamInLeague(r.team)})
@@ -1479,7 +1501,7 @@ async function renderRank(){
        (d.higher_is_better===false?' <b>Lower is better</b>, so the percentile is inverted.':'')+'</div>'+
        legendHtml()+'</div>';
     main.innerHTML=rankCtrls()+h;
-  }catch(e){main.innerHTML=rankCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===viewGeneration&&TAB==='Rank')main.innerHTML=rankCtrls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
 }
 
 /* ---------- PITCH VISUALISATIONS ---------- */
@@ -1700,17 +1722,17 @@ function vizLayers(grp,p){
     const sh=A.filter(function(a){return a.is_shot&&a.is_open_play});
     const by=function(oc){return sh.filter(function(a){return (a.shot_outcome||'off')===oc})};
     const mk=function(c,oc){return function(a){
-      const xg=+(a.xg||0.04), r=Math.max(0.52,0.26+Math.sqrt(xg)*0.92);
+      const xg=a.xg==null?null:+a.xg, r=xg==null?0.65:Math.max(0.52,0.26+Math.sqrt(Math.max(0,xg))*0.92);
       const tipN=esc(p.player_name)+' \u00B7 '+({goal:'Goal',saved:'Saved',blocked:'Blocked',post:'Post',off:'Off target'}[oc]);
       const dist=Math.sqrt(Math.pow((100-a.x)*1.05,2)+Math.pow((50-a.y)*0.68,2));
-      const tipV='xG '+xg.toFixed(3)+' \u00B7 '+dist.toFixed(0)+' m'+(a.head?' \u00B7 header':'')+(a.bigchance?' \u00B7 big chance':'');
-      return eventSvg(a,shotMark(a.x,a.y,r,c,oc==='goal'?1:(oc==='saved'?0.75:(oc==='blocked'?0.6:0.5)),oc))+
+      const tipV='xG '+(xg==null?'unavailable':xg.toFixed(3))+' \u00B7 '+dist.toFixed(0)+' m'+(a.head?' \u00B7 header':'')+(a.bigchance?' \u00B7 big chance':'');
+      return eventSvg(a,shotMark(a.x,a.y,r,xg==null?'var(--text3)':c,oc==='goal'?1:(oc==='saved'?0.75:(oc==='blocked'?0.6:0.5)),oc))+(xg==null?'<text x="'+PX(a.x)+'" y="'+PY(a.y)+'" font-size="1.4" fill="var(--text)">?</text>':'')+
         '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(r*2.4,1.6)+
         '" fill="transparent" style="cursor:crosshair" data-n="'+tipN+'" data-v="'+tipV+'"/>';}};
-    const sx=sh.reduce(function(t,a){return t+(+(a.xg||0.04))},0);
+    const known=sh.filter(function(a){return a.xg!=null&&Number.isFinite(+a.xg)}),sx=known.reduce(function(t,a){return t+(+a.xg)},0);
     return {title:'Shot map',
-      sub:'Open-play shots, sized by chance quality (xG). '+sx.toFixed(1)+' xG from '+sh.length+
-          ' shots. Blocked attempts are separated \u2014 the provider files them as saves but they never reached the keeper.',
+      sub:'Open-play shots only; season xG/90 includes penalties. '+sx.toFixed(2)+' known xG ('+known.length+'/'+sh.length+' available) from '+sh.length+
+          ' shots. Grey ? markers have unavailable xG. Blocked attempts are separated \u2014 the provider files them as saves but they never reached the keeper.',
       focus:true,
       tog:'<div class="vz-tog"><button class="vzb'+(VZ.shotFocus?' on':'')+'" aria-pressed="'+VZ.shotFocus+'" onclick="VZ.shotFocus=true;refreshViz()">Attacking half</button><button class="vzb'+(!VZ.shotFocus?' on':'')+'" aria-pressed="'+(!VZ.shotFocus)+'" onclick="VZ.shotFocus=false;refreshViz()">Full pitch</button></div>',
       sizeKey:true,
@@ -1886,6 +1908,7 @@ async function exportViz(fmt){
   const p=playerOf(SEL);if(!p)return;
   const src=document.querySelector('.split-r .sect')||document.querySelector('.studio-grid .pitch-viz')||document.querySelector('#main .pitch-viz');
   if(!src)return;
+  if(window.FutScoutExports)return window.FutScoutExports.capture(src,fmt);
   const stage=document.createElement('div');
   stage.style.cssText='position:fixed;left:-10000px;top:0;width:1020px;padding:26px 28px;'+
     'background:'+getComputedStyle(document.body).backgroundColor+';font-family:var(--f-body)';
@@ -1915,7 +1938,7 @@ async function exportViz(fmt){
   const cap=document.createElement('div');
   cap.style.cssText='margin-top:12px;padding-top:10px;border-top:1px solid var(--border);'+
     'font:500 9.5px/1.6 var(--f-body);color:var(--text3);display:flex;justify-content:space-between;gap:14px';
-  cap.innerHTML='<span>Full season, open play unless stated \u00B7 attack left to right</span>'+
+  cap.innerHTML='<span>Active event filters: '+esc(JSON.stringify(EVF))+' · open play unless stated \u00B7 attack left to right</span>'+
     '<span>data whoscored \u00B7 percentiles within role</span>';
   stage.appendChild(cap);
   document.body.appendChild(stage);
@@ -1994,6 +2017,7 @@ let DRILL_RETURN=null,DRILL_KEY=null,DRILL_CONTEXT=null,DRILL_REQUEST=0;
 const DRILL_ATTRS=' aria-haspopup="dialog" aria-controls="drillWrap" aria-expanded="false"';
 function closeDrill(){
   document.getElementById('drillWrap').style.display='none';
+  modalInert.forEach(function(value,el){el.inert=value});modalInert.clear();
   DRILL_REQUEST++;
   if(DRILL_RETURN&&document.contains(DRILL_RETURN)){
     if(DRILL_RETURN.hasAttribute('aria-expanded'))DRILL_RETURN.setAttribute('aria-expanded','false');
@@ -2007,8 +2031,16 @@ function closeDrill(){
 document.getElementById('drillWrap').addEventListener('click',function(e){
   if(e.target===this)closeDrill();
 });
+const modalInert=new Map();
+new MutationObserver(function(){const wrap=document.getElementById('drillWrap'),open=wrap.style.display==='flex';if(open){Array.from(document.body.children).forEach(function(el){if(el!==wrap&&!['SCRIPT','STYLE'].includes(el.tagName)){if(!modalInert.has(el))modalInert.set(el,el.inert);el.inert=true}})}else{modalInert.forEach(function(value,el){el.inert=value});modalInert.clear()}}).observe(document.getElementById('drillWrap'),{attributes:true,attributeFilter:['style']});
 document.addEventListener('keydown',function(e){
   const wrap=document.getElementById('drillWrap');
+  if(e.key==='Tab'&&wrap&&wrap.style.display==='flex'){
+    const items=Array.from(wrap.querySelectorAll('button,input,select,textarea,a[href],[tabindex="0"]')).filter(function(el){return !el.disabled&&el.getClientRects().length});
+    const first=items[0],last=items[items.length-1];
+    if(e.shiftKey&&(document.activeElement===first||!wrap.contains(document.activeElement))){e.preventDefault();if(last)last.focus()}
+    else if(!e.shiftKey&&(document.activeElement===last||!wrap.contains(document.activeElement))){e.preventDefault();if(first)first.focus()}
+  }
   if(e.key==='Escape'&&wrap&&wrap.style.display==='flex'){e.preventDefault();closeDrill()}
 });
 
@@ -2084,13 +2116,13 @@ function drill(key,context){
              bigchance:function(a){return a.is_shot&&a.bigchance},
              hsshot:function(a){return a.is_shot&&a.x>=50&&((a.y>=21.1&&a.y<=36.8)||(a.y>=63.2&&a.y<=78.9))},
              spshot:function(a){return a.is_shot&&a.sp_phase}}[kind];
-    let sx=0;
+    let sx=0,knownCount=0;
     A.filter(f).forEach(function(a){
-      const xg=+(a.xg||0.04);sx+=xg;const r=Math.max(0.52,0.26+Math.sqrt(xg)*0.92);
+      const xg=a.xg==null?null:+a.xg;if(xg!=null&&Number.isFinite(xg)){sx+=xg;knownCount++}const r=xg==null?0.65:Math.max(0.52,0.26+Math.sqrt(Math.max(0,xg))*0.92);
       const oc=a.shot_outcome||'off';
       const c=oc==='goal'?AC:(oc==='saved'?G:(oc==='blocked'?'#a78bfa':R));
-      inner+=eventSvg(a,shotMark(a.x,a.y,r,c,oc==='goal'?1:0.55,oc));n++;});
-    sub='Sized by chance quality. '+sx.toFixed(2)+' xG across these '+n+' shots.';
+      inner+=eventSvg(a,shotMark(a.x,a.y,r,xg==null?'var(--text3)':c,oc==='goal'?1:0.55,oc))+(xg==null?'<text x="'+PX(a.x)+'" y="'+PY(a.y)+'" font-size="1.4" fill="var(--text)">?</text>':'');n++;});
+    sub='Filtered evidence: '+sx.toFixed(2)+' known xG; '+knownCount+'/'+n+' shots have xG. Missing xG is not zero. Open-play shots exclude penalties; season-reference xG/90 includes them.';
     leg=lg(AC,'Goal')+lg(G,'Saved')+lg('#a78bfa','Blocked')+lg(R,'Off target');
   }
   else if(kind==='takeon'||kind==='tackle'||kind==='int'||kind==='recov'||kind==='clear'||kind==='aerial'||kind==='def'){
@@ -2119,7 +2151,7 @@ function drill(key,context){
   document.getElementById('drillBody').innerHTML=
     '<div class="viz-eyebrow">Behind the number</div>'+
     '<div class="viz-title">'+esc(d.label||key)+' \u2014 '+esc(p.player_name)+'</div>'+
-    '<div class="viz-sub">'+(r?('<b>'+fmt(r.value,d.unit)+'</b>'+metricRateSuffix(d)+' \u00B7 '+ordinal(r.pct)+' percentile among '+
+    '<div class="viz-sub">'+(r?('Unfiltered season reference: <b>'+fmt(r.value,d.unit)+'</b>'+metricRateSuffix(d)+' \u00B7 '+ordinal(r.pct)+' percentile among '+
       (POOL_NAME[p.pool]||p.pool)+'s. '):'')+esc(d.definition||'')+' '+sub+'</div>'+eventContextControls(ctx)+
     '<div class="pitch-box" style="height:min(58vh,540px)"><svg role="img" aria-label="'+esc((d.label||key)+' actions for '+p.player_name+'. Attack is left to right; the attacking team’s right side is the bottom edge.')+'" viewBox="-3 -3 111.5 78" preserveAspectRatio="xMidYMid meet" '+
     'style="width:100%;height:100%;display:block">'+pitchMarks()+inner+
@@ -2218,6 +2250,41 @@ document.addEventListener('pointerdown',function(e){if(NAVOPEN&&navMenuOutside(e
 document.addEventListener('focusin',function(e){if(NAVOPEN&&navMenuOutside(e))closeNavMenu(false)});
 window.addEventListener('resize',function(){if(NAVOPEN)placeNavMenu()});
 
+let restoringPlayerState=true;
+window.futScoutExportContext=function(){const context={workspace:'Player fingerprints',view:TAB,league:scopeLabel(),minimumNineties:MIN90,dataAsOf:typeof ASOF!=='undefined'&&ASOF?ASOF.as_of:'Unavailable',reference:'Percentiles retain league-and-role cohorts'};if(TAB==='Player'||TAB==='Plot studio'){context.player=(playerOf(SEL)||{}).player_name;context.category=GRP;context.eventFilters=Object.fromEntries(Object.entries(EVF).filter(function(x){return x[1]!==''}));context.reference+='; event filters do not rebase season values'}if(TAB==='Rank')context.rank=PILLAR||RK;if(TAB==='Scatter')context.axes={x:SC.x,y:SC.y,role:SC.pool};if(TAB==='Scout')context.metrics=SK.metrics;if(TAB==='Compare')context.comparison=CMP;return context;};
+function playerState(){const state={v:1,tab:TAB,league:PLGSCOPE,player:SEL,group:GRP};const team=document.getElementById('teamSel').value,pool=document.getElementById('poolSel').value,q=document.getElementById('search').value;if(team)state.team=team;if(pool)state.pool=pool;if(q)state.q=q;if(TAB==='Rank'){state.rank=RK;if(PILLAR)state.pillar=PILLAR}if(TAB==='Scatter')state.scatter=SC;if(TAB==='Compare')state.compare=CMP;if(TAB==='Scout')state.scout={pool:SK.pool,metrics:SK.metrics,sort:SK.sort,show:SK.show};const evidence=Object.fromEntries(Object.entries(EVF).filter(function(x){return x[1]!==''}));if(Object.keys(evidence).length)state.evidence=evidence;if(TAB==='Plot studio')state.studio=PB;return state;}
+function savePlayerState(replace){if(restoringPlayerState||!PLAYERS.length)return;const u=new URL(location.href),s=playerState();u.searchParams.set('state',JSON.stringify(s));u.searchParams.set('view',TAB);if(SEL)u.searchParams.set('player',SEL);else u.searchParams.delete('player');if(u.href!==location.href)history[replace?'replaceState':'pushState']({},'',u);}
+async function restorePlayerState(){
+  let s;try{s=JSON.parse(new URLSearchParams(location.search).get('state')||'null')}catch(e){restoringPlayerState=false;return}if(!s||s.v!==1){const initial=restoringPlayerState;restoringPlayerState=false;if(!initial){restoringPlayerState=true;SEL=new URLSearchParams(location.search).get('player');if(!playerOf(SEL))SEL=null;await setTab('Player');restoringPlayerState=false}return}
+  restoringPlayerState=true;
+  try{
+    if(s.league==='ALL'||PLEAGUES.some(function(l){return l.league===s.league}))PLGSCOPE=s.league;
+    SEL=playerOf(s.player)?s.player:null;GRP=typeof s.group==='string'?s.group:'All';
+    const metric=function(k){return DEFS.some(function(d){return d.key===k})};
+    if(s.rank&&metric(s.rank.metric)){RK.metric=s.rank.metric;RK.pool=POOLS.includes(s.rank.pool)?s.rank.pool:'';RK.n=[10,25,50,100].includes(s.rank.n)?s.rank.n:25;RK.dir=s.rank.dir===1?1:-1}
+    if(s.scatter&&metric(s.scatter.x)&&metric(s.scatter.y)&&POOLS.includes(s.scatter.pool))SC={x:s.scatter.x,y:s.scatter.y,pool:s.scatter.pool,hi:(s.scatter.hi||[]).filter(function(id){return !!playerOf(id)})};
+    if(s.compare&&POOLS.includes(s.compare.pool))CMP={pool:s.compare.pool,a:playerOf(s.compare.a)?s.compare.a:null,b:playerOf(s.compare.b)?s.compare.b:null};
+    if(s.scout&&POOLS.includes(s.scout.pool)){SK.pool=s.scout.pool;SK.metrics=(s.scout.metrics||[]).filter(function(m){return metric(m.k)&&Number.isFinite(m.w)&&m.w>=0&&m.w<=5}).slice(0,10);SK.show=['both','value','pct'].includes(s.scout.show)?s.scout.show:'both'}
+    fillTeamSel();renderLeaguePick();updateHdrSub();['team','pool','q'].forEach(function(k){const el=document.getElementById({team:'teamSel',pool:'poolSel',q:'search'}[k]);if(typeof s[k]==='string')el.value=s[k]});
+    PILLAR=s.pillar&&typeof s.pillar.name==='string'&&POOLS.includes(s.pillar.pool)?s.pillar:null;
+    const pending=setTab(TABS.includes(s.tab)?s.tab:'Player'),generation=viewGeneration;
+    await pending;
+    if(generation!==viewGeneration)return;
+    if(s.evidence&&typeof s.evidence==='object')Object.keys(EVF).forEach(function(k){if(typeof s.evidence[k]==='string'&&s.evidence[k].length<100)EVF[k]=s.evidence[k]});
+    if(s.studio&&typeof s.studio==='object'){PB.mode=s.studio.mode==='events'?'events':'pizza';PB.metrics=(s.studio.metrics||[]).filter(metric);PB.ready=true;if(typeof s.studio.group==='string')PB.group=s.studio.group;PB.pattern=s.studio.pattern!==false;}
+    if(TAB==='Plot studio')renderPlotStudio();else if(TAB==='Player'&&SEL&&PACT)refreshViz();
+  }finally{restoringPlayerState=false}
+}
+['setTab','pick','setPlayerLeague','setGrp','renderRank','renderScatter','renderScout','renderCompare','renderPlotStudio','renderPillarRank'].forEach(function(name){const fn=window[name];window[name]=function(){const result=fn.apply(this,arguments);savePlayerState(false);return result}});
+document.getElementById('side').addEventListener('input',function(){savePlayerState(true)});
+window.addEventListener('popstate',restorePlayerState);
+function labelPlayerControls(){
+  const main=document.getElementById('main');if(main&&!main.querySelector('h1')){const title=document.createElement('h1');title.textContent='Player fingerprints · '+TAB;title.style.cssText='position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap';main.prepend(title)}
+  document.querySelectorAll('.cfield input,.cfield select,.studio-side input,.studio-side select').forEach(function(el){if(el.getAttribute('aria-label')||el.labels&&el.labels.length)return;const field=el.closest('.cfield')||el.parentElement,label=field.querySelector('.clbl,label');if(label)el.setAttribute('aria-label',label.textContent.trim());else if(el.placeholder)el.setAttribute('aria-label',el.placeholder)});
+  document.querySelectorAll('input[type="range"]').forEach(function(el){if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',((el.closest('.mchip')||el.parentElement).textContent.trim()||'Metric')+' weight')});
+  document.querySelectorAll('th[onclick*="sortScout"]').forEach(function(th){if(!th.hasAttribute('tabindex')){th.tabIndex=0;th.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();th.click()}})}const match=th.getAttribute('onclick').match(/sortScout\('([^']+)'\)/);if(match)th.setAttribute('aria-sort',SK.sort.col===match[1]?(SK.sort.dir===1?'ascending':'descending'):'none')});
+}
+new MutationObserver(labelPlayerControls).observe(document.getElementById('main'),{childList:true,subtree:true});
 renderNavMenu();
 init();
 

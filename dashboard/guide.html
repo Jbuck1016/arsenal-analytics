@@ -178,7 +178,7 @@ details p:last-child{margin-bottom:0}
         <a href="sequences.html">Sequences</a>
         <a href="methodology.html">Method</a>
       </nav>
-      <div class="tbtn" id="themeBtn">☾</div>
+      <button class="tbtn" id="themeBtn" type="button" aria-label="Toggle light/dark theme">☾</button>
       <button class="btn noprint" onclick="window.print()">Save as PDF</button>
     </div>
     <div class="sys-line">
@@ -214,6 +214,8 @@ details p:last-child{margin-bottom:0}
   </aside>
 
   <main class="doc">
+  <h1>Field guide</h1>
+  <p>Worked player and league examples below are saved illustrations, not refreshed rankings; their snapshot dates were not recorded. Current counts are labelled separately. See <a href="evidence-contracts.html#eligibility">eligibility contracts</a> before comparing populations.</p>
 
   <!-- ============ 1 ============ -->
   <h2 id="s1"><span class="n">01</span>What this is, and what it isn't</h2>
@@ -270,12 +272,7 @@ details p:last-child{margin-bottom:0}
       <li><strong>No defender positions.</strong> We can see where a pass started and ended,
       not who was between those points. This is why passes are labelled by
       <em>trajectory</em>, not as "line-breaking". We cannot verify a line was broken.</li>
-      <li><strong>Unused substitutes are present but their minutes are wrong.</strong> They appear
-      in matchday squads and are credited 90 minutes per lineup row whether or not they played, so
-      any minutes figure for such a player is fabricated. They never reach the involvement
-      threshold, so they are excluded from percentiles, search and insights. Earlier text on this
-      site said they were invisible; that was incorrect. Squad data otherwise contains players
-      who touched the ball. "Fringe" means plays rarely and late, not "end of the bench".</li>
+      <li><strong>A squad listing is not playing time.</strong> The 14 September 2026 minutes-check migration documents the correction that excludes unused substitutes from credited minutes. Earlier saved aggregates could contain fabricated bench minutes. Missing event data for a named starter remains an ingestion gap; inspect the current minutes check rather than assuming every squad member played.</li>
       <li><strong>Age is a snapshot.</strong> WhoScored reports age at match time, not date of
       birth, so a player can read a year light. We store the highest age observed.</li>
       <li><strong>Uneven season phases.</strong> Domestic leagues and MLS are at different points
@@ -607,9 +604,7 @@ details p:last-child{margin-bottom:0}
   underlying distributions are completely different. Always know which pool you are reading.</p>
 
   <h4>The small-sample trap</h4>
-  <p>Six nineties is the floor for a reason. Below it, finishing metrics in particular are
-  close to meaningless: a player can be at the 99th percentile for conversion on four goals
-  from six shots. Role percentages stabilise faster than rate stats.</p>
+  <p>The worked searches above deliberately use six nineties. Eligibility differs by source and view: see <a href="evidence-contracts.html#eligibility">the documented cohort contracts</a>. Eligibility is not reliability: four goals from six shots can produce an extreme finishing percentile in a small sample. Check minutes, action counts and the displayed comparison cohort before drawing conclusions.</p>
 
   <h4>The style-is-not-quality trap</h4>
   <p>Chain roles describe function. A player can be the league's most extreme progressor and
@@ -921,9 +916,9 @@ const QUIZ=[
       "Because it excludes defenders"],
    c:1,e:"The metric counts early involvement in possessions that ended in a shot. If your teammates are good at producing shots, you appear more often regardless of your own contribution. Compare within similar teams."},
 
-  {q:"What is the minimum sample the guide recommends before trusting rate statistics?",
+  {q:"What exposure floor do the worked searches in this guide deliberately use?",
    a:["2 nineties","6 nineties","20 nineties","No minimum needed"],
-   c:1,e:"Six is the working floor. Below that, finishing and conversion metrics in particular are close to random. Role percentages stabilise sooner than rate stats, but six is a sensible default across the board."},
+   c:1,e:"These worked searches use six nineties. This is an example filter, not a universal eligibility or statistical reliability guarantee. Check action counts and the actual comparison cohort."},
 
   {q:"A side's directness barely changes between winning and losing. What does that suggest?",
    a:["The data is wrong",
@@ -936,23 +931,23 @@ const QUIZ=[
    a:["Where he touches the ball","How often he does each thing","How well he does it","His position group"],
    c:2,e:"Roles are deliberately separated from quality. The league's most extreme progressor could be a poor player. Establish what a player is first, then assess how well he does it using the metrics."},
 
-  {q:"On an xT map, why should negative actions stay visible?",
+  {q:"Why must a net xT total retain negative changes?",
    a:["To make the map look busier",
-      "Because hiding them flatters everyone and hides risk profile",
+      "Because dropping them changes net threat into positive-only threat",
       "They are more important than positives",
       "To fill empty space"],
-   c:1,e:"Backwards passes subtract threat. A map of positives only makes every player look productive. Seeing both reveals whether someone is a low-risk accumulator or a high-variance gambler, a real difference in how they'd fit a system."}
+   c:1,e:"Net xT includes negative changes. A positive-only map is valid when labelled, but its total must not be compared as if it were net xT. Neither alone establishes a player's quality or tactical risk."}
 ];
 
 let answered={};
 function renderQuiz(){
   const host=document.getElementById('quiz');
   host.innerHTML=QUIZ.map(function(item,i){
-    return '<div class="q" id="q'+i+'">'
-      +'<div class="q-t">'+(i+1)+'. '+item.q+'</div>'
+    return '<div class="q" role="group" aria-labelledby="qt'+i+'" id="q'+i+'">'
+      +'<div class="q-t" id="qt'+i+'">'+(i+1)+'. '+item.q+'</div>'
       +item.a.map(function(opt,j){
-        return '<div class="opt" data-q="'+i+'" data-o="'+j+'">'+opt+'</div>'}).join('')
-      +'<div class="exp" id="e'+i+'">'+item.e+'</div></div>';
+        return '<button type="button" class="opt" style="display:block;width:100%;text-align:left;font:inherit;color:inherit" aria-pressed="false" data-q="'+i+'" data-o="'+j+'">'+opt+'</button>'}).join('')
+      +'<div class="exp" role="status" id="e'+i+'">'+item.e+'</div></div>';
   }).join('');
 }
 document.addEventListener('click',function(ev){
@@ -963,11 +958,14 @@ document.addEventListener('click',function(ev){
   const wrap=document.getElementById('q'+qi);
   wrap.querySelectorAll('.opt').forEach(function(o){
     o.classList.add('locked');
+    o.setAttribute('aria-disabled','true');
+    o.setAttribute('aria-pressed',String(+o.dataset.o===oi));
     const j=+o.dataset.o;
     if(j===QUIZ[qi].c) o.classList.add('correct');
     else if(j===oi) o.classList.add('wrong');
   });
   document.getElementById('e'+qi).classList.add('show');
+  document.getElementById('e'+qi).textContent=(oi===QUIZ[qi].c?'Correct. ':'Not correct. Correct answer: '+QUIZ[qi].a[QUIZ[qi].c]+'. ')+QUIZ[qi].e;
   updateScore();
 });
 function updateScore(){
@@ -1007,7 +1005,8 @@ paintThemeBtn();
       el.textContent='unavailable'; el.className='lv unavail'; });
     var a=document.getElementById('availText');
     if(a)a.innerHTML='<span class="unavail">League availability unavailable.</span> '+
-      'These figures are read live rather than written into the page, so nothing here is stale by default.';
+      'The current request failed. Reload to retry; saved examples are not a fallback for current coverage.';
+    document.getElementById('popGap').textContent='Current population comparison unavailable.';
     var g=document.getElementById('gAsOf'); if(g)g.textContent='as of unavailable';
   }
   Promise.all([
@@ -1023,11 +1022,11 @@ paintThemeBtn();
       el.textContent=(v==null)?'unavailable':(+v).toLocaleString(); });
     var gap=document.getElementById('popGap');
     if(gap){
-      var touched=+d.players_touched_ball, squads=+d.players_in_matchday_squads;
+      var touched=d.players_touched_ball==null?NaN:+d.players_touched_ball, squads=d.players_in_matchday_squads==null?NaN:+d.players_in_matchday_squads;
       gap.textContent=Number.isFinite(touched)&&Number.isFinite(squads)&&touched!==squads
         ?'Current source totals differ by '+Math.abs(touched-squads).toLocaleString()+
-          ' player'+(Math.abs(touched-squads)===1?'':'s')+'. These populations are not equivalent. The 30 September audit traced the one-player difference to Luis Barraza (376150): a non-touch card event, with no playing-minutes row. Future differences require a fresh ID check.'
-        :'The event-feed and playing-minutes totals currently match. Equal counts do not establish identical membership.';
+          ' player'+(Math.abs(touched-squads)===1?'':'s')+'. These populations are not equivalent. A fresh stable-ID comparison is needed to explain this difference.'
+        :Number.isFinite(touched)&&Number.isFinite(squads)?'The event-feed and playing-minutes totals currently match. Equal counts do not establish identical membership.':'Current population comparison unavailable.';
     }
     var g=document.getElementById('gAsOf');
     if(g)g.textContent='as of '+d.as_of_match_date;

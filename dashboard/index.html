@@ -423,6 +423,8 @@ async function init(){
     renderSegs();renderTable();loadLeaders();
   }catch(e){
     document.getElementById('sysLine').innerHTML='<span style="color:var(--red)">connection failed: '+esc(e.message)+'</span>';
+    document.querySelectorAll('.loading').forEach(function(node){node.textContent='Data unavailable. Reload to retry.';node.setAttribute('role','status');});
+    ['tblBody','ldBody'].forEach(function(id){var node=document.getElementById(id);if(node)node.innerHTML='<div role="status">Data unavailable. <button onclick="location.reload()">Retry</button></div>';});
   }
 }
 

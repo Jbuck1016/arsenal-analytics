@@ -39,8 +39,8 @@ def main() -> None:
             "modeled leagues use the governed canonical ingestion path")
     require("enqueue_rebuild_if_new_data" in worker,
             "a manual canonical ingest queues the normal analytics publisher")
-    require("CANONICAL.has(CUR.competition)?'events':'events_cup'" in page
-            and "CUR.canonical_game_id||CUR.game_id" in page,
+    require("CANONICAL.has(p.competition)?'events':'events_cup'" in page
+            and "p.canonical_game_id||p.game_id" in page,
             "Writing Lab reads from the table selected by ingestion scope")
     require("--watch" in worker and "scrape_status" in worker,
             "the local worker can process the browser queue continuously")

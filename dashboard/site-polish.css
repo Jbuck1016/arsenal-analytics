@@ -1,6 +1,6 @@
 /* Editorial cleanup: shared direction, scoped to avoid changing bespoke plots. */
-body.lab-polished{--bg:#f4f5f7;--paper:#fff;--ink:#151922;--muted:#4c5666;--line:#cdd3dc;--acid:#145bbb;--cyan:#006f79;--sans:'Segoe UI',sans-serif;--serif:Georgia,serif;background:var(--bg);font-family:var(--sans)}
-html.dark body.lab-polished{--bg:#0d1420;--paper:#17202d;--ink:#f7f9fc;--muted:#c0ccdc;--line:#4b5b70;--acid:#72b6ff;--cyan:#64d7df}
+body.lab-polished{--paper:var(--bg2);--ink:var(--text);--muted:var(--text2);--line:var(--border);--acid:#145bbb;--cyan:#006f79;--sans:var(--f-body);--serif:Georgia,serif;background:var(--bg);font-family:var(--sans)}
+html.dark body.lab-polished{--acid:#72b6ff;--cyan:#64d7df}
 .lab-polished .shell{max-width:1280px}
 .lab-polished .mast{border-top:0;gap:24px;padding-top:0}
 .lab-polished h1{font-size:clamp(30px,3vw,40px);line-height:1.08;letter-spacing:-.035em}

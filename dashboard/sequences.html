@@ -93,7 +93,7 @@ select option{background:var(--bg2);color:var(--text)}
 .ov-stat .v{font:700 16px/1 'JetBrains Mono',monospace;margin-top:5px;font-variant-numeric:tabular-nums}
 .split{display:grid;grid-template-columns:1.35fr .65fr;gap:12px;align-items:start}
 @media(max-width:1000px){.split{grid-template-columns:1fr}}
-@media(max-width:720px){
+@media(max-width:1024px){
   .hdr{height:auto;min-height:52px;flex-wrap:wrap;padding:9px 12px;gap:8px}
   .tabs{order:4;flex:1 1 100%;min-width:0;max-width:100%;margin-left:0;overflow-x:auto}
   .tabs .tab{flex-shrink:0}
@@ -148,8 +148,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="explain-body">
     <p><b>A sequence is one unbroken spell of possession by one team.</b> It begins when a
     side takes control of the ball and ends when they lose it, the game stops, or a set piece
-    intervenes. Every match breaks into roughly 250 of them, and the whole league into about
-    74,000. They are the unit this platform reasons in, because a possession is the smallest
+    intervenes. Coverage varies by competition and season; the current query selects up to twelve candidates.
+    They are the unit this platform reasons in, because a possession is the smallest
     thing that has a shape: a start, a route, and an outcome.</p>
 
     <p><b>Why possessions rather than passes.</b> Counting passes tells you volume. A
@@ -169,8 +169,8 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <li>A <b>star</b> marks the shot. Anything drawn faintly after it is a rebound or second
       phase, not part of the original move.</li>
       <li><b>xT</b> is the threat the possession added by moving the ball into more dangerous
-      areas. The league averages about 0.016 per possession, so anything above 0.4 is an
-      exceptional move.</li>
+      areas. No league-average benchmark is supplied by this view; compare the displayed
+      values within their stated source context, not against an invented baseline.</li>
     </ul>
 
     <h4>What the type filter means</h4>
@@ -356,7 +356,7 @@ async function init(){
     TEAMS=(await sbAll('team_sequence_agg',{select:'team',order:'team.asc'})).map(function(x){return x.team});
     TEAMSEL=TEAMS[0];
     document.getElementById('hdrSub').textContent='Available competitions \u00B7 pick a sequence, then find the nearest matches in the current data pool';
-    loadCandidates();
+    restoreSequenceState();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 
@@ -375,6 +375,7 @@ function controls(){
 }
 
 async function loadCandidates(){
+  const request=++sequenceGeneration;
   PICK=null;NB=[];OVERLAY=null;
   const main=document.getElementById('main');
   main.innerHTML=controls()+'<div class="sect"><div class="spin"></div></div>';
@@ -387,10 +388,13 @@ async function loadCandidates(){
         order:'xt_sum.desc',limit:'12',
         select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
     }
+    if(request!==sequenceGeneration)return;
     CANDS=rows;
     renderBrowse();
-  }catch(e){main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(request===sequenceGeneration)main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+' <button onclick="loadCandidates()">Retry</button></div>'}
 }
+let sequenceGeneration=0;
+function actionTrace(s){return '<details class="sect"><summary>Ordered action data · '+esc(tname(s.team))+' · '+(s.path||[]).length+' actions</summary><p>Coordinates use the provider’s 0–100 pitch; attack increases x. Dotted links between recorded actions are unobserved movement, not confirmed carries.</p><ol>'+(s.path||[]).map(function(p){return '<li>'+esc(p.t||'Action')+': ('+esc(p.x)+', '+esc(p.y)+') → '+(p.ex==null||p.ey==null?'end coordinate unavailable':'('+esc(p.ex)+', '+esc(p.ey)+')')+'</li>'}).join('')+'</ol></details>'}
 
 function cardHtml(s,opts){
   opts=opts||{};
@@ -429,20 +433,25 @@ function renderBrowse(){
 }
 
 async function choosePick(i){
+  const request=++sequenceGeneration;
+  if(!CANDS[i])return;
   PICK=CANDS[i];OVERLAY=null;SIM_ERROR=null;
   const main=document.getElementById('main');
   main.innerHTML=controls()+'<div class="sect"><div class="spin"></div>'+
     '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Finding similar sequences\u2026</div></div>';
   try{
     const hits=await sbRpc('similar_sequences',{p_seq:PICK.seq_uid,p_n:12});
+    if(request!==sequenceGeneration)return;
     const ids=hits.map(function(x){return '"'+x.seq_uid+'"'});
     const paths=await sbAll('v_league_sequences',{seq_uid:'in.('+ids.join(',')+')',
       select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum'});
+    if(request!==sequenceGeneration)return;
     const pm={};paths.forEach(function(p){pm[p.seq_uid]=p});
     NB=hits.map(function(h){return Object.assign({},pm[h.seq_uid]||{},{dist:h.dist})})
            .filter(function(x){return x.path});
     renderPick();
   }catch(e){
+    if(request!==sequenceGeneration)return;
     NB=[];SIM_ERROR=String(e.message||e);
     renderPick();
   }
@@ -458,7 +467,7 @@ function renderPick(){
       '<span class="pill">'+esc(tname(PICK.team))+'</span> '+
       '<span style="font:500 10px/1.4 Inter;color:var(--text3)">'+matchLabel(PICK.game_id,PICK.team)+
         (PICK.start_min!=null?' \u00B7 '+PICK.start_min+"'":'')+'</span>'+
-      big+
+      big+actionTrace(PICK)+
       '<div class="ov-stats">'+
         ovStat('xT',(+PICK.xt_sum).toFixed(3))+ovStat('Passes',PICK.n_pass)+
         ovStat('Ends',PICK.ended_goal?'goal':(shot?'shot':'open play'))+
@@ -490,7 +499,7 @@ function openOverlay(i){
     '<div class="viz-eyebrow">Two sequences, one pitch</div>'+
     '<div class="viz-title">'+esc(tname(PICK.team))+' vs '+esc(tname(OVERLAY.team))+' \u00B7 dist '+(+OVERLAY.dist).toFixed(2)+'</div>'+
     '<div class="viz-sub">The picked sequence in amber, its nearest match in blue, both drawn start to finish attacking left to right.</div>'+
-    pitchSVG(inner,'min(60vh,520px)')+
+    pitchSVG(inner,'min(60vh,520px)')+actionTrace(PICK)+actionTrace(OVERLAY)+
     '<div class="viz-leg">'+
       '<span><i style="background:var(--accent)"></i><b>'+esc(tname(PICK.team))+'</b> \u00B7 '+matchLabel(PICK.game_id,PICK.team)+(PICK.start_min!=null?' '+PICK.start_min+"'":'')+'</span>'+
       '<span><i style="background:var(--nb)"></i><b>'+esc(tname(OVERLAY.team))+'</b> \u00B7 '+matchLabel(OVERLAY.game_id,OVERLAY.team)+(OVERLAY.start_min!=null?' '+OVERLAY.start_min+"'":'')+'</span>'+
@@ -506,6 +515,15 @@ function openOverlay(i){
   window.scrollTo(0,0);
 }
 
+let restoringSequence=false;
+function sequenceState(){return {v:1,mode:MODE,tag:TAG,team:TEAMSEL,pick:PICK&&PICK.seq_uid,overlay:OVERLAY&&OVERLAY.seq_uid};}
+function saveSequenceState(){if(restoringSequence)return;const u=new URL(location.href);u.searchParams.set('state',JSON.stringify(sequenceState()));if(u.href!==location.href)history.pushState({},'',u);}
+async function restoreSequenceState(){let s;try{s=JSON.parse(new URLSearchParams(location.search).get('state')||'null')}catch(e){}restoringSequence=true;try{if(s&&s.v===1){MODE=s.mode==='team'?'team':'type';TAG=TYPES.some(function(t){return t[0]===s.tag})?s.tag:'ended_shot';if(TEAMS.includes(s.team))TEAMSEL=s.team;}await loadCandidates();if(s&&s.pick){let index=CANDS.findIndex(function(c){return c.seq_uid===s.pick});if(index<0){const rows=await sbAll('v_league_sequences',{seq_uid:'eq.'+s.pick,select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum',limit:'1'});if(rows[0]){CANDS.push(rows[0]);index=CANDS.length-1}}if(index>=0){await choosePick(index);if(s.overlay){const n=NB.findIndex(function(c){return c.seq_uid===s.overlay});if(n>=0)openOverlay(n)}}}}catch(e){document.getElementById('main').innerHTML=controls()+'<div class="empty">Could not restore this sequence. <button onclick="loadCandidates()">Browse available sequences</button></div>'}finally{restoringSequence=false}}
+const originalBrowse=renderBrowse;renderBrowse=function(){PICK=null;OVERLAY=null;sequenceGeneration++;originalBrowse();saveSequenceState()};
+const originalPick=renderPick;renderPick=function(){OVERLAY=null;originalPick();saveSequenceState()};
+const originalOverlay=openOverlay;openOverlay=function(i){originalOverlay(i);saveSequenceState()};
+window.addEventListener('popstate',restoreSequenceState);
+window.futScoutExportContext=function(){return {workspace:'Possession sequences',mode:MODE,type:TAG,team:TEAMSEL,picked:PICK&&PICK.seq_uid,comparison:OVERLAY&&OVERLAY.seq_uid,candidatesShown:CANDS.length,selection:'Up to twelve candidates ordered by xT; nearest twelve by trajectory distance',population:'Current API data pool; no league-average baseline supplied'};};
 init();
 
 function paintThemeBtn(){var b=document.getElementById('themeBtn');

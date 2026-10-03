@@ -7,3 +7,5 @@ _old_desktop_versions/
 __pycache__/
 *.log
 artifacts/transfermarkt/
+# Locally reproducible UX screenshots/downloads, including the baseline archive.
+/artifacts/ux-audit*/

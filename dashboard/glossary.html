@@ -82,6 +82,7 @@ a{color:inherit;text-decoration:none}
 
 .ex{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:820px){.ex{grid-template-columns:1fr}}
+@media(max-width:1024px){.hdr{height:auto;flex-wrap:wrap}.nav{flex-wrap:wrap;margin-left:0}.hdr-r{margin-left:auto}}
 @media(max-width:680px){
   .hdr{height:auto;min-height:52px;flex-wrap:wrap;padding:10px 12px;gap:8px}
   .nav{order:3;width:100%;margin-left:0;flex-wrap:wrap}
@@ -188,11 +189,11 @@ async function init(){
     r[1].forEach(function(e){EX[e.metric]=e});
     document.getElementById('hs').textContent=
       DEFS.length+' metrics · '+[...new Set(DEFS.map(function(d){return d.grp}))].length+
-      ' groups · examples drawn from players with 8+ nineties';
+      ' groups · saved reference population; example counts shown per metric';
     renderList();
     const q=new URLSearchParams(location.search).get('m');
-    open(q&&DEFS.some(function(d){return d.key===q})?q:DEFS[0].key);
-  }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed: '+esc(e.message)+'</div>'}
+    if(DEFS.length)open(q&&DEFS.some(function(d){return d.key===q})?q:DEFS[0].key);else document.getElementById('main').innerHTML='<div class="empty" role="status">No metric definitions available.</div>';
+  }catch(e){document.getElementById('hs').textContent='Reference unavailable';document.getElementById('main').innerHTML='<div class="empty" role="alert">Failed: '+esc(e.message)+' <button onclick="init()">Retry</button></div>'}
 }
 
 function renderList(){
@@ -234,11 +235,6 @@ async function open(k){
 
   if(e){
     const lo=+e.min_v, md=+e.med_v, hi=+e.max_v;
-    const bars=12;let sb='';
-    for(let i=0;i<bars;i++){
-      const t=(i+1)/bars;
-      sb+='<div class="sc-seg" style="height:'+(14+t*38)+'px;opacity:'+(0.14+t*0.6)+'"></div>';
-    }
     h+='<div class="blk"><div class="blk-h">Where it sits in the league</div><div class="blk-b">'+
       '<div class="stat-row">'+
         '<div class="st"><div class="st-l">Lowest</div><div class="st-v">'+fmt(lo)+'</div></div>'+
@@ -246,8 +242,7 @@ async function open(k){
         '<div class="st"><div class="st-l">Highest</div><div class="st-v">'+fmt(hi)+'</div></div>'+
         '<div class="st"><div class="st-l">Players</div><div class="st-v" style="color:var(--dim)">'+e.n+'</div></div>'+
       '</div>'+
-      '<div class="scale">'+sb+'</div>'+
-      '<div class="sc-lbls"><span>'+fmt(lo)+'</span><span>'+fmt(hi)+'</span></div>'+
+      '<p>Observed minimum, median and maximum across '+esc(e.n)+' qualifying players. These summaries do not describe the frequency distribution.</p>'+
       '</div></div>';
 
     const best=(d.higher_is_better===false)?
@@ -271,16 +266,16 @@ async function open(k){
     '<div class="warn">'+cav+'</div></div></div>';
 
   h+='<div class="blk"><div class="blk-h">How to read it</div><div class="blk-b"><div class="read">'+
-     'Every value on the player pages is shown two ways: the <b>raw number</b> per 90 minutes, and a '+
+     'Player metrics retain their stated units: per 90, percentages, seconds or counts. Eligible metrics also show a '+
      '<b>percentile</b> against the same role. A striker on 0.6 xG per 90 sits in a different distribution '+
-     'from a centre-back, so the percentile is what makes them comparable. Percentiles need 6 or more '+
-     'nineties; below that the sample is too small and the metric shows as unranked.'+
+     'from a centre-back. Read the role, league and qualifying sample on the profile. The repository contains distinct three- and six-ninety percentile views; eligibility depends on the data source, not one universal site threshold. Separate reference and sequence samples also differ.'+
      '</div></div></div></div>';
 
   document.getElementById('main').innerHTML=h;
   document.getElementById('main').scrollTop=0;
-  history.replaceState(null,'','?m='+encodeURIComponent(k));
+  if(new URLSearchParams(location.search).get('m')!==k)history.pushState(null,'','?m='+encodeURIComponent(k));
 }
+window.addEventListener('popstate',function(){const key=new URLSearchParams(location.search).get('m');if(DEFS.some(d=>d.key===key))open(key);});
 
 function exCard(label,p,unit){
   if(!p||!p.n)return '<div class="ex-c"><div class="ex-l">'+label+'</div><div class="ex-m" style="margin-top:9px">no qualifying player</div></div>';

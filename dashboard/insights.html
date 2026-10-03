@@ -127,7 +127,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
         <a href="guide.html">Guide</a>
         <a href="methodology.html">Method</a>
       </nav>
-      <div class="tbtn" id="themeBtn" title="Toggle theme">☾</div>
+      <button type="button" class="tbtn" id="themeBtn" aria-label="Toggle light or dark theme" title="Toggle theme">☾</button>
     </div>
     <div class="sys-line" id="sysLine">reading insights…</div>
   </div>
@@ -251,6 +251,7 @@ function visible(){
 }
 
 function render(){
+  const u=new URL(location);['league','team','lens'].forEach(k=>u.searchParams.set(k,STATE[k]));if(u.href!==location.href)history.replaceState(null,'',u);
   var rows=visible();
   var host=document.getElementById('content'); host.innerHTML='';
   SECTIONS.forEach(function(s){
@@ -279,8 +280,8 @@ function render(){
   }
   if(!host.children.length){
     var why = STATE.team!=='all'
-      ? esc(STATE.team)+' isn\'t flagged by any current detector.<br>'
-        +'That means nothing about them sits far enough from the league norm to be worth calling out yet.'
+      ? 'No published insight matches these filters for '+esc(STATE.team)+'.<br>'
+        +'This does not establish average performance: coverage or the selected filters may exclude relevant evidence. Try clearing filters or inspect the team profile.'
       : 'no insights match this filter.';
     host.innerHTML='<div class="empty">'+why+'</div>';
   }
@@ -293,6 +294,7 @@ function render(){
 
 function buildTeamSelect(){
   var counts={};
+  Object.keys(DIR).forEach(function(team){if(inLeague(team))counts[team]=0;});
   ALL.forEach(function(d){ if(d.team&&inLeague(d.team)) counts[d.team]=(counts[d.team]||0)+1; });
   var teams=Object.keys(counts).sort();
   var sel=document.getElementById('teamSel');
@@ -306,12 +308,13 @@ function buildTeamSelect(){
 document.getElementById('filter').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(!b) return;
   STATE.lens=b.dataset.f;
+  pushInsightsState();
   document.querySelectorAll('#filter button').forEach(function(x){
     x.classList.toggle('on', x.dataset.f===STATE.lens)});
   render();
 });
 document.getElementById('teamSel').addEventListener('change',function(e){
-  STATE.team=e.target.value; render();
+  STATE.team=e.target.value;pushInsightsState(); render();
 });
 function buildLeagueSelect(){
   var sel=document.getElementById('lgSel');
@@ -326,6 +329,7 @@ function buildLeagueSelect(){
     STATE.league=e.target.value;
     try{localStorage.setItem('leagueScope',STATE.league)}catch(err){}
     STATE.team='all';
+    pushInsightsState();
     buildTeamSelect(); render();
   });
 }
@@ -337,9 +341,7 @@ document.getElementById('themeBtn').addEventListener('click',function(){
   try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}
   paintThemeBtn();
 });
-document.getElementById('filter').addEventListener('click',function(e){
-  var b=e.target.closest('button'); if(b) applyFilter(b.dataset.f);
-});
+function pushInsightsState(){const u=new URL(location);['league','team','lens'].forEach(k=>u.searchParams.set(k,STATE[k]));if(u.href!==location.href)history.pushState(null,'',u);}
 
 async function init(){
   paintThemeBtn();
@@ -355,14 +357,16 @@ async function init(){
     }catch(e){LEAGUES=[]}
     buildLeagueSelect();
     buildTeamSelect();
-    render();
+    restoreInsightsState();render();
     var gen = ALL.length && ALL[0].generated_at ? new Date(ALL[0].generated_at) : null;
     document.getElementById('footGen').textContent = gen ? ('built '+gen.toISOString().slice(0,10)) : '';
   }catch(err){
-    document.getElementById('content').innerHTML='<div class="empty">could not load insights ('+esc(err.message)+')</div>';
+    document.getElementById('content').innerHTML='<div class="empty" role="alert">could not load insights ('+esc(err.message)+') <button onclick="init()">Retry</button></div>';
     document.getElementById('sysLine').textContent='load failed';
   }
 }
+function restoreInsightsState(){const q=new URL(location).searchParams;['league','team','lens'].forEach(k=>{const v=q.get(k);if(v)STATE[k]=v});if(!LEAGUES.some(l=>l.league===STATE.league))STATE.league='ALL';buildTeamSelect();document.getElementById('teamSel').value=STATE.team;document.getElementById('lgSel').value=STATE.league;document.querySelectorAll('#filter button').forEach(b=>b.classList.toggle('on',b.dataset.f===STATE.lens));}
+window.addEventListener('popstate',()=>{restoreInsightsState();render()});
 init();
 </script>
 </body>

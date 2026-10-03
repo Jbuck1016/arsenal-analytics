@@ -82,13 +82,14 @@ li:before{content:'—';position:absolute;left:0;color:var(--amber)}
   <div class="mark"></div>
   <div><h1>Metrics Validation</h1></div>
   <div class="nav">
-    <button onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){};this.innerHTML=d?'&#9728;':'&#9789;'">&#9728;</button>
+    <button aria-label="Toggle light/dark theme" onclick="var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('theme',d?'dark':'light')}catch(e){};this.innerHTML=d?'&#9728;':'&#9789;'">&#9728;</button>
     <a href="index.html">&larr; Site</a>
   </div>
   <div class="sub" id="liveSub">loading current figures&hellip;</div>
 </div>
 
-<p class="lede">Not everything here is validated the same way, and presenting it as if it were is how a document like this loses credibility. Claims are graded on four tiers, strongest first. This is the same framework used on the <a href="methodology.html">Methodology</a> page, which is canonical: where the two ever disagree, Methodology is correct and this page is stale.</p>
+<main id="validationContent">
+<p class="lede">Claims are graded by the evidence supporting them. Read the <a href="methodology.html">Methodology</a> and <a href="evidence-contracts.html">source contracts</a> alongside each diagnostic. A disagreement needs a source-and-version check, not automatic preference for one page. Static face-validity examples are historical illustrations, not refreshed rankings; unless dated explicitly, their snapshot date was not recorded.</p>
 
 <div class="methods">
   <div class="m"><b>Tier 1 · Reconciled against ground truth</b><span>Checked against numbers this platform did not produce. If these fail, something is genuinely broken.</span></div>
@@ -269,17 +270,17 @@ workflow that logs who checked refreshed outputs and when.
 
 <h2><span class="n">09</span> Known limitations</h2>
 <ul>
-<li><b>Pool size.</b> Percentiles and style z-scores are computed against 30 MLS teams and roughly 15–30 players per position, a smaller pool than a cross-league reference. Extreme values are signal; near-average ones should be read lightly.</li>
+<li><b>Pool size.</b> The historical MLS examples used 30 teams and roughly 15–30 players per position. Current comparisons depend on the league, role, source and eligibility filters displayed with the chart. Extreme values in a small pool are not automatically reliable signals.</li>
 <li><b>Tempo resolution.</b> Event timestamps are whole-second, so a single player's hold time is coarse. Averaged over 1,000+ involvements it separates holders from quick-releasers reliably, but it is not sub-second precise.</li>
 <li><b>Proxy definitions.</b> A few metrics (hold-up, support angle, wide triangles) are transparent proxies for concepts the raw data doesn't label directly. Their exact rules are published in the glossary so they can be judged on their own terms rather than assumed to match anyone else's.</li>
-<li><b>Face validity is not ground truth.</b> Only xG is checked against outcomes, and only
-in-sample. <b>xT is not validated at all</b>: it uses a borrowed grid that was never fitted or
+<li><b>Face validity is not ground truth.</b> xG has in-sample diagnostics and the temporal holdout reported above when available; neither is external validation. <b>The xT grid is not validated on these competitions</b>: it uses a borrowed grid that was never fitted or
 externally checked on these competitions, so it sits alongside everything else that rests on face
 validity rather than being exempt from that limitation. These checks confirm metrics behave as
 designed and agree with each other and with football sense. They do not claim to be externally
 verified truth.</li>
 </ul>
 
+</main>
 <div class="foot">
 data · whoscored · xg calibrated against outcomes · xt grid borrowed, not fitted here · sequences benchmarked vs published reference · <span id="footAsOf">as of …</span><br>
 generated from the live database · figures reproducible from the platform
@@ -298,7 +299,7 @@ generated from the live database · figures reproducible from the platform
       '04 to 07 is not.';}
     var cal=document.getElementById('xgCal');
     if(cal){cal.innerHTML='<span class="unavail">Calibration figures unavailable.</span> '+
-      'They are read live rather than written into the page, so nothing here is out of date by default.';}
+      'The request failed. Reload to retry; historical examples do not substitute for current diagnostic results.';}
     var f=document.getElementById('footAsOf'); if(f)f.textContent='as of unavailable';
   }
   fetch(SB+'/rest/v1/mv_site_summary?select=*',{headers:HD})
@@ -314,7 +315,7 @@ generated from the live database · figures reproducible from the platform
       document.getElementById('xgCal').innerHTML=
         'Across '+n(d.shots_non_pen)+' non-penalty shots the model predicts <b>'+
         n(d.xg_predicted)+'</b> goals against <b>'+n(d.goals_actual)+'</b> actually scored, an error of <b>'+
-        err.toFixed(1)+'%</b>. Figures are read live from the database, so this cannot go stale.';
+        err.toFixed(1)+'%</b>. Retrieved from database views; freshness depends on the recorded source date and their last refresh.';
       document.getElementById('footAsOf').textContent='as of '+d.as_of_match_date;
     })
     .catch(fail);
@@ -336,7 +337,7 @@ generated from the live database · figures reproducible from the platform
           d.sparse_threshold+' shots ('+(+d.sparse_shot_share_pct).toFixed(2)+'% of shots)');
     })
     .catch(function(){
-      ['msShots','msBins','msDistinct','msRange','msSparse','msStatus'].forEach(function(id){
+      ['msShots','msBins','msDistinct','msRange','msSparse'].forEach(function(id){
         var el=document.getElementById(id); if(!el)return;
         el.textContent='unavailable';
         el.className=(el.className+' unavail').trim();

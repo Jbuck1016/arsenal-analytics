@@ -2,25 +2,24 @@
   'use strict';
 
   var DESTINATIONS = [
-    ['Explore matches', [
-      ['Home', 'index.html'],
+    ['Home', [['Home', 'index.html']]],
+    ['Analyze', [
       ['Match analysis', 'match.html'],
-      ['Possession sequences', 'sequences.html'],
-      ['Quick ingest', 'quick-ingest.html']
+      ['Possession sequences', 'sequences.html']
     ]],
-    ['Scout players & teams', [
+    ['Scout', [
       ['Player fingerprints', 'players.html'],
       ['Team profiles', 'teams.html'],
       ['Scouting insights', 'insights.html'],
       ['Player search', 'search.html'],
       ['Market values', 'market-values.html']
     ]],
-    ['Forecast & investigate', [
+    ['Models', [
       ['Domestic forecasts', 'model-review.html'],
       ['Model laboratory', 'model-lab.html'],
-      ['Match review', 'match-review.html'],
-      ['Writing lab', 'writing-lab.html']
+      ['Worked match review', 'match-review.html']
     ]],
+    ['Write', [['Writing lab', 'writing-lab.html'], ['Quick ingest', 'quick-ingest.html']]],
     ['Learn', [
       ['Field guide', 'guide.html'],
       ['Metric reference', 'glossary.html'],
@@ -54,6 +53,9 @@
       '.fs-export-bar{display:flex;justify-content:flex-end;margin:0 0 10px}.fs-card-export{display:inline-flex;gap:5px;margin-left:auto}.fs-card-export button{padding:9px 10px;font-size:10.5px}' +
       '.fs-exporting{opacity:.62;pointer-events:none}.fs-export-stage{position:fixed;left:-20000px;top:0;width:1120px;padding:28px;background:var(--bg2,var(--paper,#fff));color:var(--text,var(--ink,#111));z-index:-1}' +
       '@media(max-width:720px){.fs-goto-panel{width:min(244px,calc(100vw - 16px))}.fs-goto-btn{padding:7px 8px}}';
+    style.textContent += '.fs-goto-panel,.fs-export-stage{background:var(--overlay,#fffdf8);color:var(--overlay-text,#16191f)}.fs-goto-panel a{color:var(--overlay-text,#16191f);min-height:32px;box-sizing:border-box;display:flex;align-items:center}.fs-goto-panel a:hover,.fs-goto-panel a:focus-visible,html.dark .fs-goto-panel a:hover,html.dark .fs-goto-panel a:focus-visible{background:var(--selection);color:var(--selection-text);outline-color:var(--focus)}@media(max-width:640px){.fs-goto-panel a{min-height:44px}}';
+    style.textContent += '.fs-export-stage table td,.fs-export-stage table th,.fs-export-stage .row,.fs-export-stage .row-lbl,.fs-export-stage .row-val,.fs-export-stage .row-pct{font-size:18px!important;line-height:1.45!important}.fs-export-stage .row{min-height:28px}.fs-export-stage table th{letter-spacing:.02em!important}.fs-export-stage table{table-layout:auto!important}';
+    style.textContent+='.fs-goto-panel a[aria-current="page"]{background:var(--selection);color:var(--selection-text)}.fs-export-stage *{animation:none!important;transition:none!important}.fs-export-stage .match{opacity:1!important;transform:none!important}.fs-export-stage .frow{font-size:18px!important;min-height:32px}.fs-export-stage .frow>span{overflow-wrap:anywhere}';
     document.head.appendChild(style);
   }
 
@@ -66,19 +68,16 @@
     if (currentFile() !== 'index.html') return;
     var modules = document.querySelector('.mods');
     if (!modules || modules.classList.contains('enhanced')) return;
-    var groups = [
-      ['Explore matches', 'Start with a fixture, its events, or a newly completed game.',
-        ['match.html', 'sequences.html', 'quick-ingest.html']],
-      ['Scout players & teams', 'Move from a profile to comparisons, patterns, and market context.',
-        ['players.html', 'teams.html', 'insights.html', 'search.html', 'market-values.html']],
-      ['Forecast & write', 'Review frozen forecasts, interrogate the model, or assemble an article.',
-        ['model-review.html', 'model-lab.html', 'writing-lab.html']],
-      ['Learn the data', 'Definitions and reading guides for every analysis surface.',
-        ['glossary.html', 'guide.html']]
-    ];
+    var groups = DESTINATIONS.filter(function(group){return group[0]!=='Home';}).map(function(group){return [group[0],'',group[1].map(function(item){return item[1];})];});
     var cards = Array.from(modules.querySelectorAll(':scope > .mod'));
     var byHref = new Map(cards.map(function (card) { return [card.getAttribute('href'), card]; }));
-    if (groups.some(function (group) { return group[2].some(function (href) { return !byHref.has(href); }); })) return;
+    DESTINATIONS.forEach(function(group){group[1].forEach(function(item){
+      if(item[1]==='index.html')return;
+      var card=byHref.get(item[1]);
+      if(!card){card=document.createElement('a');card.className='mod';card.href=item[1];card.innerHTML='<h2>'+esc(item[0])+'</h2>';byHref.set(item[1],card);}
+      var title=card.querySelector('h2,h3,.mod-title,.mod-t');if(title)title.textContent=item[0];
+      var numbering=card.querySelector('.mod-k,.mod-num,.mod-i');if(numbering)numbering.remove();
+    });});
     groups.forEach(function (group, index) {
       var section = document.createElement('section');
       section.className = 'nav-cluster';
@@ -123,18 +122,14 @@
           return '<a href="' + item[1] + '"' + (item[1] === file ? ' aria-current="page"' : '') + '>' + esc(item[0]) + '</a>';
         }).join('');
     }).join('');
-    wrap.innerHTML = '<button type="button" class="fs-goto-btn" aria-haspopup="true" aria-expanded="false">Go to</button>' +
-      '<div class="fs-goto-panel" role="menu">' + links + '</div>';
+    wrap.innerHTML = '<button type="button" class="fs-goto-btn" aria-controls="fsDestinationLinks" aria-expanded="false">Go to</button>' +
+      '<nav class="fs-goto-panel" id="fsDestinationLinks" aria-label="All FutScout destinations">' + links + '</nav>';
     if (host.id === 'navMenu') host.replaceChildren(wrap);
     else host.appendChild(wrap);
     var button = wrap.querySelector('button');
     var panel = wrap.querySelector('.fs-goto-panel');
-    // Match the actual neighbouring controls instead of imposing a larger button.
-    var peer = Array.from(host.querySelectorAll('button,.navlink')).find(function(node){return !wrap.contains(node);});
-    if (peer) {
-      var peerStyle = getComputedStyle(peer);
-      ['height','minHeight','padding','fontSize','lineHeight','borderRadius'].forEach(function(key){button.style[key]=peerStyle[key];});
-    }
+    // Stable shared control size; never inherit geometry from an arbitrary neighbour.
+    button.style.cssText='min-height:32px;padding:7px 10px;font-size:12px';
 
     function place() {
       var rect = button.getBoundingClientRect();
@@ -191,11 +186,12 @@
 
   async function captureCard(card, format, button) {
     var label = exportLabel(card);
-    button.closest('.fs-card-export').classList.add('fs-exporting');
+    var control=button&&(button.closest('.fs-card-export')||button);
+    if(control)control.classList.add('fs-exporting');
     try {
       await ensureExportLibraries(format);
     } catch (error) {
-      button.closest('.fs-card-export').classList.remove('fs-exporting');
+      if(control)control.classList.remove('fs-exporting');
       alert('Export unavailable: ' + error.message);
       return;
     }
@@ -207,12 +203,16 @@
       node.width=sourceCanvases[index].width; node.height=sourceCanvases[index].height;
       node.getContext('2d').drawImage(sourceCanvases[index],0,0);
     });
-    var context = Array.from(document.querySelectorAll('select')).filter(function(node){return node.getClientRects().length;}).map(function(node){return Array.from(node.selectedOptions).map(function(option){return option.textContent.trim();}).join(', ');}).filter(Boolean).join(' · ');
-    clone.querySelectorAll('.fs-card-export,.fs-export-bar,.viz-exp,button,input,select').forEach(function (node) { node.remove(); });
+    var metadata={};
+    try{metadata=card.dataset.exportContext?JSON.parse(card.dataset.exportContext):(typeof window.futScoutExportContext==='function'?window.futScoutExportContext(card):{});}catch(error){metadata={contextError:'Context unavailable; do not infer full-season scope'};}
+    var context=Object.entries(metadata||{}).map(function(pair){return pair[0]+': '+(typeof pair[1]==='object'?JSON.stringify(pair[1]):pair[1]);}).join(' · ');
+    clone.querySelectorAll('.fs-card-export,.fs-export-bar,.viz-exp,[data-export],input,select').forEach(function (node) { node.remove(); });
+    clone.querySelectorAll('button').forEach(function(node){var text=document.createElement('span');text.innerHTML=node.innerHTML;text.className=node.className;text.style.cssText=node.style.cssText;node.replaceWith(text);});
+    clone.querySelectorAll('details').forEach(function(node){node.open=true;});
     stage.appendChild(clone);
     var footer = document.createElement('p');
-    footer.style.cssText='font:14px/1.5 sans-serif;border-top:1px solid currentColor;padding-top:12px;overflow-wrap:anywhere';
-    footer.textContent='FutScout · '+label+' · '+(context ? 'Selected context: '+context+' · ' : '')+'Source page: '+location.origin+location.pathname+' · Exported '+new Date().toISOString()+' (export time, not data freshness).';
+    footer.style.cssText='font:18px/1.5 sans-serif;border-top:1px solid currentColor;padding-top:12px;overflow-wrap:anywhere';
+    footer.textContent='FutScout · '+label+' · '+(context ? context+' · ' : 'Scope is as labelled in this view; additional provenance not supplied. · ')+'Source page: '+location.href+' · Exported '+new Date().toISOString()+' (export time, not data freshness).';
     stage.appendChild(footer);
     document.body.appendChild(stage);
     clone.querySelectorAll('*').forEach(function (node) {
@@ -225,9 +225,11 @@
     });
     clone.style.maxHeight = 'none';
     clone.style.overflow = 'visible';
+    // Wide tables must expand the capture surface, not disappear beyond its edge.
+    stage.style.width=Math.max(1120,stage.scrollWidth)+'px';
     try {
       var bg = getComputedStyle(stage).backgroundColor;
-      var canvas = await window.html2canvas(stage, {backgroundColor: bg, scale: 2, useCORS: true, windowWidth: stage.scrollWidth, height: stage.scrollHeight, windowHeight: stage.scrollHeight,
+      var canvas = await window.html2canvas(stage, {backgroundColor: bg, scale: 2, useCORS: true, width:stage.scrollWidth, windowWidth: stage.scrollWidth, height: stage.scrollHeight, windowHeight: stage.scrollHeight,
         onclone: function(doc) {
           // html2canvas 1.4 cannot parse modern color()/oklch() output from color-mix.
           // Let the browser resolve those colours, then serialize an sRGB equivalent.
@@ -255,19 +257,29 @@
       } else {
         if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('PDF library is unavailable');
         var jsPDF = window.jspdf.jsPDF;
-        var landscape = canvas.width >= canvas.height;
+        var landscape = canvas.width / canvas.height >= 1.45;
         var pdf = new jsPDF({orientation: landscape ? 'l' : 'p', unit: 'pt', format: 'a4'});
         var pw = pdf.internal.pageSize.getWidth();
         var ph = pdf.internal.pageSize.getHeight();
         var ratio = (pw - 32) / canvas.width;
         var sliceHeight = Math.floor((ph - 48) / ratio);
-        for (var offset=0,page=1;offset<canvas.height;offset+=sliceHeight,page++) {
+        var stageTop=stage.getBoundingClientRect().top;
+        var boundaries=Array.from(stage.querySelectorAll('tr,.rank-row,.frow,.match')).map(function(node){var r=node.getBoundingClientRect();return {top:Math.round((r.top-stageTop)*2),bottom:Math.round((r.bottom-stageTop)*2)};});
+        var headers=Array.from(stage.querySelectorAll('table')).map(function(table){var head=table.querySelector('thead');if(!head)return null;var h=head.getBoundingClientRect(),t=table.getBoundingClientRect();return {top:Math.round((h.top-stageTop)*2),height:Math.round(h.height*2),bottom:Math.round((t.bottom-stageTop)*2)};}).filter(Boolean);
+        for (var offset=0,page=1;offset<canvas.height;page++) {
           if (offset) pdf.addPage();
+          var header=offset?headers.find(function(h){return offset>h.top+h.height&&offset<h.bottom;}):null;
+          var repeat=header?header.height:0;
+          var end=Math.min(canvas.height,offset+sliceHeight-repeat);
+          var crossing=boundaries.find(function(row){return row.top>offset&&row.top<end&&row.bottom>end;});
+          if(crossing)end=crossing.top;
           var slice=document.createElement('canvas');
-          slice.width=canvas.width; slice.height=Math.min(sliceHeight,canvas.height-offset);
+          slice.width=canvas.width; slice.height=end-offset;
           slice.getContext('2d').drawImage(canvas,0,offset,canvas.width,slice.height,0,0,canvas.width,slice.height);
-          pdf.addImage(slice.toDataURL('image/jpeg',.92),'JPEG',16,16,slice.width*ratio,slice.height*ratio,undefined,'FAST');
+          if(header){var headCanvas=document.createElement('canvas');headCanvas.width=canvas.width;headCanvas.height=header.height;headCanvas.getContext('2d').drawImage(canvas,0,header.top,canvas.width,header.height,0,0,canvas.width,header.height);pdf.addImage(headCanvas.toDataURL('image/jpeg',.92),'JPEG',16,16,headCanvas.width*ratio,headCanvas.height*ratio,undefined,'FAST');}
+          pdf.addImage(slice.toDataURL('image/jpeg',.92),'JPEG',16,16+repeat*ratio,slice.width*ratio,slice.height*ratio,undefined,'FAST');
           pdf.setFontSize(9); pdf.text('FutScout · '+page,16,ph-12);
+          offset=end;
         }
         pdf.save(base + '.pdf');
       }
@@ -275,8 +287,17 @@
       alert('Export failed: ' + error.message);
     } finally {
       stage.remove();
-      button.closest('.fs-card-export').classList.remove('fs-exporting');
+      if(control)control.classList.remove('fs-exporting');
     }
+  }
+
+  window.FutScoutExports={capture:captureCard};
+  function exportTable(card){
+    var rows=Array.from(card.querySelectorAll('table tr')).map(function(row){return Array.from(row.querySelectorAll('th,td')).map(function(cell){return '"'+cell.textContent.trim().replace(/"/g,'""')+'"';}).join(',');});
+    rows.unshift('"FutScout source","'+location.href.replace(/"/g,'""')+'"');
+    var meta=typeof window.futScoutExportContext==='function'?window.futScoutExportContext(card):{};
+    rows.unshift('"Context","'+JSON.stringify(meta).replace(/"/g,'""')+'"');
+    var url=URL.createObjectURL(new Blob(['\uFEFF'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=safeName(exportLabel(card))+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},1000);
   }
 
   function exportable(card) {
@@ -291,9 +312,10 @@
       var controls = document.createElement('div');
       controls.className = 'fs-card-export';
       controls.innerHTML = '<button type="button" data-format="png">PNG</button><button type="button" data-format="pdf">PDF</button>';
+      if(card.querySelector('table'))controls.insertAdjacentHTML('beforeend','<button type="button" data-format="csv">CSV</button>');
       controls.querySelectorAll('button').forEach(function (button) {
         button.setAttribute('aria-label', 'Download ' + exportLabel(card) + ' as ' + button.dataset.format.toUpperCase());
-        button.addEventListener('click', function () { captureCard(card, button.dataset.format, button); });
+        button.addEventListener('click', function () { if(button.dataset.format==='csv')exportTable(card);else captureCard(card, button.dataset.format, button); });
       });
       var heading = card.querySelector(':scope > .sect-h');
       if (heading) heading.appendChild(controls);
@@ -307,9 +329,18 @@
   }
 
   function init() {
+    if(!document.querySelector('link[href*="theme.css"]')){var theme=document.createElement('link');theme.rel='stylesheet';theme.href='theme.css';document.head.appendChild(theme);}
     addStyles();
     groupHomeNavigation();
     installGoto();
+    if(['methodology.html','guide.html','validation.html','evidence-contracts.html'].includes(currentFile())){
+      document.querySelectorAll('table').forEach(function(table){if(table.parentElement.classList.contains('fs-table-scroll'))return;var region=document.createElement('div');region.className='fs-table-scroll';region.style.cssText='max-width:100%;overflow:auto';region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label','Scrollable evidence table');table.before(region);region.appendChild(table);});
+    }
+    if(currentFile()==='evidence-contracts.html'){
+      document.documentElement.classList.toggle('dark',localStorage.getItem('theme')==='dark');
+      var themeButton=document.createElement('button');themeButton.type='button';themeButton.textContent='Light / dark';themeButton.onclick=function(){var dark=document.documentElement.classList.toggle('dark');localStorage.setItem('theme',dark?'dark':'light');};document.querySelector('body > nav').appendChild(themeButton);
+      document.body.style.background='var(--bg)';
+    }
     enhanceExports();
     if (document.body) {
       var queued = false;

@@ -247,7 +247,28 @@ const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Co
 function tname(t){return TEAM_DISPLAY[t]||t||''}
 const TPAL={ok:'var(--viz-positive)',fail:'var(--viz-negative)',pass:'var(--viz-positive)',prog:'var(--viz-progress)',carry:'var(--viz-carry)',box:'var(--viz-box)'};
 let RKT={metric:'ppda'};
-let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null;
+let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null,TFIXTURES=[];
+let teamViewRevision=0;
+function teamRequest(){const revision=teamViewRevision,team=SEL,tab=TAB,filters=JSON.stringify([LG,MP,RKT,LM]);return ()=>revision===teamViewRevision&&team===SEL&&tab===TAB&&filters===JSON.stringify([LG,MP,RKT,LM]);}
+function displayMetric(value,decimals=1,suffix=''){return value==null||!Number.isFinite(Number(value))?'—':Number(value).toFixed(decimals)+suffix;}
+let restoringTeamURL=false;
+function writeTeamURL(){
+  if(restoringTeamURL||!SEL)return;
+  const u=new URL(location.href);u.searchParams.set('state','1');u.searchParams.set('team',SEL);u.searchParams.set('tab',TAB);u.searchParams.set('league',LG);
+  for(const k of ['kind','mode','outcome','third','lane','defMode'])if(MP[k]!=null)u.searchParams.set('map_'+k,MP[k]);
+  u.searchParams.set('metric',RKT.metric);u.searchParams.set('x',LM.x);u.searchParams.set('y',LM.y);
+  if(u.href!==location.href)history.pushState(null,'',u);
+}
+function restoreTeamURL(){
+  const p=new URLSearchParams(location.search);
+  if(p.has('league'))LG=p.get('league')==='ALL'||LEAGUES.some(l=>l.league===p.get('league'))?p.get('league'):'ALL';
+  if(teamOf(p.get('team')))SEL=p.get('team');
+  if(TABS.includes(p.get('tab')))TAB=p.get('tab');
+  const allowed={kind:MAPS.map(m=>m.k),mode:['pattern','events'],outcome:['all','ok','fail'],third:['','def','mid','att'],lane:['','L','C','R'],defMode:['wins','interventions','failed']};
+  Object.entries(allowed).forEach(([k,values])=>{if(values.includes(p.get('map_'+k)))MP[k]=p.get('map_'+k);});
+  for(const [object,key,param] of [[RKT,'metric','metric'],[LM,'x','x'],[LM,'y','y']])if(tdefOf(p.get(param)))object[key]=p.get(param);
+}
+window.addEventListener('popstate',()=>{if(!TEAMS.length)return;restoringTeamURL=true;restoreTeamURL();renderLeaguePicker();renderTabs();renderList();updateHdr();draw();restoringTeamURL=false;});
 
 async function sbAll(t,p){p=p||{};const PG=1000;let all=[],off=0;
   while(true){const u=new URL(SB+'/rest/v1/'+t);
@@ -327,7 +348,7 @@ async function init(){
       // the Rankings highlight, so both stop defaulting to one club.
       SEL=(scopedTeams()[0]||{}).team||null;
     }
-    renderLeaguePicker();renderTabs();renderList();wireTips();updateHdr();draw();
+    restoreTeamURL();renderLeaguePicker();renderTabs();renderList();wireTips();updateHdr();draw();
   }catch(e){document.getElementById('main').innerHTML='<div class="empty">Failed to load: '+esc(e.message)+'</div>'}
 }
 /* Page tabs only. Site nav moved to the header menu, so this strip holds seven
@@ -361,6 +382,8 @@ function pick(t){SEL=t;renderList();draw()}
 function openProfile(t){SEL=t;TAB='Profile';renderTabs();renderList();draw()}
 
 async function draw(){
+  teamViewRevision++;
+  writeTeamURL();
   const main=document.getElementById('main');
   if(TAB==='League Map')return renderLeagueMap();
   if(!SEL)return;
@@ -390,7 +413,7 @@ function goAttrs(key,label){
 /* One metric row, used by the profile panels and by the channel block, so the
    two cannot drift apart. */
 function metricRow(d,r){
-  const pc=r?+r.pct:null,tc=tier(pc),go=rankable(d.key);
+    const pc=r?.pct==null?null:+r.pct,tc=tier(pc),go=rankable(d.key);
   const body='<div class="row-lbl">'+esc(d.label)+'</div>'+
     '<div class="row-val">'+(r?fmt(r.value,d.unit):'\u2014')+'</div>'+
     '<div class="bar"><div class="bar-f" style="width:'+(pc==null?0:pc)+'%;background:'+tc.c+'"></div></div>'+
@@ -402,18 +425,18 @@ function metricRow(d,r){
 }
 function teamHead(t){
   const p=PCT[t.team]||{};
-  const gd=(t.goals_pg-t.goals_against_pg);
+  const gd=t.goals_pg==null||t.goals_against_pg==null?null:t.goals_pg-t.goals_against_pg;
   return '<div class="tcard"><div style="flex:1;min-width:230px">'+
     '<div class="tname">'+esc(tname(t.team))+'</div>'+
-    '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' \u00B7 '+mcount(t.matches)+' \u00B7 '+(+t.goals_pg).toFixed(2)+' scored / '+
-    (+t.goals_against_pg).toFixed(2)+' conceded per game \u00B7 GD '+(gd>=0?'+':'')+gd.toFixed(2)+'</div></div></div>'+
+    '<div class="tmeta">'+esc(lgName(lgOf(t.team)))+' \u00B7 '+mcount(t.matches)+' \u00B7 '+displayMetric(t.goals_pg,2)+' scored / '+
+    displayMetric(t.goals_against_pg,2)+' conceded per game \u00B7 GD '+(gd!=null&&gd>=0?'+':'')+displayMetric(gd,2)+'</div></div></div>'+
     '<div class="kpis">'+
-    kpi('Possession',(+t.possession_pct).toFixed(1)+'%',p.possession_pct,'','possession_pct')+
-    kpi('Field tilt',(+t.field_tilt).toFixed(1)+'%',p.field_tilt,'','field_tilt')+
-    kpi('PPDA',(+t.ppda).toFixed(2),p.ppda,'lower = presses harder','ppda')+
-    kpi('Line height',(+t.def_height).toFixed(1),p.def_height,'','def_height')+
-    kpi('Directness',(+t.directness).toFixed(2)+' m',p.directness,'','directness')+
-    kpi('Shots',(+t.shots_pg).toFixed(1),p.shots_pg,'','shots_pg')+
+    kpi('Possession',displayMetric(t.possession_pct,1,'%'),p.possession_pct,'','possession_pct')+
+    kpi('Field tilt',displayMetric(t.field_tilt,1,'%'),p.field_tilt,'','field_tilt')+
+    kpi('PPDA',displayMetric(t.ppda,2,''),p.ppda,'lower = presses harder','ppda')+
+    kpi('Line height',displayMetric(t.def_height,1,''),p.def_height,'','def_height')+
+    kpi('Directness',displayMetric(t.directness,2,' m'),p.directness,'','directness')+
+    kpi('Shots',displayMetric(t.shots_pg,1,''),p.shots_pg,'','shots_pg')+
     '</div>';
 }
 function kpi(l,v,p,sub,key){
@@ -447,9 +470,10 @@ function metricOpts(sel){let o='',g='';
     o+='<option value="'+d.key+'"'+(sel===d.key?' selected':'')+'>'+esc(d.label)+'</option>'});
   return o+'</optgroup>'}
 function renderLeagueMap(){
+  writeTeamURL();
   const dx=tdefOf(LM.x)||{},dy=tdefOf(LM.y)||{};
   const scope=scopedTeams(),eligible=scope.filter(function(t){return +t.matches>=6});
-  const pts=eligible.map(function(t){return{team:t.team,x:+t[LM.x],y:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
+  const pts=eligible.map(function(t){return{team:t.team,x:t[LM.x]==null?NaN:+t[LM.x],y:t[LM.y]==null?NaN:+t[LM.y]}}).filter(function(p){return !isNaN(p.x)&&!isNaN(p.y)});
   if(!pts.length){document.getElementById('main').innerHTML='<div class="sect"><div class="empty" style="height:260px">League Map unavailable until teams reach six matches</div></div>';return}
   const W=1080,H=520,MT=22,MR=34,MB=54,ML=82;
   const xs=pts.map(function(p){return p.x}),ys=pts.map(function(p){return p.y});
@@ -519,13 +543,15 @@ function renderLeagueMap(){
     '<div class="viz-sub">'+esc(lgScopeLabel())+' · '+pts.length+' eligible teams · raw values · dashed guides are displayed-sample medians.</div>'+s+
     '<div class="foot">'+pts.length+' teams meet the six-match minimum in the current scope'+(scope.length>eligible.length?' · '+(scope.length-eligible.length)+' excluded below threshold':'')+'. The highlighted team and axis extremes are labelled; hover any dot for exact values. '+
     (LM.x==='ppda'&&LM.y==='field_tilt'?'Quadrants are named only for this defensible pairing and describe style, not quality. ':'')+
-    'Remember PPDA is inverted in meaning: left means pressing harder.</div></div>';
+    'Remember PPDA is inverted in meaning: left means pressing harder.</div><details><summary>Exact values for '+pts.length+' teams</summary><div style="overflow:auto" tabindex="0"><table><thead><tr><th>Team</th><th>'+esc(dx.label)+' ('+esc(dx.unit||'raw')+')</th><th>'+esc(dy.label)+' ('+esc(dy.unit||'raw')+')</th></tr></thead><tbody>'+pts.map(p=>'<tr><td><a href="teams.html?team='+encodeURIComponent(p.team)+'">'+esc(tname(p.team))+'</a></td><td>'+fmt(p.x,dx.unit)+'</td><td>'+fmt(p.y,dy.unit)+'</td></tr>').join('')+'</tbody></table></div></details></div>';
 }
 async function renderMatches(t){
+  const current=teamRequest();
   try{
     const rows=await sbAll('mv_team_match',{team:'eq.'+encodeURIComponent(t.team).replace(/%20/g,' '),select:'*'});
     const gids=rows.map(function(r){return r.game_id});
-    const ms=await sbAll('v_league_matches',{game_id:'in.('+gids.join(',')+')',select:'game_id,date,home_team,away_team,home_score,away_score'});
+    const ms=gids.length?await sbAll('v_league_matches',{game_id:'in.('+gids.join(',')+')',select:'game_id,date,home_team,away_team,home_score,away_score'}):[];
+    if(!current())return;
     const mm={};ms.forEach(function(m){mm[m.game_id]=m});
     const list=rows.map(function(r){
       const m=mm[r.game_id]||{};const home=m.home_team===t.team;
@@ -545,7 +571,7 @@ async function renderMatches(t){
       h+='<tr class="mrow" title="Open this fixture in the match dashboard" '+
         'onclick="location.href=\'match.html?game='+encodeURIComponent(r.game_id)+'\'">'+
         '<td style="color:var(--text2)">'+esc((r.date||'').slice(0,10))+'</td>'+
-        '<td style="font-weight:700">'+esc(tname(r.opp||''))+'</td>'+
+        '<td style="font-weight:700"><a href="match.html?game='+encodeURIComponent(r.game_id)+'">'+esc(tname(r.opp||''))+'</a></td>'+
         '<td><span class="wl" style="background:'+rc[r.res]+'">'+r.res+'</span> <span style="color:var(--text3)">'+r.ha+'</span></td>'+
         '<td class="num">'+r.gf+'\u2013'+r.ga+'</td>'+
         '<td class="num">'+(+r.possession_pct).toFixed(1)+'%</td>'+
@@ -557,21 +583,23 @@ async function renderMatches(t){
     h+='</tbody></table></div><div class="foot">Match-by-match style. Open any of these in the '+
        '<a href="match.html" style="color:var(--accent)">match dashboard</a> for the full event maps.</div></div>';
     document.getElementById('main').innerHTML=h;
-  }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(current())document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+' <button onclick="draw()">Retry</button></div>'}
 }
 function naCell(v,p){
   if(v!=null)return '<td class="num" style="color:'+tier(+v).c+';font-weight:700">'+v+'</td>';
   const why=(p.pool==='GK')?'Keepers are scored on goalkeeping, not the outfield pillars'
-    :'Needs 6+ nineties to be ranked \u2014 this player has '+(+p.nineties).toFixed(1);
+    :'No published DNA score for this player; eligibility belongs to the DNA measure, not the general percentile threshold';
   return '<td class="num" style="color:var(--text3)" title="'+esc(why)+'">n/a</td>';
 }
 async function renderSquad(t){
+  const current=teamRequest();
   try{
     const r=await Promise.all([
       sbAll('mv_player_season',{team:'eq.'+t.team,select:'player_id,player_name,nineties,minutes,starts'}),
       sbAll('mv_player_role',{select:'player_id,pool,modal_position'}),
       sbAll('mv_player_dna',{select:'player_id,completeness,impact,top_pillar'})
     ]);
+    if(!current())return;
     const rm={};r[1].forEach(function(x){rm[x.player_id]=x});
     const dm={};r[2].forEach(function(x){dm[x.player_id]=x});
     const rows=r[0].map(function(p){return Object.assign({},p,rm[p.player_id]||{},dm[p.player_id]||{})})
@@ -589,9 +617,9 @@ async function renderSquad(t){
     });
     h+='</tbody></table></div>'+legendHtml()+
        '<div class="foot">Completeness and Impact are ranked within each player\u2019s role across the league, not within this squad. '+
-       '<b>n/a</b> means the player is under the 6-nineties threshold or is a goalkeeper, who are scored on goalkeeping rather than the outfield pillars \u2014 hover for the reason.</div></div>';
+       '<b>n/a</b> means the player is under the published DNA coverage or is a goalkeeper; DNA eligibility is separate from general player percentiles \u2014 hover for the reason.</div></div>';
     document.getElementById('main').innerHTML=h;
-  }catch(e){document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(current())document.getElementById('main').innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+' <button onclick="draw()">Retry</button></div>'}
 }
 
 /* ---------- PITCH + TEAM MAPS ---------- */
@@ -703,12 +731,15 @@ function zoneNote(){
 }
 async function loadZones(team){
   if(ZTEAM===team&&ZONES)return;
+  const current=teamRequest();
   const r=await Promise.all([
     sbAll('v_team_actions',{team:'eq.'+team,select:'type,x,y,end_x,end_y,ok,is_shot,prog,into_box'}),
     sbAll('v_team_carries',{team:'eq.'+team,select:'start_x,start_y,end_x,end_y,is_progressive,into_box'}),
-    sbAll('v_team_shots',{select:'team,player,x,y,xg,is_goal,game_id,dist_m,outcome'})
+    sbAll('v_team_shots',{select:'team,player,x,y,xg,is_goal,game_id,dist_m,outcome'}),
+    sbAll('mv_team_match',{team:'eq.'+team,select:'game_id'})
   ]);
-  ZONES=r[0];CZONES=r[1];TSHOTS=r[2];ZTEAM=team;
+  if(!current())return;
+  ZONES=r[0];CZONES=r[1];TSHOTS=r[2];TFIXTURES=r[3];ZTEAM=team;
 }
 /* Small hollow ring at the point the action began. Used on the maps where the
    origin carries meaning: progressive passes, box entries and carries. */
@@ -805,11 +836,14 @@ function passOutcomeLegend(items,successColor,successLabel){
     (fail?'<span><i style="background:'+TPAL.fail+'"></i>Incomplete · dashed <b>'+fail.toLocaleString()+'</b></span>':'');
 }
 async function renderMaps(t){
+  writeTeamURL();
+  const current=teamRequest();
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
     '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Loading season actions\u2026</div></div>';
   try{
     await loadZones(t.team);
+    if(!current())return;
     const m=MAPS.filter(function(x){return x.k===MP.kind})[0]||MAPS[0];
     // Solo view: green succeeded, red failed. Multi view: passes green,
     // progressive blue, carries yellow.
@@ -909,27 +943,27 @@ async function renderMaps(t){
     }
     else {
       const forTeam=(m.k==='shots');
-      const gids={};TSHOTS.forEach(function(x){if(x.team===t.team)gids[x.game_id]=1});
+      const gids={};TFIXTURES.forEach(function(x){gids[x.game_id]=1});
       const sh=TSHOTS.filter(function(x){return (forTeam?x.team===t.team:(gids[x.game_id]&&x.team!==t.team))&&inZone(x.x,x.y)});
-      let g=0,sx=0,ocn={saved:0,blocked:0,post:0,off:0};
+      let g=0,sx=0,known=0,ocn={saved:0,blocked:0,post:0,off:0};
       sh.forEach(function(a){
-        const xg=+(a.xg||0.04);sx+=xg;
+        const xg=a.xg==null||!Number.isFinite(Number(a.xg))?null:Number(a.xg);if(xg!==null){sx+=xg;known++;}
         const c=a.is_goal?AC:(forTeam?G:R);if(a.is_goal)g++;
-        const rr=0.26+Math.sqrt(xg)*0.92;
+        const rr=xg===null?0.5:0.26+Math.sqrt(Math.max(0,xg))*0.92;
         const oc=a.outcome||(a.is_goal?'goal':'off');if(oc!=='goal')ocn[oc]=(ocn[oc]||0)+1;
-        const oc_c=oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'var(--viz-neutral)':(oc==='post'?Y:(forTeam?G:R))));
+        const oc_c=xg===null?'var(--viz-neutral)':oc==='goal'?TPAL.box:(oc==='saved'?(forTeam?G:R):(oc==='blocked'?'var(--viz-neutral)':(oc==='post'?Y:(forTeam?G:R))));
         inner+=shotMark(a.x,a.y,rr,oc_c,a.is_goal?1:0.5,oc)+
                '<circle class="hit" cx="'+PX(a.x)+'" cy="'+PY(a.y)+'" r="'+Math.max(rr,1.9)+
                '" fill="transparent" style="cursor:crosshair" data-n="'+esc(a.player||'Unknown')+' \u00B7 '+
-               (a.is_goal?'Goal':'Shot')+'" data-v="xG '+xg.toFixed(3)+(a.dist_m?' \u00B7 '+a.dist_m+' m':'')+'"/>';
+               (a.is_goal?'Goal':'Shot')+'" data-v="xG '+(xg===null?'unavailable':xg.toFixed(3))+(a.dist_m?' \u00B7 '+a.dist_m+' m':'')+'"/>';
       });
       leg=shotOutcomeLegend({goal:g,saved:ocn.saved||0,blocked:ocn.blocked||0,post:ocn.post||0,off:ocn.off||0},forTeam)+
-          '<span>xG <b>'+sx.toFixed(1)+'</b> \u00B7 marker area refs <b>0.05 / 0.20 / 0.50</b></span>';
+          '<span>Known xG <b>'+(known?sx.toFixed(2):'unavailable')+'</b> · '+known+'/'+sh.length+' shots covered · '+TFIXTURES.length+' eligible fixtures · grey fixed-size marks = unavailable xG · marker area refs <b>0.05 / 0.20 / 0.50</b></span>';
     }
     main.innerHTML=teamHead(t)+pitchWrap(m.l,m.d+(pattern&&['passes','prog','box','carries','combined'].indexOf(m.k)>=0?' Aggregated into a 6 by 4 zone grid.':'')+' Attack is left to right, '+acrossMatches(t.matches)+'.'+zoneNote()+(hasOutcome?outcomeNote():''),
       inner,leg,mapCtrl());
     wireTips();
-  }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(current())main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+' <button onclick="draw()">Retry</button></div>'}
 }
 
 function heatLayer(rows){
@@ -998,10 +1032,11 @@ function laneViz(t){
 }
 /* ---------- RANKINGS ---------- */
 function renderRankings(){
+  writeTeamURL();
   const d=tdefOf(RKT.metric)||{};
   const rows=scopedTeams().map(function(t){
     const p=(PCT[t.team]||{})[RKT.metric];
-    return{team:t.team,value:+t[RKT.metric],pct:p?+p.pct:null};
+    return{team:t.team,value:t[RKT.metric]==null?NaN:+t[RKT.metric],pct:p?.pct==null?null:+p.pct};
   }).filter(function(r){return !isNaN(r.value)});
   rows.sort(function(a,b){return (b.pct==null?-1:b.pct)-(a.pct==null?-1:a.pct)});
   const vals=rows.map(function(r){return r.value});
@@ -1081,15 +1116,16 @@ const SEQ_GROUPS=[
 ];
 // z-score -> the same colour language used elsewhere on the site
 function zBand(z){
-  if(z==null)return {c:'var(--text3)',t:''};
-  if(z>=1.5) return {c:'var(--style-hi)', t:'much higher than league'};
-  if(z>=0.6) return {c:'var(--style-hi)', t:'higher than league'};
-  if(z<=-1.5)return {c:'var(--style-low)', t:'much lower than league'};
-  if(z<=-0.6)return {c:'var(--style-low)', t:'lower than league'};
-  return {c:'var(--text2)', t:'around league average'};
+  if(z==null)return {c:'var(--text3)',t:'Comparison unavailable'};
+  if(z>=1.5) return {c:'var(--style-hi)', t:'much higher than stored pool'};
+  if(z>=0.6) return {c:'var(--style-hi)', t:'higher than stored pool'};
+  if(z<=-1.5)return {c:'var(--style-low)', t:'much lower than stored pool'};
+  if(z<=-0.6)return {c:'var(--style-low)', t:'lower than stored pool'};
+  return {c:'var(--text2)', t:'around stored pool average'};
 }
 function zFmt(z){z=Math.abs(+z)<0.05?0:+z;return (z>0?'+':'')+z.toFixed(1)}
 async function renderSequences(t){
+  const current=teamRequest();
   const main=document.getElementById('main');
   main.innerHTML=teamHead(t)+'<div class="sect"><div class="spin"></div>'+
     '<div style="text-align:center;color:var(--text3);font:500 11px/1 Inter">Loading sequence style\u2026</div></div>';
@@ -1098,12 +1134,13 @@ async function renderSequences(t){
       sbAll('team_sequence_agg',{team:'eq.'+t.team,select:'*'}),
       sbAll('team_sequence_style',{team:'eq.'+t.team,select:'metric,raw,z'})
     ]);
+    if(!current())return;
     const a=(r[0]||[])[0];
     if(!a){main.innerHTML=teamHead(t)+'<div class="empty">No sequence data for this team yet.</div>';return}
-    const Z={},RAW={};(r[1]||[]).forEach(function(x){Z[x.metric]=x.z==null?0:+x.z;RAW[x.metric]=+x.raw});
+    const Z={},RAW={};(r[1]||[]).forEach(function(x){Z[x.metric]=x.z==null?null:+x.z;RAW[x.metric]=x.raw==null?null:+x.raw});
     let cards='<div class="sect"><div class="sect-h"><span>Sequence output</span>'+
       '<span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0">'+
-      mcount(a.matches)+' \u00B7 open play \u00B7 colour shows distance from the league average</span></div>';
+      mcount(a.matches)+' \u00B7 open play \u00B7 colour shows distance from the stored comparison pool</span></div>';
     SEQ_GROUPS.forEach(function(grp){
       let tiles='';
       grp.m.forEach(function(c){
@@ -1124,20 +1161,21 @@ async function renderSequences(t){
     const radar=seqRadar(t,Z,RAW);
     main.innerHTML=teamHead(t)+cards+radar+
       '<div class="foot">Sequence style is shown as z-scores from the comparison pool stored by the sequence view. The centre line is that pool mean; each full half-rail spans 2.5 standard deviations. '+
-      'Blue means higher than the league and amber means lower, not better and worse. Read longer bars as stronger stylistic signals and near-centre bars lightly. '+
+      'Blue means higher than the stored comparison pool and amber means lower, not better and worse. Read longer bars as stronger stylistic signals and near-centre bars lightly. '+
       'Hold-up and central-prog use deliberately strict definitions \u2014 see the glossary. '+
       'Open play only; a possession is a run of controlled touches by one team, ended by a turnover, stoppage or set piece.</div>';
     wireTips();
-  }catch(e){main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+'</div>'}
+  }catch(e){if(current())main.innerHTML=teamHead(t)+'<div class="empty">Error: '+esc(e.message)+' <button onclick="draw()">Retry</button></div>'}
 }
 function seqRadar(t,Z,RAW){
-  let s='<div class="dev-legend"><span class="dev-key"><i style="background:var(--style-low)"></i>Lower than league</span>'+
-    '<span>\u22122.5\u03c3</span><span>League mean</span><span>+2.5\u03c3</span>'+
-    '<span class="dev-key"><i style="background:var(--style-hi)"></i>Higher than league</span></div><div class="dev-groups">';
+  let s='<div class="dev-legend"><span class="dev-key"><i style="background:var(--style-low)"></i>Lower than pool</span>'+
+    '<span>\u22122.5\u03c3</span><span>Pool mean</span><span>+2.5\u03c3</span>'+
+    '<span class="dev-key"><i style="background:var(--style-hi)"></i>Higher than pool</span></div><div class="dev-groups">';
   SEQ_GROUPS.forEach(function(grp){
     s+='<div class="dev-group"><div class="dev-group-h">'+esc(grp.g)+'</div>';
     grp.m.forEach(function(m){
-      const z=Z[m[0]]==null?0:+Z[m[0]],zc=Math.max(-2.5,Math.min(2.5,z));
+      if(Z[m[0]]==null){s+='<div class="dev-row"><div class="dev-lbl">'+esc(m[1])+'</div><div>Comparison unavailable</div></div>';return;}
+      const z=+Z[m[0]],zc=Math.max(-2.5,Math.min(2.5,z));
       const end=50+(zc/2.5)*50,left=Math.min(50,end),width=Math.max(z===0?0:1,Math.abs(end-50));
       const raw=RAW[m[0]],rawtxt=raw==null?'\u2014':(+raw).toFixed(m[2])+(m[3]||'');
       const col=z<0?'var(--style-low)':'var(--style-hi)';
@@ -1150,15 +1188,16 @@ function seqRadar(t,Z,RAW){
   });
   s+='</div>';
   return '<div class="sect" style="margin-top:12px"><div class="viz-eyebrow">Season style</div>'+
-    '<div class="viz-title">'+esc(tname(t.team))+' \u2014 deviations from league style</div>'+
+    '<div class="viz-title">'+esc(tname(t.team))+' \u2014 deviations from stored comparison pool</div>'+
     '<div class="viz-sub">The same numbers as above, grouped by football question. Each bar shows how far '+
-    esc(tname(t.team))+' sits from the '+esc(lgName(lgOf(SEL)))+' average. Direction describes style, not quality; '+
+    esc(tname(t.team))+' sits from the stored comparison pool mean (league membership is not supplied by this view). Direction describes style, not quality; '+
     'the raw value and exact z-score remain beside every bar.</div>'+
     s+'</div>';
 }
 
 function wireTips(){
   const main=document.getElementById('main');
+  const hits=[...main.querySelectorAll('.hit[data-n]')];if(hits.length&&!main.querySelector('.exact-marks')){const details=document.createElement('details');details.className='sect exact-marks';details.innerHTML='<summary>Exact plotted observations ('+hits.length+')</summary><div style="overflow:auto;max-height:260px" tabindex="0"><table><thead><tr><th>Observation</th><th>Value</th></tr></thead><tbody>'+hits.map(el=>'<tr><td>'+esc(el.dataset.n)+'</td><td>'+esc(el.dataset.v||'unavailable')+'</td></tr>').join('')+'</tbody></table></div>';main.append(details);}
   if(main.dataset.tipsBound)return;
   main.dataset.tipsBound='1';
   const tip=document.getElementById('tip');
@@ -1200,14 +1239,9 @@ async function snap(){
     return await html2canvas(clone,{backgroundColor:bg,scale:2,width:w,height:h,windowWidth:w,windowHeight:h});
   }finally{stage.remove()}
 }
-async function exportPNG(){try{const c=await snap();const a=document.createElement('a');
-  a.download=(SEL||'team').replace(/[^\w]+/g,'_')+'.png';a.href=c.toDataURL('image/png');a.click()}catch(e){alert(e.message)}}
-async function exportPDF(){try{const c=await snap();const jsPDF=window.jspdf.jsPDF;
-  const pdf=new jsPDF({orientation:c.width>=c.height?'l':'p',unit:'pt',format:'a4'});
-  const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-  const r=Math.min(pw/c.width,ph/c.height);
-  pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',(pw-c.width*r)/2,20,c.width*r,c.height*r,undefined,'FAST');
-  pdf.save((SEL||'team').replace(/[^\w]+/g,'_')+'.pdf')}catch(e){alert(e.message)}}
+async function exportPNG(){if(!window.FutScoutExports){alert('Export tools are still loading. Please retry.');return;}await window.FutScoutExports.capture(document.getElementById('main'),'png');}
+async function exportPDF(){if(!window.FutScoutExports){alert('Export tools are still loading. Please retry.');return;}await window.FutScoutExports.capture(document.getElementById('main'),'pdf');}
+window.futScoutExportContext=()=>({subject:SEL,view:TAB,league:LG,metric:RKT.metric,map:{...MP},axes:{...LM},scope:'Stored season aggregate; exact season/freshness follows the data source',source:location.href,exportedAt:new Date().toISOString()});
 /* The tab strip only shows an overflow cue when it actually has more bar in
    that direction. Kept in script because CSS cannot see a scroll position. */
 function syncTabCue(){

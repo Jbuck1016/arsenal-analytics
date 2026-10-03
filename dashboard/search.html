@@ -182,7 +182,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
         <a href="guide.html">Guide</a>
         <a href="methodology.html">Method</a>
       </nav>
-      <div class="tbtn" id="themeBtn">☾</div>
+      <button type="button" class="tbtn" id="themeBtn" aria-label="Toggle light or dark theme">☾</button>
     </div>
     <div class="sys-line" id="sysLine">loading index…</div>
   </div>
@@ -192,11 +192,13 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       placeholder="Ask in plain English, e.g. ten players most similar to Cade Cowell in expected threat creation">
     <button class="btn askbtn" id="askGo">Ask</button>
   </div>
-  <p class="hint">Plain-English answers search all covered leagues. Use the competition filter below for a league-specific shortlist.</p>
+  <p class="hint">Plain-English answers search all covered leagues and show their actual query threshold. Clear the answer to return to the league-specific shortlist filters.</p>
   <div id="askOut"></div>
 
+  <button type="button" class="btn mobile-filter-toggle" aria-expanded="false" aria-controls="shortlistFilters" onclick="const open=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',open);document.getElementById('shortlistFilters').classList.toggle('filters-open',open)">Shortlist filters</button>
+  <style>.mobile-filter-toggle{display:none}.layout>.main{min-width:0}#askOut{overflow:auto}@media(max-width:640px){.mobile-filter-toggle{display:block;margin:8px 0}#shortlistFilters:not(.filters-open){display:none}.layout{display:block}.layout>.main{width:100%}.ask input{min-width:0}.nav{flex-wrap:wrap}}</style>
   <div class="layout" id="facetLayout">
-    <div class="side">
+    <div class="side" id="shortlistFilters">
       <div class="fg">
         <div class="fl">Shortcuts</div>
         <div class="presets" id="presets"></div>
@@ -220,7 +222,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <div class="fg">
         <div class="fl">Age <span class="hint">max</span></div>
         <div class="row">
-          <input type="range" id="ageMax" min="16" max="40" value="40">
+          <input aria-label="Maximum age" type="range" id="ageMax" min="16" max="40" value="40">
           <span class="val" id="ageMaxV">any</span>
         </div>
       </div>
@@ -228,7 +230,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
       <div class="fg">
         <div class="fl">Minutes <span class="hint">min 90s</span></div>
         <div class="row">
-          <input type="range" id="minN" min="0" max="25" value="3">
+          <input aria-label="Minimum exposure in nineties" type="range" id="minN" min="0" max="25" value="3">
           <span class="val" id="minNV">3</span>
         </div>
       </div>
@@ -347,21 +349,27 @@ function renderAsk(d){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+let askGeneration=0, shortlistRows=[];
 function clearAsk(){
+  askGeneration++;
   document.getElementById('askOut').innerHTML='';
   document.getElementById('facetLayout').style.display='';
   document.getElementById('askInput').value='';
 }
 
 async function runAsk(){
+  const generation=++askGeneration;
   const q=document.getElementById('askInput').value.trim();
   if(!q) return;
+  saveSearchState(false);
   document.getElementById('askOut').innerHTML=
     '<div class="ans"><div class="parse">thinking…</div></div>';
   try{
     const d=await sbRpc('nl_query',{q:q,p_limit:12});
+    if(generation!==askGeneration)return;
     renderAsk(d);
   }catch(e){
+    if(generation!==askGeneration)return;
     document.getElementById('askOut').innerHTML=
       '<div class="ans"><div class="parse">could not run that ('+esc(e.message)+')</div></div>';
   }
@@ -463,6 +471,7 @@ function apply(){
 }
 
 function render(rows){
+  shortlistRows=rows;
   document.getElementById('count').innerHTML='<b>'+rows.length+'</b> players';
   const host=document.getElementById('results');
   if(!rows.length){host.innerHTML='<div class="empty">no players match these filters<br>try widening age, minutes, or trait thresholds</div>';return;}
@@ -470,11 +479,11 @@ function render(rows){
   let h='<table><thead><tr>'
     +'<th class="l">#</th><th class="l">Player</th><th class="l">Team</th><th class="l">League</th><th>Pos</th>'
     +'<th>Age</th><th>90s</th><th>'+esc(sortLabel(s))+'</th><th>Pool pct</th></tr></thead><tbody>';
-  rows.slice(0,60).forEach(function(r,i){
+  rows.forEach(function(r,i){
     const p=pctOf(r,s);
     h+='<tr>'
       +'<td class="l rk">'+(i+1)+'</td>'
-      +'<td class="l"><span class="pn">'+esc(r.player)+'</span></td>'
+      +'<td class="l">'+pname(r.player_id,r.player)+'</td>'
       +'<td class="l tm">'+esc(r.team)+'</td>'
       +'<td class="l tm">'+esc(LEAGUE_LABELS[r.league]||r.league||'—')+'</td>'
       +'<td>'+esc(r.pos)+'</td>'
@@ -485,16 +494,15 @@ function render(rows){
       +'</tr>';
   });
   h+='</tbody></table>';
-  if(rows.length>60)h+='<div class="empty">showing top 60 of '+rows.length+'</div>';
-  host.innerHTML=h;
+  host.innerHTML='<div role="region" aria-label="Player shortlist results" tabindex="0" style="overflow:auto;max-width:100%">'+h+'</div>';
 }
 
 /* ---------- UI wiring ---------- */
-function chip(label,on){return '<span class="chip'+(on?' on':'')+'" data-v="'+esc(label)+'">'+esc(label)+'</span>'}
+function chip(label,on){return '<button type="button" aria-pressed="'+on+'" class="chip'+(on?' on':'')+'" data-v="'+esc(label)+'">'+esc(label)+'</button>'}
 function paintChips(){
   document.getElementById('poolChips').innerHTML=POOLS.map(function(p){return chip(p,STATE.pools.indexOf(p)>=0)}).join('');
   document.getElementById('sideChips').innerHTML=SIDES.map(function(s){
-    return '<span class="chip'+(STATE.sides.indexOf(s[0])>=0?' on':'')+'" data-v="'+s[0]+'">'+s[1]+'</span>'}).join('');
+    return '<button type="button" aria-pressed="'+(STATE.sides.indexOf(s[0])>=0)+'" class="chip'+(STATE.sides.indexOf(s[0])>=0?' on':'')+'" data-v="'+s[0]+'">'+s[1]+'</button>'}).join('');
 }
 function paintTraits(){
   document.getElementById('traits').innerHTML=TRAITS.map(function(t){
@@ -502,7 +510,7 @@ function paintTraits(){
     return '<div class="trait-row'+(v?' on':'')+'">'
       +'<div class="trait-head"><span class="trait-name">'+esc(t[1])+'</span>'
       +'<span class="tval">'+(v?('top '+(100-v)+'%'):'any')+'</span></div>'
-      +'<div class="mini"><input type="range" min="0" max="95" step="5" value="'+v+'" data-t="'+t[0]+'"></div>'
+      +'<div class="mini"><input aria-label="Minimum '+esc(t[1])+' percentile" type="range" min="0" max="95" step="5" value="'+v+'" data-t="'+t[0]+'"></div>'
       +'</div>';
   }).join('');
 }
@@ -555,15 +563,13 @@ document.getElementById('reset').addEventListener('click',function(){
   document.getElementById('leagueSel').value='ALL';paintAll();
 });
 document.getElementById('copy').addEventListener('click',function(){
-  const rowsEl=document.querySelectorAll('#results tbody tr');
-  let txt='';
-  rowsEl.forEach(function(tr){
-    const c=tr.querySelectorAll('td');
-    txt+=[c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText,c[5].innerText,c[7].innerText].join('\t')+'\n';
-  });
+  const clean=function(v){return String(v==null?'Unavailable':v).replace(/[\t\r\n]/g,' ')};
+  let txt='FutScout — all '+shortlistRows.length+' eligible results\nSource: '+location.href+'\nExported: '+new Date().toISOString()+'\nFilters: '+JSON.stringify(STATE)+'\nPercentiles: within position pool across covered leagues, not rebased by filters\n';
+  txt+=['Player','Team','League','Position','Age','Exposure (90s)',sortLabel(STATE.sort)+(STATE.sort.endsWith('_90')?' per 90':''),'Pool percentile'].join('\t')+'\n';
+  shortlistRows.forEach(function(r){txt+=[r.player,r.team,r.league,r.pos,r.age_seen,r.nineties,r[STATE.sort],pctOf(r,STATE.sort)].map(clean).join('\t')+'\n'});
   navigator.clipboard.writeText(txt).then(function(){
     const b=document.getElementById('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy shortlist'},1400);
-  }).catch(function(){});
+  }).catch(function(){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([txt],{type:'text/tab-separated-values;charset=utf-8'}));a.href=url;a.download='futscout-shortlist.tsv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},1000);document.getElementById('copy').textContent='Clipboard denied — TSV downloaded';});
 });
 document.getElementById('presets').innerHTML=PRESETS.map(function(p,i){
   return '<button class="preset" data-i="'+i+'">'+esc(p.n)+'</button>'}).join('');
@@ -608,12 +614,21 @@ async function init(){
       'Percentiles are computed within position pool across all covered leagues; the competition filter does not rebase them. '
       +'Three nineties is an early-season minimum, not a guarantee of stable rankings. '
       +'Age is a snapshot at match time, not date of birth.';
+    restoreSearchState();
     paintAll();
   }catch(err){
     document.getElementById('results').innerHTML='<div class="empty">could not load index ('+esc(err.message)+')</div>';
     document.getElementById('sysLine').textContent='load failed';
   }
 }
+let restoringSearch=false;
+function saveSearchState(replace){if(restoringSearch)return;const u=new URL(location.href);u.searchParams.set('state',JSON.stringify({v:1,filters:STATE,query:document.getElementById('askInput').value}));if(u.href!==location.href)history[replace?'replaceState':'pushState']({},'',u);}
+function restoreSearchState(){let s;try{s=JSON.parse(new URLSearchParams(location.search).get('state')||'null')}catch(e){return}if(!s||s.v!==1||!s.filters)return;restoringSearch=true;const f=s.filters;STATE={league:typeof f.league==='string'?f.league:'ALL',pools:(f.pools||[]).filter(function(p){return POOLS.includes(p)}),sides:(f.sides||[]).filter(function(p){return ['L','C','R'].includes(p)}),age:Math.max(16,Math.min(40,+f.age||40)),minN:Math.max(0,Math.min(25,+f.minN||0)),traits:{},sort:SORTS.some(function(g){return g[1].some(function(m){return m[0]===f.sort})})?f.sort:'xt_90'};TRAITS.forEach(function(t){if(f.traits&&Number.isFinite(f.traits[t[0]]))STATE.traits[t[0]]=Math.max(0,Math.min(95,f.traits[t[0]]))});document.getElementById('leagueSel').value=STATE.league;clearAsk();document.getElementById('askInput').value=typeof s.query==='string'?s.query:'';paintAll();if(s.query)runAsk();restoringSearch=false;}
+document.addEventListener('change',function(){saveSearchState(false)});
+document.addEventListener('input',function(){saveSearchState(true)});
+document.addEventListener('click',function(e){if(e.target.closest('.chip,#reset,#askGo,.preset,.ex button,.close'))queueMicrotask(function(){saveSearchState(false)})});
+window.addEventListener('popstate',function(){if(!new URLSearchParams(location.search).has('state')){restoringSearch=true;STATE={league:'ALL',pools:[],sides:[],age:40,minN:3,traits:{},sort:'xt_90'};clearAsk();document.getElementById('leagueSel').value='ALL';paintAll();restoringSearch=false}else restoreSearchState()});
+window.futScoutExportContext=function(){return {workspace:'Player search',filters:STATE,eligible:shortlistRows.length,shown:shortlistRows.length,cohort:'Across covered leagues within position pool',query:document.getElementById('askInput').value};};
 init();
 </script>
 </body>
