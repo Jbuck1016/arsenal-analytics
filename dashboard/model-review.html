@@ -71,7 +71,7 @@ document.getElementById('outlookContext').textContent=isFrozen?'Historical Monte
 const recordedResults=new Map();
 const resultKey=r=>[r.league,String(r.date).slice(0,10),r.home_team,r.away_team].join('|');
 function resultFor(r){return recordedResults.get(resultKey(r))||recordedResults.get(String(r.game_id));}
-async function loadRecordedResults(){
+async function loadRecordedResults(){let status=document.getElementById('resultFeedStatus');if(!status){status=document.createElement('p');status.id='resultFeedStatus';status.setAttribute('role','status');document.getElementById('fixtures').before(status)}status.textContent='Checking recorded results… Forecast snapshot unchanged.';
   const key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
   const url='https://xrsilhiffjoulyoqhdmp.supabase.co/rest/v1/matches?select=game_id,league,date,home_team,away_team,home_score,away_score&season=eq.2627&home_score=not.is.null&away_score=not.is.null&limit=1000';
   try{

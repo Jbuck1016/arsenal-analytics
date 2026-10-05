@@ -93,7 +93,7 @@
   }
 
   function gotoHost() {
-    return document.getElementById('navMenu') ||
+    return document.querySelector('[data-fs-navigation]') || document.getElementById('navMenu') ||
       document.querySelector('.hdr-right') ||
       document.querySelector('header .actions') ||
       document.querySelector('.mast-actions') ||
@@ -109,7 +109,7 @@
 
   function installGoto() {
     var host = gotoHost();
-    if (!host) return;
+    if(!host){host=document.createElement('nav');host.setAttribute('aria-label','Site navigation');host.style.cssText='display:flex;justify-content:flex-end;padding:8px';document.body.prepend(host)}host.setAttribute('data-fs-navigation','');
     var existing = document.getElementById('fsGoto');
     if (existing) existing.remove();
     var wrap = document.createElement('div');
@@ -185,7 +185,7 @@
   }
 
   async function captureCard(card, format, button) {
-    var label = exportLabel(card);
+    var label = exportLabel(card),sourceURL=location.href,exportTime=new Date().toISOString(),clone=card.cloneNode(true),metadata={};try{metadata=JSON.parse(JSON.stringify(card.dataset.exportContext?JSON.parse(card.dataset.exportContext):(typeof window.futScoutExportContext==='function'?window.futScoutExportContext(card):{})))}catch(error){metadata={contextError:'Context unavailable'}}card.querySelectorAll('canvas').forEach(function(source,i){var target=clone.querySelectorAll('canvas')[i];target.width=source.width;target.height=source.height;target.getContext('2d').drawImage(source,0,0)});
     var control=button&&(button.closest('.fs-card-export')||button);
     if(control)control.classList.add('fs-exporting');
     try {
@@ -197,22 +197,17 @@
     }
     var stage = document.createElement('div');
     stage.className = 'fs-export-stage';
-    var clone = card.cloneNode(true);
-    var sourceCanvases = card.querySelectorAll('canvas');
-    clone.querySelectorAll('canvas').forEach(function(node,index){
-      node.width=sourceCanvases[index].width; node.height=sourceCanvases[index].height;
-      node.getContext('2d').drawImage(sourceCanvases[index],0,0);
-    });
-    var metadata={};
-    try{metadata=card.dataset.exportContext?JSON.parse(card.dataset.exportContext):(typeof window.futScoutExportContext==='function'?window.futScoutExportContext(card):{});}catch(error){metadata={contextError:'Context unavailable; do not infer full-season scope'};}
-    var context=Object.entries(metadata||{}).map(function(pair){return pair[0]+': '+(typeof pair[1]==='object'?JSON.stringify(pair[1]):pair[1]);}).join(' · ');
+    // The card pixels, metadata and URL were captured before the first await.
+    // Immutable metadata captured above.
+    // Do not consult live page state after export libraries resolve.
+    var context=Object.entries(metadata||{}).filter(function(pair){return !(['url','sourceURL'].includes(pair[0])&&pair[1]===sourceURL)}).map(function(pair){return pair[0]+': '+(typeof pair[1]==='object'?JSON.stringify(pair[1]):pair[1]);}).join(' · ');
     clone.querySelectorAll('.fs-card-export,.fs-export-bar,.viz-exp,[data-export],input,select').forEach(function (node) { node.remove(); });
     clone.querySelectorAll('button').forEach(function(node){var text=document.createElement('span');text.innerHTML=node.innerHTML;text.className=node.className;text.style.cssText=node.style.cssText;node.replaceWith(text);});
     clone.querySelectorAll('details').forEach(function(node){node.open=true;});
     stage.appendChild(clone);
     var footer = document.createElement('p');
     footer.style.cssText='font:18px/1.5 sans-serif;border-top:1px solid currentColor;padding-top:12px;overflow-wrap:anywhere';
-    footer.textContent='FutScout · '+label+' · '+(context ? context+' · ' : 'Scope is as labelled in this view; additional provenance not supplied. · ')+'Source page: '+location.href+' · Exported '+new Date().toISOString()+' (export time, not data freshness).';
+    footer.textContent='FutScout · '+label+' · '+(context ? context+' · ' : 'Scope is as labelled in this view; additional provenance not supplied. · ')+'Source page: '+sourceURL+' · Exported '+exportTime+' (export time, not data freshness).';
     stage.appendChild(footer);
     document.body.appendChild(stage);
     clone.querySelectorAll('*').forEach(function (node) {

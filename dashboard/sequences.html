@@ -40,7 +40,7 @@ html.dark{--accent:#D8B384;--accent-dim:rgba(216,179,132,.12);--accent-glow:rgba
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow:hidden}
 /* Header base is in shell.css. These are this page's differences from it. */
-.hdr-logo{font:800 13px/1 'Inter';color:#12141a}
+.hdr{height:auto;min-height:52px;flex-wrap:wrap;padding-block:8px}.hdr-logo{flex-shrink:0;font:800 13px/1 'Inter';color:#12141a}.hdr #tabs{flex:1;min-width:0}
 .tab{text-decoration:none}
 .lnk{background:var(--surface);border:1px solid var(--border);color:var(--text2);font:500 11px/1 'Inter';padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .lnk:hover{background:var(--surface2);color:var(--text)}
@@ -141,7 +141,7 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
   <div class="hdr-logo">S</div>
   <div><div class="hdr-title">Sequence Explorer</div><div class="hdr-sub" id="hdrSub">loading&hellip;</div></div>
   <div class="tabs" id="tabs"></div>
-  <div class="tbtn" id="themeBtn">☾</div>
+  <button type="button" class="tbtn" id="themeBtn" aria-label="Toggle light and dark theme">☾</button>
 </div>
 <details class="explain" id="explain">
   <summary>What a sequence is, and how to read these</summary>
@@ -197,7 +197,6 @@ select option,select optgroup{background-color:var(--bg2,var(--panel,#1a1d24));c
 const SB='https://xrsilhiffjoulyoqhdmp.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyc2lsaGlmZmpvdWx5b3FoZG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2Nzc5NDAsImV4cCI6MjEwMDI1Mzk0MH0.3_ccOJi0SBKOwHGxhJL3fsWCSSLoxZumzt-KH4wO8OU';
 const HD={'apikey':AK,'Authorization':'Bearer '+AK};
-const NAV=[['Home','index.html'],['Insights','insights.html'],['Search','search.html'],['Match','match.html'],['Players','players.html'],['Teams','teams.html'],['Guide','guide.html'],['Method','methodology.html'],['Reference','glossary.html']];
 const TEAM_DISPLAY={'Chicago':'Chicago Fire FC','Colorado':'Colorado Rapids','Columbus':'Columbus Crew',
  'Houston':'Houston Dynamo FC','Kansas City':'Sporting Kansas City','Montreal':'CF Montréal',
  'New England':'New England Revolution','New York':'New York Red Bulls','Philadelphia':'Philadelphia Union',
@@ -341,7 +340,7 @@ function matchLabel(gid,team){
   return esc(tname(opp))+' ('+(home?'H':'A')+')';
 }
 function tabsHtml(){
-  return NAV.map(function(n){return '<a class="tab'+(n[0]==='Sequences'?' on':'')+'" href="'+n[1]+'">'+n[0]+'</a>'}).join('');
+  return ''; // Cross-page links are owned by the shared site-tools registry.
 }
 
 async function init(){
@@ -361,20 +360,20 @@ async function init(){
 }
 
 function controls(){
-  let typeSel='<select class="lnk" onchange="TAG=this.value;loadCandidates()">'+
+  let typeSel='<select aria-label="Sequence type" class="lnk" onchange="TAG=this.value;loadCandidates()">'+
     TYPES.map(function(t){return '<option value="'+t[0]+'"'+(TAG===t[0]?' selected':'')+'>'+t[1]+'</option>'}).join('')+'</select>';
-  let teamSel='<select class="lnk" onchange="TEAMSEL=this.value;loadCandidates()">'+
+  let teamSel='<select aria-label="Sequence team" class="lnk" onchange="TEAMSEL=this.value;loadCandidates()">'+
     TEAMS.map(function(t){return '<option value="'+esc(t)+'"'+(TEAMSEL===t?' selected':'')+'>'+esc(tname(t))+'</option>'}).join('')+'</select>';
   return '<div class="ctrl">'+
     '<div class="fld" style="min-width:auto"><span class="kpi-l">Browse by</span>'+
-      '<div class="seg"><button class="'+(MODE==='type'?'on':'')+'" onclick="MODE=\'type\';loadCandidates()">Sequence type</button>'+
-      '<button class="'+(MODE==='team'?'on':'')+'" onclick="MODE=\'team\';loadCandidates()">Team</button></div></div>'+
+      '<div class="seg"><button aria-pressed="'+(MODE==='type')+'" class="'+(MODE==='type'?'on':'')+'" onclick="MODE=\'type\';loadCandidates()">Sequence type</button>'+
+      '<button aria-pressed="'+(MODE==='team')+'" class="'+(MODE==='team'?'on':'')+'" onclick="MODE=\'team\';loadCandidates()">Team</button></div></div>'+
     (MODE==='type'?'<div class="fld"><span class="kpi-l">Type</span>'+typeSel+'</div>'
                   :'<div class="fld"><span class="kpi-l">Team</span>'+teamSel+'</div>')+
     '</div>';
 }
 
-async function loadCandidates(){
+async function loadCandidates(restoring=false){if(!restoring){sequenceRestoreGeneration++;restoringSequence=false}
   const request=++sequenceGeneration;
   PICK=null;NB=[];OVERLAY=null;
   const main=document.getElementById('main');
@@ -393,7 +392,7 @@ async function loadCandidates(){
     renderBrowse();
   }catch(e){if(request===sequenceGeneration)main.innerHTML=controls()+'<div class="empty">Error: '+esc(e.message)+' <button onclick="loadCandidates()">Retry</button></div>'}
 }
-let sequenceGeneration=0;
+let sequenceGeneration=0,sequenceRestoreGeneration=0;function seqMetric(v,n=3){return v==null||v===''||!Number.isFinite(Number(v))?'unavailable':Number(v).toFixed(n)}
 function actionTrace(s){return '<details class="sect"><summary>Ordered action data · '+esc(tname(s.team))+' · '+(s.path||[]).length+' actions</summary><p>Coordinates use the provider’s 0–100 pitch; attack increases x. Dotted links between recorded actions are unobserved movement, not confirmed carries.</p><ol>'+(s.path||[]).map(function(p){return '<li>'+esc(p.t||'Action')+': ('+esc(p.x)+', '+esc(p.y)+') → '+(p.ex==null||p.ey==null?'end coordinate unavailable':'('+esc(p.ex)+', '+esc(p.ey)+')')+'</li>'}).join('')+'</ol></details>'}
 
 function cardHtml(s,opts){
@@ -414,7 +413,7 @@ function cardHtml(s,opts){
     '<div class="scard-t">'+esc(tname(s.team))+'</div>'+
     '<div class="scard-m">'+matchLabel(s.game_id,s.team)+(s.start_min!=null?' \u00B7 '+s.start_min+"'":'')+'</div>'+
     pitchSVG(inner)+
-    '<div class="scard-s"><span>xT <b>'+(+s.xt_sum).toFixed(3)+'</b></span><span>'+s.n_pass+' passes</span>'+dist+'</div></button>';
+    '<div class="scard-s"><span>xT <b>'+seqMetric(s.xt_sum)+'</b></span><span>'+s.n_pass+' passes</span>'+dist+'</div></button>';
 }
 
 function renderBrowse(){
@@ -432,7 +431,7 @@ function renderBrowse(){
   main.innerHTML=h;
 }
 
-async function choosePick(i){
+async function choosePick(i,restoring=false){if(!restoring){sequenceRestoreGeneration++;restoringSequence=false}
   const request=++sequenceGeneration;
   if(!CANDS[i])return;
   PICK=CANDS[i];OVERLAY=null;SIM_ERROR=null;
@@ -469,12 +468,12 @@ function renderPick(){
         (PICK.start_min!=null?' \u00B7 '+PICK.start_min+"'":'')+'</span>'+
       big+actionTrace(PICK)+
       '<div class="ov-stats">'+
-        ovStat('xT',(+PICK.xt_sum).toFixed(3))+ovStat('Passes',PICK.n_pass)+
+        ovStat('xT',seqMetric(PICK.xt_sum))+ovStat('Passes',PICK.n_pass)+
         ovStat('Ends',PICK.ended_goal?'goal':(shot?'shot':'open play'))+
       '</div></div>'+
     '<div class="sect"><div class="sect-h"><span>How to read it</span></div>'+
       '<div class="viz-sub">This is the sequence you picked. The cards on the right are the '+NB.length+
-      ' most similar open-play sequences across the current data pool, by trajectory shape, length, zones and threat. '+
+      ' most similar open-play sequences across the current data pool, by trajectory shape, length, zones and threat. Pool league/season coverage and eligible N are unavailable. '+
       'Lower distance is a closer match. Click any of them to overlay the two on one pitch.</div>'+
       '<div class="viz-leg"><span><i style="background:var(--accent)"></i><b>Picked</b></span>'+
       '<span><i style="background:var(--nb)"></i><b>Comparison</b></span>'+
@@ -505,7 +504,7 @@ function openOverlay(i){
       '<span><i style="background:var(--nb)"></i><b>'+esc(tname(OVERLAY.team))+'</b> \u00B7 '+matchLabel(OVERLAY.game_id,OVERLAY.team)+(OVERLAY.start_min!=null?' '+OVERLAY.start_min+"'":'')+'</span>'+
     '</div>'+
     '<div class="ov-stats">'+
-      ovStat('xT \u2014 picked',(+PICK.xt_sum).toFixed(3))+ovStat('xT \u2014 match',(+OVERLAY.xt_sum).toFixed(3))+
+      ovStat('xT \u2014 picked',seqMetric(PICK.xt_sum))+ovStat('xT \u2014 match',seqMetric(OVERLAY.xt_sum))+
       ovStat('Passes',PICK.n_pass+' / '+OVERLAY.n_pass)+ovStat('Distance',(+OVERLAY.dist).toFixed(2))+
     '</div></div>'+
     '<div class="sect" style="margin-top:12px"><div class="sect-h"><span>Nearest matches</span></div><div class="sgrid">';
@@ -518,12 +517,12 @@ function openOverlay(i){
 let restoringSequence=false;
 function sequenceState(){return {v:1,mode:MODE,tag:TAG,team:TEAMSEL,pick:PICK&&PICK.seq_uid,overlay:OVERLAY&&OVERLAY.seq_uid};}
 function saveSequenceState(){if(restoringSequence)return;const u=new URL(location.href);u.searchParams.set('state',JSON.stringify(sequenceState()));if(u.href!==location.href)history.pushState({},'',u);}
-async function restoreSequenceState(){let s;try{s=JSON.parse(new URLSearchParams(location.search).get('state')||'null')}catch(e){}restoringSequence=true;try{if(s&&s.v===1){MODE=s.mode==='team'?'team':'type';TAG=TYPES.some(function(t){return t[0]===s.tag})?s.tag:'ended_shot';if(TEAMS.includes(s.team))TEAMSEL=s.team;}await loadCandidates();if(s&&s.pick){let index=CANDS.findIndex(function(c){return c.seq_uid===s.pick});if(index<0){const rows=await sbAll('v_league_sequences',{seq_uid:'eq.'+s.pick,select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum',limit:'1'});if(rows[0]){CANDS.push(rows[0]);index=CANDS.length-1}}if(index>=0){await choosePick(index);if(s.overlay){const n=NB.findIndex(function(c){return c.seq_uid===s.overlay});if(n>=0)openOverlay(n)}}}}catch(e){document.getElementById('main').innerHTML=controls()+'<div class="empty">Could not restore this sequence. <button onclick="loadCandidates()">Browse available sequences</button></div>'}finally{restoringSequence=false}}
+async function restoreSequenceState(){const generation=++sequenceRestoreGeneration;let s;try{s=JSON.parse(new URLSearchParams(location.search).get('state')||'null')}catch(e){}restoringSequence=true;MODE='type';TAG='ended_shot';TEAMSEL=TEAMS[0]||'';PICK=null;OVERLAY=null;NB=[];try{if(s&&s.v===1){MODE=s.mode==='team'?'team':'type';TAG=TYPES.some(function(t){return t[0]===s.tag})?s.tag:'ended_shot';if(TEAMS.includes(s.team))TEAMSEL=s.team;}await loadCandidates(true);if(generation!==sequenceRestoreGeneration)return;if(s&&s.pick){let index=CANDS.findIndex(function(c){return c.seq_uid===s.pick});if(index<0){const rows=await sbAll('v_league_sequences',{seq_uid:'eq.'+s.pick,select:'seq_uid,team,game_id,start_min,path,ended_shot,ended_goal,n_pass,xt_sum',limit:'1'});if(generation!==sequenceRestoreGeneration)return;if(rows[0]){CANDS.push(rows[0]);index=CANDS.length-1}}if(index>=0){await choosePick(index,true);if(generation!==sequenceRestoreGeneration)return;if(s.overlay){const n=NB.findIndex(function(c){return c.seq_uid===s.overlay});if(n>=0)openOverlay(n)}}}}catch(e){if(generation!==sequenceRestoreGeneration)return;document.getElementById('main').innerHTML=controls()+'<div class="empty">Could not restore this sequence. <button onclick="loadCandidates()">Browse available sequences</button></div>'}finally{if(generation===sequenceRestoreGeneration)restoringSequence=false}}
 const originalBrowse=renderBrowse;renderBrowse=function(){PICK=null;OVERLAY=null;sequenceGeneration++;originalBrowse();saveSequenceState()};
 const originalPick=renderPick;renderPick=function(){OVERLAY=null;originalPick();saveSequenceState()};
 const originalOverlay=openOverlay;openOverlay=function(i){originalOverlay(i);saveSequenceState()};
 window.addEventListener('popstate',restoreSequenceState);
-window.futScoutExportContext=function(){return {workspace:'Possession sequences',mode:MODE,type:TAG,team:TEAMSEL,picked:PICK&&PICK.seq_uid,comparison:OVERLAY&&OVERLAY.seq_uid,candidatesShown:CANDS.length,selection:'Up to twelve candidates ordered by xT; nearest twelve by trajectory distance',population:'Current API data pool; no league-average baseline supplied'};};
+window.futScoutExportContext=function(){return {workspace:'Possession sequences',mode:MODE,type:TAG,team:TEAMSEL,picked:PICK&&PICK.seq_uid,comparison:OVERLAY&&OVERLAY.seq_uid,candidatesShown:CANDS.length,selection:'Up to twelve candidates ordered by xT; nearest twelve by trajectory distance',population:'Current API data pool; league/season coverage and eligible pool N unavailable; no league-average baseline supplied'};};
 init();
 
 function paintThemeBtn(){var b=document.getElementById('themeBtn');

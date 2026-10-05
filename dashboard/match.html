@@ -919,7 +919,7 @@ function VT(){return S.viewTeam||(S.matchTeams&&S.matchTeams[0])||T().name}
 function isOppView(){return S.viewTeam&&S.viewTeam!==T().name}
 function posToGroup(pos){if(!pos)return null;if(pos.startsWith('GK'))return'GK';if(pos.startsWith('D')&&!pos.startsWith('DMC'))return'DEF';if(pos==='DMC')return'DEF';if(pos.startsWith('FW'))return'FWD';return'MID';}
 function passesPosFilter(playerName){if(!S.posGroups.size)return true;const pos=S.playerPos[playerName];if(!pos)return false;return S.posGroups.has(posToGroup(pos));}
-let matchLoadRevision=0,seasonLoadRevision=0,restoringMatchURL=false;
+let matchLoadRevision=0,matchListRevision=0,deepLinkRevision=0,seasonLoadRevision=0,restoringMatchURL=false;
 function writeMatchURL(){
   if(restoringMatchURL||!S.selMatch)return;
   const u=new URL(location.href);u.searchParams.set('state','1');u.searchParams.set('game',S.selMatch);u.searchParams.set('team',VT());
@@ -928,7 +928,7 @@ function writeMatchURL(){
   if(u.href!==location.href)history.pushState(null,'',u);
 }
 function restoreMatchURL(p){
-  const plots=(p.get('plots')||'').split(',').filter(v=>VIZ_LABELS[v]);if(plots.length)S.activeVizs=plots.slice(0,4);
+  const plots=(p.get('plots')||'').split(',').filter(v=>VIZ_LABELS[v]);S.activeVizs=plots.length?plots.slice(0,4):['progressive'];
   if((S.matchTeams||[]).includes(p.get('team')))S.viewTeam=p.get('team');
   S.selPlayer=S.events.some(e=>e.team===VT()&&e.player===p.get('player'))?p.get('player'):null;
   S.periods=new Set((p.get('periods')||'').split(',').filter(v=>['1','2','3','4'].includes(v)));
@@ -947,7 +947,7 @@ async function sbRpc(fn,p={}){const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:
 /* DATA */
 async function loadMatch(gid){const request=matchLoadRevision+1;try{await loadMatchData(gid);}catch(e){if(request!==matchLoadRevision)return;const area=document.getElementById('pitchArea');area.innerHTML='<div class="empty" role="alert">Match events unavailable. </div>';const retry=document.createElement('button');retry.textContent='Retry';retry.onclick=()=>loadMatch(gid);area.firstChild.append(retry);}}
 async function loadMatches(){
-  const t=T();let all=[];
+  const t=T(),team=S.team,request=++matchListRevision;matchLoadRevision++;let all=[];
   for(const c of t.comps){
     const q={competition:'eq.'+c.v,select:'game_id,date,home_team,away_team,home_score,away_score,competition,season',order:'date.desc'};
     if(t.name!=='__ALL__'){
@@ -958,7 +958,7 @@ async function loadMatches(){
     }else{
       q.home_score='not.is.null';
     }
-    const m=await sbAll('v_league_matches',q);all=all.concat(m);
+    let m;try{m=await sbAll('v_league_matches',q)}catch(e){if(request!==matchListRevision||team!==S.team)return;throw e}if(request!==matchListRevision||team!==S.team)return;all=all.concat(m);
   }
   all.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   S.matches=all;renderMatchSelect();
@@ -1259,7 +1259,7 @@ function renderShotMap(ctx,c,evts,titleEl,legendEl){
     '<span class="leg leg-note">'+sizeNote+'</span>';
 }
 
-function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=oppMode?evts:evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};evts.filter(e=>e.team===vt&&e.x!=null&&(oppMode||S.starters.has(e.player))).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&(oppMode||S.starters.has(sorted[j].player))){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(lastName(name),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
+function renderNetwork(ctx,c,evts,titleEl,legendEl,pairEl){drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);const t=T();const vt=VT();const oppMode=isOppView();const stEvts=evts.filter(e=>S.starters.has(e.player));const pos={},cnt={};evts.filter(e=>e.team===vt&&e.x!=null&&S.starters.has(e.player)).forEach(e=>{if(!pos[e.player]){pos[e.player]={x:0,y:0};cnt[e.player]=0;}pos[e.player].x+=e.x;pos[e.player].y+=e.y;cnt[e.player]++;});Object.keys(pos).forEach(p=>{pos[p].x/=cnt[p];pos[p].y/=cnt[p]});const pairs={};const sorted=[...stEvts].sort((a,b)=>a.period-b.period||a.minute-b.minute||a.second-b.second);for(let i=0;i<sorted.length-1;i++){if(sorted[i].type==='Pass'&&sorted[i].outcome_type==='Successful'){for(let j=i+1;j<Math.min(i+3,sorted.length);j++){if(sorted[j].team===vt&&sorted[j].player!==sorted[i].player&&S.starters.has(sorted[j].player)){const key=[sorted[i].player,sorted[j].player].sort().join('|||');pairs[key]=(pairs[key]||0)+1;break;}}}}const topPairs=Object.entries(pairs).sort((a,b)=>b[1]-a[1]).slice(0,20);const maxP=topPairs[0]?topPairs[0][1]:1;const netColor=oppMode?'#2563eb':t.color;topPairs.forEach(([key,count])=>{const[p1,p2]=key.split('|||');if(!pos[p1]||!pos[p2])return;const a=toXY(pos[p1].x,pos[p1].y,c),b=toXY(pos[p2].x,pos[p2].y,c);ctx.strokeStyle=hexAlpha(netColor,0.15+0.6*(count/maxP));ctx.lineWidth=1+4*(count/maxP);ctx.beginPath();ctx.moveTo(a.cx,a.cy);ctx.lineTo(b.cx,b.cy);ctx.stroke();});const posColors={GK:'#d4a017',DC:'#2563eb',DL:'#2563eb',DR:'#2563eb',DMC:'#0d9488',MC:'#16a34a',ML:'#16a34a',MR:'#16a34a',AMC:'#84cc16',AML:'#84cc16',AMR:'#84cc16',FW:'#ef4444',FWL:'#ef4444',FWR:'#ef4444',Sub:'#9ca3af'};const maxCnt=Math.max(...Object.values(cnt).filter(v=>v>0),1);Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);const r=6+10*(cnt[name]/maxCnt);const ppos=S.playerPos[name]||'MC';const col=posColors[ppos]||'#9ca3af';ctx.fillStyle=hexAlpha(col,0.85);ctx.beginPath();ctx.arc(pt.cx,pt.cy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=CT().text;ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.fillText(lastName(name),pt.cx,pt.cy+r+11);});const nStored=[];Object.entries(pos).forEach(([name,p])=>{const pt=toXY(p.x,p.y,c);nStored.push({cx:pt.cx,cy:pt.cy,player:name,minute:'',outcome:cnt[name]+' touches',type:'Avg Position'});});S.canvasEvents.set(c,nStored);titleEl.textContent='Passing Network';legendEl.innerHTML='<span class="leg">Starters only</span>';if(pairEl){pairEl.innerHTML=topPairs.slice(0,15).map(([key,count])=>{const[p1,p2]=key.split('|||');return'<div class="net-pair"><span class="net-names">'+lastName(p1)+' \u2194 '+lastName(p2)+'</span><span class="net-count">'+count+'</span></div>';}).join('');}}
 
 function renderProgressive(ctx,c,evts,titleEl,legendEl){
   drawPitch(ctx,c);if(S.showJdP)drawJdP(ctx,c);
@@ -1528,7 +1528,7 @@ function buildPanel(area,viz,sz,teamOverride){
   if(viz==='shape')panelTitle=panelTitle.replace('Phase Shape Shift',S.shapeMode==='in'?'In-Possession Shape':S.shapeMode==='out'?'Out-of-Possession Shape':'Phase Shape Shift');
   title.textContent=panelTitle;
   panel.dataset.exportContext=JSON.stringify({subject:panelTeam,player:TEAM_VIZ.has(viz)?null:S.selPlayer,game:S.selMatch,plot:viz,periods:[...S.periods],outcomes:viz==='xt_carry'?'unsupported':[...S.outcomes],positions:TEAM_VIZ.has(viz)?'unsupported':[...S.posGroups],window:S.timeFilter||'full match',source:'v_match_events / inferred carries',url:location.href});
-  const evidence=document.createElement('details');evidence.className='plot-data';const summary=document.createElement('summary');summary.textContent='Exact plot evidence ('+evts.length+' records)';evidence.append(summary);
+  const evidence=document.createElement('details');evidence.className='plot-data';const summary=document.createElement('summary');summary.textContent='Exact plot evidence ('+exactRows.length+' records)';evidence.append(summary);
   evidence.addEventListener('toggle',()=>{if(!evidence.open||evidence.dataset.loaded)return;evidence.dataset.loaded='1';const holder=document.createElement('div');holder.style.cssText='max-height:220px;overflow:auto';holder.tabIndex=0;holder.setAttribute('aria-label','Plot event data');const rows=exactRows;holder.innerHTML='<table><thead><tr>'+['Team','Player','Minute','Type','Outcome','x','y','End x','End y','xG'].map(k=>'<th>'+k+'</th>').join('')+'</tr></thead><tbody>'+rows.map(e=>'<tr>'+[e.team,e.player,e.minute,e.type||'Inferred carry',e.outcome_type,e.x??e.start_x,e.y??e.start_y,e.end_x,e.end_y,e.xg].map(v=>'<td>'+esc(v==null?'unavailable':String(v))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';evidence.append(holder);});panel.append(evidence);
   can.setAttribute('aria-label',title.textContent+'. Attack is bottom to top; the attacking team’s right side is screen right.');
   // Export menu
@@ -3370,14 +3370,14 @@ async function init(){initThemeToggle();await loadTeams();applyTheme();initTeamS
 /* A game link owns its competition context. A previously selected league (or
    the default MLS checkbox) must not leave the linked match outside the list. */
 async function openDeepLink(){
-  const params=new URLSearchParams(location.search),gid=params.get('game');
-  if(!gid)return;
-  if(!/^\d+$/.test(gid)){document.getElementById('pitchArea').innerHTML='<div class="empty">Invalid match link. Select a fixture from the match list.</div>';return;}
+  const request=++deepLinkRevision;matchLoadRevision++;matchListRevision++;const params=new URLSearchParams(location.search),gid=params.get('game');
+  if(!gid){S.selMatch=null;S.events=[];S.carries=[];S.sequences=[];S.viewTeam=null;S.oppTeam=null;S.matchTeams=[];S.selPlayer=null;S.timeFilter=null;S.periods=new Set();S.outcomes=new Set();S.posGroups=new Set();S.activeVizs=['progressive'];S.compareMode=false;renderMatchEssentials(null);document.getElementById('pitchArea').innerHTML='<div class="empty">Select a fixture to inspect its plots.</div>';return;}
+  if(!/^\d+$/.test(gid)){S.selMatch=null;S.events=[];S.carries=[];S.sequences=[];renderMatchEssentials(null);document.getElementById('pitchArea').innerHTML='<div class="empty">Invalid match link. Select a fixture from the match list.</div>';return;}
   restoringMatchURL=true;
   try{
     const rows=await sbAll('v_league_matches',{game_id:'eq.'+gid,
       select:'game_id,date,home_team,away_team,home_score,away_score,competition,season'});
-    const m=rows&&rows[0]; if(!m)return;
+    if(request!==deepLinkRevision)return;const m=rows&&rows[0];if(!m){S.selMatch=null;S.events=[];renderMatchEssentials(null);document.getElementById('pitchArea').innerHTML='<div class="empty" role="status">Match not found. Select a fixture from the match list.</div>';return;}
     const hev=evName(m.home_team);
     if(!LEAGUES.some(c=>c.v===m.competition))LEAGUES.push({v:m.competition,l:m.competition,n:1});
     TEAMS.__ALL__.comps=LEAGUES;
@@ -3386,21 +3386,21 @@ async function openDeepLink(){
     // In that case the all-team list is the honest context for the match.
     S.team=TEAMS[hev]&&LEAGUE_OF[hev]===m.competition?hev:'__ALL__';
     applyTheme();initTeamSwitcher();initCompFilters();
-    await loadMatches();
+    await loadMatches();if(request!==deepLinkRevision)return;
     if(!S.matches.some(x=>String(x.game_id)===String(gid))){
       S.team='__ALL__';
       applyTheme();initTeamSwitcher();initCompFilters();
-      await loadMatches();
+      await loadMatches();if(request!==deepLinkRevision)return;
     }
     if(!S.matches.some(x=>String(x.game_id)===String(gid))){
       S.matches.unshift(m);renderMatchSelectFiltered();
     }
     const sel=document.getElementById('matchSel');
     if(sel)sel.value=String(gid);
-    await loadMatch(gid);
+    await loadMatch(gid);if(request!==deepLinkRevision)return;
     restoreMatchURL(params);
     loadSeasonStats();
-  }catch(e){document.getElementById('pitchArea').innerHTML='<div class="empty">Unable to load this match. <button onclick="openDeepLink()">Retry</button></div>';console.warn('deep link failed',e)}finally{restoringMatchURL=false;}
+  }catch(e){if(request!==deepLinkRevision)return;document.getElementById('pitchArea').innerHTML='<div class="empty">Unable to load this match. <button onclick="openDeepLink()">Retry</button></div>';console.warn('deep link failed',e)}finally{if(request===deepLinkRevision)restoringMatchURL=false;}
 }
 window.addEventListener('popstate',()=>openDeepLink());
 // Keyboard equivalents are bound by delegation so rerendered rows retain them.

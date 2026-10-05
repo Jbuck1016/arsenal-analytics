@@ -283,7 +283,7 @@ function render(){
       ? 'No published insight matches these filters for '+esc(STATE.team)+'.<br>'
         +'This does not establish average performance: coverage or the selected filters may exclude relevant evidence. Try clearing filters or inspect the team profile.'
       : 'no insights match this filter.';
-    host.innerHTML='<div class="empty">'+why+'</div>';
+    const eligible=ALL.filter(d=>inLeague(d.team)&&(STATE.team==='all'||d.team===STATE.team));const hasDirectory=STATE.team==='all'?Object.keys(DIR).some(inLeague):!!DIR[STATE.team];why=eligible.length?'Published insights exist, but none match the selected lens.':!hasDirectory?'Team coverage is unavailable in this scope.':'No qualifying detector output has been published for this scope. This is not evidence of average performance.';host.innerHTML='<div class="empty" role="status">'+why+' <button onclick="STATE.lens=&quot;all&quot;;STATE.team=&quot;all&quot;;buildTeamSelect();render()">Clear filters</button> <a href="teams.html'+(STATE.team!=='all'?'?team='+encodeURIComponent(STATE.team):'')+'">Inspect team profiles</a></div>';
   }
   var n=rows.length;
   document.getElementById('sysLine').innerHTML =

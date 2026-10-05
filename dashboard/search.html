@@ -565,9 +565,9 @@ document.getElementById('reset').addEventListener('click',function(){
 document.getElementById('copy').addEventListener('click',function(){
   const clean=function(v){return String(v==null?'Unavailable':v).replace(/[\t\r\n]/g,' ')};
   let txt='FutScout — all '+shortlistRows.length+' eligible results\nSource: '+location.href+'\nExported: '+new Date().toISOString()+'\nFilters: '+JSON.stringify(STATE)+'\nPercentiles: within position pool across covered leagues, not rebased by filters\n';
-  txt+=['Player','Team','League','Position','Age','Exposure (90s)',sortLabel(STATE.sort)+(STATE.sort.endsWith('_90')?' per 90':''),'Pool percentile'].join('\t')+'\n';
+  txt+=['Player','Team','League','Position','Age','Exposure (90s)',sortLabel(STATE.sort).replace(/ per 90$/,'')+' ('+(STATE.sort.endsWith('_90')?'per 90':({mean_carry_m:'metres',nineties:'90s',age_seen:'years',height_cm:'cm',xg_per_shot:'xG / shot',finishing:'goals minus xG',player_xt:'total xT'}[STATE.sort]||'raw value'))+')','Pool percentile'].join('\t')+'\n';
   shortlistRows.forEach(function(r){txt+=[r.player,r.team,r.league,r.pos,r.age_seen,r.nineties,r[STATE.sort],pctOf(r,STATE.sort)].map(clean).join('\t')+'\n'});
-  navigator.clipboard.writeText(txt).then(function(){
+  Promise.resolve().then(function(){if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');return navigator.clipboard.writeText(txt)}).then(function(){
     const b=document.getElementById('copy');b.textContent='Copied';setTimeout(function(){b.textContent='Copy shortlist'},1400);
   }).catch(function(){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([txt],{type:'text/tab-separated-values;charset=utf-8'}));a.href=url;a.download='futscout-shortlist.tsv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},1000);document.getElementById('copy').textContent='Clipboard denied — TSV downloaded';});
 });

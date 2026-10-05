@@ -222,7 +222,7 @@ async function open(k){
   const d=DEFS.filter(function(x){return x.key===k})[0];if(!d)return;
   const e=EX[k];
   const unit=d.unit==='%'?'%':(d.unit==='m'?' m':(d.unit==='s'?' s':''));
-  const fmt=function(v){return v==null?'—':(+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
+  const fmt=function(v){return v==null||String(v).trim()===''||!Number.isFinite(Number(v))?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
 
   let h='<div class="entry">'+
     '<div class="e-eye">'+esc(d.grp)+(d.higher_is_better===false?' · lower is better':'')+'</div>'+
@@ -234,15 +234,15 @@ async function open(k){
      '<div class="calc">'+esc(d.calc||'Counted directly from the event feed, then divided by minutes played over 90.')+'</div></div></div>';
 
   if(e){
-    const lo=+e.min_v, md=+e.med_v, hi=+e.max_v;
-    h+='<div class="blk"><div class="blk-h">Where it sits in the league</div><div class="blk-b">'+
+    const lo=e.min_v, md=e.med_v, hi=e.max_v;
+    h+='<div class="blk"><div class="blk-h">Saved reference population</div><div class="blk-b">'+
       '<div class="stat-row">'+
         '<div class="st"><div class="st-l">Lowest</div><div class="st-v">'+fmt(lo)+'</div></div>'+
         '<div class="st"><div class="st-l">Median</div><div class="st-v" style="color:var(--amber)">'+fmt(md)+'</div></div>'+
         '<div class="st"><div class="st-l">Highest</div><div class="st-v">'+fmt(hi)+'</div></div>'+
         '<div class="st"><div class="st-l">Players</div><div class="st-v" style="color:var(--dim)">'+e.n+'</div></div>'+
       '</div>'+
-      '<p>Observed minimum, median and maximum across '+esc(e.n)+' qualifying players. These summaries do not describe the frequency distribution.</p>'+
+      '<p>Observed minimum, median and maximum across '+esc(e.n)+' qualifying players. These summaries do not describe the frequency distribution. Saved population: league '+esc(e.league||'unavailable')+'; role '+esc(e.pool||'mixed roles / not supplied')+'; season '+esc(e.season||'unavailable')+'. This is not the current profile filter cohort.</p>'+
       '</div></div>';
 
     const best=(d.higher_is_better===false)?
@@ -254,8 +254,8 @@ async function open(k){
 
     h+='<div class="blk"><div class="blk-h">What it looks like in practice</div><div class="blk-b">'+
       '<div class="ex">'+
-      exCard('Top of the league',best,unit)+
-      exCard('Bottom of the league',worst,unit)+
+      exCard(d.higher_is_better===false?'Lowest saved reference value':'Highest saved reference value',best,unit)+
+      exCard(d.higher_is_better===false?'Highest saved reference value':'Lowest saved reference value',worst,unit)+
       '</div>'+
       '<div class="read" style="margin-top:13px">'+readLine(d,best,worst,md,unit)+'</div>'+
       '</div></div>';
@@ -291,8 +291,9 @@ function exCard(label,p,unit){
 function readLine(d,best,worst,med,unit){
   const u=function(v){return (+v).toLocaleString(undefined,{maximumFractionDigits:3})+unit};
   if(!best||!best.n)return '';
+  if([best.v,worst?.v,med].some(v=>v==null||String(v).trim()===''||!Number.isFinite(Number(v))))return 'Some saved reference values are unavailable; no relative comparison is calculated.';
   const dir=(d.higher_is_better===false)?'lowest':'highest';
-  return '<b>'+esc(best.n)+'</b> posts the '+dir+' figure in the league at <b>'+u(best.v)+
+  return '<b>'+esc(best.n)+'</b> posts the '+dir+' figure in the saved reference at <b>'+u(best.v)+
     '</b>, against a median of <b>'+u(med)+'</b> — roughly '+
     (med&&+med!==0?(Math.abs(+best.v/+med)).toFixed(1)+'×':'well clear of')+
     ' the typical player. At the other end, <b>'+esc(worst.n)+'</b> records '+u(worst.v)+

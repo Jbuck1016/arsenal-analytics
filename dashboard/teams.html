@@ -250,7 +250,7 @@ let RKT={metric:'ppda'};
 let ZONES=null,CZONES=null,TSHOTS=null,ZTEAM=null,BUILD=null,LANES=null,TFIXTURES=[];
 let teamViewRevision=0;
 function teamRequest(){const revision=teamViewRevision,team=SEL,tab=TAB,filters=JSON.stringify([LG,MP,RKT,LM]);return ()=>revision===teamViewRevision&&team===SEL&&tab===TAB&&filters===JSON.stringify([LG,MP,RKT,LM]);}
-function displayMetric(value,decimals=1,suffix=''){return value==null||!Number.isFinite(Number(value))?'—':Number(value).toFixed(decimals)+suffix;}
+function displayMetric(value,decimals=1,suffix=''){return value==null||String(value).trim()===''||!Number.isFinite(Number(value))?'—':Number(value).toFixed(decimals)+suffix;}
 let restoringTeamURL=false;
 function writeTeamURL(){
   if(restoringTeamURL||!SEL)return;
@@ -574,8 +574,8 @@ async function renderMatches(t){
         '<td style="font-weight:700"><a href="match.html?game='+encodeURIComponent(r.game_id)+'">'+esc(tname(r.opp||''))+'</a></td>'+
         '<td><span class="wl" style="background:'+rc[r.res]+'">'+r.res+'</span> <span style="color:var(--text3)">'+r.ha+'</span></td>'+
         '<td class="num">'+r.gf+'\u2013'+r.ga+'</td>'+
-        '<td class="num">'+(+r.possession_pct).toFixed(1)+'%</td>'+
-        '<td class="num">'+(+r.field_tilt).toFixed(1)+'%</td>'+
+        '<td class="num">'+displayMetric(r.possession_pct,1,'%')+'</td>'+
+        '<td class="num">'+displayMetric(r.field_tilt,1,'%')+'</td>'+
         '<td class="num">'+(r.ppda==null?'\u2014':(+r.ppda).toFixed(2))+'</td>'+
         '<td class="num">'+r.shots+'</td><td class="num">'+r.opp_shots+'</td>'+
         '<td style="color:var(--text3);text-align:right">\u203A</td></tr>';
